@@ -153,13 +153,15 @@ interface Recipe {
 ### 4.3 AI Integration Strategy
 
 #### 4.3.1 Natural Language Processing
-
-- Use Vercel AI SDK with Gemini Flash for parsing inventory commands
+#### 4.3.1 Natural Language Processing
+- Use Vercel AI SDK with Gemini Flash
+- All AI calls run server-side (Route Handlers/Server Actions); never expose API keys to the client
+- Apply timeouts, retries with backoff, and per-session request budgets
+- Log prompt/response metadata (no PII) for observability
 - Implement prompt engineering for:
   - Inventory item extraction and categorization
   - Recipe suggestion generation
   - Cooking instruction formatting
-
 #### 4.3.2 Prompt Structure
 
 - **Inventory Management**: Extract item name, quantity, unit, and type from natural language
