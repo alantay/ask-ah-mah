@@ -118,18 +118,15 @@ Beginner cooks struggle to:
 ### 4.2 Data Structure
 
 #### 4.2.1 Inventory Item Schema
-
-```typescript
 interface InventoryItem {
   id: string;
   name: string;
   type: "ingredient" | "kitchenware";
   quantity?: number;
   unit?: string;
-  dateAdded: Date;
-  lastUpdated: Date;
+  dateAddedISO: string;    // ISO8601 string
+  lastUpdatedISO: string;  // ISO8601 string
 }
-```
 
 #### 4.2.2 Recipe Schema
 
