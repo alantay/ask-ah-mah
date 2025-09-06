@@ -96,6 +96,7 @@ Beginner cooks struggle to:
 - Primary chat interface taking majority of screen space
 - Sidebar/panel for inventory management (toggleable)
 - Responsive design for mobile and desktop use
+- Light and Dark mode toggle
 
 #### 3.2.2 Inventory Management UI
 
@@ -118,14 +119,15 @@ Beginner cooks struggle to:
 ### 4.2 Data Structure
 
 #### 4.2.1 Inventory Item Schema
+
 interface InventoryItem {
-  id: string;
-  name: string;
-  type: "ingredient" | "kitchenware";
-  quantity?: number;
-  unit?: string;
-  dateAddedISO: string;    // ISO8601 string
-  lastUpdatedISO: string;  // ISO8601 string
+id: string;
+name: string;
+type: "ingredient" | "kitchenware";
+quantity?: number;
+unit?: string;
+dateAddedISO: string; // ISO8601 string
+lastUpdatedISO: string; // ISO8601 string
 }
 
 #### 4.2.2 Recipe Schema
@@ -150,7 +152,9 @@ interface Recipe {
 ### 4.3 AI Integration Strategy
 
 #### 4.3.1 Natural Language Processing
+
 #### 4.3.1 Natural Language Processing
+
 - Use Vercel AI SDK with Gemini Flash
 - All AI calls run server-side (Route Handlers/Server Actions); never expose API keys to the client
 - Apply timeouts, retries with backoff, and per-session request budgets
@@ -159,6 +163,7 @@ interface Recipe {
   - Inventory item extraction and categorization
   - Recipe suggestion generation
   - Cooking instruction formatting
+
 #### 4.3.2 Prompt Structure
 
 - **Inventory Management**: Extract item name, quantity, unit, and type from natural language
