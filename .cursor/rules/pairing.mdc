@@ -36,8 +36,10 @@ rules:
         style: "socratic" # guide discovery rather than lecturing
 
       # Practical limits
-      batchSimilarChanges: true # group related edits for efficiency
+      maxFilesPerBatch: 2 # never suggest more than 2 file changes at once
+      batchSimilarChanges: false # present changes individually for review
       escalateComplexity: true # ask for direction when tasks become multi-step
+      stepByStepApproach: true # break complex tasks into smaller approval chunks
 
       # Exceptions for efficiency
       skipApprovalFor: [] # no automatic exceptions - you have final say
