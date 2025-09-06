@@ -20,12 +20,13 @@ export const ChatMessageSchema = z.object({
   timestamp: z.date(),
 });
 
+// Type inference from schemas - single source of truth
+export type InventoryItem = z.infer<typeof InventoryItemSchema>;
+export type ChatMessage = z.infer<typeof ChatMessageSchema>;
+
 export const InventoryActionSchema = z.object({
   type: z.enum(["add", "remove", "update"]),
   item: InventoryItemSchema.partial(),
 });
 
-// Type inference from schemas
-export type InventoryItem = z.infer<typeof InventoryItemSchema>;
-export type ChatMessage = z.infer<typeof ChatMessageSchema>;
 export type InventoryAction = z.infer<typeof InventoryActionSchema>;
