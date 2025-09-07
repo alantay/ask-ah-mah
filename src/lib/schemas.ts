@@ -29,7 +29,7 @@ export const ChatMessageSchema = z.object({
   id: z.string().min(1),
   role: z.enum(["user", "assistant"]),
   content: z.string().min(1),
-  timestamp: z.string(),
+  timestamp: z.string().datetime(),
 });
 
 // Type inference from schemas - single source of truth
