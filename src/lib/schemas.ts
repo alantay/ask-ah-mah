@@ -9,15 +9,27 @@ export const InventoryItemSchema = z.object({
   type: z.enum(["ingredient", "kitchenware"]),
   quantity: z.number().positive().optional(),
   unit: z.string().min(1).max(20).optional(),
-  dateAdded: z.date(),
-  lastUpdated: z.date(),
+  dateAdded: z.string(),
+  lastUpdated: z.string(),
+});
+
+// for adding inventory items
+export const AddInventoryItemSchema = InventoryItemSchema.omit({
+  id: true,
+  dateAdded: true,
+  lastUpdated: true,
+});
+
+export const GetInventoryResponseSchema = z.object({
+  kitchenwareInventory: z.array(InventoryItemSchema),
+  ingredientInventory: z.array(InventoryItemSchema),
 });
 
 export const ChatMessageSchema = z.object({
   id: z.string().min(1),
   role: z.enum(["user", "assistant"]),
   content: z.string().min(1),
-  timestamp: z.date(),
+  timestamp: z.string(),
 });
 
 // Type inference from schemas - single source of truth
