@@ -10,7 +10,10 @@ import { NextRequest } from "next/server";
 export async function POST(req: NextRequest) {
   const model = google("gemini-1.5-flash");
 
-  const { message } = await req.json();
+  import { z } from "zod";
+
+  const MessageSchema = z.object({ message: z.string().min(1) });
+  const { message } = MessageSchema.parse(await req.json());
 
   const result = await streamText({
     model,
