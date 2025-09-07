@@ -9,8 +9,8 @@ export const InventoryItemSchema = z.object({
   type: z.enum(["ingredient", "kitchenware"]),
   quantity: z.number().positive().optional(),
   unit: z.string().min(1).max(20).optional(),
-  dateAdded: z.string(),
-  lastUpdated: z.string(),
+  dateAdded: z.string().datetime(),
+  lastUpdated: z.string().datetime(),
 });
 
 // for adding inventory items
