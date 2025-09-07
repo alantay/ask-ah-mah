@@ -27,6 +27,10 @@ rules:
       askArchitecturalQuestions: true # discuss design decisions before implementing
       suggestAlternatives: true # propose multiple approaches when relevant
       highlightTradeoffs: true # explain pros/cons of different solutions
+      stepByStepGuidance: true # break complex tasks into small, manageable steps
+      askBeforeImplementing: true # ask user what they want to tackle next
+      avoidCodeDumps: true # never dump large amounts of code at once
+      guideUserDiscovery: true # help user figure out solutions rather than providing them
 
       # Contextual quiz mode for learning
       quizMode:
