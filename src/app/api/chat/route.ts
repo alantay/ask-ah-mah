@@ -4,7 +4,7 @@ import {
   GetInventoryResponseSchema,
 } from "@/lib/schemas";
 import { google } from "@ai-sdk/google";
-import { streamText } from "ai";
+import { stepCountIs, streamText } from "ai";
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -14,9 +14,17 @@ export async function POST(req: NextRequest) {
 
   const result = await streamText({
     model,
-    system:
-      "You are Ask Ah Mah, a warm and friendly cooking assistant. Be encouraging, use simple language, and always help beginners feel confident about cooking. Use the tools provided to help user manage their inventory and suggest recipes based on their inventory.",
+    system: `You are Ask Ah Mah, a warm and friendly cooking assistant. 
+
+IMPORTANT: After calling any tool, you MUST provide a helpful response to the user. Never end the conversation after a tool call.
+
+When getting inventory:
+- If empty: Encourage them to add ingredients
+- If not empty: List what they have and suggest recipes
+
+Always be warm, encouraging, and helpful!`,
     messages: [{ role: "user", content: message }],
+    stopWhen: stepCountIs(5),
     tools: {
       addInventoryItem: {
         description: `Add items to the user's inventory. Required: name (string) and type ("ingredient" or "kitchenware"). Optional: quantity (number) and unit (string).`,
@@ -30,16 +38,20 @@ export async function POST(req: NextRequest) {
         },
       },
       getInventory: {
-        description: "Get the inventory/pantry",
+        description:
+          "Get the user's current inventory and ALWAYS provide a friendly response summarizing what they have, even if empty.",
         inputSchema: GetInventoryResponseSchema,
         execute: async () => {
-          console.log("Getting inventory", getInventory());
+          const { ingredientInventory, kitchenwareInventory } = getInventory();
+          console.log("Getting inventory");
+
           return {
             content: getInventory(),
+            inventory: { ingredientInventory, kitchenwareInventory },
           };
         },
       },
     },
   });
-  return result.toTextStreamResponse();
+  return result.toUIMessageStreamResponse();
 }
