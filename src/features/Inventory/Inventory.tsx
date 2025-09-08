@@ -21,12 +21,13 @@ const Inventory = () => {
       </ul>
 
       <div>
-        <h2>Kitchenware</h2>
+        <h2>Ingredients</h2>
         <ul className="pl-2">
-          {ingredientInventory.map((item: any) => (
+          {ingredientInventory.map((item: InventoryItem) => (
             <li key={item.id}>{item.name}</li>
           ))}
         </ul>
+      </div>
       </div>
     </div>
   );
