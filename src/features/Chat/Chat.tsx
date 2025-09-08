@@ -3,6 +3,11 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useState } from "react";
+import { mutate } from "swr";
+
+type MetadataWithToolCalls = {
+  toolCalls?: unknown[]; // or more specific type if you know it
+};
 
 const Chat = () => {
   const [input, setInput] = useState("");
@@ -11,6 +16,28 @@ const Chat = () => {
     transport: new DefaultChatTransport({
       api: "/api/chat",
     }),
+    onFinish: (options) => {
+      const { message } = options;
+      mutate("/api/inventory");
+
+      const metadata = message.metadata as MetadataWithToolCalls;
+      // Example: Inspect metadata or parts for tool usage info
+      console.log("Full message meta", message.metadata);
+
+      // If toolCalls array is present:
+      if (metadata?.toolCalls?.length) {
+        console.log("Tools used in this message:", metadata.toolCalls);
+      } else {
+        console.log("No tools used in this message.");
+      }
+
+      // Alternatively inspect parts for tool usage
+      message.parts.forEach((part) => {
+        if (part.type.startsWith("tool-")) {
+          console.log("Tool part detected:", part);
+        }
+      });
+    },
   });
 
   return (

@@ -1,4 +1,4 @@
-import { addInventoryItem, getInventory } from "@/lib/inventory";
+import { addInventoryItem, getInventory } from "@/lib/inventory/Inventory";
 import {
   AddInventoryItemSchema,
   GetInventoryResponseSchema,
