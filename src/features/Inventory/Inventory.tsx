@@ -29,7 +29,6 @@ const Inventory = () => {
         </ul>
       </div>
       </div>
-    </div>
   );
 };
 
