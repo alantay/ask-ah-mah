@@ -4,18 +4,14 @@ import {
   GetInventoryResponseSchema,
 } from "@/lib/schemas";
 import { google } from "@ai-sdk/google";
-import { stepCountIs, streamText } from "ai";
+import { convertToModelMessages, stepCountIs, streamText, UIMessage } from "ai";
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
   const model = google("gemini-1.5-flash");
+  const { messages }: { messages: UIMessage[] } = await req.json();
 
-  import { z } from "zod";
-
-  const MessageSchema = z.object({ message: z.string().min(1) });
-  const { message } = MessageSchema.parse(await req.json());
-
-  const result = await streamText({
+  const result = streamText({
     model,
     system: `You are Ask Ah Mah, a warm and friendly cooking assistant. 
 
@@ -26,7 +22,7 @@ When getting inventory:
 - If not empty: List what they have and suggest recipes
 
 Always be warm, encouraging, and helpful!`,
-    messages: [{ role: "user", content: message }],
+    messages: convertToModelMessages(messages),
     stopWhen: stepCountIs(5),
     tools: {
       addInventoryItem: {
