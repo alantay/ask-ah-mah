@@ -84,3 +84,5 @@ export const InventoryActionSchema = z.object({
 });
 
 export type InventoryAction = z.infer<typeof InventoryActionSchema>;
+
+export type GetInventoryResponse = z.infer<typeof GetInventoryResponseSchema>;

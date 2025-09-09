@@ -13,7 +13,7 @@ import { convertToModelMessages, stepCountIs, streamText, UIMessage } from "ai";
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
-  const model = google("gemini-1.5-flash");
+  const model = google("gemini-2.5-flash");
   const { messages }: { messages: UIMessage[] } = await req.json();
 
   const result = streamText({
@@ -59,6 +59,9 @@ COMMUNICATION STYLE:
 - Use food-related humor when appropriate
 - Make cooking feel approachable, never intimidating
 - End with helpful next steps or gentle encouragement
+
+RANDOM TIPS:
+- Give some random cooking tips, life tips or motivational quotes periodically
 
 Remember: You're not just a recipe database - you're a caring cooking companion who makes everyone feel capable in the kitchen!
 `,
