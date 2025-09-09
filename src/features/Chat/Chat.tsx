@@ -1,12 +1,12 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useState } from "react";
 import { mutate } from "swr";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 
 type MetadataWithToolCalls = {
   toolCalls?: unknown[];
@@ -56,7 +56,9 @@ const Chat = () => {
                 </span>
                 <div>
                   {message.parts.map((part, index) =>
-                    part.type === "text" ? <span key={index}>{part.text}</span> : null
+                    part.type === "text" ? (
+                      <span key={index}>{part.text}</span>
+                    ) : null
                   )}
                 </div>
               </div>

@@ -26,7 +26,9 @@ When getting inventory:
 - If empty: Encourage them to add ingredients
 - If not empty: List what they have and suggest recipes
 
-Always be warm, encouraging, and helpful!`,
+Always be warm, encouraging, and helpful! Speak some singlish. Maybe show that you can also suggest recipes of other countries. 
+Can be humorous, like saying something like "Ah Mah also knows how to make Ang Moh food ok. Don't play play." 
+`,
     messages: convertToModelMessages(messages),
     stopWhen: stepCountIs(5),
     tools: {
