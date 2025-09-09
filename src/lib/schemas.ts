@@ -8,7 +8,40 @@ export const InventoryItemSchema = z.object({
   name: z.string().min(1).max(100),
   type: z.enum(["ingredient", "kitchenware"]),
   quantity: z.number().positive().optional(),
-  unit: z.string().min(1).max(5).optional(),
+  unit: z
+    .enum([
+      // Weight
+      "g",
+      "kg",
+      "oz",
+      "lb",
+      // Volume
+      "ml",
+      "l",
+      "cup",
+      "tbsp",
+      "tsp",
+      // Count/Container
+      "piece",
+      "pieces",
+      "clove",
+      "cloves",
+      "bottle",
+      "bottles",
+      "can",
+      "cans",
+      "pack",
+      "packs",
+      "bunch",
+      "bunches",
+      // Other
+      "pinch",
+      "dash",
+      "slice",
+      "slices",
+      "piece",
+    ])
+    .optional(),
   dateAdded: z.string().datetime(),
   lastUpdated: z.string().datetime(),
 });
@@ -26,7 +59,7 @@ export const AddInventoryItemSchema = z.object({
 
 // In src/lib/schemas.ts
 export const RemoveInventoryItemSchema = z.object({
-  itemNames: z.array(z.string().min(1))
+  itemNames: z.array(z.string().min(1)),
 });
 
 export const GetInventoryResponseSchema = z.object({
@@ -51,4 +84,3 @@ export const InventoryActionSchema = z.object({
 });
 
 export type InventoryAction = z.infer<typeof InventoryActionSchema>;
-

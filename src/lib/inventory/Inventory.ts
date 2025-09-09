@@ -16,17 +16,19 @@ const ingredientInventory: InventoryItem[] = [
     name: "Eggs",
     type: "ingredient",
     quantity: 12,
-    unit: "dozen",
+    unit: "piece",
     dateAdded: new Date().toISOString(),
     lastUpdated: new Date().toISOString(),
   },
 ];
 
 export function getInventory() {
-  return {
+  const inventory = {
     kitchenwareInventory,
     ingredientInventory,
   };
+  console.log("getInventory called, returning:", inventory);
+  return inventory;
 }
 
 export function getKitchenwareInventory() {
@@ -38,11 +40,25 @@ export function getIngredientInventory() {
 }
 
 export function addInventoryItem(items: InventoryItem[]) {
+  console.log("Adding items to inventory:", items);
   items.forEach((item) => {
     item.id = generateShortId();
     // make the name consistent with first letter capitalized and rest of the letters lowercase
     item.name =
       item.name.charAt(0).toUpperCase() + item.name.slice(1).toLowerCase();
+    // Add missing date fields
+    item.dateAdded = new Date().toISOString();
+    item.lastUpdated = new Date().toISOString();
+
+    if (!item.quantity) {
+      item.quantity = 1;
+    }
+
+    if (!item.unit) {
+      item.unit = "piece"; // Default to empty string when unit is ambiguous
+    }
+
+    console.log("Processing item:", item);
     switch (item.type) {
       case "kitchenware": {
         const duplicateIdx = kitchenwareInventory.findIndex(
@@ -69,6 +85,9 @@ export function addInventoryItem(items: InventoryItem[]) {
       }
     }
   });
+  console.log("Inventory after adding items:");
+  console.log("Kitchenware:", kitchenwareInventory);
+  console.log("Ingredients:", ingredientInventory);
 }
 
 export function removeInventoryItem(itemNames: string[]) {

@@ -7,7 +7,14 @@ import { InventoryItem } from "@/lib/schemas";
 import useSWR from "swr";
 
 const Inventory = () => {
-  const { data, error, isLoading } = useSWR(`/api/inventory`, fetcher);
+  const { data, error, isLoading } = useSWR(`/api/inventory`, fetcher, {
+    onSuccess: (data) => {
+      console.log("SWR data updated:", data);
+    },
+    onError: (error) => {
+      console.log("SWR error:", error);
+    },
+  });
 
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
@@ -30,7 +37,7 @@ const Inventory = () => {
               {kitchenwareInventory.map((item: InventoryItem) => (
                 <Badge key={item.id} variant="secondary">
                   {item.name}
-                  {item.quantity && ` (${item.quantity}${item.unit || ""})`}
+                  {item.quantity && ` (${item.quantity} ${item.unit || ""})`}
                 </Badge>
               ))}
             </div>
