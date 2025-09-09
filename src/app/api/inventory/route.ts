@@ -1,5 +1,5 @@
-import { getInventory } from "@/lib/inventory/Inventory";
-import { NextResponse } from "next/server";
+import { addInventoryItem, getInventory } from "@/lib/inventory/Inventory";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET() {
   try {
@@ -13,7 +13,10 @@ export async function GET() {
   }
 }
 
-export async function POST() {
-  
+export async function POST(req: NextRequest) {
+  const data = await req.json();
+  console.log("*****Adding inventory items(Route Handler)", data);
+  addInventoryItem(data);
+
   return NextResponse.json({ success: true, message: "Inventory updated" });
 }

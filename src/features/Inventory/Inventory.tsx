@@ -1,6 +1,9 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetcher } from "@/lib/inventory/utils";
+import { InventoryItem } from "@/lib/schemas";
 import useSWR from "swr";
 
 const Inventory = () => {
@@ -12,23 +15,49 @@ const Inventory = () => {
   const { kitchenwareInventory, ingredientInventory } = data;
 
   return (
-    <div>
-      <h1>Inventory</h1>
-      <ul className="pl-2">
-        {kitchenwareInventory.map((item: any) => (
-          <li key={item.id}>{item.name}</li>
-        ))}
-      </ul>
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold">Your Inventory</h1>
 
-      <div>
-        <h2>Ingredients</h2>
-        <ul className="pl-2">
-          {ingredientInventory.map((item: InventoryItem) => (
-            <li key={item.id}>{item.name}</li>
-          ))}
-        </ul>
-      </div>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Kitchenware</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {kitchenwareInventory.length === 0 ? (
+            <p className="text-muted-foreground">No kitchenware yet</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {kitchenwareInventory.map((item: InventoryItem) => (
+                <Badge key={item.id} variant="secondary">
+                  {item.name}
+                  {item.quantity && ` (${item.quantity}${item.unit || ""})`}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Ingredients</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {ingredientInventory.length === 0 ? (
+            <p className="text-muted-foreground">No ingredients yet</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {ingredientInventory.map((item: InventoryItem) => (
+                <Badge key={item.id} variant="outline">
+                  {item.name}
+                  {item.quantity && ` (${item.quantity}${item.unit || ""})`}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

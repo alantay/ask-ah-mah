@@ -1,7 +1,12 @@
-import { addInventoryItem, getInventory } from "@/lib/inventory/Inventory";
+import {
+  addInventoryItem,
+  getInventory,
+  removeInventoryItem,
+} from "@/lib/inventory/Inventory";
 import {
   AddInventoryItemSchema,
   GetInventoryResponseSchema,
+  RemoveInventoryItemSchema,
 } from "@/lib/schemas";
 import { google } from "@ai-sdk/google";
 import { convertToModelMessages, stepCountIs, streamText, UIMessage } from "ai";
@@ -28,9 +33,9 @@ Always be warm, encouraging, and helpful!`,
       addInventoryItem: {
         description: `Add items to the user's inventory. Required: name (string) and type ("ingredient" or "kitchenware"). Optional: quantity (number) and unit (string).`,
         inputSchema: AddInventoryItemSchema,
-        execute: async (input) => {
-          console.log("Item added to inventory", input);
-          addInventoryItem([input]);
+        execute: async ({ items }) => {
+          console.log("Item added to inventory", items);
+          addInventoryItem(items);
           return {
             content: "Item added to inventory",
           };
@@ -47,6 +52,18 @@ Always be warm, encouraging, and helpful!`,
           return {
             content: getInventory(),
             inventory: { ingredientInventory, kitchenwareInventory },
+          };
+        },
+      },
+      removeInventoryItem: {
+        description:
+          "Remove items from inventory by their names (e.g., 'eggs', 'frying pan')",
+        inputSchema: RemoveInventoryItemSchema,
+        execute: async ({ itemNames }) => {
+          console.log("Items removed from inventory", itemNames);
+          removeInventoryItem(itemNames);
+          return {
+            content: "Items removed from inventory",
           };
         },
       },
