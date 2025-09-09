@@ -1,12 +1,15 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useState } from "react";
 import { mutate } from "swr";
 
 type MetadataWithToolCalls = {
-  toolCalls?: unknown[]; // or more specific type if you know it
+  toolCalls?: unknown[];
 };
 
 const Chat = () => {
@@ -18,6 +21,7 @@ const Chat = () => {
     }),
     onFinish: (options) => {
       const { message } = options;
+      console.log("onFinish");
       mutate("/api/inventory");
 
       const metadata = message.metadata as MetadataWithToolCalls;
@@ -25,13 +29,13 @@ const Chat = () => {
       console.log("Full message meta", message.metadata);
 
       // If toolCalls array is present:
+      // Leaving this here for now. Didn't seem to hit this condition.
       if (metadata?.toolCalls?.length) {
         console.log("Tools used in this message:", metadata.toolCalls);
       } else {
         console.log("No tools used in this message.");
       }
 
-      // Alternatively inspect parts for tool usage
       message.parts.forEach((part) => {
         if (part.type.startsWith("tool-")) {
           console.log("Tool part detected:", part);
@@ -41,15 +45,25 @@ const Chat = () => {
   });
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex flex-col gap-2">
+    <div className="space-y-4">
+      <div className="space-y-2">
         {messages.map((message) => (
-          <div key={message.id}>
-            {message.role === "user" ? "User: " : "AI: "}
-            {message.parts.map((part, index) =>
-              part.type === "text" ? <span key={index}>{part.text}</span> : null
-            )}
-          </div>
+          <Card key={message.id}>
+            <CardContent className="pt-4">
+              <div className="flex gap-2">
+                <span className="font-semibold">
+                  {message.role === "user" ? "You: " : "Ah Mah: "}
+                </span>
+                <div>
+                  {message.parts.map((part, index) =>
+                    part.type === "text" ? (
+                      <span key={index}>{part.text}</span>
+                    ) : null
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
       <form
@@ -62,16 +76,16 @@ const Chat = () => {
         }}
       >
         <div className="flex gap-2">
-          <input
-            className="border solid border-gray-300 rounded-md p-2"
+          <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={status !== "ready"}
-            placeholder="Say something..."
+            placeholder="Ask Ah Mah a question..."
+            className="flex-1"
           />
-          <button type="submit" disabled={status !== "ready"}>
-            Submit
-          </button>
+          <Button type="submit" disabled={status !== "ready"}>
+            Send
+          </Button>
         </div>
       </form>
     </div>

@@ -70,3 +70,23 @@ export function addInventoryItem(items: InventoryItem[]) {
     }
   });
 }
+
+export function removeInventoryItem(itemNames: string[]) {
+  itemNames.forEach((name) => {
+    // Remove from kitchenware inventory
+    const kitchenwareIndex = kitchenwareInventory.findIndex(
+      (item) => item.name.toLowerCase() === name.toLowerCase()
+    );
+    if (kitchenwareIndex >= 0) {
+      kitchenwareInventory.splice(kitchenwareIndex, 1);
+    }
+
+    // Remove from ingredient inventory
+    const ingredientIndex = ingredientInventory.findIndex(
+      (item) => item.name.toLowerCase() === name.toLowerCase()
+    );
+    if (ingredientIndex >= 0) {
+      ingredientInventory.splice(ingredientIndex, 1);
+    }
+  });
+}

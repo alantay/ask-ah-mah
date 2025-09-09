@@ -1,9 +1,9 @@
 POST http://localhost:3000/api/inventory HTTP/1.1   
 Content-Type: application/json
 
-{
-  "name": "Eggs",
+[{
+  "name": "Chocolates",
   "type": "ingredient",
   "quantity": 12,
-  "unit": "dozen"
-}
+  "unit": "piece"
+}]
