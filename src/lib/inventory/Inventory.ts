@@ -27,7 +27,6 @@ export function getInventory() {
     kitchenwareInventory,
     ingredientInventory,
   };
-  console.log("getInventory called, returning:", inventory);
   return inventory;
 }
 
@@ -40,8 +39,7 @@ export function getIngredientInventory() {
 }
 
 export function addInventoryItem(items: InventoryItem[]) {
-  console.log("Adding items to inventory:", items);
-  items.forEach((item) => {
+  for (const item of items) {
     item.id = generateShortId();
     // make the name consistent with first letter capitalized and rest of the letters lowercase
     item.name =
@@ -58,7 +56,6 @@ export function addInventoryItem(items: InventoryItem[]) {
       item.unit = "piece"; // Default to empty string when unit is ambiguous
     }
 
-    console.log("Processing item:", item);
     switch (item.type) {
       case "kitchenware": {
         const duplicateIdx = kitchenwareInventory.findIndex(
@@ -84,10 +81,7 @@ export function addInventoryItem(items: InventoryItem[]) {
         break;
       }
     }
-  });
-  console.log("Inventory after adding items:");
-  console.log("Kitchenware:", kitchenwareInventory);
-  console.log("Ingredients:", ingredientInventory);
+  }
 }
 
 export function removeInventoryItem(itemNames: string[]) {
