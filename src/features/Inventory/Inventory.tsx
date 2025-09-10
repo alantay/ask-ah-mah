@@ -30,7 +30,7 @@ import { z } from "zod";
 const addItemSchema = z.object({
   name: z.string().min(1, "Name is required"),
   type: z.enum(["ingredient", "kitchenware"]),
-  quantity: z.coerce.number().positive().optional(),
+  quantity: z.number().positive().optional(),
   unit: z.string().optional(),
 });
 
@@ -50,7 +50,7 @@ const Inventory = () => {
       name: "",
       type: "ingredient" as const,
       quantity: 1,
-      unit: "piece",
+      unit: undefined,
     },
   });
 
@@ -166,7 +166,7 @@ const Inventory = () => {
                       <FormItem>
                         <FormLabel>Unit</FormLabel>
                         <FormControl>
-                          <Input placeholder="piece, kg, cup..." {...field} />
+                          <Input placeholder="Optional" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -196,7 +196,12 @@ const Inventory = () => {
               {kitchenwareInventory?.map((item: InventoryItem) => (
                 <Badge key={item.id} variant="secondary">
                   {item.name}
-                  {item.quantity && ` (${item.quantity} ${item.unit || ""})`}
+                  {item.quantity &&
+                    item.quantity > 1 &&
+                    ` (${item.quantity}${item.unit ? ` ${item.unit}` : ""})`}
+                  {item.quantity === 1 &&
+                    item.unit &&
+                    ` (${item.quantity} ${item.unit})`}
                 </Badge>
               ))}
             </div>
@@ -217,7 +222,12 @@ const Inventory = () => {
               {ingredientInventory?.map((item: InventoryItem) => (
                 <Badge key={item.id} variant="outline">
                   {item.name}
-                  {item.quantity && ` (${item.quantity} ${item.unit || ""})`}
+                  {item.quantity &&
+                    item.quantity > 1 &&
+                    ` (${item.quantity}${item.unit ? ` ${item.unit}` : ""})`}
+                  {item.quantity === 1 &&
+                    item.unit &&
+                    ` (${item.quantity} ${item.unit})`}
                 </Badge>
               ))}
             </div>

@@ -1,32 +1,15 @@
 import { InventoryItem } from "../schemas";
 import { generateShortId } from "./utils";
 
-const kitchenwareInventory: InventoryItem[] = [
-  {
-    id: "2",
-    name: "Pot",
-    type: "kitchenware",
-    dateAdded: new Date().toISOString(),
-    lastUpdated: new Date().toISOString(),
-  },
-];
-const ingredientInventory: InventoryItem[] = [
-  {
-    id: "1",
-    name: "Eggs",
-    type: "ingredient",
-    quantity: 12,
-    unit: "piece",
-    dateAdded: new Date().toISOString(),
-    lastUpdated: new Date().toISOString(),
-  },
-];
+const kitchenwareInventory: InventoryItem[] = [];
+const ingredientInventory: InventoryItem[] = [];
 
 export function getInventory() {
   const inventory = {
     kitchenwareInventory,
     ingredientInventory,
   };
+  console.log("Inventory", inventory);
   return inventory;
 }
 
@@ -39,7 +22,9 @@ export function getIngredientInventory() {
 }
 
 export function addInventoryItem(items: InventoryItem[]) {
+  console.log("Adding items to inventory", items);
   for (const item of items) {
+    console.log("Adding item to inventory(inside loop)", item);
     item.id = generateShortId();
     // make the name consistent with first letter capitalized and rest of the letters lowercase
     item.name =
@@ -53,7 +38,7 @@ export function addInventoryItem(items: InventoryItem[]) {
     }
 
     if (!item.unit) {
-      item.unit = "piece"; // Default to empty string when unit is ambiguous
+      item.unit = undefined;
     }
 
     switch (item.type) {
@@ -64,18 +49,22 @@ export function addInventoryItem(items: InventoryItem[]) {
         if (duplicateIdx >= 0) {
           kitchenwareInventory[duplicateIdx] = item;
         } else {
+          console.log("push kitchenwareInventory");
+
           kitchenwareInventory.push(item);
         }
 
         break;
       }
       case "ingredient": {
-        const duplicateIdx = ingredientInventory.findIndex(
+        const duplicateName = ingredientInventory.findIndex(
           (i) => i.name.toLowerCase() === item.name.toLowerCase()
         );
-        if (duplicateIdx >= 0) {
-          ingredientInventory[duplicateIdx] = item;
+        if (duplicateName >= 0) {
+          ingredientInventory[duplicateName] = item;
         } else {
+          console.log("push ingredientInventory");
+
           ingredientInventory.push(item);
         }
         break;
