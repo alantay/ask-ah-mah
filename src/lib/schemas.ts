@@ -39,7 +39,6 @@ export const InventoryItemSchema = z.object({
       "dash",
       "slice",
       "slices",
-      "piece",
     ])
     .optional(),
   dateAdded: z.string().datetime(),
