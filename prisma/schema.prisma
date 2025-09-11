@@ -10,7 +10,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -22,6 +22,7 @@ model InventoryItem {
   unit        String?  // Optional unit
   dateAdded   DateTime @default(now())
   lastUpdated DateTime @updatedAt
+  userId      String   
 
   @@map("inventory_items")
 }

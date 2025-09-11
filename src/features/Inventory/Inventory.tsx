@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useSessionContext } from "@/contexts/SessionContext";
 import { GetInventoryResponse, InventoryItem } from "@/lib/inventory/schemas";
 import { fetcher } from "@/lib/inventory/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -38,10 +39,15 @@ type AddItemForm = z.infer<typeof addItemSchema>;
 
 const Inventory = () => {
   const [isAdding, setIsAdding] = useState(false);
+  const { userId, isLoading: sessionLoading } = useSessionContext();
 
   const { data, error, isLoading } = useSWR<GetInventoryResponse>(
-    `/api/inventory`,
-    fetcher
+    userId ? `/api/inventory?userId=${userId}` : null,
+    fetcher,
+    {
+      shouldRetryOnError: true,
+      revalidateOnMount: true,
+    }
   );
 
   const form = useForm<AddItemForm>({
@@ -55,23 +61,36 @@ const Inventory = () => {
   });
 
   const onSubmit = async (values: AddItemForm) => {
+    if (!userId) return;
+
     try {
       const response = await fetch("/api/inventory", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify([values]),
+        body: JSON.stringify({ items: [values], userId }),
       });
 
       if (response.ok) {
         form.reset();
-        mutate("/api/inventory");
+        mutate(`/api/inventory?userId=${userId}`);
       }
     } catch (error) {
       console.error("Failed to add item:", error);
     }
   };
+
+  if (sessionLoading || !userId) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Your Inventory</h1>
+        </div>
+        <div>Loading...</div>
+      </div>
+    );
+  }
 
   if (error) return <div>Error: {error.message}</div>;
 

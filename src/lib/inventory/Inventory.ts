@@ -1,8 +1,10 @@
 import { prisma } from "@/lib/db";
 import { AddInventoryItem } from "./schemas";
 
-export async function getInventory() {
-  const inventoryItems = await prisma.inventoryItem.findMany();
+export async function getInventory(userId: string) {
+  const inventoryItems = await prisma.inventoryItem.findMany({
+    where: { userId },
+  });
   return {
     kitchenwareInventory: inventoryItems.filter(
       (item) => item.type === "kitchenware"
@@ -14,9 +16,9 @@ export async function getInventory() {
 }
 
 export async function addInventoryItem(
-  itemsNonNormalisedName: AddInventoryItem[]
+  itemsNonNormalisedName: AddInventoryItem[],
+  userId: string
 ) {
-  console.log("itemsNonNormalisedName", itemsNonNormalisedName);
   const items = itemsNonNormalisedName.map((item) => ({
     ...item,
     name: item.name.charAt(0).toUpperCase() + item.name.slice(1).toLowerCase(),
@@ -26,6 +28,7 @@ export async function addInventoryItem(
       OR: items.map(({ name, type }) => ({
         name,
         type,
+        userId,
       })),
     },
   });
@@ -33,7 +36,8 @@ export async function addInventoryItem(
 
   for (const item of items) {
     const existingItem = existingItems.find(
-      (ei) => ei.name === item.name && ei.type === item.type
+      (ei) =>
+        ei.name === item.name && ei.type === item.type && ei.userId === userId
     );
     if (existingItem) {
       await prisma.inventoryItem.update({
@@ -53,18 +57,25 @@ export async function addInventoryItem(
           unit: item.unit,
           dateAdded: nowIso,
           lastUpdated: nowIso,
+          userId,
         },
       });
     }
   }
 }
 
-export async function removeInventoryItem(itemsNonNormalisedName: string[]) {
+export async function removeInventoryItem(
+  itemsNonNormalisedName: string[],
+  userId: string
+) {
   const itemsNames = itemsNonNormalisedName.map(
     (item) => item.charAt(0).toUpperCase() + item.slice(1).toLowerCase()
   );
 
   await prisma.inventoryItem.deleteMany({
-    where: { name: { in: itemsNames } },
+    where: {
+      name: { in: itemsNames },
+      userId,
+    },
   });
 }
