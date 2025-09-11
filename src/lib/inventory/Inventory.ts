@@ -56,10 +56,12 @@ export async function addInventoryItem(
   }
 }
 
-export async function removeInventoryItem(itemNames: string[]) {
-  for (const name of itemNames) {
-    await prisma.inventoryItem.deleteMany({
-      where: { name },
-    });
-  }
+export async function removeInventoryItem(itemsNonNormalisedName: string[]) {
+  const itemsNames = itemsNonNormalisedName.map(
+    (item) => item.charAt(0).toUpperCase() + item.slice(1).toLowerCase()
+  );
+
+  await prisma.inventoryItem.deleteMany({
+    where: { name: { in: itemsNames } },
+  });
 }
