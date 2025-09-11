@@ -1,10 +1,25 @@
 import { addInventoryItem, getInventory } from "@/lib/inventory/Inventory";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const inventory = getInventory();
-    return NextResponse.json(inventory);
+    const userId = req.nextUrl.searchParams.get("userId");
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "userId is required" },
+        { status: 400 }
+      );
+    }
+
+    const inventory = await getInventory(userId);
+    return NextResponse.json(inventory, {
+      headers: {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
+    });
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to fetch inventory" },
@@ -14,8 +29,22 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const data = await req.json();
-  addInventoryItem(data);
+  try {
+    const { items, userId } = await req.json();
 
-  return NextResponse.json({ success: true, message: "Inventory updated" });
+    if (!userId) {
+      return NextResponse.json(
+        { error: "userId is required" },
+        { status: 400 }
+      );
+    }
+
+    await addInventoryItem(items, userId);
+    return NextResponse.json({ success: true, message: "Inventory updated" });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to update inventory" },
+      { status: 500 }
+    );
+  }
 }

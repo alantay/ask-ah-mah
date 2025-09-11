@@ -14,7 +14,8 @@ import { z } from "zod";
 
 export async function POST(req: NextRequest) {
   const model = google("gemini-2.5-flash");
-  const { messages }: { messages: UIMessage[] } = await req.json();
+  const { messages, userId }: { messages: UIMessage[]; userId: string } =
+    await req.json();
 
   const result = streamText({
     model,
@@ -71,9 +72,7 @@ COMMUNICATION STYLE:
 
 RANDOM TIPS:
 - Give some random cooking tips, life tips or motivational quotes periodically.
-- Example of some quotes(don't need to use these exact quotes, use your own words):
-    - “Cooking is like love. It should be entered into with abandon or not at all.” - Harriet Van Horne
-    - “The only real stumbling block is fear of failure. In cooking, you’ve got to have a what-the-hell attitude.” – Julia Child
+- Quote some famouse chef of philosopher.
 
 Remember: You're not just a recipe database - you're a caring cooking companion who makes everyone feel capable in the kitchen!
 Very important: always show step numbers!
@@ -87,7 +86,7 @@ Do not be too eager to give recipe suggestions. Sometimes user just want to add 
         inputSchema: AddInventoryItemSchemaObj,
         execute: async ({ items }) => {
           console.log("(AI) Adding items to inventory");
-          addInventoryItem(items);
+          await addInventoryItem(items, userId);
           return {
             content: "Item added to inventory",
           };
@@ -99,7 +98,7 @@ Do not be too eager to give recipe suggestions. Sometimes user just want to add 
           "Check what ingredients and kitchenware the user currently has in their inventory. Use this BEFORE suggesting recipes to see what they can cook with.",
         execute: async () => {
           const { ingredientInventory, kitchenwareInventory } =
-            await getInventory();
+            await getInventory(userId);
           console.log("~!!~!~~!~!~!~!!~!Getting inventory (AI)", {
             ingredientInventory,
             kitchenwareInventory,
@@ -117,7 +116,7 @@ Do not be too eager to give recipe suggestions. Sometimes user just want to add 
         inputSchema: RemoveInventoryItemSchema,
         execute: async ({ itemNames }) => {
           console.log("Items removed from inventory", itemNames);
-          removeInventoryItem(itemNames);
+          await removeInventoryItem(itemNames, userId);
           return {
             content: "Items removed from inventory",
           };

@@ -14,6 +14,7 @@ import {
 import { Response } from "@/components/ai-elements/response";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useSessionContext } from "@/contexts/SessionContext";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useState } from "react";
@@ -25,9 +26,15 @@ type MetadataWithToolCalls = {
 
 const Chat = () => {
   const [input, setInput] = useState("");
+  const { userId, isLoading } = useSessionContext();
+  console.log("userId!!! in Chat", { userId, isLoading });
+
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/chat",
+      body: {
+        userId: userId || "",
+      },
     }),
     onFinish: (options) => {
       const { message } = options;
@@ -57,8 +64,17 @@ const Chat = () => {
     },
   });
 
+  // Show loading state while session is loading
+  if (isLoading || !userId) {
+    return (
+      <div className="flex h-[600px] items-center justify-center">
+        <div>Loading...</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex h-[600px] flex-col">
+    <div className="flex h-[80vh] flex-col">
       <Conversation>
         <ConversationContent>
           {messages.length === 0 ? (
@@ -70,10 +86,6 @@ const Chat = () => {
             <div className="space-y-4">
               {messages.map((message) => (
                 <Message key={message.id} from={message.role}>
-                  <MessageAvatar
-                    src=""
-                    name={message.role === "user" ? "🙋‍♀️" : "👵"}
-                  />
                   <MessageContent>
                     {message.parts.map((part, index) =>
                       part.type === "text" ? (
@@ -83,6 +95,10 @@ const Chat = () => {
                       ) : null
                     )}
                   </MessageContent>
+                  <MessageAvatar
+                    src=""
+                    name={message.role === "user" ? "🙋‍♀️" : "👵"}
+                  />
                 </Message>
               ))}
             </div>
