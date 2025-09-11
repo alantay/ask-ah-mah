@@ -1,94 +1,65 @@
-import { InventoryItem } from "../schemas";
-import { generateShortId } from "./utils";
+import { prisma } from "@/lib/db";
+import { InventoryItem } from "./schemas";
 
-const kitchenwareInventory: InventoryItem[] = [];
-const ingredientInventory: InventoryItem[] = [];
-
-export function getInventory() {
-  const inventory = {
-    kitchenwareInventory,
-    ingredientInventory,
+export async function getInventory() {
+  const inventoryItems = await prisma.inventoryItem.findMany();
+  return {
+    kitchenwareInventory: inventoryItems.filter(
+      (item) => item.type === "kitchenware"
+    ),
+    ingredientInventory: inventoryItems.filter(
+      (item) => item.type === "ingredient"
+    ),
   };
-  console.log("Inventory", inventory);
-  return inventory;
 }
 
-export function getKitchenwareInventory() {
-  return kitchenwareInventory;
-}
-
-export function getIngredientInventory() {
-  return ingredientInventory;
-}
-
-export function addInventoryItem(items: InventoryItem[]) {
-  console.log("Adding items to inventory", items);
+export async function addInventoryItem(
+  itemsNonNormalisedName: InventoryItem[]
+) {
+  const items = itemsNonNormalisedName.map((item) => ({
+    ...item,
+    name: item.name.charAt(0).toUpperCase() + item.name.slice(1).toLowerCase(),
+  }));
+  const existingItems = await prisma.inventoryItem.findMany({
+    where: {
+      OR: items.map(({ name, type }) => ({
+        name,
+        type,
+      })),
+    },
+  });
   for (const item of items) {
-    console.log("Adding item to inventory(inside loop)", item);
-    item.id = generateShortId();
-    // make the name consistent with first letter capitalized and rest of the letters lowercase
-    item.name =
-      item.name.charAt(0).toUpperCase() + item.name.slice(1).toLowerCase();
-    // Add missing date fields
-    item.dateAdded = new Date().toISOString();
-    item.lastUpdated = new Date().toISOString();
-
-    if (!item.quantity) {
-      item.quantity = 1;
-    }
-
-    if (!item.unit) {
-      item.unit = undefined;
-    }
-
-    switch (item.type) {
-      case "kitchenware": {
-        const duplicateIdx = kitchenwareInventory.findIndex(
-          (i) => i.name.toLowerCase() === item.name.toLowerCase()
-        );
-        if (duplicateIdx >= 0) {
-          kitchenwareInventory[duplicateIdx] = item;
-        } else {
-          console.log("push kitchenwareInventory");
-
-          kitchenwareInventory.push(item);
-        }
-
-        break;
-      }
-      case "ingredient": {
-        const duplicateName = ingredientInventory.findIndex(
-          (i) => i.name.toLowerCase() === item.name.toLowerCase()
-        );
-        if (duplicateName >= 0) {
-          ingredientInventory[duplicateName] = item;
-        } else {
-          console.log("push ingredientInventory");
-
-          ingredientInventory.push(item);
-        }
-        break;
-      }
+    const existingItem = existingItems.find(
+      (ei) => ei.name === item.name && ei.type === item.type
+    );
+    if (existingItem) {
+      await prisma.inventoryItem.update({
+        where: { id: existingItem.id },
+        data: {
+          quantity: item?.quantity || 1,
+          unit: item.unit,
+          lastUpdated: new Date().toISOString(),
+        },
+      });
+    } else {
+      await prisma.inventoryItem.create({
+        data: {
+          name: item.name,
+          type: item.type,
+          quantity: item?.quantity || 1,
+          unit: item.unit,
+          dateAdded: new Date().toISOString(),
+          lastUpdated: new Date().toISOString(),
+        },
+      });
     }
   }
 }
 
-export function removeInventoryItem(itemNames: string[]) {
-  itemNames.forEach((name) => {
-    // Remove from kitchenware inventory
-    const kitchenwareIndex = kitchenwareInventory.findIndex(
-      (item) => item.name.toLowerCase() === name.toLowerCase()
-    );
-    if (kitchenwareIndex >= 0) {
-      kitchenwareInventory.splice(kitchenwareIndex, 1);
-    }
-
-    // Remove from ingredient inventory
-    const ingredientIndex = ingredientInventory.findIndex(
-      (item) => item.name.toLowerCase() === name.toLowerCase()
-    );
-    if (ingredientIndex >= 0) {
-      ingredientInventory.splice(ingredientIndex, 1);
-    }
-  });
+export async function removeInventoryItem(itemNames: string[]) {
+  for (const name of itemNames) {
+    await prisma.inventoryItem.deleteMany({
+      where: { name },
+    });
+  }
 }

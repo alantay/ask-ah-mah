@@ -6,7 +6,7 @@ import {
 import {
   AddInventoryItemSchema,
   RemoveInventoryItemSchema,
-} from "@/lib/schemas";
+} from "@/lib/inventory/schemas";
 import { google } from "@ai-sdk/google";
 import { convertToModelMessages, stepCountIs, streamText, UIMessage } from "ai";
 import { NextRequest } from "next/server";
@@ -98,7 +98,8 @@ Do not be too eager to give recipe suggestions. Sometimes user just want to add 
         description:
           "Check what ingredients and kitchenware the user currently has in their inventory. Use this BEFORE suggesting recipes to see what they can cook with.",
         execute: async () => {
-          const { ingredientInventory, kitchenwareInventory } = getInventory();
+          const { ingredientInventory, kitchenwareInventory } =
+            await getInventory();
           console.log("~!!~!~~!~!~!~!!~!Getting inventory (AI)", {
             ingredientInventory,
             kitchenwareInventory,

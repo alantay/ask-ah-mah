@@ -19,8 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { GetInventoryResponse, InventoryItem } from "@/lib/inventory/schemas";
 import { fetcher } from "@/lib/inventory/utils";
-import { GetInventoryResponse, InventoryItem } from "@/lib/schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
