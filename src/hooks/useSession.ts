@@ -13,12 +13,10 @@ export default function useSession() {
     }
 
     let sessionId = localStorage.getItem("ask-ah-mah-session");
-    console.log("sessionId!!! in useSession", sessionId);
     if (!sessionId) {
       sessionId = generateShortId();
       localStorage.setItem("ask-ah-mah-session", sessionId);
     }
-    console.log("sessionId!!!", sessionId);
     setUserId(sessionId);
     setIsLoading(false);
   }, []);

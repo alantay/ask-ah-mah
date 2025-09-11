@@ -19,7 +19,6 @@ export async function addInventoryItem(
   itemsNonNormalisedName: AddInventoryItem[],
   userId: string
 ) {
-  console.log("itemsNonNormalisedName", { itemsNonNormalisedName, userId });
   const items = itemsNonNormalisedName.map((item) => ({
     ...item,
     name: item.name.charAt(0).toUpperCase() + item.name.slice(1).toLowerCase(),

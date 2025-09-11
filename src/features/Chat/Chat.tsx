@@ -27,8 +27,6 @@ type MetadataWithToolCalls = {
 const Chat = () => {
   const [input, setInput] = useState("");
   const { userId, isLoading } = useSessionContext();
-  console.log("userId!!! in Chat", { userId, isLoading });
-
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/chat",
@@ -39,11 +37,10 @@ const Chat = () => {
     onFinish: (options) => {
       const { message } = options;
       let toolCalled = false;
-      console.log("onFinish");
 
       const metadata = message.metadata as MetadataWithToolCalls;
       // Example: Inspect metadata or parts for tool usage info
-      console.log("Full message meta", message.metadata);
+      console.log("Full message meta", metadata);
 
       // If toolCalls array is present:
       // Leaving this here for now. Didn't seem to hit this condition.

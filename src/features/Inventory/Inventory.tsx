@@ -40,10 +40,6 @@ type AddItemForm = z.infer<typeof addItemSchema>;
 const Inventory = () => {
   const [isAdding, setIsAdding] = useState(false);
   const { userId, isLoading: sessionLoading } = useSessionContext();
-  console.log("!!!!!!userId!!! in InventoryFEATURE,", {
-    userId,
-    sessionLoading,
-  });
 
   const { data, error, isLoading } = useSWR<GetInventoryResponse>(
     userId ? `/api/inventory?userId=${userId}` : null,

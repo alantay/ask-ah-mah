@@ -85,7 +85,6 @@ Do not be too eager to give recipe suggestions. Sometimes user just want to add 
         description: `Add items to the user's inventory. Required: name (string) and type ("ingredient" or "kitchenware"). Optional: quantity (number) and unit (string).`,
         inputSchema: AddInventoryItemSchemaObj,
         execute: async ({ items }) => {
-          console.log("(AI) Adding items to inventory");
           await addInventoryItem(items, userId);
           return {
             content: "Item added to inventory",
@@ -99,10 +98,6 @@ Do not be too eager to give recipe suggestions. Sometimes user just want to add 
         execute: async () => {
           const { ingredientInventory, kitchenwareInventory } =
             await getInventory(userId);
-          console.log("~!!~!~~!~!~!~!!~!Getting inventory (AI)", {
-            ingredientInventory,
-            kitchenwareInventory,
-          });
 
           return {
             content: `Current inventory: ${ingredientInventory.length} ingredients, ${kitchenwareInventory.length} kitchenware items`,
@@ -115,7 +110,6 @@ Do not be too eager to give recipe suggestions. Sometimes user just want to add 
           "Remove items from inventory by their names (e.g., 'eggs', 'frying pan')",
         inputSchema: RemoveInventoryItemSchema,
         execute: async ({ itemNames }) => {
-          console.log("Items removed from inventory", itemNames);
           await removeInventoryItem(itemNames, userId);
           return {
             content: "Items removed from inventory",
