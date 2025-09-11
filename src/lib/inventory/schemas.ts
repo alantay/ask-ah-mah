@@ -46,14 +46,15 @@ export const InventoryItemSchema = z.object({
 });
 
 // for adding inventory items
-export const AddInventoryItemSchema = z.object({
-  items: z.array(
-    InventoryItemSchema.omit({
-      id: true,
-      dateAdded: true,
-      lastUpdated: true,
-    })
-  ),
+export const AddInventoryItemSchema = InventoryItemSchema.omit({
+  id: true,
+  dateAdded: true,
+  lastUpdated: true,
+});
+
+// for ai sdk
+export const AddInventoryItemSchemaObj = z.object({
+  items: z.array(AddInventoryItemSchema),
 });
 
 // In src/lib/schemas.ts
@@ -85,3 +86,5 @@ export const InventoryActionSchema = z.object({
 export type InventoryAction = z.infer<typeof InventoryActionSchema>;
 
 export type GetInventoryResponse = z.infer<typeof GetInventoryResponseSchema>;
+
+export type AddInventoryItem = z.infer<typeof AddInventoryItemSchema>;

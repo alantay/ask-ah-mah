@@ -4,7 +4,7 @@ import {
   removeInventoryItem,
 } from "@/lib/inventory/Inventory";
 import {
-  AddInventoryItemSchema,
+  AddInventoryItemSchemaObj,
   RemoveInventoryItemSchema,
 } from "@/lib/inventory/schemas";
 import { google } from "@ai-sdk/google";
@@ -84,7 +84,7 @@ Do not be too eager to give recipe suggestions. Sometimes user just want to add 
     tools: {
       addInventoryItem: {
         description: `Add items to the user's inventory. Required: name (string) and type ("ingredient" or "kitchenware"). Optional: quantity (number) and unit (string).`,
-        inputSchema: AddInventoryItemSchema,
+        inputSchema: AddInventoryItemSchemaObj,
         execute: async ({ items }) => {
           console.log("(AI) Adding items to inventory");
           addInventoryItem(items);

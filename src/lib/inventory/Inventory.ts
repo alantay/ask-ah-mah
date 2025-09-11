@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { InventoryItem } from "./schemas";
+import { AddInventoryItem } from "./schemas";
 
 export async function getInventory() {
   const inventoryItems = await prisma.inventoryItem.findMany();
@@ -14,8 +14,9 @@ export async function getInventory() {
 }
 
 export async function addInventoryItem(
-  itemsNonNormalisedName: InventoryItem[]
+  itemsNonNormalisedName: AddInventoryItem[]
 ) {
+  console.log("itemsNonNormalisedName", itemsNonNormalisedName);
   const items = itemsNonNormalisedName.map((item) => ({
     ...item,
     name: item.name.charAt(0).toUpperCase() + item.name.slice(1).toLowerCase(),
