@@ -5,4 +5,4 @@ export type {
   ChatMessage,
   InventoryAction,
   InventoryItem,
-} from "../lib/schemas";
+} from "../lib/inventory/schemas";
