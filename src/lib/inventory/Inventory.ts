@@ -28,6 +28,8 @@ export async function addInventoryItem(
       })),
     },
   });
+  const nowIso = new Date().toISOString();
+
   for (const item of items) {
     const existingItem = existingItems.find(
       (ei) => ei.name === item.name && ei.type === item.type
@@ -38,7 +40,7 @@ export async function addInventoryItem(
         data: {
           quantity: item?.quantity || 1,
           unit: item.unit,
-          lastUpdated: new Date().toISOString(),
+          lastUpdated: nowIso,
         },
       });
     } else {
@@ -48,8 +50,8 @@ export async function addInventoryItem(
           type: item.type,
           quantity: item?.quantity || 1,
           unit: item.unit,
-          dateAdded: new Date().toISOString(),
-          lastUpdated: new Date().toISOString(),
+          dateAdded: nowIso,
+          lastUpdated: nowIso,
         },
       });
     }
