@@ -15,10 +15,16 @@ import { Response } from "@/components/ai-elements/response";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSessionContext } from "@/contexts/SessionContext";
+import {
+  AddInventoryItemSchemaObj,
+  RemoveInventoryItemSchemaObj,
+} from "@/lib/inventory/schemas";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useState } from "react";
+import { toast } from "sonner";
 import { mutate } from "swr";
+import { z } from "zod";
 
 type MetadataWithToolCalls = {
   toolCalls?: unknown[];
@@ -38,9 +44,10 @@ const Chat = () => {
       const { message } = options;
       let toolCalled = false;
 
-      const metadata = message.metadata as MetadataWithToolCalls;
+      console.log("message", message);
+      // const metadata = message.metadata as MetadataWithToolCalls;
       // Example: Inspect metadata or parts for tool usage info
-      console.log("Full message meta", metadata);
+      // console.log("Full message meta", metadata);
 
       // If toolCalls array is present:
       // Leaving this here for now. Didn't seem to hit this condition.
@@ -53,10 +60,44 @@ const Chat = () => {
       message.parts.forEach((part) => {
         if (part.type.startsWith("tool-")) {
           console.log(part.type, " called");
-          // getInventory is not a mutation. its just a GET request.
-          if (part.type !== "tool-getInventory") {
-            // we mutate for other tools
-            mutate(`/api/inventory?userId=${userId}`);
+          const { input } = part as {
+            input:
+              | z.infer<typeof AddInventoryItemSchemaObj>
+              | z.infer<typeof RemoveInventoryItemSchemaObj>;
+          };
+
+          switch (part.type) {
+            case "tool-addInventoryItem":
+              {
+                const addInput = input as z.infer<
+                  typeof AddInventoryItemSchemaObj
+                >;
+
+                toast.success(
+                  `${addInput.items
+                    .map((i) => i.name)
+                    .join(", ")} added to inventory!`
+                );
+                mutate(`/api/inventory?userId=${userId}`);
+              }
+              break;
+            case "tool-removeInventoryItem":
+              {
+                const removeInput = input as z.infer<
+                  typeof RemoveInventoryItemSchemaObj
+                >;
+
+                toast.success(
+                  `${removeInput.itemNames
+                    .map((i) => i)
+                    .join(", ")} removed from inventory!`
+                );
+                mutate(`/api/inventory?userId=${userId}`);
+              }
+              break;
+            case "tool-getInventory":
+              // we mutate for other tools
+              break;
           }
           toolCalled = true;
         }
