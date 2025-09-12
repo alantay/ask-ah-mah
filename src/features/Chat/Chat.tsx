@@ -112,7 +112,7 @@ const Chat = () => {
   }
 
   return (
-    <div className="flex h-[80vh] flex-col">
+    <div className="flex h-[80dvh] flex-col">
       <Conversation>
         <ConversationContent>
           {messages.length === 0 ? (
