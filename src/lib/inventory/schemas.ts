@@ -58,7 +58,7 @@ export const AddInventoryItemSchemaObj = z.object({
 });
 
 // In src/lib/schemas.ts
-export const RemoveInventoryItemSchema = z.object({
+export const RemoveInventoryItemSchemaObj = z.object({
   itemNames: z.array(z.string().min(1)),
 });
 
@@ -88,3 +88,4 @@ export type InventoryAction = z.infer<typeof InventoryActionSchema>;
 export type GetInventoryResponse = z.infer<typeof GetInventoryResponseSchema>;
 
 export type AddInventoryItem = z.infer<typeof AddInventoryItemSchema>;
+

@@ -1,6 +1,7 @@
 import { SessionProvider } from "@/contexts/SessionContext";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -26,9 +27,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`m-8 ${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`m-2 md:m-8 ${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SessionProvider>{children}</SessionProvider>
+        <SessionProvider>
+          <Toaster position="top-center" />
+          {children}
+        </SessionProvider>
       </body>
     </html>
   );

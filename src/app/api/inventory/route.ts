@@ -1,4 +1,8 @@
-import { addInventoryItem, getInventory } from "@/lib/inventory/Inventory";
+import {
+  addInventoryItem,
+  getInventory,
+  removeInventoryItem,
+} from "@/lib/inventory/Inventory";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -40,6 +44,25 @@ export async function POST(req: NextRequest) {
     }
 
     await addInventoryItem(items, userId);
+    return NextResponse.json({ success: true, message: "Inventory updated" });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to update inventory" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { itemNames, userId } = await req.json();
+    if (!userId) {
+      return NextResponse.json(
+        { error: "userId is required" },
+        { status: 400 }
+      );
+    }
+    await removeInventoryItem(itemNames, userId);
     return NextResponse.json({ success: true, message: "Inventory updated" });
   } catch (error) {
     return NextResponse.json(

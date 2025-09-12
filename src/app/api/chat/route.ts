@@ -5,7 +5,7 @@ import {
 } from "@/lib/inventory/Inventory";
 import {
   AddInventoryItemSchemaObj,
-  RemoveInventoryItemSchema,
+  RemoveInventoryItemSchemaObj,
 } from "@/lib/inventory/schemas";
 import { google } from "@ai-sdk/google";
 import { convertToModelMessages, stepCountIs, streamText, UIMessage } from "ai";
@@ -108,7 +108,7 @@ Do not be too eager to give recipe suggestions. Sometimes user just want to add 
       removeInventoryItem: {
         description:
           "Remove items from inventory by their names (e.g., 'eggs', 'frying pan')",
-        inputSchema: RemoveInventoryItemSchema,
+        inputSchema: RemoveInventoryItemSchemaObj,
         execute: async ({ itemNames }) => {
           await removeInventoryItem(itemNames, userId);
           return {
