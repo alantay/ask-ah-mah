@@ -49,8 +49,10 @@ export default function Home() {
             Inventory
           </Button>
         </DrawerTrigger>
-        <DrawerContent className="p-4" aria-label="Inventory">
-          <Inventory />
+        <DrawerContent aria-label="Inventory">
+          <div className="flex-1 overflow-auto p-4">
+            <Inventory />
+          </div>
         </DrawerContent>
       </Drawer>
     </div>
