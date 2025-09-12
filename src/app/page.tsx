@@ -6,7 +6,7 @@ import Image from "next/image";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       <div className="container mx-auto p-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
@@ -49,8 +49,10 @@ export default function Home() {
             Inventory
           </Button>
         </DrawerTrigger>
-        <DrawerContent className="p-4" aria-label="Inventory">
-          <Inventory />
+        <DrawerContent aria-label="Inventory">
+          <div className="flex-1 overflow-auto p-4">
+            <Inventory />
+          </div>
         </DrawerContent>
       </Drawer>
     </div>
