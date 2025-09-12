@@ -26,10 +26,6 @@ import { toast } from "sonner";
 import { mutate } from "swr";
 import { z } from "zod";
 
-type MetadataWithToolCalls = {
-  toolCalls?: unknown[];
-};
-
 const Chat = () => {
   const [input, setInput] = useState("");
   const { userId, isLoading } = useSessionContext();
