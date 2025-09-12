@@ -23,6 +23,11 @@ rules:
         - "terminal commands" # potentially destructive operations
         - "package installation" # dependency changes
 
+      # User typing preference
+      userTypesCommands: true # user prefers to type terminal commands themselves
+      provideCommandGuidance: true # suggest commands but let user type them
+      avoidAutoExecuting: true # never run commands automatically
+
       # Learning and guidance
       askArchitecturalQuestions: true # discuss design decisions before implementing
       suggestAlternatives: true # propose multiple approaches when relevant

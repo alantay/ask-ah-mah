@@ -53,7 +53,11 @@ const Chat = () => {
       message.parts.forEach((part) => {
         if (part.type.startsWith("tool-")) {
           console.log(part.type, " called");
-          mutate("/api/inventory", undefined, { revalidate: true });
+          // getInventory is not a mutation. its just a GET request.
+          if (part.type !== "tool-getInventory") {
+            // we mutate for other tools
+            mutate(`/api/inventory?userId=${userId}`);
+          }
           toolCalled = true;
         }
       });

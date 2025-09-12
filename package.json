@@ -4,9 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "build": "prisma generate && next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:local": "prisma generate && prisma db push",
+    "db:prod": "prisma generate && prisma db push",
+    "db:studio": "DATABASE_URL=\"file:./prisma/dev.db\" prisma studio"
   },
   "dependencies": {
     "@ai-sdk/google": "^2.0.12",
