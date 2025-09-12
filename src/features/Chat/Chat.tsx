@@ -68,28 +68,32 @@ const Chat = () => {
 
           switch (part.type) {
             case "tool-addInventoryItem":
-              const addInput = input as z.infer<
-                typeof AddInventoryItemSchemaObj
-              >;
+              {
+                const addInput = input as z.infer<
+                  typeof AddInventoryItemSchemaObj
+                >;
 
-              toast.success(
-                `${addInput.items
-                  .map((i) => i.name)
-                  .join(", ")} added to inventory!`
-              );
-              mutate(`/api/inventory?userId=${userId}`);
+                toast.success(
+                  `${addInput.items
+                    .map((i) => i.name)
+                    .join(", ")} added to inventory!`
+                );
+                mutate(`/api/inventory?userId=${userId}`);
+              }
               break;
             case "tool-removeInventoryItem":
-              const removeInput = input as z.infer<
-                typeof RemoveInventoryItemSchemaObj
-              >;
+              {
+                const removeInput = input as z.infer<
+                  typeof RemoveInventoryItemSchemaObj
+                >;
 
-              toast.success(
-                `${removeInput.itemNames
-                  .map((i) => i)
-                  .join(", ")} removed from inventory!`
-              );
-              mutate(`/api/inventory?userId=${userId}`);
+                toast.success(
+                  `${removeInput.itemNames
+                    .map((i) => i)
+                    .join(", ")} removed from inventory!`
+                );
+                mutate(`/api/inventory?userId=${userId}`);
+              }
               break;
             case "tool-getInventory":
               // we mutate for other tools
