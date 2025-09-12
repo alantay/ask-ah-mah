@@ -124,9 +124,24 @@ const Inventory = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Your Inventory</h1>
         <Button
+          className="cursor-pointer"
           onClick={() => setIsAdding(!isAdding)}
-          variant={isAdding ? "outline" : "default"}
+          variant={isAdding ? "outline" : "secondary"}
         >
+          {isAdding || (
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M11 13H5V11H11V5H13V11H19V13H13V19H11V13Z"
+                fill="currentColor"
+              />
+            </svg>
+          )}
           {isAdding ? "Cancel" : "Add Item"}
         </Button>
       </div>
@@ -217,6 +232,18 @@ const Inventory = () => {
                 </div>
 
                 <Button type="submit" className="w-full">
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M11 13H5V11H11V5H13V11H19V13H13V19H11V13Z"
+                      fill="currentColor"
+                    />
+                  </svg>
                   Add to Inventory
                 </Button>
               </form>
