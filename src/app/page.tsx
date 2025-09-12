@@ -49,7 +49,7 @@ export default function Home() {
             Inventory
           </Button>
         </DrawerTrigger>
-        <DrawerContent className="p-4">
+        <DrawerContent className="p-4" aria-label="Inventory">
           <Inventory />
         </DrawerContent>
       </Drawer>
