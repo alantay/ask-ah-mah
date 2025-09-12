@@ -27,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`m-2 md:m-4 lg:m-8 ${fontSans.variable} ${fontMono.variable} antialiased font-sans`}
+        className={`p-2 md:p-4 lg:p-8 ${fontSans.variable} ${fontMono.variable} antialiased font-sans h-[100dvh] `}
       >
         <SessionProvider>
           <Toaster position="top-center" />
