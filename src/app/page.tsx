@@ -15,9 +15,9 @@ export default function Home() {
                 <Image
                   src="/granny-icon.png"
                   alt="Ask Ah Mah"
-                  width={32}
-                  height={32}
-                />{" "}
+                  width={45}
+                  height={48}
+                />
                 Ask Ah Mah
               </h1>
               <p className="text-muted-foreground">
