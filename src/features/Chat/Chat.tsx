@@ -18,14 +18,16 @@ import {
   AddInventoryItemSchemaObj,
   RemoveInventoryItemSchemaObj,
 } from "@/lib/inventory/schemas";
+import { fetcher } from "@/lib/inventory/utils";
+import { SavedMessage } from "@/lib/messages/schemas";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { mutate } from "swr";
+import useSWR, { mutate } from "swr";
 import { z } from "zod";
 import { INITIAL_MESSAGE } from "./constants";
-import { getRandomThinkingMessage } from "./utils";
+import { convertToUIMessage, getRandomThinkingMessage } from "./utils";
 
 const Chat = () => {
   const [input, setInput] = useState("");
@@ -37,11 +39,21 @@ const Chat = () => {
         userId: userId || "",
       },
     }),
-    onFinish: (options) => {
+    onFinish: async (options) => {
       const { message } = options;
       let toolCalled = false;
 
       console.log("message", message);
+
+      if (message.role === "assistant") {
+        const content = message.parts
+          .filter((part) => part.type === "text")
+          .map((part) => part.text)
+          .join("");
+        if (content) {
+          await saveMessage("assistant", content);
+        }
+      }
       // const metadata = message.metadata as MetadataWithToolCalls;
       // Example: Inspect metadata or parts for tool usage info
       // console.log("Full message meta", metadata);
@@ -103,10 +115,31 @@ const Chat = () => {
     },
   });
 
+  const { data, isLoading: messagesLoading } = useSWR<SavedMessage[]>(
+    userId ? `/api/message?userId=${userId}` : null,
+    fetcher,
+    {
+      shouldRetryOnError: true,
+      revalidateOnMount: true,
+    }
+  );
+
+  const saveMessage = async (role: "user" | "assistant", content: string) => {
+    try {
+      await fetch("/api/message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, role, content }),
+      });
+      mutate(`/api/message?userId=${userId}`);
+    } catch (error) {
+      console.error("Failed to save message:", error);
+    }
+  };
+
   const thinkingMessage = useMemo(() => {
     return getRandomThinkingMessage();
   }, [status === "streaming"]);
-
   // Show loading state while session is loading
   if (isLoading || !userId) {
     return (
@@ -115,7 +148,12 @@ const Chat = () => {
       </div>
     );
   }
-  const allMessages = [INITIAL_MESSAGE, ...messages];
+  const savedMessages = (data || []).map(convertToUIMessage);
+  // Only show saved messages if there are no current UI messages (to avoid duplicates)
+  const allMessages =
+    messages.length > 0
+      ? [INITIAL_MESSAGE, ...messages]
+      : [INITIAL_MESSAGE, ...savedMessages];
 
   return (
     <div className="flex h-[80dvh] flex-col">
@@ -124,7 +162,15 @@ const Chat = () => {
           {
             <div className="space-y-4">
               {allMessages.map((message) => (
-                <Message key={message.id} from={message.role}>
+                <Message
+                  key={message.id}
+                  from={message.role}
+                  className={`flex-col md:flex-row ${
+                    message.role === "user"
+                      ? "items-end"
+                      : "items-start md:flex-row-reverse"
+                  }`}
+                >
                   <MessageContent>
                     {message.parts.map((part, index) =>
                       part.type === "text" ? (
@@ -142,7 +188,11 @@ const Chat = () => {
                       )}
                   </MessageContent>
                   <MessageAvatar
-                    src=""
+                    src={
+                      message.role === "user"
+                        ? "/user-avatar.png"
+                        : "/granny-avatar.png"
+                    }
                     name={message.role === "user" ? "🙋‍♀️" : "👵"}
                   />
                 </Message>
@@ -154,9 +204,10 @@ const Chat = () => {
       </Conversation>
 
       <form
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault();
           if (input.trim()) {
+            await saveMessage("user", input); // Save user message
             sendMessage({ text: input });
             setInput("");
           }

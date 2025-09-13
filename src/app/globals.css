@@ -120,3 +120,26 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* For Webkit-based browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px; /* For horizontal scrollbars */
+}
+
+::-webkit-scrollbar-track {
+  background: var(--accent); /* Creamy Off-White for the track */
+  border-radius: 10px; /* Slightly rounded track */
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--primary); /* Warm Brown/Terracotta for the thumb */
+  border-radius: 10px; /* Rounded thumb */
+  border: 2px solid var(--background); /* A small border to separate thumb from track */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: oklch(
+    0.3893 0.0595 60.74
+  ); /* A slightly darker brown on hover for interaction */
+}
