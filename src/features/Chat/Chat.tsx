@@ -3,7 +3,6 @@
 import {
   Conversation,
   ConversationContent,
-  ConversationEmptyState,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
 import {
@@ -25,6 +24,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { mutate } from "swr";
 import { z } from "zod";
+import { INITIAL_MESSAGE } from "./constants";
+import { getRandomThinkingMessage } from "./utils";
 
 const Chat = () => {
   const [input, setInput] = useState("");
@@ -110,19 +111,15 @@ const Chat = () => {
       </div>
     );
   }
+  const allMessages = [INITIAL_MESSAGE, ...messages];
 
   return (
     <div className="flex h-[80dvh] flex-col">
       <Conversation>
         <ConversationContent>
-          {messages.length === 0 ? (
-            <ConversationEmptyState
-              title="Welcome to Ask Ah Mah!"
-              description="I'm your friendly cooking assistant. Ask me about recipes, ingredients, or add items to your pantry!"
-            />
-          ) : (
+          {
             <div className="space-y-4">
-              {messages.map((message) => (
+              {allMessages.map((message) => (
                 <Message key={message.id} from={message.role}>
                   <MessageContent>
                     {message.parts.map((part, index) =>
@@ -132,6 +129,12 @@ const Chat = () => {
                         </Response>
                       ) : null
                     )}
+                    {status === "streaming" &&
+                      message.role !== "user" && ( // don't show thinking message for user messages
+                        <span className="animate-pulse text-muted-foreground">
+                          {getRandomThinkingMessage()}
+                        </span>
+                      )}
                   </MessageContent>
                   <MessageAvatar
                     src=""
@@ -140,7 +143,7 @@ const Chat = () => {
                 </Message>
               ))}
             </div>
-          )}
+          }
         </ConversationContent>
         <ConversationScrollButton />
       </Conversation>
