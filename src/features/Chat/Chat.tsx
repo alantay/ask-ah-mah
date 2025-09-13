@@ -103,6 +103,10 @@ const Chat = () => {
     },
   });
 
+  const thinkingMessage = useMemo(() => {
+    return getRandomThinkingMessage();
+  }, [status === "streaming"]);
+
   // Show loading state while session is loading
   if (isLoading || !userId) {
     return (
@@ -112,10 +116,6 @@ const Chat = () => {
     );
   }
   const allMessages = [INITIAL_MESSAGE, ...messages];
-
-  const thinkingMessage = useMemo(() => {
-    return getRandomThinkingMessage();
-  }, [status === "streaming"]);
 
   return (
     <div className="flex h-[80dvh] flex-col">
