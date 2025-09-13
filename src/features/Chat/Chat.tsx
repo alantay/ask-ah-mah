@@ -20,7 +20,7 @@ import {
 } from "@/lib/inventory/schemas";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { mutate } from "swr";
 import { z } from "zod";
@@ -113,6 +113,10 @@ const Chat = () => {
   }
   const allMessages = [INITIAL_MESSAGE, ...messages];
 
+  const thinkingMessage = useMemo(() => {
+    return getRandomThinkingMessage();
+  }, [status === "streaming"]);
+
   return (
     <div className="flex h-[80dvh] flex-col">
       <Conversation>
@@ -133,7 +137,7 @@ const Chat = () => {
                       message === messages[messages.length - 1] &&
                       message.role === "assistant" && ( // don't show thinking message for user messages
                         <span className="animate-pulse text-muted-foreground">
-                          {getRandomThinkingMessage()}
+                          {thinkingMessage}
                         </span>
                       )}
                   </MessageContent>
