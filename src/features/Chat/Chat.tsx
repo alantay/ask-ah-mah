@@ -130,7 +130,8 @@ const Chat = () => {
                       ) : null
                     )}
                     {status === "streaming" &&
-                      message.role !== "user" && ( // don't show thinking message for user messages
+                      message === messages[messages.length - 1] &&
+                      message.role === "assistant" && ( // don't show thinking message for user messages
                         <span className="animate-pulse text-muted-foreground">
                           {getRandomThinkingMessage()}
                         </span>
