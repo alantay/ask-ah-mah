@@ -20,3 +20,14 @@ model InventoryItem {
 
   @@map("inventory_items")
 }
+
+model Message{
+    id          String   @id @default(cuid())
+    userId      String
+    content     String
+    role        String
+    createdAt   DateTime @default(now())
+
+    @@map("messages")
+    @@index([userId, createdAt])
+}
