@@ -29,7 +29,6 @@ export const INITIAL_MESSAGE = {
       type: "text" as const,
       text: `**Hello dear!** I'm Ah Mah, your cooking assistant. I'd love to help you discover delicious recipes!
 
-### To get started, you can:
 
 - **Tell me what ingredients you have:** "I have chicken and rice"
 - **Add items to your kitchenware:** "I have a wok" 
