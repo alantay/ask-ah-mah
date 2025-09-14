@@ -28,6 +28,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
 import { z } from "zod";
+import { INVENTORY_LOADING_MESSAGES } from "./constants";
 
 const addItemSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -110,7 +111,13 @@ const Inventory = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Your Inventory</h1>
         </div>
-        <div>Loading...</div>
+        <div className="animate-pulse">
+          {
+            INVENTORY_LOADING_MESSAGES[
+              Math.floor(Math.random() * INVENTORY_LOADING_MESSAGES.length)
+            ]
+          }
+        </div>
       </div>
     );
   }

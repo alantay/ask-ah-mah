@@ -40,3 +40,15 @@ export const INITIAL_MESSAGE = {
     },
   ],
 };
+
+export const LOADING_MESSAGES = [
+  "Ah Mah is getting ready...",
+  "Preparing your cooking assistant...",
+  "Ah Mah is searching for her recipe book...",
+  "Getting the kitchen ready...",
+  "Ah Mah is warming up...",
+  "Setting up your cooking session...",
+  "Ah Mah is putting on her apron...",
+  "Ah Mah is sharpening her knives...",
+  "Getting ready to help you cook...",
+];

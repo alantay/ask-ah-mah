@@ -26,7 +26,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
 import { z } from "zod";
-import { INITIAL_MESSAGE } from "./constants";
+import { INITIAL_MESSAGE, LOADING_MESSAGES } from "./constants";
 import { convertToUIMessage, getRandomThinkingMessage } from "./utils";
 
 const Chat = () => {
@@ -140,11 +140,18 @@ const Chat = () => {
   const thinkingMessage = useMemo(() => {
     return getRandomThinkingMessage();
   }, [status === "streaming"]);
+
   // Show loading state while session is loading
   if (isLoading || !userId) {
     return (
       <div className="flex h-[600px] items-center justify-center">
-        <div>Loading...</div>
+        <div className="animate-pulse">
+          {
+            LOADING_MESSAGES[
+              Math.floor(Math.random() * LOADING_MESSAGES.length)
+            ]
+          }
+        </div>
       </div>
     );
   }
@@ -228,7 +235,9 @@ const Chat = () => {
             className="disabled:cursor-not-allowed"
             disabled={status !== "ready"}
           >
-            <svg aria-hidden="true" focusable="false"
+            <svg
+              aria-hidden="true"
+              focusable="false"
               width="24"
               height="24"
               viewBox="0 0 24 24"
