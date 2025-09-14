@@ -20,6 +20,7 @@ import {
 } from "@/lib/inventory/schemas";
 import { fetcher } from "@/lib/inventory/utils";
 import { SavedMessage } from "@/lib/messages/schemas";
+import { upperCaseFirstLetter } from "@/lib/utils";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useMemo, useState } from "react";
@@ -85,7 +86,7 @@ const Chat = () => {
 
                 toast.success(
                   `${addInput.items
-                    .map((i) => i.name)
+                    .map((i) => upperCaseFirstLetter(i.name))
                     .join(", ")} added to inventory!`
                 );
                 mutate(`/api/inventory?userId=${userId}`);
@@ -99,7 +100,7 @@ const Chat = () => {
 
                 toast.success(
                   `${removeInput.itemNames
-                    .map((i) => i)
+                    .map((i) => upperCaseFirstLetter(i))
                     .join(", ")} removed from inventory!`
                 );
                 mutate(`/api/inventory?userId=${userId}`);

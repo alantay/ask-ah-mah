@@ -1,7 +1,7 @@
+import { Toaster } from "@/components/ui/sonner";
 import { SessionProvider } from "@/contexts/SessionContext";
 import type { Metadata } from "next";
 import { JetBrains_Mono, Lora } from "next/font/google";
-import { Toaster } from "sonner";
 import "./globals.css";
 
 const fontSans = Lora({
@@ -94,10 +94,17 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`m-0 sm:m-2 md:m-4 lg:m-8 ${fontSans.variable} ${fontMono.variable} antialiased font-sans h-[100dvh] `}
+        className={`m-0 sm:m-2 md:m-4 lg:m-8 ${fontSans.variable} ${fontMono.variable} antialiased font-sans  `}
       >
         <SessionProvider>
-          <Toaster position="top-center" />
+          <Toaster
+            position="top-center"
+            toastOptions={{
+              style: {
+                color: "#6F502D",
+              },
+            }}
+          />
           {children}
         </SessionProvider>
       </body>
