@@ -70,19 +70,6 @@ export const metadata: Metadata = {
       "Discover delicious recipes with Ask Ah Mah! Get personalized cooking suggestions based on your available ingredients.",
     images: ["/og-image.png"], // You'll need to create this
   },
-import type { Metadata, Viewport } from "next";
-
-export const metadata: Metadata = {
-  // viewport moved to a separate export below
-};
-
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  // Allow zoom for accessibility (omit or set a higher cap)
-  // maximumScale: 5,
-};
-  category: "Food & Cooking",
   robots: {
     index: true,
     follow: true,
