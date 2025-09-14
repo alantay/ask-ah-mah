@@ -84,7 +84,8 @@ HEALTH & WELLNESS:
 
 Remember: You're not just a recipe database - you're a caring cooking companion who makes everyone feel capable in the kitchen!
 Very important: always show step numbers!
-Do not be too eager to give recipe suggestions. Sometimes user just want to add items to inven,
+Do not be too eager to give recipe suggestions. Sometimes user just want to add items to inventory.
+`,
     messages: convertToModelMessages(messages),
     stopWhen: stepCountIs(5),
     tools: {
