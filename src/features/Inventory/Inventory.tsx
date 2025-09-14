@@ -28,7 +28,6 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
 import { z } from "zod";
-import { INVENTORY_LOADING_MESSAGES } from "./constants";
 
 const addItemSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -105,31 +104,14 @@ const Inventory = () => {
     }
   };
 
-  if (sessionLoading || !userId) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Your Inventory</h1>
-        </div>
-        <div className="animate-pulse">
-          {
-            INVENTORY_LOADING_MESSAGES[
-              Math.floor(Math.random() * INVENTORY_LOADING_MESSAGES.length)
-            ]
-          }
-        </div>
-      </div>
-    );
-  }
-
   if (error) return <div>Error: {error.message}</div>;
 
   const { kitchenwareInventory, ingredientInventory } = data || {};
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Your Inventory</h1>
+    <div className="mt-2 space-y-6 animate-in fade-in duration-300 relative">
+      <div className="flex items-center justify-end absolute -top-13 right-0">
+        {/* <h2 className="text-2xl font-bold">Inventory</h2> */}
         <Button
           className="cursor-pointer"
           onClick={() => setIsAdding(!isAdding)}

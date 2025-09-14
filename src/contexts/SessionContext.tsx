@@ -12,9 +12,9 @@ const SessionContext = createContext<SessionContextType | undefined>(undefined);
 export function SessionProvider({ children }: { children: ReactNode }) {
   const { userId, isLoading } = useSession();
 
-  if (isLoading) {
-    return <div>Loading session...</div>; // Or a spinner
-  }
+  // if (isLoading) {
+  //   return <div>Loading session...</div>; // Or a spinner
+  // }
 
   return (
     <SessionContext.Provider value={{ userId, isLoading }}>

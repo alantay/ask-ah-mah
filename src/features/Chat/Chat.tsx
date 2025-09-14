@@ -26,17 +26,18 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
 import { z } from "zod";
-import { INITIAL_MESSAGE, LOADING_MESSAGES } from "./constants";
+import { INITIAL_MESSAGE } from "./constants";
 import { convertToUIMessage, getRandomThinkingMessage } from "./utils";
 
 const Chat = () => {
   const [input, setInput] = useState("");
   const { userId, isLoading } = useSessionContext();
+
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/chat",
       body: {
-        userId: userId || "",
+        userId,
       },
     }),
     onFinish: async (options) => {
@@ -142,19 +143,19 @@ const Chat = () => {
   }, [status === "streaming"]);
 
   // Show loading state while session is loading
-  if (isLoading || !userId) {
-    return (
-      <div className="flex h-[600px] items-center justify-center">
-        <div className="animate-pulse">
-          {
-            LOADING_MESSAGES[
-              Math.floor(Math.random() * LOADING_MESSAGES.length)
-            ]
-          }
-        </div>
-      </div>
-    );
-  }
+  // if (isLoading || !userId) {
+  //   return (
+  //     <div className="flex h-[600px] items-center justify-center">
+  //       <div className="animate-pulse">
+  //         {
+  //           LOADING_MESSAGES[
+  //             Math.floor(Math.random() * LOADING_MESSAGES.length)
+  //           ]
+  //         }
+  //       </div>
+  //     </div>
+  //   );
+  // }
   const savedMessages = (data || []).map(convertToUIMessage);
   // Only show saved messages if there are no current UI messages (to avoid duplicates)
   const currentMessages = messages.filter((currentMsg) => {
@@ -178,7 +179,7 @@ const Chat = () => {
   const allMessages = [INITIAL_MESSAGE, ...savedMessages, ...currentMessages];
 
   return (
-    <div className="flex h-[80dvh] flex-col">
+    <div className="flex h-[85dvh] flex-col animate-in fade-in  duration-300">
       <Conversation>
         <ConversationContent>
           {

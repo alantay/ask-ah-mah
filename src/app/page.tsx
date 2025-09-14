@@ -1,39 +1,50 @@
 import { Button } from "@/components/ui/button";
-import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
-import Chat from "@/features/Chat";
-import Inventory from "@/features/Inventory";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import ChatWrapper from "@/features/Chat/components/ChatWrapper";
+
+import InventoryWrapper from "@/features/Inventory/components/InventoryWrapper";
 import Image from "next/image";
 
 export default function Home() {
   return (
     <div className="bg-background">
-      <div className="container mx-auto p-4">
+      <main className="container mx-auto p-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <div className="mb-6">
-              <h1 className="text-3xl font-bold flex items-center gap-2">
-                <Image
-                  src="/granny-icon.png"
-                  alt="Ask Ah Mah"
-                  width={45}
-                  height={48}
-                />
+          <section className="lg:col-span-2">
+            <div className="pb-3 sm:pb-4  border-b">
+              <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
+                <div className="relative w-10 h-10 md:w-12 md:h-12">
+                  <Image
+                    src="/granny-icon.png"
+                    alt="Ask Ah Mah"
+                    fill
+                    className="object-contain"
+                  />
+                </div>
                 Ask Ah Mah
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground text-sm md:text-base">
                 Your friendly cooking assistant
               </p>
             </div>
-            <Chat />
-          </div>
+            <ChatWrapper />
+          </section>
           <div className="hidden lg:block lg:col-span-1">
-            <Inventory />
+            <InventoryWrapper />
           </div>
         </div>
-      </div>
+      </main>
       <Drawer direction="right">
         <DrawerTrigger asChild>
-          <Button className="flex items-center gap-1 absolute top-8 right-4 cursor-pointer lg:hidden">
+          <Button
+            variant="secondary"
+            className="flex items-center gap-1 absolute top-8 right-4 cursor-pointer lg:hidden"
+          >
             <svg
               width="24"
               height="24"
@@ -50,8 +61,9 @@ export default function Home() {
           </Button>
         </DrawerTrigger>
         <DrawerContent aria-label="Inventory">
+          <DrawerTitle className="sr-only">Inventory</DrawerTitle>
           <div className="flex-1 overflow-auto p-4">
-            <Inventory />
+            <InventoryWrapper />
           </div>
         </DrawerContent>
       </Drawer>
