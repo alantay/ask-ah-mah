@@ -224,10 +224,11 @@ const Chat = () => {
           />
           <Button
             type="submit"
-            className="cursor-pointer"
+            aria-label="Send message"
+            className="disabled:cursor-not-allowed"
             disabled={status !== "ready"}
           >
-            <svg
+            <svg aria-hidden="true" focusable="false"
               width="24"
               height="24"
               viewBox="0 0 24 24"
