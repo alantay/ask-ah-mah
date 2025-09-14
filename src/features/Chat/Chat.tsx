@@ -157,10 +157,23 @@ const Chat = () => {
   }
   const savedMessages = (data || []).map(convertToUIMessage);
   // Only show saved messages if there are no current UI messages (to avoid duplicates)
-  const currentMessages = messages.filter(
-    (currentMsg) =>
-      !savedMessages.some((savedMsg) => savedMsg.id === currentMsg.id)
-  );
+  const currentMessages = messages.filter((currentMsg) => {
+    const currentContent = currentMsg.parts
+      .filter((part) => part.type === "text")
+      .map((part) => part.text)
+      .join("");
+
+    return !savedMessages.some((savedMsg) => {
+      const savedContent = savedMsg.parts
+        .filter((part) => part.type === "text")
+        .map((part) => part.text)
+        .join("");
+
+      return (
+        savedContent === currentContent && savedMsg.role === currentMsg.role
+      );
+    });
+  });
 
   const allMessages = [INITIAL_MESSAGE, ...savedMessages, ...currentMessages];
 
