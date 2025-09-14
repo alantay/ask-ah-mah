@@ -157,10 +157,12 @@ const Chat = () => {
   }
   const savedMessages = (data || []).map(convertToUIMessage);
   // Only show saved messages if there are no current UI messages (to avoid duplicates)
-  const allMessages =
-    messages.length > 0
-      ? [INITIAL_MESSAGE, ...messages]
-      : [INITIAL_MESSAGE, ...savedMessages];
+  const currentMessages = messages.filter(
+    (currentMsg) =>
+      !savedMessages.some((savedMsg) => savedMsg.id === currentMsg.id)
+  );
+
+  const allMessages = [INITIAL_MESSAGE, ...savedMessages, ...currentMessages];
 
   return (
     <div className="flex h-[80dvh] flex-col">
