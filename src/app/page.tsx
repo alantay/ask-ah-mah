@@ -13,7 +13,7 @@ import Image from "next/image";
 export default function Home() {
   return (
     <div className="bg-background">
-      <main className="container mx-auto p-4">
+      <main className="container mx-auto pt-4 pl-4 pr-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <section className="lg:col-span-2">
             <div className="pb-3 sm:pb-4  border-b">

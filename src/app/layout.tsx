@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL("https://ask-ah-mah.vercel.app"), // Replace with your actual domain
+  metadataBase: new URL("https://ask-ah-mah.vercel.app"),
   alternates: {
     canonical: "/",
   },
@@ -50,11 +50,11 @@ export const metadata: Metadata = {
     title: "Ask Ah Mah - Your Friendly Cooking Assistant",
     description:
       "Discover delicious recipes with Ask Ah Mah! Get personalized cooking suggestions based on your available ingredients.",
-    url: "https://ask-ah-mah.vercel.app", // Replace with your actual domain
+    url: "https://ask-ah-mah.vercel.app",
     siteName: "Ask Ah Mah",
     images: [
       {
-        url: "/og-image.png", // You'll need to create this
+        url: "/og-image.png",
         width: 1200,
         height: 630,
         alt: "Ask Ah Mah - Cooking Assistant",
@@ -68,7 +68,7 @@ export const metadata: Metadata = {
     title: "Ask Ah Mah - Your Friendly Cooking Assistant",
     description:
       "Discover delicious recipes with Ask Ah Mah! Get personalized cooking suggestions based on your available ingredients.",
-    images: ["/og-image.png"], // You'll need to create this
+    images: ["/og-image.png"],
   },
   robots: {
     index: true,
@@ -81,9 +81,9 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  verification: {
-    google: "your-google-verification-code", // Add when you have it
-  },
+  // verification: {
+  //   google: "google-verification-code",
+  // },
 };
 
 export default function RootLayout({
@@ -94,7 +94,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`m-0 sm:m-2 md:m-4 lg:m-8 ${fontSans.variable} ${fontMono.variable} antialiased font-sans  `}
+        className={`mx-0 mt-0 sm:mx-2 sm:mt-2 md:mx-4 md:mt-4 mb-0 ${fontSans.variable} ${fontMono.variable} antialiased font-sans
+`}
       >
         <SessionProvider>
           <Toaster

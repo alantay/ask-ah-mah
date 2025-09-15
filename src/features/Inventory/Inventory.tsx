@@ -20,27 +20,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useSessionContext } from "@/contexts/SessionContext";
-import { GetInventoryResponse, InventoryItem } from "@/lib/inventory/schemas";
+import {
+  AddInventoryItem,
+  AddInventoryItemSchema,
+  GetInventoryResponse,
+  InventoryItem,
+} from "@/lib/inventory/schemas";
 import { fetcher } from "@/lib/inventory/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
-import { z } from "zod";
-
-const addItemSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  type: z.enum(["ingredient", "kitchenware"]),
-  quantity: z.number().positive().optional(),
-  unit: z.string().optional(),
-});
-
-type AddItemForm = z.infer<typeof addItemSchema>;
 
 const Inventory = () => {
   const [isAdding, setIsAdding] = useState(false);
-  const { userId, isLoading: sessionLoading } = useSessionContext();
+  const { userId } = useSessionContext();
 
   const { data, error, isLoading } = useSWR<GetInventoryResponse>(
     userId ? `/api/inventory?userId=${userId}` : null,
@@ -51,8 +46,8 @@ const Inventory = () => {
     }
   );
 
-  const form = useForm<AddItemForm>({
-    resolver: zodResolver(addItemSchema),
+  const form = useForm<AddInventoryItem>({
+    resolver: zodResolver(AddInventoryItemSchema),
     defaultValues: {
       name: "",
       type: "ingredient" as const,
@@ -61,7 +56,7 @@ const Inventory = () => {
     },
   });
 
-  const onSubmit = async (values: AddItemForm) => {
+  const onSubmit = async (values: AddInventoryItem) => {
     if (!userId) return;
 
     try {
@@ -251,7 +246,7 @@ const Inventory = () => {
           <CardTitle>Ingredients</CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading && <div>Loading...</div>}
+          {isLoading && <div>Looking in the pantry...</div>}
           {ingredientsSorted?.length === 0 ? (
             <p className="text-muted-foreground">No ingredients yet</p>
           ) : (
@@ -299,7 +294,7 @@ const Inventory = () => {
           <CardTitle>Kitchenware</CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading && <div>Loading...</div>}
+          {isLoading && <div>Rummaging through the cupboards...</div>}
           {kitchenwareSorted?.length === 0 ? (
             <p className="text-muted-foreground">No kitchenware yet</p>
           ) : (
