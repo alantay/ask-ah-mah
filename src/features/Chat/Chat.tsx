@@ -180,7 +180,7 @@ const Chat = () => {
   const allMessages = [INITIAL_MESSAGE, ...savedMessages, ...currentMessages];
 
   return (
-    <div className="flex  h-[calc(100dvh-6.5rem)]  md:h-[calc(100dvh-7.8rem)]  lg:h-[calc(100dvh-8.8rem)] flex-col animate-in fade-in  duration-300">
+    <div className="flex  h-[calc(100dvh-7rem)]  md:h-[calc(100dvh-8rem)]  flex-col animate-in fade-in  duration-300">
       <Conversation>
         <ConversationContent>
           {
