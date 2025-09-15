@@ -108,7 +108,7 @@ const Inventory = () => {
 
   const { kitchenwareInventory, ingredientInventory } = data || {};
   const ingredientsSorted = ingredientInventory?.sort((a, b) =>
-    a.name.localeCompare(b.name) 
+    a.name.localeCompare(b.name)
   );
   const kitchenwareSorted = kitchenwareInventory?.sort((a, b) =>
     a.name.localeCompare(b.name)
