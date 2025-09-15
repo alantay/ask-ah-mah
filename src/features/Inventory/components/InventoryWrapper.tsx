@@ -8,7 +8,7 @@ export default function InventoryWrapper() {
 
   return (
     <>
-      <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-5 mt-3">
+      <h2 className="text-lg sm:text-lg md:text-xl font-bold mb-5 mt-5">
         Your Inventory
       </h2>
 
