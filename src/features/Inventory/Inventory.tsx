@@ -107,8 +107,12 @@ const Inventory = () => {
   if (error) return <div>Error: {error.message}</div>;
 
   const { kitchenwareInventory, ingredientInventory } = data || {};
-  
-
+  const ingredientsSorted = ingredientInventory?.sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
+  const kitchenwareSorted = kitchenwareInventory?.sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
 
   return (
     <div className="mt-2 space-y-6 animate-in fade-in duration-300 relative">
@@ -248,11 +252,11 @@ const Inventory = () => {
         </CardHeader>
         <CardContent>
           {isLoading && <div>Loading...</div>}
-          {ingredientInventory?.length === 0 ? (
+          {ingredientsSorted?.length === 0 ? (
             <p className="text-muted-foreground">No ingredients yet</p>
           ) : (
             <div className="flex flex-wrap gap-2">
-              {ingredientInventory?.map((item: InventoryItem) => (
+              {ingredientsSorted?.map((item: InventoryItem) => (
                 <Badge
                   key={item.id}
                   variant="outline"
@@ -296,11 +300,11 @@ const Inventory = () => {
         </CardHeader>
         <CardContent>
           {isLoading && <div>Loading...</div>}
-          {kitchenwareInventory?.length === 0 ? (
+          {kitchenwareSorted?.length === 0 ? (
             <p className="text-muted-foreground">No kitchenware yet</p>
           ) : (
             <div className="flex flex-wrap gap-2">
-              {kitchenwareInventory?.map((item: InventoryItem) => (
+              {kitchenwareSorted?.map((item: InventoryItem) => (
                 <Badge
                   key={item.id}
                   variant="outline"
