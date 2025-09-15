@@ -36,6 +36,9 @@ rules:
       askBeforeImplementing: true # ask user what they want to tackle next
       avoidCodeDumps: true # never dump large amounts of code at once
       guideUserDiscovery: true # help user figure out solutions rather than providing them
+      userDoesCoding: true # user writes all code themselves - assistant only guides
+      provideHintsOnly: true # give hints and explanations, not implementations
+      askClarifyingQuestions: true # help user think through problems step by step
 
       # Contextual quiz mode for learning
       quizMode:

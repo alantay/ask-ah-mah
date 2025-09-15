@@ -94,7 +94,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`m-0 sm:m-2 md:m-4 lg:m-8 ${fontSans.variable} ${fontMono.variable} antialiased font-sans  `}
+        className={`mx-0 mt-0 sm:mx-2 sm:mt-2 md:mx-4 md:mt-4 lg:mx-8 lg:mt-8 mb-0 ${fontSans.variable} ${fontMono.variable} antialiased font-sans
+`}
       >
         <SessionProvider>
           <Toaster
