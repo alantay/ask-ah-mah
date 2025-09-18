@@ -1,5 +1,5 @@
 "use client";
-import { generateShortId } from "@/lib/inventory/utils";
+import { generateShortId } from "@/lib/utils/index";
 import { useEffect, useState } from "react";
 
 export default function useSession() {

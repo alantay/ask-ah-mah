@@ -1,3 +1,4 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -5,45 +6,52 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChatWrapper from "@/features/Chat/components/ChatWrapper";
+import RecipeDisplay from "@/features/RecipeDisplay/RecipeDisplay";
+import RecipeList from "@/features/RecipeList/RecipeList";
+import { useState } from "react";
 
 import InventoryWrapper from "@/features/Inventory/components/InventoryWrapper";
-import Image from "next/image";
 
 export default function Home() {
+  const [selectedRecipe, setSelectedRecipe] = useState<string>("");
+
   return (
     <div className="bg-background">
-      <main className="container mx-auto pt-4 pl-4 pr-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <section className="lg:col-span-2">
-            <div className="pb-3 sm:pb-4  border-b">
-              <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
-                <div className="relative w-10 h-10 md:w-12 md:h-12">
-                  <Image
-                    src="/granny-icon.png"
-                    alt="Ask Ah Mah"
-                    fill
-                    className="object-contain"
-                  />
-                </div>
-                Ask Ah Mah
-              </h1>
-              <p className="text-muted-foreground text-sm md:text-base">
-                Your friendly cooking assistant
-              </p>
-            </div>
-            <ChatWrapper />
+      <main className="container mx-auto pl-4 pr-4 h-[calc(100dvh-6rem)] sm:h-[calc(100dvh-6.5rem)]  md:h-[calc(100dvh-8rem)] ">
+        <div className="flex gap-4 h-full">
+          <section className="flex-7 min-w-0">
+            {selectedRecipe ? (
+              <RecipeDisplay
+                recipe={selectedRecipe}
+                exitRecipe={() => setSelectedRecipe("")}
+              />
+            ) : (
+              <ChatWrapper />
+            )}
           </section>
-          <div className="hidden lg:block lg:col-span-1">
-            <InventoryWrapper />
-          </div>
+          <aside className="flex-3 min-w-0 pt-4 hidden lg:block lg:relative">
+            <Tabs defaultValue="inventory">
+              <TabsList>
+                <TabsTrigger value="inventory">Inventory</TabsTrigger>
+                <TabsTrigger value="recipe">Recipe</TabsTrigger>
+              </TabsList>
+              <TabsContent value="inventory">
+                <InventoryWrapper />
+              </TabsContent>
+              <TabsContent value="recipe">
+                <RecipeList setSelectedRecipe={setSelectedRecipe} />
+              </TabsContent>
+            </Tabs>
+          </aside>
         </div>
       </main>
       <Drawer direction="right">
         <DrawerTrigger asChild>
           <Button
             variant="secondary"
-            className="flex items-center gap-1 absolute top-8 right-4 cursor-pointer lg:hidden"
+            className="flex items-center gap-1 absolute top-6 lg:top-8 right-4 cursor-pointer lg:hidden"
           >
             <svg
               width="24"
@@ -57,13 +65,24 @@ export default function Home() {
                 fill="currentColor"
               />
             </svg>
-            Inventory
+            Kitchen
           </Button>
         </DrawerTrigger>
         <DrawerContent aria-label="Inventory">
           <DrawerTitle className="sr-only">Inventory</DrawerTitle>
-          <div className="flex-1 overflow-auto p-4">
-            <InventoryWrapper />
+          <div className="flex-1 overflow-auto px-4 pt-8">
+            <Tabs defaultValue="inventory">
+              <TabsList>
+                <TabsTrigger value="inventory">Inventory</TabsTrigger>
+                <TabsTrigger value="recipe">Recipe</TabsTrigger>
+              </TabsList>
+              <TabsContent value="inventory">
+                <InventoryWrapper />
+              </TabsContent>
+              <TabsContent value="recipe">
+                <RecipeList setSelectedRecipe={setSelectedRecipe} />
+              </TabsContent>
+            </Tabs>
           </div>
         </DrawerContent>
       </Drawer>

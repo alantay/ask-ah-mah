@@ -26,7 +26,7 @@ import {
   GetInventoryResponse,
   InventoryItem,
 } from "@/lib/inventory/schemas";
-import { fetcher } from "@/lib/inventory/utils";
+import { fetcher } from "@/lib/utils/index";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -110,11 +110,11 @@ const Inventory = () => {
   );
 
   return (
-    <div className="mt-2 space-y-6 animate-in fade-in duration-300 relative">
-      <div className="flex items-center justify-end absolute -top-13 right-0">
+    <div className="mt-2 space-y-4 animate-in fade-in duration-300 ">
+      <div className="flex items-center justify-end">
         {/* <h2 className="text-2xl font-bold">Inventory</h2> */}
         <Button
-          className="cursor-pointer"
+          className="cursor-pointer w-full"
           onClick={() => setIsAdding(!isAdding)}
           variant={isAdding ? "outline" : "secondary"}
         >
