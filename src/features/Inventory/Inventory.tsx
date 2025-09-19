@@ -273,7 +273,11 @@ const Inventory = () => {
           ) : (
             <div className="flex flex-wrap gap-2">
               {ingredientsSorted?.map((item: InventoryItem) => (
-                <InventoryItemBadge item={item} onRemove={removeItem} />
+                <InventoryItemBadge
+                  key={item.id}
+                  item={item}
+                  onRemove={removeItem}
+                />
               ))}
             </div>
           )}
@@ -321,7 +325,11 @@ const Inventory = () => {
                 //     </svg>
                 //   </button>
                 // </Badge>
-                <InventoryItemBadge item={item} onRemove={removeItem} />
+                <InventoryItemBadge
+                  key={item.id}
+                  item={item}
+                  onRemove={removeItem}
+                />
               ))}
             </div>
           )}
