@@ -6,12 +6,10 @@ import { INVENTORY_LOADING_MESSAGES } from "../constants";
 export default function InventoryWrapper() {
   const { userId, isLoading } = useSessionContext();
 
-  return (
-    <>
-      <h2 className="text-lg sm:text-lg md:text-xl font-bold mb-5 mt-5">
-        Your Inventory
-      </h2>
+  // flex  h-[calc(100dvh-6rem)] sm:h-[calc(100dvh-6.5rem)]  md:h-[calc(100dvh-8rem)]  flex-col animate-in fade-in  duration-300
 
+  return (
+    <div className="max-h-full overflow-y-auto pb-4  ">
       {isLoading || !userId ? (
         <div className="animate-pulse">
           {
@@ -23,6 +21,6 @@ export default function InventoryWrapper() {
       ) : (
         <Inventory />
       )}
-    </>
+    </div>
   );
 }

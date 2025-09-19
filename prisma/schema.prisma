@@ -31,3 +31,13 @@ model Message{
     @@map("messages")
     @@index([userId, createdAt])
 }
+
+model Recipe {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  instructions String
+
+  @@map("recipes")
+  @@index([userId]) 
+}

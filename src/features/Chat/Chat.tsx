@@ -18,9 +18,10 @@ import {
   AddInventoryItemSchemaObj,
   RemoveInventoryItemSchemaObj,
 } from "@/lib/inventory/schemas";
-import { fetcher } from "@/lib/inventory/utils";
 import { SavedMessage } from "@/lib/messages/schemas";
+import { RecipeWithId } from "@/lib/recipes/schemas";
 import { upperCaseFirstLetter } from "@/lib/utils";
+import { fetcher } from "@/lib/utils/index";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useMemo, useState } from "react";
@@ -33,6 +34,14 @@ import { convertToUIMessage, getRandomThinkingMessage } from "./utils";
 const Chat = () => {
   const [input, setInput] = useState("");
   const { userId, isLoading } = useSessionContext();
+  const { data: recipeSaved } = useSWR<RecipeWithId[]>(
+    userId ? `/api/recipe?userId=${userId}` : null,
+    fetcher,
+    {
+      shouldRetryOnError: true,
+      revalidateOnMount: true,
+    }
+  );
 
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
@@ -177,50 +186,118 @@ const Chat = () => {
     });
   });
 
+  const saveRecipe = async (recipeStr: string) => {
+    const nameMatch = recipeStr.match(/^##\s+(.*)/m);
+    const name = nameMatch
+      ? nameMatch[1].trim().replace(/\*\*/g, "")
+      : "Untitled Recipe";
+    try {
+      await fetch("/api/recipe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, name, instructions: recipeStr }),
+      });
+      mutate(`/api/recipe?userId=${userId}`);
+      toast.success(`Recipe ${name} saved!`);
+    } catch (error) {
+      console.error("Failed to save recipe:", error);
+    }
+  };
+
   const allMessages = [INITIAL_MESSAGE, ...savedMessages, ...currentMessages];
 
   return (
-    <div className="flex  h-[calc(100dvh-6rem)] sm:h-[calc(100dvh-6.5rem)]  md:h-[calc(100dvh-8rem)]  flex-col animate-in fade-in  duration-300">
+    <div className="flex flex-col animate-in fade-in  duration-300 h-full">
       <Conversation>
         <ConversationContent>
           {
             <div className="space-y-4">
-              {allMessages.map((message) => (
-                <Message
-                  key={message.id}
-                  from={message.role}
-                  className={`flex-col md:flex-row ${
-                    message.role === "user"
-                      ? "items-end"
-                      : "items-start md:flex-row-reverse"
-                  }`}
-                >
-                  <MessageContent>
-                    {message.parts.map((part, index) =>
-                      part.type === "text" ? (
-                        <Response key={`${message.id}-${index}`}>
-                          {part.text}
-                        </Response>
-                      ) : null
-                    )}
-                    {status === "streaming" &&
-                      message === messages[messages.length - 1] &&
-                      message.role === "assistant" && ( // don't show thinking message for user messages
-                        <span className="animate-pulse text-muted-foreground">
-                          {thinkingMessage}
-                        </span>
-                      )}
-                  </MessageContent>
-                  <MessageAvatar
-                    src={
+              {allMessages.map((message) => {
+                let recipe: string = "";
+                const hasRecipe = message.parts.filter(
+                  (part) => part.type === "text" && part.text.includes("-----")
+                )[0] as { type: "text"; text: string };
+                if (hasRecipe) {
+                  recipe = hasRecipe.text.split("-----")[1];
+                }
+                const isRecipeSaved =
+                  recipeSaved?.some((r) => r.instructions === recipe) ?? false;
+                return (
+                  <Message
+                    key={message.id}
+                    from={message.role}
+                    className={`flex-col md:flex-row ${
                       message.role === "user"
-                        ? "/user-avatar.png"
-                        : "/granny-avatar.png"
-                    }
-                    name={message.role === "user" ? "🙋‍♀️" : "👵"}
-                  />
-                </Message>
-              ))}
+                        ? "items-end"
+                        : "items-start md:flex-row-reverse"
+                    }`}
+                  >
+                    <MessageContent>
+                      {message.parts.map((part, index) =>
+                        part.type === "text" ? (
+                          <Response key={`${message.id}-${index}`}>
+                            {part.text}
+                          </Response>
+                        ) : null
+                      )}
+                      {!!hasRecipe && status === "ready" && (
+                        <div>
+                          <Button
+                            className="cursor-pointer my-2"
+                            onClick={() =>
+                              !!isRecipeSaved || saveRecipe(recipe)
+                            }
+                          >
+                            {isRecipeSaved ? (
+                              <svg
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M5 21V5C5 4.45 5.196 3.97933 5.588 3.588C5.98 3.19667 6.45067 3.00067 7 3H17C17.55 3 18.021 3.196 18.413 3.588C18.805 3.98 19.0007 4.45067 19 5V21L12 18L5 21Z"
+                                  fill="currentColor"
+                                />
+                              </svg>
+                            ) : (
+                              <svg
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M17 18L12 15.82L7 18V5H17M17 3H7C6.46957 3 5.96086 3.21071 5.58579 3.58579C5.21071 3.96086 5 4.46957 5 5V21L12 18L19 21V5C19 4.46957 18.7893 3.96086 18.4142 3.58579C18.0391 3.21071 17.5304 3 17 3Z"
+                                  fill="currentColor"
+                                />
+                              </svg>
+                            )}
+                            {isRecipeSaved ? "Saved Recipe" : "Save Recipe"}
+                          </Button>
+                        </div>
+                      )}
+                      {status === "streaming" &&
+                        message === messages[messages.length - 1] &&
+                        message.role === "assistant" && ( // don't show thinking message for user messages
+                          <span className="animate-pulse text-muted-foreground">
+                            {thinkingMessage}
+                          </span>
+                        )}
+                    </MessageContent>
+                    <MessageAvatar
+                      src={
+                        message.role === "user"
+                          ? "/user-avatar.png"
+                          : "/granny-avatar.png"
+                      }
+                      name={message.role === "user" ? "🙋‍♀️" : "👵"}
+                    />
+                  </Message>
+                );
+              })}
             </div>
           }
         </ConversationContent>

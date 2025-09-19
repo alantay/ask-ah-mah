@@ -88,4 +88,3 @@ export type InventoryAction = z.infer<typeof InventoryActionSchema>;
 export type GetInventoryResponse = z.infer<typeof GetInventoryResponseSchema>;
 
 export type AddInventoryItem = z.infer<typeof AddInventoryItemSchema>;
-
