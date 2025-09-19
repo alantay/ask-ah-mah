@@ -198,6 +198,7 @@ const Chat = () => {
         body: JSON.stringify({ userId, name, instructions: recipeStr }),
       });
       mutate(`/api/recipe?userId=${userId}`);
+      toast.success(`Recipe ${name} saved!`);
     } catch (error) {
       console.error("Failed to save recipe:", error);
     }
@@ -243,21 +244,38 @@ const Chat = () => {
                         <div>
                           <Button
                             className="cursor-pointer my-2"
-                            onClick={() => saveRecipe(recipe)}
+                            onClick={() =>
+                              !!isRecipeSaved || saveRecipe(recipe)
+                            }
                           >
-                            <svg
-                              width="24"
-                              height="24"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                d="M17 18L12 15.82L7 18V5H17M17 3H7C6.46957 3 5.96086 3.21071 5.58579 3.58579C5.21071 3.96086 5 4.46957 5 5V21L12 18L19 21V5C19 4.46957 18.7893 3.96086 18.4142 3.58579C18.0391 3.21071 17.5304 3 17 3Z"
-                                fill="currentColor"
-                              />
-                            </svg>
-                            Save Recipe
+                            {isRecipeSaved ? (
+                              <svg
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M5 21V5C5 4.45 5.196 3.97933 5.588 3.588C5.98 3.19667 6.45067 3.00067 7 3H17C17.55 3 18.021 3.196 18.413 3.588C18.805 3.98 19.0007 4.45067 19 5V21L12 18L5 21Z"
+                                  fill="currentColor"
+                                />
+                              </svg>
+                            ) : (
+                              <svg
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M17 18L12 15.82L7 18V5H17M17 3H7C6.46957 3 5.96086 3.21071 5.58579 3.58579C5.21071 3.96086 5 4.46957 5 5V21L12 18L19 21V5C19 4.46957 18.7893 3.96086 18.4142 3.58579C18.0391 3.21071 17.5304 3 17 3Z"
+                                  fill="currentColor"
+                                />
+                              </svg>
+                            )}
+                            {isRecipeSaved ? "Saved Recipe" : "Save Recipe"}
                           </Button>
                         </div>
                       )}

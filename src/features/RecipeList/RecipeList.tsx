@@ -60,7 +60,7 @@ export default function RecipeList({
               <Badge key={recipe.id} className=" w-full flex" variant="outline">
                 <Button
                   className="flex-1 text-left text-wrap break-words whitespace-normal  h-auto cursor-pointer"
-                  variant="link"
+                  variant="ghost"
                   onClick={() => showRecipe(recipe)}
                 >
                   {recipe.name}
