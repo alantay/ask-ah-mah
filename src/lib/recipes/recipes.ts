@@ -10,11 +10,9 @@ export async function getRecipes(userId: string) {
 }
 
 export async function saveRecipe(recipe: Recipe) {
-  const saveRecipe = await prisma.recipe.create({
+  return await prisma.recipe.create({
     data: recipe,
   });
-
-  return saveRecipe;
 }
 
 export async function deleteRecipe(recipeId: string) {
