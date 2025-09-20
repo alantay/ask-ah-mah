@@ -151,3 +151,11 @@ ol {
 ol li {
   margin-left: 1.2em;
 }
+
+ul {
+  list-style-type: disc;
+}
+
+ul li {
+  margin-left: 1.2em;
+}

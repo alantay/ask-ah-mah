@@ -22,14 +22,16 @@ export default function Home() {
       <main className="container mx-auto pl-4 pr-4 h-[calc(100dvh-6rem)] sm:h-[calc(100dvh-6.5rem)]  md:h-[calc(100dvh-8rem)] ">
         <div className="flex gap-4 h-full">
           <section className="flex-7 min-w-0">
-            {selectedRecipe ? (
-              <RecipeDisplay
-                recipe={selectedRecipe}
-                exitRecipe={() => setSelectedRecipe("")}
-              />
-            ) : (
-              <ChatWrapper />
-            )}
+            <>
+              {selectedRecipe ? (
+                <RecipeDisplay
+                  recipe={selectedRecipe}
+                  exitRecipe={() => setSelectedRecipe("")}
+                />
+              ) : (
+                <ChatWrapper />
+              )}
+            </>
           </section>
           <aside className="flex-3 min-w-0 pt-4 hidden lg:block lg:relative">
             <Tabs defaultValue="inventory">
