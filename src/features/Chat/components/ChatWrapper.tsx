@@ -10,7 +10,7 @@ export default function ChatWrapper() {
     <>
       {isLoading || !userId ? (
         <div className="flex h-[600px] items-center justify-center">
-          <div className="animate-pulse">
+          <div className="animate-pulse" suppressHydrationWarning>
             {
               LOADING_MESSAGES[
                 Math.floor(Math.random() * LOADING_MESSAGES.length)

@@ -7,8 +7,15 @@ import {
   AddInventoryItemSchemaObj,
   RemoveInventoryItemSchemaObj,
 } from "@/lib/inventory/schemas";
+import { getMessages } from "@/lib/messages/messages";
 import { google } from "@ai-sdk/google";
-import { convertToModelMessages, stepCountIs, streamText, UIMessage } from "ai";
+import {
+  convertToModelMessages,
+  stepCountIs,
+  streamText,
+  UIMessage,
+  validateUIMessages,
+} from "ai";
 import { NextRequest } from "next/server";
 import { z } from "zod";
 
@@ -16,6 +23,14 @@ export async function POST(req: NextRequest) {
   const model = google("gemini-2.5-flash");
   const { messages, userId }: { messages: UIMessage[]; userId: string } =
     await req.json();
+
+  console.log({ messages });
+
+  const previousMessages = await getMessages(userId);
+
+  const validatedMessages = await validateUIMessages({
+    messages: [...previousMessages, messages],
+  });
 
   const result = streamText({
     model,

@@ -145,10 +145,7 @@ const Chat = () => {
       </div>
     );
   }
-  const handleSendMessage = async (message: string) => {
-    await saveMessage("user", message);
-    sendMessage({ text: message });
-  };
+
   const savedMessages = (data || []).map(convertToUIMessage);
   // Only show saved messages if there are no current UI messages (to avoid duplicates)
   const currentMessages = messages.filter((currentMsg) => {
@@ -170,6 +167,11 @@ const Chat = () => {
   });
 
   const allMessages = [INITIAL_MESSAGE, ...savedMessages, ...currentMessages];
+
+  const handleSendMessage = async (message: string) => {
+    await saveMessage("user", message);
+    sendMessage({ text: message });
+  };
 
   return (
     <div className="flex flex-col animate-in fade-in  duration-300 h-full">

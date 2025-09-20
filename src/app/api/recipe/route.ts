@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   }
 
   const recipe = await saveRecipe({ userId, name, instructions });
-  return NextResponse.json({ recipe });
+  return NextResponse.json(recipe);
 }
 
 export async function DELETE(req: NextRequest) {
