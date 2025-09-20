@@ -19,7 +19,7 @@ import {
 import { NextRequest } from "next/server";
 import { z } from "zod";
 
-export const CONTEXT_WINDOW = 15; // ai can only remember 30 messages for context
+export const CONTEXT_WINDOW = 15; // ai can only remember 15 messages for context
 
 export async function POST(req: NextRequest) {
   const model = google("gemini-2.5-flash");
