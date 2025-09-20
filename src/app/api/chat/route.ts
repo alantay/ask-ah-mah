@@ -44,6 +44,14 @@ export async function POST(req: NextRequest) {
     messages: [...uiMessages, ...messages],
   });
 
+  console.log({ messages });
+
+  const previousMessages = await getMessages(userId);
+
+  const validatedMessages = await validateUIMessages({
+    messages: [...previousMessages, messages],
+  });
+
   const result = streamText({
     model,
     messages: convertToModelMessages(validatedMessages),
