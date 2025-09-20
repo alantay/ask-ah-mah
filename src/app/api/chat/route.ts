@@ -44,17 +44,6 @@ export async function POST(req: NextRequest) {
     messages: [...uiMessages, ...messages],
   });
 
-
-  console.log(
-    "second last",
-    validatedMessages[validatedMessages.length - 2]
-  );
-
-  console.log(
-    "last",
-    validatedMessages[validatedMessages.length - 1]
-  );
-
   const result = streamText({
     model,
     messages: convertToModelMessages(validatedMessages),
