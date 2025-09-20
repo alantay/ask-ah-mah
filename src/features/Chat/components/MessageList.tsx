@@ -13,10 +13,9 @@ import { Response } from "@/components/ai-elements/response";
 import { Button } from "@/components/ui/button";
 import { RecipeWithId } from "@/lib/recipes/schemas";
 import { fetcher } from "@/lib/utils/index";
-import { toast } from "sonner";
-import useSWR, { mutate } from "swr";
-
 import { UIMessage } from "ai";
+import { toast } from "sonner";
+import useSWR from "swr";
 
 interface MessageListProps {
   messages: UIMessage[];
@@ -25,32 +24,70 @@ interface MessageListProps {
   userId: string;
 }
 
+const saveRecipeCall = async (
+  recipeStr: string,
+  name: string,
+  userId: string,
+  recipeSaved: RecipeWithId[]
+) => {
+  const res = await fetch("/api/recipe", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId, name, instructions: recipeStr }),
+  });
+
+  if (!res.ok) throw new Error("Failed to save recipe");
+  const newRecipe = await res.json();
+  return [...(recipeSaved ?? []), newRecipe];
+};
+
 export const MessageList = ({
   messages,
   status,
   userId,
   thinkingMessage,
 }: MessageListProps) => {
-  const { data: recipeSaved } = useSWR<RecipeWithId[]>(
-    userId ? `/api/recipe?userId=${userId}` : null,
-    fetcher,
-    {
-      shouldRetryOnError: true,
-      revalidateOnMount: true,
-    }
+  const { data: recipeSaved, mutate } = useSWR<RecipeWithId[]>(
+    `/api/recipe?userId=${userId}`,
+    fetcher
   );
-  const saveRecipe = async (recipeStr: string) => {
+
+  const extractRecipeName = (recipeStr: string): string => {
     const nameMatch = recipeStr.match(/^##\s+(.*)/m);
-    const name = nameMatch
+    return nameMatch
       ? nameMatch[1].trim().replace(/\*\*/g, "")
       : "Untitled Recipe";
+  };
+
+  const saveRecipe = async (recipeStr: string) => {
+    const name = extractRecipeName(recipeStr);
     try {
-      await fetch("/api/recipe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, name, instructions: recipeStr }),
+      // await mutate(addTodo(newTodo), {
+      //   optimisticData: [...data, newTodo],
+      //   rollbackOnError: true,
+      //   populateCache: true,
+      //   revalidate: false
+      // });
+      const optimisticRecipe = {
+        id: `temp-${Date.now()}`,
+        userId,
+        name,
+        instructions: recipeStr,
+      };
+
+      await mutate(saveRecipeCall(recipeStr, name, userId, recipeSaved ?? []), {
+        optimisticData: [...(recipeSaved ?? []), optimisticRecipe],
+        rollbackOnError: true,
+        populateCache: true,
+        revalidate: false,
       });
-      mutate(`/api/recipe?userId=${userId}`);
+
+      // await fetch("/api/recipe", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify({ userId, name, instructions: recipeStr }),
+      // });
+      // mutate();
       toast.success(`Recipe ${name} saved!`);
     } catch (error) {
       console.error("Failed to save recipe:", error);

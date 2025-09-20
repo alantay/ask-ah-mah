@@ -11,7 +11,7 @@ export default function InventoryWrapper() {
   return (
     <div className="max-h-full overflow-y-auto pb-4  ">
       {isLoading || !userId ? (
-        <div className="animate-pulse">
+        <div className="animate-pulse" suppressHydrationWarning>
           {
             INVENTORY_LOADING_MESSAGES[
               Math.floor(Math.random() * INVENTORY_LOADING_MESSAGES.length)
