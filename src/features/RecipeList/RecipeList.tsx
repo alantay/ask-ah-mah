@@ -58,13 +58,12 @@ export default function RecipeList({
           <div className="flex flex-wrap gap-2">
             {recipes?.map((recipe: RecipeWithId) => (
               <Badge key={recipe.id} className=" w-full flex" variant="outline">
-                <Button
-                  className="flex-1 text-left text-wrap break-words whitespace-normal  h-auto cursor-pointer"
-                  variant="ghost"
+                <button
+                  className="flex-1 text-left text-wrap break-words whitespace-normal  h-auto cursor-pointer hover:bg-secondary rounded p-2"
                   onClick={() => showRecipe(recipe)}
                 >
                   {recipe.name}
-                </Button>
+                </button>
                 <Button
                   variant="ghost"
                   className="cursor-pointer"

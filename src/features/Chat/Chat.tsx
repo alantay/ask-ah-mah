@@ -33,7 +33,7 @@ const Chat = () => {
       const { message } = options;
       let toolCalled = false;
 
-      console.log("message", message);
+      // console.log("message", message);
 
       if (message.role === "assistant") {
         const content = message.parts
