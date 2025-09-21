@@ -95,7 +95,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`mx-0 mt-0 sm:mx-2 sm:mt-2 md:mx-4 md:mt-4 mb-0 ${fontSans.variable} ${fontMono.variable} antialiased font-sans
+        className={`mx-0 mt-0 sm:mx-2 sm:mt-2 md:mx-4 md:mt-4 ${fontSans.variable} ${fontMono.variable} antialiased font-sans
 `}
       >
         <SessionProvider>
@@ -107,7 +107,7 @@ export default function RootLayout({
               },
             }}
           />
-          <div className="pb-3 sm:pb-4 pt-4 border-b container mx-auto px-4">
+          <div className="pb-3 sm:pb-4 pt-4 border-b xl:container mx-auto px-4">
             <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
               <div className="relative w-10 h-10 md:w-12 md:h-12">
                 <Image

@@ -19,7 +19,7 @@ export default function Home() {
 
   return (
     <div className="bg-background">
-      <main className="container mx-auto pl-4 pr-4 h-[calc(100dvh-6rem)] sm:h-[calc(100dvh-6.5rem)]  md:h-[calc(100dvh-8rem)] ">
+      <main className="xl:container mx-auto h-[calc(100dvh-6rem)] sm:h-[calc(100dvh-6.5rem)]  md:h-[calc(100dvh-8rem)] ">
         <div className="flex gap-4 h-full">
           <section className="flex-7 min-w-0">
             {selectedRecipe ? (
@@ -31,7 +31,7 @@ export default function Home() {
               <ChatWrapper />
             )}
           </section>
-          <aside className="flex-3 min-w-0 pt-4 hidden lg:block lg:relative">
+          <aside className="flex-3 min-w-0 pt-4 hidden lg:block lg:relative overflow-y-auto pr-4 mb-4 border-b">
             <Tabs defaultValue="inventory">
               <TabsList>
                 <TabsTrigger value="inventory">Inventory</TabsTrigger>
