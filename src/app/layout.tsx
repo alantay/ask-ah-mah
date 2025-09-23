@@ -1,11 +1,12 @@
 import { Toaster } from "@/components/ui/sonner";
 import { SessionProvider } from "@/contexts/SessionContext";
 import type { Metadata } from "next";
-import { JetBrains_Mono, Merriweather } from "next/font/google";
+
+import { Inter, JetBrains_Mono } from "next/font/google";
 import Image from "next/image";
 import "./globals.css";
 
-const fontSans = Merriweather({
+const fontSans = Inter({
   variable: "--font-var-sans",
   subsets: ["latin"],
 });
