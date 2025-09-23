@@ -31,7 +31,7 @@ export default function Home() {
               <ChatWrapper />
             )}
           </section>
-          <aside className="flex-3 min-w-0 pt-4 hidden lg:block lg:relative overflow-y-auto pr-4 mb-4 border-b">
+          <aside className="flex-3 min-w-0 pt-4 hidden lg:block lg:relative overflow-y-auto pr-4 mb-4 ">
             <Tabs defaultValue="inventory">
               <TabsList>
                 <TabsTrigger value="inventory">Inventory</TabsTrigger>

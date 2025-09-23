@@ -22,7 +22,7 @@ export const MessageInput = ({
           setInput("");
         }
       }}
-      className="border-t p-4"
+      className=" p-4"
     >
       <div className="flex gap-2">
         <Input
