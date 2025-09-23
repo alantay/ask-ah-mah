@@ -1,11 +1,11 @@
 import { Toaster } from "@/components/ui/sonner";
 import { SessionProvider } from "@/contexts/SessionContext";
 import type { Metadata } from "next";
-import { JetBrains_Mono, Lora } from "next/font/google";
+import { JetBrains_Mono, Merriweather } from "next/font/google";
 import Image from "next/image";
 import "./globals.css";
 
-const fontSans = Lora({
+const fontSans = Merriweather({
   variable: "--font-var-sans",
   subsets: ["latin"],
 });
@@ -107,7 +107,7 @@ export default function RootLayout({
               },
             }}
           />
-          <div className="pb-3 sm:pb-4 pt-4 border-b xl:container mx-auto px-4">
+          <div className="pb-2 sm:pb-4 pt-2 border-b xl:container mx-auto px-4">
             <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
               <div className="relative w-10 h-10 md:w-12 md:h-12">
                 <Image
@@ -119,7 +119,7 @@ export default function RootLayout({
               </div>
               Ask Ah Mah
             </h1>
-            <p className="text-muted-foreground text-sm md:text-base">
+            <p className="text-muted-foreground text-xs md:text-sm lg:text-base">
               Your friendly cooking assistant
             </p>
           </div>
