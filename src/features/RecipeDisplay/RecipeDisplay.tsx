@@ -30,8 +30,9 @@ export default function RecipeDisplay({
       <div className="absolute right-4 top-4 flex gap-2">
         <Button
           variant="secondary"
-          className=" cursor-pointer"
+          className="cursor-pointer"
           onClick={copyRecipe}
+          aria-label="Copy recipe to clipboard"
         >
           <svg
             width="24"
@@ -45,13 +46,6 @@ export default function RecipeDisplay({
               fill="currentColor"
             />
           </svg>
-        </Button>
-        <Button
-          variant="secondary"
-          className="cursor-pointer"
-          onClick={exitRecipe}
-        >
-          Close Recipe
         </Button>
       </div>
       <div className="h-full overflow-y-auto pt-15 xl:pt-4 pb-10 px-4 ">
