@@ -2,7 +2,15 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Streamdown } from "streamdown";
 
-export default function RecipeDisplay({ recipe }: { recipe: string }) {
+export default function RecipeDisplay({
+  recipe,
+  exitRecipe,
+  className,
+}: {
+  recipe: string;
+  exitRecipe: () => void;
+  className?: string;
+}) {
   // Remove only the specific ✅ and 🛒 symbols, preserving other emojis and formatting
   const cleanRecipe = recipe
     .replace(/✅\s*/g, "") // Remove checkmark and any following spaces
@@ -13,7 +21,6 @@ export default function RecipeDisplay({ recipe }: { recipe: string }) {
       await navigator.clipboard.writeText(cleanRecipe);
       toast.success("Recipe copied to clipboard!");
     } catch (err) {
-      console.error("Failed to copy recipe", err);
       toast.error("Failed to copy recipe");
     }
   };
@@ -39,6 +46,13 @@ export default function RecipeDisplay({ recipe }: { recipe: string }) {
               fill="currentColor"
             />
           </svg>
+        </Button>
+        <Button
+          variant="secondary"
+          className="cursor-pointer"
+          onClick={exitRecipe}
+        >
+          Close Recipe
         </Button>
       </div>
       <div className="h-full overflow-y-auto pt-15 xl:pt-4 pb-10 px-4 ">
