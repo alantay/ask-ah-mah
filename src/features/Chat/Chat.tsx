@@ -169,8 +169,8 @@ const Chat = () => {
   const allMessages = [INITIAL_MESSAGE, ...savedMessages, ...currentMessages];
 
   const handleSendMessage = async (message: string) => {
-    await saveMessage("user", message);
     sendMessage({ text: message });
+    await saveMessage("user", message);
   };
 
   return (

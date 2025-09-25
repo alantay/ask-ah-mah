@@ -1,7 +1,7 @@
+import AboutPopOver from "@/components/AboutPopOver";
 import { Toaster } from "@/components/ui/sonner";
 import { SessionProvider } from "@/contexts/SessionContext";
 import type { Metadata } from "next";
-
 import { Inter, JetBrains_Mono } from "next/font/google";
 import Image from "next/image";
 import "./globals.css";
@@ -108,21 +108,24 @@ export default function RootLayout({
               },
             }}
           />
-          <div className="pb-2 sm:pb-4 pt-2 border-b xl:container mx-auto px-4">
-            <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
-              <div className="relative w-10 h-10 md:w-12 md:h-12">
-                <Image
-                  src="/granny-icon.png"
-                  alt="Ask Ah Mah"
-                  fill
-                  className="object-contain"
-                />
-              </div>
-              Ask Ah Mah
-            </h1>
-            <p className="text-muted-foreground text-xs md:text-sm lg:text-base">
-              Your friendly cooking assistant
-            </p>
+          <div className="pb-2 sm:pb-3 pt-2 border-b xl:container mx-auto px-4 flex justify-between items-end">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
+                <div className="relative w-10 h-10 md:w-12 md:h-12">
+                  <Image
+                    src="/granny-icon.png"
+                    alt="Ask Ah Mah"
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+                Ask Ah Mah
+              </h1>
+              <p className="text-muted-foreground text-xs md:text-sm lg:text-base">
+                Your friendly cooking assistant
+              </p>
+            </div>
+            <AboutPopOver className="hidden lg:block" />
           </div>
           {children}
         </SessionProvider>
