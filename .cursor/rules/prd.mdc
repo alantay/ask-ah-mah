@@ -74,6 +74,8 @@ Beginner cooks struggle to:
 - Initial suggestions are brief with: name, description, key ingredients, missing ingredients, cooking time/difficulty
 - System remembers suggested recipes within the chat session
 - Detailed recipe view includes: step-by-step instructions, full ingredient list, cooking time, difficulty level, cooking tips
+- Professional markdown formatting with visual delimiters and emojis
+- Enhanced recipe format with substitutions, cooking tips, and availability markers
 
 #### 3.1.3 Chat Interface
 
@@ -88,21 +90,26 @@ Beginner cooks struggle to:
 - Chat interface with message bubbles and conversation history
 - AI maintains context for recipe suggestions within session
 - Inventory commands are processed independently (no cross-command memory needed)
+- Message persistence with full conversation history
+- Efficient JSON-based conversation storage
 
 ### 3.2 UI/UX Requirements
 
 #### 3.2.1 Layout
 
 - Primary chat interface taking majority of screen space
-- Sidebar/panel for inventory management (toggleable)
+- Drawer-based inventory management (modern UX approach)
 - Responsive design for mobile and desktop use
-- Light and Dark mode toggle
+- Light and Dark mode toggle (planned)
+- Professional styling with shadcn/ui components
 
 #### 3.2.2 Inventory Management UI
 
+- Drawer-based UI for modern inventory management
 - Traditional UI elements for viewing/editing pantry items
 - Add/remove/edit functionality for ingredients and kitchenware
 - Display items with quantities/units when available
+- Toast notifications for user feedback on all operations
 
 ## 4. Technical Architecture
 
@@ -111,8 +118,10 @@ Beginner cooks struggle to:
 - **Frontend**: Next.js 14/15 (App Router), TypeScript, Tailwind CSS
 - **AI Integration**: Vercel AI SDK with Google Gemini Flash
 - **Data Storage**:
-  - MVP: Local storage or server-side JSON file
-  - Future: SQLite with Prisma (migration path to PostgreSQL)
+  - PostgreSQL with Prisma ORM (upgraded from MVP)
+  - Single JSON conversation field per user for efficiency
+  - Message persistence with AI SDK's onFinish callback
+- **UI Components**: shadcn/ui with drawer-based inventory management
 - **Validation**: Zod for data validation
 - **Deployment**: Vercel (free tier)
 
@@ -170,6 +179,9 @@ interface Recipe {
 - **Recipe Suggestions**: Generate beginner-friendly recipes with substitution options, emphasize "you can do this" messaging
 - **Cooking Guidance**: Provide encouraging, step-by-step help with troubleshooting and technique explanations
 - **Substitution Logic**: Proactively suggest alternatives for missing ingredients with confidence-building language
+- **Recipe Formatting**: Professional markdown with clear sections, emojis, and visual delimiters
+- **Enhanced Instructions**: Step-by-step guidance with cooking tips and substitutions
+- **Visual Appeal**: Emoji-enhanced instructions and professional presentation
 
 ## 5. Development Phases
 
@@ -179,14 +191,16 @@ interface Recipe {
 - Implement basic chat interface
 - Integrate Vercel AI SDK with Gemini Flash
 - Build natural language inventory management
-- Implement local storage for data persistence
+- Implement PostgreSQL database with Prisma (upgraded from local storage)
 
 ### 5.2 Phase 2: Recipe Engine (Weeks 4-6)
 
 - Develop recipe suggestion algorithm
 - Implement recipe detail display
-- Add inventory management UI panel
+- Add drawer-based inventory management UI
 - Polish chat interface and user experience
+- Enhanced recipe formatting with professional markdown
+- Message persistence and conversation history
 
 ### 5.3 Phase 3: Enhancement (Weeks 7-8)
 
@@ -194,16 +208,29 @@ interface Recipe {
 - Add error handling and edge cases
 - Optimize performance and user experience
 - Deploy to Vercel
+- Add toast notifications and professional UI components
+- Implement comprehensive SEO metadata
 
-## 6. Future Enhancements
+## 6. Additional Features Implemented (Beyond MVP)
 
-### 6.1 User Management
+### 6.1 Enhanced Features
+
+- **Toast Notifications**: User feedback for all inventory operations using sonner
+- **Drawer-Based UI**: Modern inventory management with shadcn/ui drawer component
+- **SEO Optimization**: Comprehensive metadata and Open Graph support
+- **Enhanced Recipe Format**: Professional markdown with emojis, substitutions, and tips
+- **Message Persistence**: Full conversation history with efficient JSON storage
+- **Professional Styling**: shadcn/ui components for consistent, modern design
+
+## 7. Future Enhancements
+
+### 7.1 User Management
 
 - User accounts and authentication
 - Personal recipe history and favorites
 - Multi-device synchronization
 
-### 6.2 Advanced Features
+### 7.2 Advanced Features
 
 - Recipe rating and reviews
 - Nutritional information
@@ -211,58 +238,64 @@ interface Recipe {
 - Meal planning capabilities
 - Recipe sharing and community features
 
-### 6.3 Technical Improvements
+### 7.3 Technical Improvements
 
 - Migration to PostgreSQL database
 - Advanced caching strategies
 - Mobile app version
 - Offline functionality
 
-## 7. Constraints and Assumptions
+## 8. Constraints and Assumptions
 
-### 7.1 Technical Constraints
+### 8.1 Technical Constraints
 
 - Using free tiers for AI services (Gemini Flash rate limits)
 - Vercel free deployment limitations
 - No user authentication in MVP
 
-### 7.2 Assumptions
+### 8.2 Assumptions
 
 - Users are comfortable with natural language interaction
 - Inventory management will be primarily conversational
 - Recipe suggestions don't need real-time updates
 - Users will primarily access via desktop/mobile web browsers
 
-## 8. Success Criteria for MVP
+## 9. Success Criteria for MVP
 
-### 8.1 Functional Success
+### 9.1 Functional Success
 
 - Users can successfully add ingredients and kitchenware via natural language
 - System accurately suggests recipes based on available inventory
 - Users can get detailed cooking instructions for suggested recipes
 - Data persists between browser sessions
+- Professional UI with drawer-based inventory management
+- Enhanced recipe formatting with visual appeal
+- Toast notifications provide clear user feedback
+- Message persistence with full conversation history
 
-### 8.2 User Experience Success
+### 9.2 User Experience Success
 
 - Intuitive chat interface with clear conversation flow
 - Quick response times for AI interactions
 - Accessible inventory management through both chat and traditional UI
+- Modern drawer-based UI for inventory management
+- Professional styling and user feedback systems
 
-## 9. Risk Assessment
+## 10. Risk Assessment
 
-### 9.1 Technical Risks
+### 10.1 Technical Risks
 
 - **AI API limitations**: Rate limits on free Gemini Flash tier
 - **Natural language parsing accuracy**: Complex ingredient descriptions
 - **Data persistence**: Local storage limitations for inventory data
 
-### 9.2 Mitigation Strategies
+### 10.2 Mitigation Strategies
 
 - Implement graceful error handling for API failures
 - Use structured prompts to improve parsing accuracy
 - Plan migration path to proper database early
 
-## 10. Next Steps
+## 11. Next Steps
 
 1. Set up development environment and project structure
 2. Implement basic chat interface and AI integration

@@ -25,6 +25,7 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
+    console.error("Failed to fetch inventory", error);
     return NextResponse.json(
       { error: "Failed to fetch inventory" },
       { status: 500 }
@@ -46,6 +47,7 @@ export async function POST(req: NextRequest) {
     await addInventoryItem(items, userId);
     return NextResponse.json({ success: true, message: "Inventory updated" });
   } catch (error) {
+    console.error("Failed to update inventory", error);
     return NextResponse.json(
       { error: "Failed to update inventory" },
       { status: 500 }
@@ -65,6 +67,7 @@ export async function DELETE(req: NextRequest) {
     await removeInventoryItem(itemNames, userId);
     return NextResponse.json({ success: true, message: "Inventory updated" });
   } catch (error) {
+    console.error("Failed to update inventory", error);
     return NextResponse.json(
       { error: "Failed to update inventory" },
       { status: 500 }

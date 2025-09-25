@@ -3,7 +3,7 @@ import { useSessionContext } from "@/contexts/SessionContext";
 import Chat from "../Chat";
 import { LOADING_MESSAGES } from "../constants";
 
-export default function ChatWrapper({ className }: { className?: string }) {
+export default function ChatWrapper() {
   const { userId, isLoading } = useSessionContext();
 
   return (
