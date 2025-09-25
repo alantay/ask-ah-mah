@@ -78,6 +78,7 @@ export default function AboutPopOver({
                 onClick={copyEmail}
                 className=" cursor-pointer"
                 size="icon"
+                aria-label="Copy email address"
               >
                 <svg
                   width="14"
