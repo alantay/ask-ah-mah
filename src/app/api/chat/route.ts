@@ -28,10 +28,6 @@ export async function POST(req: NextRequest) {
     await req.json();
   const previousMessages = await getMessages(userId);
 
-  // Convert database messages to model format
-
-  console.log("previousMessages", previousMessages);
-
   const uiMessages = previousMessages.slice(-CONTEXT_WINDOW).map((msg) => ({
     id: msg.id,
     role: msg.role as "user" | "assistant",

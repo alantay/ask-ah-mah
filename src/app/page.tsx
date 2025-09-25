@@ -54,8 +54,9 @@ export default function Home() {
           </aside>
         </div>
       </main>
-      <div className="absolute top-6 lg:top-8 right-4 flex items-center gap-3">
-        <AboutPopOver svgSize="18" />
+
+      <div className="absolute top-7 sm:top-9 md:top-13 right-3 flex items-center gap-3">
+        <AboutPopOver svgSize="18" className="lg:hidden" />
         <Drawer
           direction="right"
           open={isDrawerOpen}

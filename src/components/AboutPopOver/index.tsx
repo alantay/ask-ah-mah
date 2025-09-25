@@ -44,20 +44,29 @@ export default function AboutPopOver({
           </svg>
         </button>
       </PopoverTrigger>
-      <PopoverContent side="bottom" align={popoverAlign}>
+      <PopoverContent
+        side="bottom"
+        align={popoverAlign}
+        className="w-[600px] max-w-[95vw]"
+      >
         <div className="space-y-2">
           <h4 className="font-medium leading-none">About Ask Ah Mah</h4>
           <div className="text-sm">
             <p>
-              This is a passion project I built to make cooking approachable and
-              fun for beginners!
+              A passion project inspired by my own cooking journey. I loved
+              using AI for cooking help, but it kept forgetting my ingredients!
+              So I built Ask Ah Mah with persistent memory and a caring
+              personality.
             </p>
-            <p className="mt-2">
-              Chat naturally about your ingredients, get personalized recipe
-              suggestions, and learn cooking techniques - all while building
-              confidence in the kitchen.
+            <p className="mt-4">
+              But this app is about more than just fixing a technical problem -
+              it's about making cooking feel approachable, where you understand
+              your ingredients, learn the "why" behind each step, and cook with
+              love! From Maillard reactions to knife techniques, Ah Mah explains
+              the science so you truly understand what you're doing.
             </p>
-            <h3 className="mt-2">I'd love your feedback!</h3>
+
+            <h3 className="mt-4">I'd love your feedback!</h3>
             <p>
               <Button
                 variant="ghost"
