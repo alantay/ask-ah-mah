@@ -65,11 +65,10 @@ export default function AboutPopOver({
               personality.`}
             </p>
             <p className="mt-4">
-              {`But this app is about more than just fixing a technical problem -
+              {`But this app is about more than just fixing a technical problem,
               it's about making cooking feel approachable, where you understand
               your ingredients, learn the "why" behind each step, and cook with
-              love! From Maillard reactions to knife techniques, Ah Mah explains
-              the science so you truly understand what you're doing.`}
+              love!`}
             </p>
 
             <h3 className="mt-4">{`I'd love your feedback!`}</h3>
