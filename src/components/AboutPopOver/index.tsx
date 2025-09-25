@@ -23,6 +23,7 @@ export default function AboutPopOver({
       await navigator.clipboard.writeText("lun.tay.work@gmail.com");
       toast.success("Email copied to clipboard!");
     } catch (err) {
+      console.error("Failed to copy email", err);
       toast.error("Failed to copy email");
     }
   };
@@ -58,20 +59,20 @@ export default function AboutPopOver({
           <h4 className="font-medium leading-none">About Ask Ah Mah</h4>
           <div className="text-sm">
             <p>
-              A passion project inspired by my own cooking journey. I loved
+              {`A passion project inspired by my own cooking journey. I loved
               using AI for cooking help, but it kept forgetting my ingredients!
               So I built Ask Ah Mah with persistent memory and a caring
-              personality.
+              personality.`}
             </p>
             <p className="mt-4">
-              But this app is about more than just fixing a technical problem -
+              {`But this app is about more than just fixing a technical problem -
               it's about making cooking feel approachable, where you understand
               your ingredients, learn the "why" behind each step, and cook with
               love! From Maillard reactions to knife techniques, Ah Mah explains
-              the science so you truly understand what you're doing.
+              the science so you truly understand what you're doing.`}
             </p>
 
-            <h3 className="mt-4">I'd love your feedback!</h3>
+            <h3 className="mt-4">{`I'd love your feedback!`}</h3>
             <p>
               <Button
                 variant="ghost"

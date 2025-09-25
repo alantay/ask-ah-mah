@@ -13,11 +13,7 @@ export default function RecipeList({
   setSelectedRecipe: (recipe: string) => void;
 }) {
   const { userId } = useSessionContext();
-  const {
-    data: recipes,
-    error,
-    isLoading,
-  } = useSWR<RecipeWithId[]>(
+  const { data: recipes, isLoading } = useSWR<RecipeWithId[]>(
     userId ? `/api/recipe?userId=${userId}` : null,
     fetcher,
     {
