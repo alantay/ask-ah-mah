@@ -93,10 +93,16 @@ export default function AboutPopOver({
                   />
                 </svg>
               </Button>
-              <Button variant="ghost" className=" cursor-pointer" size="icon">
+              <Button
+                asChild
+                variant="ghost"
+                className="cursor-pointer"
+                size="icon"
+              >
                 <a
                   href="https://www.linkedin.com/in/tay-alan/"
                   target="_blank"
+                  rel="noopener noreferrer"
                   aria-label="LinkedIn profile"
                 >
                   <svg
