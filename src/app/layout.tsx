@@ -125,7 +125,7 @@ export default function RootLayout({
                 Your friendly cooking assistant
               </p>
             </div>
-            <AboutPopOver className="hidden lg:block" />
+            <AboutPopOver className="hidden lg:flex" />
           </div>
           {children}
         </SessionProvider>

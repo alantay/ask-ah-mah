@@ -29,7 +29,12 @@ export default function AboutPopOver({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className={`cursor-pointer ${className || ""}`}>
+        <Button
+          size="icon"
+          variant="ghost"
+          className={`cursor-pointer ${className || ""}`}
+          aria-label="About Ask Ah Mah"
+        >
           <svg
             width={svgSize}
             height={svgSize}
@@ -42,7 +47,7 @@ export default function AboutPopOver({
               fill="currentColor"
             />
           </svg>
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent
         side="bottom"
