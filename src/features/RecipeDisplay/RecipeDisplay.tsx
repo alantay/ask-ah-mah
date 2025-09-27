@@ -5,7 +5,6 @@ import { Streamdown } from "streamdown";
 export default function RecipeDisplay({
   recipe,
   exitRecipe,
-  className,
 }: {
   recipe: string;
   exitRecipe: () => void;
@@ -20,7 +19,7 @@ export default function RecipeDisplay({
     try {
       await navigator.clipboard.writeText(cleanRecipe);
       toast.success("Recipe copied to clipboard!");
-    } catch (err) {
+    } catch {
       toast.error("Failed to copy recipe");
     }
   };

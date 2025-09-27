@@ -20,7 +20,7 @@ import { INITIAL_MESSAGE, LOADING_MESSAGES } from "./constants";
 import { convertToUIMessage, getRandomThinkingMessage } from "./utils";
 
 const Chat = () => {
-  const { userId, isLoading } = useSessionContext();
+  const { userId } = useSessionContext();
 
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
@@ -129,7 +129,7 @@ const Chat = () => {
 
   const thinkingMessage = useMemo(() => {
     return getRandomThinkingMessage();
-  }, [status === "streaming"]);
+  }, []);
 
   // Show loading state while session is loading
   if (messagesLoading || !userId) {
