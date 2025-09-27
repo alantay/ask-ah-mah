@@ -56,7 +56,7 @@ const mockedStreamText = jest.mocked(streamText);
 const mockedValidateUIMessages = jest.mocked(validateUIMessages);
 
 // Helper to create mock NextRequest
-const createMockRequest = (body: any) => {
+const createMockRequest = (body: unknown) => {
   return {
     json: async () => body,
   } as NextRequest;
@@ -69,19 +69,27 @@ describe("Chat API Route", () => {
     jest.spyOn(console, "error").mockImplementation(() => {});
 
     // Setup default mocks
-    mockedGoogle.mockReturnValue("mock-model" as any);
-    mockedStepCountIs.mockReturnValue("mock-step-count" as any);
+    mockedGoogle.mockReturnValue(
+      "mock-model" as unknown as ReturnType<typeof google>
+    );
+    mockedStepCountIs.mockReturnValue(
+      "mock-step-count" as unknown as ReturnType<typeof stepCountIs>
+    );
     mockedConvertToModelMessages.mockReturnValue(
-      "mock-converted-messages" as any
+      "mock-converted-messages" as unknown as ReturnType<
+        typeof convertToModelMessages
+      >
     );
     mockedValidateUIMessages.mockResolvedValue(
-      "mock-validated-messages" as any
+      "mock-validated-messages" as unknown as Awaited<
+        ReturnType<typeof validateUIMessages>
+      >
     );
     mockedStreamText.mockReturnValue({
       toUIMessageStreamResponse: jest
         .fn()
         .mockReturnValue("mock-stream-response"),
-    } as any);
+    } as unknown as ReturnType<typeof streamText>);
   });
 
   afterEach(() => {
@@ -95,11 +103,15 @@ describe("Chat API Route", () => {
           id: "msg-1",
           role: "user",
           content: "Hello",
+          userId: "user-123",
+          createdAt: new Date("2024-01-01T10:00:00.000Z"),
         },
         {
           id: "msg-2",
           role: "assistant",
           content: "Hi there!",
+          userId: "user-123",
+          createdAt: new Date("2024-01-01T10:01:00.000Z"),
         },
       ];
 
@@ -156,6 +168,8 @@ describe("Chat API Route", () => {
         id: `msg-${i}`,
         role: i % 2 === 0 ? "user" : "assistant",
         content: `Message ${i}`,
+        userId: "user-123",
+        createdAt: new Date("2024-01-01T10:00:00.000Z"),
       }));
 
       mockedGetMessages.mockResolvedValue(mockPreviousMessages);
@@ -186,11 +200,15 @@ describe("Chat API Route", () => {
           id: "msg-1",
           role: "user",
           content: "Test message",
+          userId: "user-123",
+          createdAt: new Date("2024-01-01T10:00:00.000Z"),
         },
         {
           id: "msg-2",
           role: "assistant",
           content: "Test response",
+          userId: "user-123",
+          createdAt: new Date("2024-01-01T10:01:00.000Z"),
         },
       ];
 
@@ -210,7 +228,9 @@ describe("Chat API Route", () => {
       const request = createMockRequest(requestBody);
       await POST(request);
 
-      const validateCall = mockedValidateUIMessages.mock.calls[0][0];
+      const validateCall = mockedValidateUIMessages.mock.calls[0][0] as {
+        messages: unknown[];
+      };
       // Should have previous messages (minus last) + new messages
       expect(validateCall.messages).toHaveLength(2); // 1 previous + 1 new
       expect(validateCall.messages[0]).toEqual({
@@ -321,7 +341,14 @@ describe("Chat API Route", () => {
   });
 
   describe("Tool Execution", () => {
-    let toolExecutions: any;
+    let toolExecutions: Record<
+      string,
+      {
+        description: string;
+        inputSchema: unknown;
+        execute: (...args: unknown[]) => unknown;
+      }
+    >;
 
     beforeEach(async () => {
       mockedGetMessages.mockResolvedValue([]);
@@ -340,7 +367,14 @@ describe("Chat API Route", () => {
       const request = createMockRequest(requestBody);
       await POST(request);
 
-      toolExecutions = mockedStreamText.mock.calls[0][0].tools;
+      toolExecutions = mockedStreamText.mock.calls[0][0].tools as Record<
+        string,
+        {
+          description: string;
+          inputSchema: unknown;
+          execute: (...args: unknown[]) => unknown;
+        }
+      >;
     });
 
     describe("addInventoryItem tool", () => {
@@ -385,10 +419,39 @@ describe("Chat API Route", () => {
       it("should execute getInventory correctly", async () => {
         const mockInventory = {
           ingredientInventory: [
-            { id: "1", name: "eggs", type: "ingredient" },
-            { id: "2", name: "flour", type: "ingredient" },
+            {
+              id: "1",
+              name: "eggs",
+              type: "ingredient",
+              userId: "user-123",
+              quantity: 6,
+              unit: "pieces",
+              dateAdded: new Date("2024-01-01T10:00:00.000Z"),
+              lastUpdated: new Date("2024-01-01T10:00:00.000Z"),
+            },
+            {
+              id: "2",
+              name: "flour",
+              type: "ingredient",
+              userId: "user-123",
+              quantity: 1,
+              unit: "kg",
+              dateAdded: new Date("2024-01-01T10:00:00.000Z"),
+              lastUpdated: new Date("2024-01-01T10:00:00.000Z"),
+            },
           ],
-          kitchenwareInventory: [{ id: "3", name: "pan", type: "kitchenware" }],
+          kitchenwareInventory: [
+            {
+              id: "3",
+              name: "pan",
+              type: "kitchenware",
+              userId: "user-123",
+              quantity: null,
+              unit: null,
+              dateAdded: new Date("2024-01-01T10:00:00.000Z"),
+              lastUpdated: new Date("2024-01-01T10:00:00.000Z"),
+            },
+          ],
         };
 
         mockedGetInventory.mockResolvedValue(mockInventory);
