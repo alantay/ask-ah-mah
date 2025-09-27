@@ -348,7 +348,7 @@ describe("Chat API Route", () => {
         inputSchema: unknown;
         execute: (...args: unknown[]) => unknown;
       }
-    >;git a
+    >;
 
     beforeEach(async () => {
       mockedGetMessages.mockResolvedValue([]);
