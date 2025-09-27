@@ -154,6 +154,7 @@ ol {
 
 ol li {
   margin-left: 0em;
+  padding-left: 0.25em;
 }
 
 ul {
@@ -163,4 +164,13 @@ ul {
 
 ul li {
   margin-left: 0em;
+}
+
+ol li::marker {
+  letter-spacing: -0.1em; /* Tighten letter spacing */
+}
+
+blockquote {
+  border-left: 3px solid var(--color-secondary);
+  padding-left: 0.5em;
 }
