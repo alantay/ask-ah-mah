@@ -9,7 +9,7 @@ export default function InventoryWrapper() {
   // flex  h-[calc(100dvh-6rem)] sm:h-[calc(100dvh-6.5rem)]  md:h-[calc(100dvh-8rem)]  flex-col animate-in fade-in  duration-300
 
   return (
-    <div className="max-h-full overflow-y-auto pb-4  ">
+    <div className="max-h-full overflow-y-auto pb-4 overscroll-contain ">
       {isLoading || !userId ? (
         <div className="animate-pulse" suppressHydrationWarning>
           {

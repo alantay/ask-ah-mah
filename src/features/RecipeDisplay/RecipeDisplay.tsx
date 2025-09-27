@@ -52,7 +52,7 @@ export default function RecipeDisplay({
           className="cursor-pointer"
           onClick={exitRecipe}
         >
-          Close Recipe
+          Exit Recipe
         </Button>
       </div>
       <div className="h-full overflow-y-auto pt-15 xl:pt-4 pb-10 px-4 ">
