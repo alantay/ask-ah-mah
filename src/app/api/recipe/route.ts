@@ -1,4 +1,5 @@
 import { deleteRecipe, getRecipes, saveRecipe } from "@/lib/recipes";
+import { processRecipe } from "@/lib/recipes/recipeProcessor";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -11,12 +12,22 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { userId, name, instructions } = await req.json();
+  const { userId, name, instructions, recipeId } = await req.json();
   if (!userId) {
     return NextResponse.json({ error: "userId is needed" }, { status: 400 });
   }
 
-  const recipe = await saveRecipe({ userId, name, instructions });
+  // Process recipe: clean instructions and generate AI-powered tags in one call
+  const { cleanedInstructions, tags } = await processRecipe(name, instructions);
+
+  const recipe = await saveRecipe({
+    userId,
+    name,
+    instructions: cleanedInstructions,
+    tags,
+    recipeId,
+  });
+
   return NextResponse.json(recipe);
 }
 

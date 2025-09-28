@@ -10,14 +10,9 @@ export default function RecipeDisplay({
   exitRecipe: () => void;
   className?: string;
 }) {
-  // Remove only the specific ✅ and 🛒 symbols, preserving other emojis and formatting
-  const cleanRecipe = recipe
-    .replace(/✅\s*/g, "") // Remove checkmark and any following spaces
-    .replace(/🛒\s*/g, ""); // Remove shopping cart and any following spaces
-
   const copyRecipe = async () => {
     try {
-      await navigator.clipboard.writeText(cleanRecipe);
+      await navigator.clipboard.writeText(recipe);
       toast.success("Recipe copied to clipboard!");
     } catch {
       toast.error("Failed to copy recipe");
@@ -55,7 +50,7 @@ export default function RecipeDisplay({
         </Button>
       </div>
       <div className="h-full overflow-y-auto pt-15 xl:pt-4 pb-10 px-4 ">
-        <Streamdown>{cleanRecipe}</Streamdown>
+        <Streamdown>{recipe}</Streamdown>
       </div>
     </div>
   );

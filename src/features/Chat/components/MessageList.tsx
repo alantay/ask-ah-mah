@@ -17,6 +17,7 @@ import type { UIMessage } from "ai";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
+import { generateTempId } from "../constants";
 
 interface MessageListProps {
   messages: UIMessage[];
@@ -29,12 +30,13 @@ const saveRecipeCall = async (
   recipeStr: string,
   name: string,
   userId: string,
-  recipeSaved: RecipeWithId[]
+  recipeSaved: RecipeWithId[],
+  recipeId?: string
 ) => {
   const res = await fetch("/api/recipe", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userId, name, instructions: recipeStr }),
+    body: JSON.stringify({ userId, name, instructions: recipeStr, recipeId }),
   });
 
   if (!res.ok) throw new Error("Failed to save recipe");
@@ -65,22 +67,27 @@ export const MessageList = ({
       : "Untitled Recipe";
   };
 
-  const saveRecipe = async (recipeStr: string) => {
+  const saveRecipe = async (recipeStr: string, messageId: string) => {
     const name = extractRecipeName(recipeStr);
+
     try {
       const optimisticRecipe = {
-        id: `temp-${Date.now()}`,
+        id: generateTempId(),
         userId,
         name,
         instructions: recipeStr,
+        recipeId: messageId,
       };
 
-      await mutate(saveRecipeCall(recipeStr, name, userId, recipeSaved ?? []), {
-        optimisticData: [...(recipeSaved ?? []), optimisticRecipe],
-        rollbackOnError: true,
-        populateCache: true,
-        revalidate: false,
-      });
+      await mutate(
+        saveRecipeCall(recipeStr, name, userId, recipeSaved ?? [], messageId),
+        {
+          optimisticData: [...(recipeSaved ?? []), optimisticRecipe],
+          rollbackOnError: true,
+          populateCache: true,
+          revalidate: false,
+        }
+      );
 
       toast.success(`Recipe ${name} saved!`);
     } catch (error) {
@@ -127,8 +134,9 @@ export const MessageList = ({
             if (hasRecipe) {
               recipe = hasRecipe.text.split("-----")[1];
             }
+            // Use message ID as the unique identifier for recipe comparison
             const isRecipeSaved =
-              recipeSaved?.some((r) => r.instructions === recipe) ?? false;
+              recipeSaved?.some((r) => r.recipeId === message.id) ?? false;
             return (
               <Message
                 key={message.id}
@@ -151,7 +159,9 @@ export const MessageList = ({
                     <div>
                       <Button
                         className="cursor-pointer my-2"
-                        onClick={() => !!isRecipeSaved || saveRecipe(recipe)}
+                        onClick={() =>
+                          !!isRecipeSaved || saveRecipe(recipe, message.id)
+                        }
                       >
                         {isRecipeSaved ? (
                           <svg
