@@ -52,3 +52,29 @@ export const LOADING_MESSAGES = [
   "Ah Mah is sharpening her knives...",
   "Getting ready to help you cook...",
 ];
+
+// Recipe processing messages for optimistic UI
+export const RECIPE_PROCESSING_MESSAGES = [
+  "Tagging your recipe with love...",
+  "Cooking up some delicious tags...",
+  "Writing down the perfect recipe...",
+  "Looking for the perfect recipe tags...",
+  "Adding colorful recipe tags...",
+  "Preparing your recipe for the cookbook...",
+  "Predicting the perfect recipe tags...",
+];
+
+// ID generation patterns
+export const generateTempId = (prefix: string = "temp"): string =>
+  `${prefix}-${Date.now()}`;
+
+// Helper function to check if an ID is a temporary ID
+export const isTempId = (id: string): boolean => id.startsWith("temp-");
+
+// Helper function to get a random recipe processing message
+export const getRandomRecipeProcessingMessage = (): string => {
+  const randomIndex = Math.floor(
+    Math.random() * RECIPE_PROCESSING_MESSAGES.length
+  );
+  return RECIPE_PROCESSING_MESSAGES[randomIndex];
+};

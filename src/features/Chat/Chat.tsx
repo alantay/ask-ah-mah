@@ -22,13 +22,25 @@ import { convertToUIMessage, getRandomThinkingMessage } from "./utils";
 const Chat = () => {
   const { userId, isLoading } = useSessionContext();
 
-  const { messages, sendMessage, status } = useChat({
+  const { messages, sendMessage, status, error } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/chat",
       body: {
         userId,
       },
     }),
+    onError: (error) => {
+      console.error("Chat error:", error);
+
+      // Show user-friendly error message
+      if (error.message.includes("503")) {
+        toast.error(
+          "Sorry lah, Ah Mah's cooking brain is taking a break! Try again in a few minutes."
+        );
+      } else {
+        toast.error("Aiyah, something went wrong! Please try again later.");
+      }
+    },
     onFinish: async (options) => {
       const { message } = options;
       let toolCalled = false;
