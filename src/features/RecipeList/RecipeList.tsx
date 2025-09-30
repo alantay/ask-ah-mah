@@ -11,7 +11,7 @@ import { getRandomRecipeProcessingMessage, isTempId } from "../Chat/constants";
 export default function RecipeList({
   setSelectedRecipe,
 }: {
-  setSelectedRecipe: (recipe: string) => void;
+  setSelectedRecipe: (recipe: RecipeWithId) => void;
 }) {
   const { userId } = useSessionContext();
 
@@ -24,7 +24,7 @@ export default function RecipeList({
     }
   );
   const showRecipe = (r: RecipeWithId) => {
-    setSelectedRecipe(r.instructions);
+    setSelectedRecipe(r);
   };
 
   const deleteRecipe = async (recipeId: string) => {

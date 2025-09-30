@@ -16,10 +16,10 @@ import { useState } from "react";
 import InventoryWrapper from "@/features/Inventory/components/InventoryWrapper";
 
 export default function Home() {
-  const [selectedRecipe, setSelectedRecipe] = useState<string>("");
+  const [selectedRecipe, setSelectedRecipe] = useState<RecipeWithId>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  const handleRecipeSelectFromDrawer = (recipe: string) => {
+  const handleRecipeSelectFromDrawer = (recipe: RecipeWithId) => {
     setSelectedRecipe(recipe);
     setIsDrawerOpen(false); // Close drawer when recipe is selected
   };

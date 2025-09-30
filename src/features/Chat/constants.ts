@@ -68,7 +68,6 @@ export const RECIPE_PROCESSING_MESSAGES = [
 export const generateTempId = (prefix: string = "temp"): string =>
   `${prefix}-${Date.now()}`;
 
-// Helper function to check if an ID is a temporary ID
 export const isTempId = (id: string): boolean => id.startsWith("temp-");
 
 // Helper function to get a random recipe processing message
