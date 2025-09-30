@@ -17,6 +17,7 @@ import type { UIMessage } from "ai";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
+import useSWRMutation from "swr/mutation";
 import { generateTempId } from "../constants";
 
 interface MessageListProps {
@@ -27,23 +28,23 @@ interface MessageListProps {
 }
 
 const saveRecipeCall = async (
-  recipeStr: string,
-  name: string,
-  userId: string,
-  recipeSaved: RecipeWithId[],
-  recipeId?: string
+  key: string,
+  {
+    arg,
+  }: {
+    arg: { recipeStr: string; name: string; userId: string; recipeId?: string };
+  }
 ) => {
-  const res = await fetch("/api/recipe", {
+  const { recipeStr, name, userId, recipeId } = arg;
+  const res = await fetch(key, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ userId, name, instructions: recipeStr, recipeId }),
   });
 
   if (!res.ok) throw new Error("Failed to save recipe");
-  const newRecipe = await res.json();
-  return [...(recipeSaved ?? []), newRecipe];
+  return await res.json();
 };
-
 export const MessageList = ({
   messages,
   status,
@@ -53,6 +54,11 @@ export const MessageList = ({
   const { data: recipeSaved, mutate } = useSWR<RecipeWithId[]>(
     `/api/recipe?userId=${userId}`,
     fetcher
+  );
+
+  const { trigger } = useSWRMutation(
+    `/api/recipe?userId=${userId}`,
+    saveRecipeCall
   );
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -68,9 +74,15 @@ export const MessageList = ({
   };
 
   const saveRecipe = async (recipeStr: string, messageId: string) => {
+    console.log("saveRecipeCall");
+
     const name = extractRecipeName(recipeStr);
 
     try {
+      // Manually handle the optimistic update
+
+      // STEP 1: Create a temporary recipe with a fake ID
+      // This is what we'll show the user immediately while we wait for the server
       const optimisticRecipe = {
         id: generateTempId(),
         userId,
@@ -79,14 +91,29 @@ export const MessageList = ({
         recipeId: messageId,
       };
 
-      await mutate(
-        saveRecipeCall(recipeStr, name, userId, recipeSaved ?? [], messageId),
-        {
-          optimisticData: [...(recipeSaved ?? []), optimisticRecipe],
-          rollbackOnError: true,
-          populateCache: true,
-          revalidate: false,
-        }
+      // STEP 2: Immediately add the fake recipe to our list and show it on screen
+      // The 'false' means don't refetch from server yet
+      // User sees this instantly
+      mutate((current = []) => [...current, optimisticRecipe], {
+        revalidate: false,
+        populateCache: true,
+      });
+
+      // STEP 3: Actually save the recipe to the server
+      // The server will return the real recipe with a real database ID
+      const saved = await trigger({
+        recipeStr,
+        name,
+        userId,
+        recipeId: messageId,
+      });
+
+      // STEP 4: Find our fake recipe and replace it with the real one from the server
+      // We match by the temporary ID and swap it with the real saved recipe
+      mutate(
+        (current = []) =>
+          current.map((r) => (r.id === optimisticRecipe.id ? saved : r)),
+        { revalidate: false, populateCache: true }
       );
 
       toast.success(`Recipe ${name} saved!`);

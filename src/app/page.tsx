@@ -9,17 +9,19 @@ import {
 } from "@/components/ui/drawer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChatWrapper from "@/features/Chat/components/ChatWrapper";
+import InventoryWrapper from "@/features/Inventory/components/InventoryWrapper";
 import RecipeDisplay from "@/features/RecipeDisplay/RecipeDisplay";
 import RecipeList from "@/features/RecipeList/RecipeList";
+import { RecipeWithId } from "@/lib/recipes/schemas";
 import { useState } from "react";
 
-import InventoryWrapper from "@/features/Inventory/components/InventoryWrapper";
-
 export default function Home() {
-  const [selectedRecipe, setSelectedRecipe] = useState<string>("");
+  const [selectedRecipe, setSelectedRecipe] = useState<RecipeWithId | null>(
+    null
+  );
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  const handleRecipeSelectFromDrawer = (recipe: string) => {
+  const handleRecipeSelectFromDrawer = (recipe: RecipeWithId) => {
     setSelectedRecipe(recipe);
     setIsDrawerOpen(false); // Close drawer when recipe is selected
   };
@@ -32,7 +34,7 @@ export default function Home() {
             {selectedRecipe ? (
               <RecipeDisplay
                 recipe={selectedRecipe}
-                exitRecipe={() => setSelectedRecipe("")}
+                exitRecipe={() => setSelectedRecipe(null)}
               />
             ) : (
               <ChatWrapper />
