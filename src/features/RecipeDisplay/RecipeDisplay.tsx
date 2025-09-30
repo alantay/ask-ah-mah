@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { RecipeWithId } from "@/lib/recipes/schemas";
 import { toast } from "sonner";
 import { Streamdown } from "streamdown";
 

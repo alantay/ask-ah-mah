@@ -44,7 +44,7 @@ export default function RecipeList({
   };
 
   return (
-    <Card className="shadow-none">
+    <Card className="shadow-none py-2 md:py-2">
       <CardContent>
         {isLoading && <div>Looking for recipes...</div>}
         {recipes?.length === 0 ? (
@@ -54,7 +54,10 @@ export default function RecipeList({
             {recipes?.map((recipe: RecipeWithId) => {
               const isOptimistic = isTempId(recipe.id);
               return (
-                <div key={recipe.id} className="w-full flex border-b py-2">
+                <div
+                  key={recipe.id}
+                  className="w-full flex border-b last:border-b-0 py-2"
+                >
                   <Button
                     variant="ghost"
                     className="flex-1 items-start text-wrap break-words whitespace-normal h-auto cursor-pointer rounded p-2 flex-col"

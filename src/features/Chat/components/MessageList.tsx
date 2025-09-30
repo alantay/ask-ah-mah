@@ -43,8 +43,7 @@ const saveRecipeCall = async (
   });
 
   if (!res.ok) throw new Error("Failed to save recipe");
-  const newRecipe = await res.json();
-  return newRecipe;
+  return await res.json();
 };
 export const MessageList = ({
   messages,
@@ -75,6 +74,8 @@ export const MessageList = ({
   };
 
   const saveRecipe = async (recipeStr: string, messageId: string) => {
+    console.log("saveRecipeCall");
+
     const name = extractRecipeName(recipeStr);
 
     try {
@@ -93,7 +94,10 @@ export const MessageList = ({
       // STEP 2: Immediately add the fake recipe to our list and show it on screen
       // The 'false' means don't refetch from server yet
       // User sees this instantly
-      mutate((current = []) => [...current, optimisticRecipe], false);
+      mutate((current = []) => [...current, optimisticRecipe], {
+        revalidate: false,
+        populateCache: true,
+      });
 
       // STEP 3: Actually save the recipe to the server
       // The server will return the real recipe with a real database ID
