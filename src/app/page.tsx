@@ -8,37 +8,23 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RecipeProvider, useRecipeContext } from "@/contexts/RecipeContext";
 import ChatWrapper from "@/features/Chat/components/ChatWrapper";
 import InventoryWrapper from "@/features/Inventory/components/InventoryWrapper";
 import RecipeDisplay from "@/features/RecipeDisplay/RecipeDisplay";
 import RecipeList from "@/features/RecipeList/RecipeList";
-import { RecipeWithId } from "@/lib/recipes/schemas";
 import { useState } from "react";
 
-export default function Home() {
-  const [selectedRecipe, setSelectedRecipe] = useState<RecipeWithId | null>(
-    null
-  );
+function HomeContent() {
+  const { selectedRecipe } = useRecipeContext();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-
-  const handleRecipeSelectFromDrawer = (recipe: RecipeWithId) => {
-    setSelectedRecipe(recipe);
-    setIsDrawerOpen(false); // Close drawer when recipe is selected
-  };
 
   return (
     <div className="bg-background">
       <main className="xl:container mx-auto h-[calc(100dvh-6rem)] sm:h-[calc(100dvh-6.5rem)]  md:h-[calc(100dvh-8rem)] ">
         <div className="flex gap-4 h-full">
           <section className="flex-7 min-w-0">
-            {selectedRecipe ? (
-              <RecipeDisplay
-                recipe={selectedRecipe}
-                exitRecipe={() => setSelectedRecipe(null)}
-              />
-            ) : (
-              <ChatWrapper />
-            )}
+            {selectedRecipe ? <RecipeDisplay /> : <ChatWrapper />}
           </section>
           <aside className="flex-3 min-w-0 pt-4 hidden lg:block lg:relative overflow-y-auto pr-4 mb-4 ">
             <Tabs defaultValue="inventory">
@@ -50,7 +36,7 @@ export default function Home() {
                 <InventoryWrapper />
               </TabsContent>
               <TabsContent value="recipe">
-                <RecipeList setSelectedRecipe={setSelectedRecipe} />
+                <RecipeList />
               </TabsContent>
             </Tabs>
           </aside>
@@ -96,9 +82,7 @@ export default function Home() {
                   <InventoryWrapper />
                 </TabsContent>
                 <TabsContent value="recipe">
-                  <RecipeList
-                    setSelectedRecipe={handleRecipeSelectFromDrawer}
-                  />
+                  <RecipeList />
                 </TabsContent>
               </Tabs>
             </div>
@@ -106,5 +90,13 @@ export default function Home() {
         </Drawer>
       </div>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <RecipeProvider>
+      <HomeContent />
+    </RecipeProvider>
   );
 }
