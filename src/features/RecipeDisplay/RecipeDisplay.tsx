@@ -1,20 +1,15 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { RecipeWithId } from "@/lib/recipes/schemas";
+import { useRecipeContext } from "@/contexts/RecipeContext";
 import { toast } from "sonner";
 import { Streamdown } from "streamdown";
 
-export default function RecipeDisplay({
-  recipe,
-  exitRecipe,
-}: {
-  recipe: RecipeWithId;
-  exitRecipe: () => void;
-  className?: string;
-}) {
+export default function RecipeDisplay() {
+  const { selectedRecipe, setSelectedRecipe, exitRecipe } = useRecipeContext();
+
   const copyRecipe = async () => {
     try {
-      await navigator.clipboard.writeText(recipe.instructions);
+      await navigator.clipboard.writeText(selectedRecipe?.instructions || "");
       toast.success("Recipe copied to clipboard!");
     } catch {
       toast.error("Failed to copy recipe");
@@ -66,16 +61,16 @@ export default function RecipeDisplay({
       </div>
 
       <div className="h-full overflow-y-auto pt-15 xl:pt-4 pb-10 px-4 ">
-        {recipe.tags && recipe.tags.length > 0 && (
+        {selectedRecipe?.tags && selectedRecipe.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
-            {recipe.tags.map((tag: string) => (
+            {selectedRecipe.tags.map((tag: string) => (
               <Badge key={tag} variant="secondary">
                 {tag}
               </Badge>
             ))}
           </div>
         )}
-        <Streamdown>{recipe.instructions}</Streamdown>
+        <Streamdown>{selectedRecipe?.instructions || ""}</Streamdown>
       </div>
     </div>
   );
