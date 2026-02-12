@@ -58,7 +58,7 @@ Ah Mah is your friendly cooking companion who:
 ### Backend & AI
 
 - **Vercel AI SDK** - Powerful AI integration with streaming
-- **Google Gemini Flash** - Smart, conversational AI
+- **OpenAI GPT-4.1 Mini** - Smart, conversational AI
 - **PostgreSQL** - Robust database with Prisma ORM
 - **SWR** - Efficient data fetching and caching
 
@@ -74,7 +74,7 @@ Ah Mah is your friendly cooking companion who:
 ### Prerequisites
 
 - Node.js 18+
-- A Google Gemini API key
+- An OpenAI API key
 - PostgreSQL database (local or hosted)
 
 ### Installation
@@ -101,7 +101,7 @@ Ah Mah is your friendly cooking companion who:
    Add your configuration to `.env.local`:
 
    ```
-   GOOGLE_GENERATIVE_AI_API_KEY=your_api_key_here
+   OPENAI_API_KEY=your_api_key_here
    DATABASE_URL=your_postgresql_connection_string
    ```
 
