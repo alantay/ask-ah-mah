@@ -8,7 +8,7 @@ import {
   RemoveInventoryItemSchemaObj,
 } from "@/lib/inventory/schemas";
 import { getMessages } from "@/lib/messages/messages";
-import { google } from "@ai-sdk/google";
+import { openai } from "@ai-sdk/openai";
 import {
   convertToModelMessages,
   stepCountIs,
@@ -24,7 +24,7 @@ export const CONTEXT_WINDOW = 15; // ai can only remember 15 messages for contex
 
 export async function POST(req: NextRequest) {
   try {
-    const model = google("gemini-2.5-flash");
+    const model = openai("gpt-4.1-mini");
     const { messages, userId }: { messages: UIMessage[]; userId: string } =
       await req.json();
     const previousMessages = await getMessages(userId);
@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
         {
           status: 503,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
       {
         status: 500,
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
   }
 }
