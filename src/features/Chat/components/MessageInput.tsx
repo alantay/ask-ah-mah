@@ -29,7 +29,9 @@ export const MessageInput = ({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           disabled={disabled}
-          placeholder="Ask Ah Mah a question..."
+          placeholder={
+            disabled ? `Sending your question...` : `Ask Ah Mah a question...`
+          }
           className="flex-1"
         />
         <Button

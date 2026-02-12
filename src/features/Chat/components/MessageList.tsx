@@ -74,8 +74,6 @@ export const MessageList = ({
   };
 
   const saveRecipe = async (recipeStr: string, messageId: string) => {
-    console.log("saveRecipeCall");
-
     const name = extractRecipeName(recipeStr);
 
     try {

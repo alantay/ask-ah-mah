@@ -48,3 +48,6 @@ next-env.d.ts
 *.sqlite3
 dev.db
 prod.db
+
+# Cursor IDE
+.cursor/

@@ -44,7 +44,6 @@ RECIPE FORMATTING - FOLLOW THIS EXACT STRUCTURE:
 - ONLY show ingredients actually needed for the recipe
 - DO NOT mention irrelevant inventory items
 - ALWAYS use **Instructions:** as a bold header  
-// (in src/app/api/chat/constants.ts, lines 47–63)
 
 - ALWAYS use proper markdown ordered lists with sequential numbering (1., 2., 3., 4., etc.) within each list or part.
 - NEVER start a new list at an arbitrary number like 3., 4., 5.; each list must begin at 1.
