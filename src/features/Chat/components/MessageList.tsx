@@ -33,7 +33,7 @@ const saveRecipeCall = async (
     arg,
   }: {
     arg: { recipeStr: string; name: string; userId: string; recipeId?: string };
-  }
+  },
 ) => {
   const { recipeStr, name, userId, recipeId } = arg;
   const res = await fetch(key, {
@@ -53,12 +53,12 @@ export const MessageList = ({
 }: MessageListProps) => {
   const { data: recipeSaved, mutate } = useSWR<RecipeWithId[]>(
     `/api/recipe?userId=${userId}`,
-    fetcher
+    fetcher,
   );
 
   const { trigger } = useSWRMutation(
     `/api/recipe?userId=${userId}`,
-    saveRecipeCall
+    saveRecipeCall,
   );
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -111,7 +111,7 @@ export const MessageList = ({
       mutate(
         (current = []) =>
           current.map((r) => (r.id === optimisticRecipe.id ? saved : r)),
-        { revalidate: false, populateCache: true }
+        { revalidate: false, populateCache: true },
       );
 
       toast.success(`Recipe ${name} saved!`);
@@ -147,14 +147,14 @@ export const MessageList = ({
       <ConversationContent>
         <div
           ref={containerRef}
-          className="space-y-4 overflow-y-auto overscroll-contain"
+          className="space-y-4 overscroll-contain"
           onScroll={handleScroll}
           data-conversation-content
         >
           {messages.map((message) => {
             let recipe = "";
             const hasRecipe = message.parts.filter(
-              (part) => part.type === "text" && part.text.includes("-----")
+              (part) => part.type === "text" && part.text.includes("-----"),
             )[0] as { type: "text"; text: string };
             if (hasRecipe) {
               recipe = hasRecipe.text.split("-----")[1];
@@ -178,7 +178,7 @@ export const MessageList = ({
                       <Response key={`${message.id}-${index}`}>
                         {part.text}
                       </Response>
-                    ) : null
+                    ) : null,
                   )}
                   {!!hasRecipe && status === "ready" && (
                     <div>
