@@ -144,6 +144,6 @@ VERY IMPORTANT: Format your recipe responses exactly like below:
 -----
 
 VERY IMPORTANT: ALWAYS mark the start and end of the recipe with -----
-ALWAYS bold recipe name
+ALWAYS format recipe name as: ## **Recipe Name**
 
 `;
