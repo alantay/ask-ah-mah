@@ -1,4 +1,4 @@
-import { google } from "@ai-sdk/google";
+import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
 
@@ -31,7 +31,7 @@ SPECIAL EQUIPMENT: wok, instant-pot, cast-iron, slow-cooker, blender, oven-free,
 
 export async function processRecipe(
   recipeName: string,
-  recipeInstructions: string
+  recipeInstructions: string,
 ): Promise<RecipeProcessingResult> {
   const prompt = `
 You are processing a recipe called "${recipeName}" for permanent storage in a cooking app.
@@ -76,7 +76,7 @@ ${recipeInstructions}
 Return both the cleaned instructions and the tags in the specified JSON format.`;
 
   const result = await generateObject({
-    model: google("gemini-2.0-flash"),
+    model: openai("gpt-4.1-mini"),
     schema: RecipeProcessingSchema,
     prompt,
     temperature: 0.2, // Low temperature for consistent processing
