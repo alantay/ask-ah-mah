@@ -73,39 +73,47 @@ export const MessageList = ({
       : "Untitled Recipe";
   };
 
-  const saveRecipe = async (recipeStr: string, messageId: string) => {
+  // Extract every recipe in a message. A recipe is a section between
+  // ----- delimiters that contains a markdown ## heading (the title).
+  const extractRecipes = (text: string): string[] => {
+    return text
+      .split(/^-{5,}$/m)
+      .map((part) => part.trim())
+      .filter((part) => /^##\s+/m.test(part));
+  };
+
+  const messageRecipes = (parts: { type: string; text?: string }[]): string[] =>
+    parts
+      .filter(
+        (p): p is { type: "text"; text: string } =>
+          p.type === "text" && typeof p.text === "string",
+      )
+      .flatMap((p) => extractRecipes(p.text));
+
+  const saveRecipe = async (recipeStr: string, recipeKey: string) => {
     const name = extractRecipeName(recipeStr);
 
     try {
-      // Manually handle the optimistic update
-
-      // STEP 1: Create a temporary recipe with a fake ID
-      // This is what we'll show the user immediately while we wait for the server
       const optimisticRecipe = {
         id: generateTempId(),
         userId,
         name,
         instructions: recipeStr,
-        recipeId: messageId,
+        recipeId: recipeKey,
         baseServings: 2,
         ingredients: [],
       };
 
-      // STEP 2: Immediately add the fake recipe to our list and show it on screen
-      // The 'false' means don't refetch from server yet
-      // User sees this instantly
       mutate((current = []) => [...current, optimisticRecipe], {
         revalidate: false,
         populateCache: true,
       });
 
-      // STEP 3: Actually save the recipe to the server
-      // The server will return the real recipe with a real database ID
       const saved = await trigger({
         recipeStr,
         name,
         userId,
-        recipeId: messageId,
+        recipeId: recipeKey,
       });
 
       // STEP 4: Find our fake recipe and replace it with the real one from the server
@@ -154,16 +162,7 @@ export const MessageList = ({
           data-conversation-content
         >
           {messages.map((message) => {
-            let recipe = "";
-            const hasRecipe = message.parts.filter(
-              (part) => part.type === "text" && part.text.includes("-----"),
-            )[0] as { type: "text"; text: string };
-            if (hasRecipe) {
-              recipe = hasRecipe.text.split("-----")[1];
-            }
-            // Use message ID as the unique identifier for recipe comparison
-            const isRecipeSaved =
-              recipeSaved?.some((r) => r.recipeId === message.id) ?? false;
+            const recipes = messageRecipes(message.parts);
             return (
               <Message
                 key={message.id}
@@ -182,43 +181,54 @@ export const MessageList = ({
                       </Response>
                     ) : null,
                   )}
-                  {!!hasRecipe && status === "ready" && (
-                    <div>
-                      <Button
-                        className="cursor-pointer my-2"
-                        onClick={() =>
-                          !!isRecipeSaved || saveRecipe(recipe, message.id)
-                        }
-                      >
-                        {isRecipeSaved ? (
-                          <svg
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
+                  {recipes.length > 0 && status === "ready" && (
+                    <div className="flex flex-wrap gap-2">
+                      {recipes.map((recipeStr, idx) => {
+                        const recipeKey = `${message.id}-${idx}`;
+                        const recipeName = extractRecipeName(recipeStr);
+                        const saved =
+                          recipeSaved?.some(
+                            (r) => r.recipeId === recipeKey,
+                          ) ?? false;
+                        return (
+                          <Button
+                            key={recipeKey}
+                            className="cursor-pointer my-2"
+                            onClick={() =>
+                              saved || saveRecipe(recipeStr, recipeKey)
+                            }
                           >
-                            <path
-                              d="M5 21V5C5 4.45 5.196 3.97933 5.588 3.588C5.98 3.19667 6.45067 3.00067 7 3H17C17.55 3 18.021 3.196 18.413 3.588C18.805 3.98 19.0007 4.45067 19 5V21L12 18L5 21Z"
-                              fill="currentColor"
-                            />
-                          </svg>
-                        ) : (
-                          <svg
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path
-                              d="M17 18L12 15.82L7 18V5H17M17 3H7C6.46957 3 5.96086 3.21071 5.58579 3.58579C5.21071 3.96086 5 4.46957 5 5V21L12 18L19 21V5C19 4.46957 18.7893 3.96086 18.4142 3.58579C18.0391 3.21071 17.5304 3 17 3Z"
-                              fill="currentColor"
-                            />
-                          </svg>
-                        )}
-                        {isRecipeSaved ? "Saved Recipe" : "Save Recipe"}
-                      </Button>
+                            {saved ? (
+                              <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M5 21V5C5 4.45 5.196 3.97933 5.588 3.588C5.98 3.19667 6.45067 3.00067 7 3H17C17.55 3 18.021 3.196 18.413 3.588C18.805 3.98 19.0007 4.45067 19 5V21L12 18L5 21Z"
+                                  fill="currentColor"
+                                />
+                              </svg>
+                            ) : (
+                              <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M17 18L12 15.82L7 18V5H17M17 3H7C6.46957 3 5.96086 3.21071 5.58579 3.58579C5.21071 3.96086 5 4.46957 5 5V21L12 18L19 21V5C19 4.46957 18.7893 3.96086 18.4142 3.58579C18.0391 3.21071 17.5304 3 17 3Z"
+                                  fill="currentColor"
+                                />
+                              </svg>
+                            )}
+                            {saved ? "Saved" : "Save"}: {recipeName}
+                          </Button>
+                        );
+                      })}
                     </div>
                   )}
                   {status === "streaming" &&
