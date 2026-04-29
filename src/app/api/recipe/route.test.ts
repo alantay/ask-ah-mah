@@ -21,9 +21,23 @@ jest.mock("@/lib/recipes", () => ({
   saveRecipe: jest.fn(),
 }));
 
+jest.mock("@/lib/recipes/recipeProcessor", () => ({
+  processRecipe: jest.fn(),
+}));
+
+import { processRecipe } from "@/lib/recipes/recipeProcessor";
+
 const mockedDeleteRecipe = jest.mocked(deleteRecipe);
 const mockedGetRecipes = jest.mocked(getRecipes);
 const mockedSaveRecipe = jest.mocked(saveRecipe);
+const mockedProcessRecipe = jest.mocked(processRecipe);
+
+const defaultProcessed = {
+  cleanedInstructions: "",
+  tags: [] as string[],
+  baseServings: 2,
+  ingredients: [] as { name: string; amount?: number; unit?: string }[],
+};
 
 // Helper to create mock NextRequest
 const createMockRequest = (url: string, options: RequestInit = {}) => {
@@ -60,12 +74,20 @@ describe("Recipe API Routes", () => {
           userId: "user-123",
           name: "Scrambled Eggs",
           instructions: "Beat eggs, cook in pan with butter.",
+          tags: [],
+          recipeId: null,
+          baseServings: 2,
+          ingredients: [],
         },
         {
           id: "recipe-2",
           userId: "user-123",
           name: "Toast",
           instructions: "Put bread in toaster, wait for golden brown.",
+          tags: [],
+          recipeId: null,
+          baseServings: 2,
+          ingredients: [],
         },
       ];
 
@@ -138,6 +160,10 @@ describe("Recipe API Routes", () => {
           userId: "user-123",
           name: "Test Recipe",
           instructions: "Test instructions",
+          tags: [],
+          recipeId: null,
+          baseServings: 2,
+          ingredients: [],
         },
       ];
 
@@ -162,8 +188,17 @@ describe("Recipe API Routes", () => {
         userId: "user-123",
         name: "Scrambled Eggs",
         instructions: "Beat eggs, cook in pan with butter.",
+        tags: ["breakfast"],
+        recipeId: null,
+        baseServings: 2,
+        ingredients: [],
       };
 
+      mockedProcessRecipe.mockResolvedValue({
+        ...defaultProcessed,
+        cleanedInstructions: "Beat eggs, cook in pan with butter.",
+        tags: ["breakfast"],
+      });
       mockedSaveRecipe.mockResolvedValue(savedRecipe);
 
       const requestBody = {
@@ -187,6 +222,10 @@ describe("Recipe API Routes", () => {
         userId: "user-123",
         name: "Scrambled Eggs",
         instructions: "Beat eggs, cook in pan with butter.",
+        tags: ["breakfast"],
+        recipeId: undefined,
+        baseServings: 2,
+        ingredients: [],
       });
       expect(mockedSaveRecipe).toHaveBeenCalledTimes(1);
     });
@@ -195,10 +234,15 @@ describe("Recipe API Routes", () => {
       const savedRecipe = {
         id: "recipe-minimal",
         userId: "user-123",
-        name: undefined,
-        instructions: undefined,
+        name: "" as string,
+        instructions: "",
+        tags: [] as string[],
+        recipeId: null,
+        baseServings: 2,
+        ingredients: [],
       };
 
+      mockedProcessRecipe.mockResolvedValue(defaultProcessed);
       mockedSaveRecipe.mockResolvedValue(savedRecipe);
 
       const requestBody = {
@@ -219,7 +263,11 @@ describe("Recipe API Routes", () => {
       expect(mockedSaveRecipe).toHaveBeenCalledWith({
         userId: "user-123",
         name: undefined,
-        instructions: undefined,
+        instructions: "",
+        tags: [],
+        recipeId: undefined,
+        baseServings: 2,
+        ingredients: [],
       });
     });
 
@@ -271,8 +319,16 @@ describe("Recipe API Routes", () => {
         userId: "user-123",
         name: "Complex Recipe",
         instructions: longInstructions,
+        tags: [] as string[],
+        recipeId: null,
+        baseServings: 2,
+        ingredients: [],
       };
 
+      mockedProcessRecipe.mockResolvedValue({
+        ...defaultProcessed,
+        cleanedInstructions: longInstructions,
+      });
       mockedSaveRecipe.mockResolvedValue(savedRecipe);
 
       const requestBody = {
@@ -292,7 +348,15 @@ describe("Recipe API Routes", () => {
 
       expect(response.status).toBe(200);
       expect(data).toEqual(savedRecipe);
-      expect(mockedSaveRecipe).toHaveBeenCalledWith(requestBody);
+      expect(mockedSaveRecipe).toHaveBeenCalledWith({
+        userId: "user-123",
+        name: "Complex Recipe",
+        instructions: longInstructions,
+        tags: [],
+        recipeId: undefined,
+        baseServings: 2,
+        ingredients: [],
+      });
     });
 
     it("should handle special characters in recipe", async () => {
@@ -305,8 +369,16 @@ describe("Recipe API Routes", () => {
       const savedRecipe = {
         id: "recipe-special",
         ...specialRecipe,
+        tags: [] as string[],
+        recipeId: null,
+        baseServings: 2,
+        ingredients: [],
       };
 
+      mockedProcessRecipe.mockResolvedValue({
+        ...defaultProcessed,
+        cleanedInstructions: specialRecipe.instructions,
+      });
       mockedSaveRecipe.mockResolvedValue(savedRecipe);
 
       const request = createMockRequest("http://localhost:3000/api/recipe", {
@@ -320,10 +392,20 @@ describe("Recipe API Routes", () => {
 
       expect(response.status).toBe(200);
       expect(data).toEqual(savedRecipe);
-      expect(mockedSaveRecipe).toHaveBeenCalledWith(specialRecipe);
+      expect(mockedSaveRecipe).toHaveBeenCalledWith({
+        ...specialRecipe,
+        tags: [],
+        recipeId: undefined,
+        baseServings: 2,
+        ingredients: [],
+      });
     });
 
     it("should handle database errors during save", async () => {
+      mockedProcessRecipe.mockResolvedValue({
+        ...defaultProcessed,
+        cleanedInstructions: "Test instructions",
+      });
       mockedSaveRecipe.mockRejectedValue(new Error("Database error"));
 
       const requestBody = {
@@ -340,7 +422,15 @@ describe("Recipe API Routes", () => {
 
       // The route doesn't have try-catch, so this will throw
       await expect(POST(request)).rejects.toThrow("Database error");
-      expect(mockedSaveRecipe).toHaveBeenCalledWith(requestBody);
+      expect(mockedSaveRecipe).toHaveBeenCalledWith({
+        userId: "user-123",
+        name: "Test Recipe",
+        instructions: "Test instructions",
+        tags: [],
+        recipeId: undefined,
+        baseServings: 2,
+        ingredients: [],
+      });
     });
 
     it("should handle malformed JSON", async () => {

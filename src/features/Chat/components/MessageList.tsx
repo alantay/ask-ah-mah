@@ -87,6 +87,8 @@ export const MessageList = ({
         name,
         instructions: recipeStr,
         recipeId: messageId,
+        baseServings: 2,
+        ingredients: [],
       };
 
       // STEP 2: Immediately add the fake recipe to our list and show it on screen
