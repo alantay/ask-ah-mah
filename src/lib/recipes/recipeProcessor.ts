@@ -2,12 +2,41 @@ import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
 
-// Define the schema for both cleaned recipe and tags
+// Define the schema for cleaned recipe, tags, and structured fields
 const RecipeProcessingSchema = z.object({
   cleanedInstructions: z
     .string()
     .describe("Cleaned and formatted recipe instructions"),
   tags: z.array(z.string()).describe("Array of relevant recipe tags"),
+  baseServings: z
+    .number()
+    .int()
+    .positive()
+    .describe(
+      "How many servings the recipe yields as written. If unstated, infer a sensible default (typically 2-4).",
+    ),
+  ingredients: z
+    .array(
+      z.object({
+        name: z.string().describe("Ingredient name, e.g., 'chicken breast'"),
+        amount: z
+          .number()
+          .positive()
+          .optional()
+          .describe(
+            "Numeric amount if stated. Omit for non-quantified ingredients (e.g., 'salt to taste').",
+          ),
+        unit: z
+          .string()
+          .optional()
+          .describe(
+            "Unit string matching the recipe text (e.g., 'g', 'tbsp', 'cup', 'piece'). Omit if amount is omitted.",
+          ),
+      }),
+    )
+    .describe(
+      "Structured ingredient list extracted from the recipe. Use the exact unit strings the recipe uses so the app can compute shortfalls against inventory.",
+    ),
 });
 
 export type RecipeProcessingResult = z.infer<typeof RecipeProcessingSchema>;
@@ -43,10 +72,12 @@ RECIPE CONTEXT:
 // …possibly more lines…
 - The recipe will be saved, shared, and referenced later by users
 // …subsequent code…
-You need to do TWO tasks for this recipe:
+You need to do FOUR tasks for this recipe:
 
 1. CLEAN the recipe instructions for permanent storage
 2. GENERATE 3-8 relevant tags
+3. EXTRACT baseServings — the number of servings the recipe yields as written (infer a sensible default like 2 or 4 if unstated)
+4. EXTRACT ingredients — a structured list of every ingredient with name, optional amount, and optional unit. Use the exact unit strings the recipe uses. Omit amount/unit for non-quantified items like "salt to taste" or "a pinch of pepper".
 
 CLEANING RULES:
 - Remove UI-specific symbols like ✅ (checkmarks) and 🛒 (shopping cart icons)
@@ -73,7 +104,7 @@ RECIPE NAME: ${recipeName}
 RECIPE INSTRUCTIONS TO PROCESS:
 ${recipeInstructions}
 
-Return both the cleaned instructions and the tags in the specified JSON format.`;
+Return the cleaned instructions, tags, baseServings, and ingredients in the specified JSON format.`;
 
   const result = await generateObject({
     model: openai("gpt-4.1-mini"),

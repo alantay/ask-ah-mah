@@ -43,8 +43,9 @@ export async function addInventoryItem(
       await prisma.inventoryItem.update({
         where: { id: existingItem.id },
         data: {
-          quantity: item?.quantity || 1,
-          unit: item.unit,
+          quantity: item.quantity ?? null,
+          unit: item.unit ?? null,
+          shelfLife: item.shelfLife,
           lastUpdated: nowIso,
         },
       });
@@ -53,8 +54,9 @@ export async function addInventoryItem(
         data: {
           name: item.name,
           type: item.type,
-          quantity: item?.quantity || 1,
-          unit: item.unit,
+          quantity: item.quantity ?? null,
+          unit: item.unit ?? null,
+          shelfLife: item.shelfLife,
           dateAdded: nowIso,
           lastUpdated: nowIso,
           userId,

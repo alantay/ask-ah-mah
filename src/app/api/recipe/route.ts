@@ -17,8 +17,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "userId is needed" }, { status: 400 });
   }
 
-  // Process recipe: clean instructions and generate AI-powered tags in one call
-  const { cleanedInstructions, tags } = await processRecipe(name, instructions);
+  // Process recipe: clean instructions, generate tags, extract baseServings + structured ingredients
+  const { cleanedInstructions, tags, baseServings, ingredients } =
+    await processRecipe(name, instructions);
 
   const recipe = await saveRecipe({
     userId,
@@ -26,6 +27,8 @@ export async function POST(req: NextRequest) {
     instructions: cleanedInstructions,
     tags,
     recipeId,
+    baseServings,
+    ingredients,
   });
 
   return NextResponse.json(recipe);

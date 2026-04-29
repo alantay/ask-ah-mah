@@ -20,7 +20,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { CHAT_SYSTEM_PROMPT } from "./constants";
 
-export const CONTEXT_WINDOW = 15; // ai can only remember 15 messages for context
+const CONTEXT_WINDOW = 15; // ai can only remember 15 messages for context
 
 export async function POST(req: NextRequest) {
   try {
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
       stopWhen: stepCountIs(5),
       tools: {
         addInventoryItem: {
-          description: `Add items to the user's inventory. Required: name (string) and type ("ingredient" or "kitchenware"). Optional: quantity (number) and unit (string).`,
+          description: `Add items to the user's inventory. Required: name (string), type ("ingredient" or "kitchenware"), and shelfLife ("short" | "medium" | "long" — infer from the item: leafy greens/seafood/dairy = short; meat/most produce = medium; oils/dry goods/spices/kitchenware = long). Optional: quantity (number) and unit (string) — only set quantity if the user explicitly states one.`,
           inputSchema: AddInventoryItemSchemaObj,
           execute: async ({ items }) => {
             await addInventoryItem(items, userId);

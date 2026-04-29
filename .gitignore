@@ -51,3 +51,8 @@ prod.db
 
 # Cursor IDE
 .cursor/
+
+# Claude Code local tooling
+.claude/
+.agents/
+skills-lock.json

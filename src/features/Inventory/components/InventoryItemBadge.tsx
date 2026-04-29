@@ -11,7 +11,14 @@ export const InventoryItemBadge = ({
   onRemove,
 }: InventoryItemBadgeProps) => {
   return (
-    <Badge key={item.id} variant="outline" className="relative pr-8 py-2">
+    <Badge key={item.id} variant="outline" className="relative pr-8 pl-3 py-2">
+      {item.shelfLife === "short" && (
+        <span
+          aria-label="Short shelf life"
+          title="Short shelf life — use soon"
+          className="mr-1.5 inline-block h-2 w-2 rounded-full bg-amber-500"
+        />
+      )}
       {item.name}
       {item.quantity &&
         item.quantity > 1 &&

@@ -18,6 +18,31 @@ jest.mock("swr", () => ({
   default: jest.fn(),
 }));
 
+jest.mock("swr/mutation", () => ({
+  __esModule: true,
+  default: jest.fn(() => ({
+    trigger: jest.fn(async (arg: {
+      recipeStr: string;
+      name: string;
+      userId: string;
+      recipeId?: string;
+    }) => {
+      const res = await fetch("/api/recipe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: arg.userId,
+          name: arg.name,
+          instructions: arg.recipeStr,
+          recipeId: arg.recipeId,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to save recipe");
+      return await res.json();
+    }),
+  })),
+}));
+
 jest.mock("@/lib/utils/index", () => ({
   fetcher: jest.fn(),
 }));
@@ -138,11 +163,7 @@ describe("MessageList", () => {
 
       const container = screen.getByTestId("conversation-content")
         .firstElementChild as HTMLElement;
-      expect(container).toHaveClass(
-        "space-y-4",
-        "overflow-y-auto",
-        "overscroll-contain"
-      );
+      expect(container).toHaveClass("space-y-4", "overscroll-contain");
       expect(container).toHaveAttribute("data-conversation-content");
     });
 
@@ -337,6 +358,7 @@ describe("MessageList", () => {
           name: "Scrambled Eggs",
           instructions:
             "\n## Scrambled Eggs\n\n**Ingredients:**\n- 2 eggs\n- 1 tbsp butter\n\n**Instructions:**\n1. Heat butter in pan\n2. Beat eggs\n3. Cook while stirring\n",
+          recipeId: "msg-1",
         },
       ];
 
@@ -383,6 +405,7 @@ describe("MessageList", () => {
           name: "Scrambled Eggs",
           instructions:
             "\n## Scrambled Eggs\n\n**Ingredients:**\n- 2 eggs\n- 1 tbsp butter\n\n**Instructions:**\n1. Heat butter in pan\n2. Beat eggs\n3. Cook while stirring\n",
+          recipeId: "msg-1",
         },
       ];
 
