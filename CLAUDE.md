@@ -52,6 +52,13 @@ Next.js 15 App Router + React 19 + Vercel AI SDK chat app ("Ask Ah Mah") that tu
 
 **Keep `docs/progress.md` in sync with reality.** Whenever a meaningful change ships (a feature lands, a V2 item moves, a design call is made and the rationale matters later), update the relevant section in the same change. Move items between V1 / V2 / V3+ as scope shifts; add a Decisions log entry when you choose between alternatives and the *why* would be useful 3 months from now. Skip for trivial work (typo fixes, formatting). The goal: a fresh reader can understand project state from `docs/progress.md` alone, without needing to read git history.
 
+### Working with git
+
+- **Suggest commit points** when a logical chunk of work is complete — a feature ships, a fix is verified with tests passing, a refactor finishes. Don't auto-commit; nudge the user ("Good moment to commit and push?") so they can decide.
+- **Check the branch fits the work** before starting something meaningful. If we're on a branch that was scoped to feature X and the user pivots to feature Y, suggest creating a new branch (`feat/<name>`, `fix/<name>`, `chore/<name>`). Don't pile unrelated work onto an open PR's branch.
+- **Never push to `main` directly.** Always go through a feature branch and a PR.
+- The user types terminal commands themselves where practical; surface the commands rather than running them silently when the action is meaningful (branch creation, push, force-push).
+
 ### Testing
 
 - Jest + Testing Library, `jsdom` env, set up via `next/jest`. Setup file: `jest.setup.ts`. Tests live next to source (`*.test.ts(x)`) and under `src/__tests__/`.
