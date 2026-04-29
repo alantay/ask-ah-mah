@@ -33,7 +33,6 @@ const mockedSaveRecipe = jest.mocked(saveRecipe);
 const mockedProcessRecipe = jest.mocked(processRecipe);
 
 const defaultProcessed = {
-  cleanedInstructions: "",
   tags: [] as string[],
   baseServings: 2,
   ingredients: [] as { name: string; amount?: number; unit?: string }[],
@@ -196,7 +195,6 @@ describe("Recipe API Routes", () => {
 
       mockedProcessRecipe.mockResolvedValue({
         ...defaultProcessed,
-        cleanedInstructions: "Beat eggs, cook in pan with butter.",
         tags: ["breakfast"],
       });
       mockedSaveRecipe.mockResolvedValue(savedRecipe);
@@ -263,7 +261,7 @@ describe("Recipe API Routes", () => {
       expect(mockedSaveRecipe).toHaveBeenCalledWith({
         userId: "user-123",
         name: undefined,
-        instructions: "",
+        instructions: undefined,
         tags: [],
         recipeId: undefined,
         baseServings: 2,
@@ -325,10 +323,7 @@ describe("Recipe API Routes", () => {
         ingredients: [],
       };
 
-      mockedProcessRecipe.mockResolvedValue({
-        ...defaultProcessed,
-        cleanedInstructions: longInstructions,
-      });
+      mockedProcessRecipe.mockResolvedValue(defaultProcessed);
       mockedSaveRecipe.mockResolvedValue(savedRecipe);
 
       const requestBody = {
@@ -375,10 +370,7 @@ describe("Recipe API Routes", () => {
         ingredients: [],
       };
 
-      mockedProcessRecipe.mockResolvedValue({
-        ...defaultProcessed,
-        cleanedInstructions: specialRecipe.instructions,
-      });
+      mockedProcessRecipe.mockResolvedValue(defaultProcessed);
       mockedSaveRecipe.mockResolvedValue(savedRecipe);
 
       const request = createMockRequest("http://localhost:3000/api/recipe", {
@@ -402,10 +394,7 @@ describe("Recipe API Routes", () => {
     });
 
     it("should handle database errors during save", async () => {
-      mockedProcessRecipe.mockResolvedValue({
-        ...defaultProcessed,
-        cleanedInstructions: "Test instructions",
-      });
+      mockedProcessRecipe.mockResolvedValue(defaultProcessed);
       mockedSaveRecipe.mockRejectedValue(new Error("Database error"));
 
       const requestBody = {

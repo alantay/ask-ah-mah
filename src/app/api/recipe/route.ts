@@ -17,30 +17,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "userId is needed" }, { status: 400 });
   }
 
-  // Process recipe: clean instructions, generate tags, extract baseServings + structured ingredients.
-  // If the model returns garbage and validation fails entirely, save the raw recipe in degraded
-  // form rather than losing the user's work — they can still read it; stepper just won't render.
-  let processed;
+  // Extract metadata (tags, baseServings, ingredients). If the model fails,
+  // save with empty metadata — the recipe text itself is the user's actual work.
+  let metadata;
   try {
-    processed = await processRecipe(name, instructions);
+    metadata = await processRecipe(name, instructions);
   } catch (error) {
-    console.error("processRecipe failed, saving raw recipe:", error);
-    processed = {
-      cleanedInstructions: instructions,
-      tags: [],
-      baseServings: 2,
-      ingredients: [],
-    };
+    console.error("processRecipe failed, saving without metadata:", error);
+    metadata = { tags: [], baseServings: 2, ingredients: [] };
   }
 
   const recipe = await saveRecipe({
     userId,
     name,
-    instructions: processed.cleanedInstructions,
-    tags: processed.tags,
+    instructions,
+    tags: metadata.tags,
     recipeId,
-    baseServings: processed.baseServings,
-    ingredients: processed.ingredients,
+    baseServings: metadata.baseServings,
+    ingredients: metadata.ingredients,
   });
 
   return NextResponse.json(recipe);
