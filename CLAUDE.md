@@ -41,16 +41,14 @@ Next.js 15 App Router + React 19 + Vercel AI SDK chat app ("Ask Ah Mah") that tu
 
 - Conventional commits required: `type(scope): description` (feat, fix, docs, style, refactor, test, chore).
 - Folder names kebab-case, component files PascalCase, utility files camelCase.
-- API routes are organized per-feature under `src/app/api/<feature>/route.ts`.
+- API routes per-feature under `src/app/api/<feature>/route.ts`.
+- Imports: relative within the same feature; absolute (`@/...`) for cross-feature; prefer feature barrel exports (`index.ts`).
+- Shared/reusable components live in `src/features/shared/components/`; shadcn primitives stay in `src/components/ui/`.
 
-### Project rules — read these
+### Project docs
 
-Authoritative rules live under `docs/`:
-
-- `docs/git.md` — commit message format.
-- `docs/folder-structure.md` — feature-based layout, naming, import rules.
-- `docs/pairing.md` — collaboration preferences (e.g., user types terminal commands themselves; ask before write operations).
 - `docs/prd.md` — product requirements / vision.
+- `docs/progress.md` — what's shipped, what's next, decisions log.
 
 ### Testing
 
