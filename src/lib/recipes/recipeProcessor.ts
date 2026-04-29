@@ -2,16 +2,23 @@ import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
 
-// Define the schema for cleaned recipe, tags, and structured fields
+// Define the schema for cleaned recipe, tags, and structured fields.
+// baseServings and ingredients are lenient (default to safe values) so a
+// partial model response still validates and the recipe still saves —
+// the structured stepper hides itself when ingredients is empty.
 const RecipeProcessingSchema = z.object({
   cleanedInstructions: z
     .string()
     .describe("Cleaned and formatted recipe instructions"),
-  tags: z.array(z.string()).describe("Array of relevant recipe tags"),
+  tags: z
+    .array(z.string())
+    .default([])
+    .describe("Array of relevant recipe tags"),
   baseServings: z
     .number()
     .int()
     .positive()
+    .default(2)
     .describe(
       "How many servings the recipe yields as written. If unstated, infer a sensible default (typically 2-4).",
     ),
@@ -34,6 +41,7 @@ const RecipeProcessingSchema = z.object({
           ),
       }),
     )
+    .default([])
     .describe(
       "Structured ingredient list extracted from the recipe. Use the exact unit strings the recipe uses so the app can compute shortfalls against inventory.",
     ),

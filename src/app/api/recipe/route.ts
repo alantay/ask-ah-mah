@@ -17,18 +17,30 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "userId is needed" }, { status: 400 });
   }
 
-  // Process recipe: clean instructions, generate tags, extract baseServings + structured ingredients
-  const { cleanedInstructions, tags, baseServings, ingredients } =
-    await processRecipe(name, instructions);
+  // Process recipe: clean instructions, generate tags, extract baseServings + structured ingredients.
+  // If the model returns garbage and validation fails entirely, save the raw recipe in degraded
+  // form rather than losing the user's work — they can still read it; stepper just won't render.
+  let processed;
+  try {
+    processed = await processRecipe(name, instructions);
+  } catch (error) {
+    console.error("processRecipe failed, saving raw recipe:", error);
+    processed = {
+      cleanedInstructions: instructions,
+      tags: [],
+      baseServings: 2,
+      ingredients: [],
+    };
+  }
 
   const recipe = await saveRecipe({
     userId,
     name,
-    instructions: cleanedInstructions,
-    tags,
+    instructions: processed.cleanedInstructions,
+    tags: processed.tags,
     recipeId,
-    baseServings,
-    ingredients,
+    baseServings: processed.baseServings,
+    ingredients: processed.ingredients,
   });
 
   return NextResponse.json(recipe);
