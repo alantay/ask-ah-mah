@@ -17,18 +17,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "userId is needed" }, { status: 400 });
   }
 
-  // Process recipe: clean instructions, generate tags, extract baseServings + structured ingredients
-  const { cleanedInstructions, tags, baseServings, ingredients } =
-    await processRecipe(name, instructions);
+  // Extract metadata (tags, baseServings, ingredients). If the model fails,
+  // save with empty metadata — the recipe text itself is the user's actual work.
+  let metadata;
+  try {
+    metadata = await processRecipe(name, instructions);
+  } catch (error) {
+    console.error("processRecipe failed, saving without metadata:", error);
+    metadata = { tags: [], baseServings: 2, ingredients: [] };
+  }
 
   const recipe = await saveRecipe({
     userId,
     name,
-    instructions: cleanedInstructions,
-    tags,
+    instructions,
+    tags: metadata.tags,
     recipeId,
-    baseServings,
-    ingredients,
+    baseServings: metadata.baseServings,
+    ingredients: metadata.ingredients,
   });
 
   return NextResponse.json(recipe);

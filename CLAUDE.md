@@ -41,16 +41,23 @@ Next.js 15 App Router + React 19 + Vercel AI SDK chat app ("Ask Ah Mah") that tu
 
 - Conventional commits required: `type(scope): description` (feat, fix, docs, style, refactor, test, chore).
 - Folder names kebab-case, component files PascalCase, utility files camelCase.
-- API routes are organized per-feature under `src/app/api/<feature>/route.ts`.
+- API routes per-feature under `src/app/api/<feature>/route.ts`.
+- Imports: relative within the same feature; absolute (`@/...`) for cross-feature; prefer feature barrel exports (`index.ts`).
+- Shared/reusable components live in `src/features/shared/components/`; shadcn primitives stay in `src/components/ui/`.
 
-### Project rules — read these
+### Project docs
 
-Authoritative rules live under `docs/`:
-
-- `docs/git.md` — commit message format.
-- `docs/folder-structure.md` — feature-based layout, naming, import rules.
-- `docs/pairing.md` — collaboration preferences (e.g., user types terminal commands themselves; ask before write operations).
 - `docs/prd.md` — product requirements / vision.
+- `docs/progress.md` — what's shipped, what's next, decisions log.
+
+**Keep `docs/progress.md` in sync with reality.** Whenever a meaningful change ships (a feature lands, a V2 item moves, a design call is made and the rationale matters later), update the relevant section in the same change. Move items between V1 / V2 / V3+ as scope shifts; add a Decisions log entry when you choose between alternatives and the *why* would be useful 3 months from now. Skip for trivial work (typo fixes, formatting). The goal: a fresh reader can understand project state from `docs/progress.md` alone, without needing to read git history.
+
+### Working with git
+
+- **Suggest commit points** when a logical chunk of work is complete — a feature ships, a fix is verified with tests passing, a refactor finishes. Don't auto-commit; nudge the user ("Good moment to commit and push?") so they can decide.
+- **Check the branch fits the work** before starting something meaningful. If we're on a branch that was scoped to feature X and the user pivots to feature Y, suggest creating a new branch (`feat/<name>`, `fix/<name>`, `chore/<name>`). Don't pile unrelated work onto an open PR's branch.
+- **Never push to `main` directly.** Always go through a feature branch and a PR.
+- The user types terminal commands themselves where practical; surface the commands rather than running them silently when the action is meaningful (branch creation, push, force-push).
 
 ### Testing
 

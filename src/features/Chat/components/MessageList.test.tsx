@@ -281,7 +281,7 @@ describe("MessageList", () => {
 
       // Recipe should be detected and save button should appear
       expect(screen.getByTestId("button")).toBeInTheDocument();
-      expect(screen.getByText("Save Recipe")).toBeInTheDocument();
+      expect(screen.getByText(/^Save:/)).toBeInTheDocument();
     });
 
     it("should not show save button when streaming", () => {
@@ -305,7 +305,7 @@ describe("MessageList", () => {
 
       render(<MessageList {...defaultProps} messages={[recipeMessage]} />);
 
-      const saveButton = screen.getByText("Save Recipe");
+      const saveButton = screen.getByText(/^Save:/);
       await user.click(saveButton);
 
       // Wait for the async operation to complete
@@ -321,33 +321,24 @@ describe("MessageList", () => {
       });
     });
 
-    it("should handle recipe without name", () => {
-      const recipeWithoutName = createMockMessage({
+    it("should render two save buttons when a message contains two recipes", () => {
+      const twoRecipes = createMockMessage({
         role: "assistant",
         parts: [
           {
             type: "text",
-            text: "Here's a recipe:\n-----\n**Ingredients:**\n- 2 eggs\n-----",
+            text:
+              "Two ideas:\n-----\n## **Sambal Belacan**\nspicy paste\n-----\nAnd:\n-----\n## **Simple Guacamole**\ncreamy dip\n-----\nEnjoy!",
           },
         ],
       });
 
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({ id: "recipe-1", name: "Untitled Recipe" }),
-      } as Response);
+      render(<MessageList {...defaultProps} messages={[twoRecipes]} />);
 
-      render(<MessageList {...defaultProps} messages={[recipeWithoutName]} />);
-
-      const saveButton = screen.getByText("Save Recipe");
-      fireEvent.click(saveButton);
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        "/api/recipe",
-        expect.objectContaining({
-          body: expect.stringContaining('"name":"Untitled Recipe"'),
-        })
-      );
+      const buttons = screen.getAllByText(/^Save:/);
+      expect(buttons).toHaveLength(2);
+      expect(buttons[0]).toHaveTextContent("Sambal Belacan");
+      expect(buttons[1]).toHaveTextContent("Simple Guacamole");
     });
 
     it("should show saved state for already saved recipes", () => {
@@ -358,7 +349,7 @@ describe("MessageList", () => {
           name: "Scrambled Eggs",
           instructions:
             "\n## Scrambled Eggs\n\n**Ingredients:**\n- 2 eggs\n- 1 tbsp butter\n\n**Instructions:**\n1. Heat butter in pan\n2. Beat eggs\n3. Cook while stirring\n",
-          recipeId: "msg-1",
+          recipeId: "msg-1-0",
         },
       ];
 
@@ -372,8 +363,8 @@ describe("MessageList", () => {
 
       render(<MessageList {...defaultProps} messages={[recipeMessage]} />);
 
-      expect(screen.getByText("Saved Recipe")).toBeInTheDocument();
-      expect(screen.queryByText("Save Recipe")).not.toBeInTheDocument();
+      expect(screen.getByText(/^Saved:/)).toBeInTheDocument();
+      expect(screen.queryByText(/^Save:/)).not.toBeInTheDocument();
     });
 
     it("should handle save recipe success", async () => {
@@ -384,7 +375,7 @@ describe("MessageList", () => {
 
       render(<MessageList {...defaultProps} messages={[recipeMessage]} />);
 
-      const saveButton = screen.getByText("Save Recipe");
+      const saveButton = screen.getByText(/^Save:/);
       await user.click(saveButton);
 
       await waitFor(() => {
@@ -405,7 +396,7 @@ describe("MessageList", () => {
           name: "Scrambled Eggs",
           instructions:
             "\n## Scrambled Eggs\n\n**Ingredients:**\n- 2 eggs\n- 1 tbsp butter\n\n**Instructions:**\n1. Heat butter in pan\n2. Beat eggs\n3. Cook while stirring\n",
-          recipeId: "msg-1",
+          recipeId: "msg-1-0",
         },
       ];
 
@@ -419,7 +410,7 @@ describe("MessageList", () => {
 
       render(<MessageList {...defaultProps} messages={[recipeMessage]} />);
 
-      const savedButton = screen.getByText("Saved Recipe");
+      const savedButton = screen.getByText(/^Saved:/);
       await user.click(savedButton);
 
       // Should not make any API calls
@@ -759,7 +750,7 @@ describe("MessageList", () => {
 
       render(<MessageList {...defaultProps} messages={[recipeMessage]} />);
 
-      const saveButton = screen.getByText("Save Recipe");
+      const saveButton = screen.getByText(/^Save:/);
 
       // Button should be focusable
       saveButton.focus();
