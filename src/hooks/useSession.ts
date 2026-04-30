@@ -13,12 +13,21 @@ export default function useSession() {
     }
 
     let sessionId = localStorage.getItem("ask-ah-mah-session");
+    const isNew = !sessionId;
     if (!sessionId) {
       sessionId = generateShortId();
       localStorage.setItem("ask-ah-mah-session", sessionId);
     }
     setUserId(sessionId);
     setIsLoading(false);
+
+    if (isNew) {
+      fetch("/api/inventory/seed", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: sessionId }),
+      });
+    }
   }, []);
 
   return { userId, isLoading };
