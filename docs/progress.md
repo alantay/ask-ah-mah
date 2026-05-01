@@ -38,6 +38,46 @@ The moat is **persistent kitchen state**: what the user has, what they cooked, w
 
 ---
 
+### Default inventory seeding
+- 6 starter items seeded idempotently for new users: salt, cooking oil, soy sauce (ingredients) + wok, pot, chef's knife (kitchenware).
+- `POST /api/inventory/seed` endpoint; `useSession` hook fires it once on first session creation.
+
+### Claude Design reference
+Visual direction for the Kopitiam Modern redesign was generated via Claude Design:
+https://api.anthropic.com/v1/design/h/bOL_xzI0rpgfpw7XTY5gsQ?open_file=Ask+Ah+Mah+-+Surface+Redesign.html
+
+Follow this for color tokens, typography, surface hierarchy, paper texture, and border radius scale when making future visual changes.
+
+### Kopitiam Modern UI overhaul (May 2026)
+Full surface redesign based on Claude Design output. Key changes:
+
+- **Color system**: OKLCH token overhaul — `--background` (aged newsprint), `--chat` (lightest, conversation surface), `--muted` (kraft tray for inventory + cookbook), `--card` (lighter than bg — inverted contrast so cards float up). Dark mode counterparts.
+- **Paper texture**: SVG `feTurbulence` noise tiled at 200×200px with `background-blend-mode: multiply` on chat and inventory surfaces.
+- **Layout**: Chat/Cookbook top-level tabs (folder-tab pattern — `z-10` TabsList covers content frame's `border-t`; active tab bottom matches surface color). Desktop: chat 7/10 + pantry sidebar 3/10. Mobile: Pantry button → bottom Drawer.
+- **Tabs**: `rounded-t-xl` triggers, `rounded-lg` content frame. Standard Tailwind values throughout.
+- **Chat header**: Replaced "Chatting with Ah Mah" strip with contextual session header — Fraunces italic day name + message count subtitle.
+- **Inventory/Pantry**: Large italic Fraunces "Pantry" heading. Ingredients and Equipment sections as card boxes on kraft tray. Inline "+ Add" button.
+- **Cookbook**: Full redesign — kraft tray background, "YOURS, KEPT" eyebrow + 40px Fraunces heading, search pill, tag filter chips with counts. Recipe cards: diagonal-stripe image strip, serif title + italic ingredient blurb, dashed-border footer with metadata + tag pills, dog-ear fold on first card. Empty state: instructional card (spans 2 rows) + 4 ghost placeholder cards.
+
+### Stitch-inspired polish (sidebar zoning + tag cleanup)
+- **Monochrome tags**: dropped categorical colors; all tags neutral outlined pills; active filter chip gets terracotta fill only.
+- **Scrollbar**: track → transparent, thumb → `--border` (warm tan). No more jade/terracotta stripe.
+- **Background zoning**: inventory aside → `bg-muted/50 rounded-2xl` tray; cookbook recipe list → `bg-muted/40 rounded-2xl` tray. Chat stays on plain cream.
+- **Inventory sidebar flattened**: dropped Card chrome; small-caps `SectionLabel` dividers replace CardTitle. Add Item → `variant="outline" size="sm"`.
+- **Chat header strip**: avatar + "Chatting with Ah Mah" + italic serif tagline above messages (desktop only).
+- **Italic serif for assistant**: Ah Mah's messages render in `font-display italic` (Fraunces). User bubbles stay Inter.
+- **Input refinement**: muted rounded container; send button is terracotta icon.
+
+### UI/UX overhaul — Kopitiam Modern
+- **Layout**: replaced kitchen drawer with Chat / Cookbook top-level tabs. Recipe detail is now a slide-over Sheet (not full-screen takeover). Mobile gets a Pantry button near the chat input opening a bottom Sheet.
+- **Cookbook tab**: full-width `max-w-2xl` layout with "My Cookbook" heading, recipe count subtitle, larger recipe entries showing servings + ingredient count, and categorical tag filter chips.
+- **Palette ("Kopitiam Modern")**: OKLCH-based — terracotta primary (`oklch(0.56 0.135 35)`), deep jade accent (`oklch(0.50 0.095 168)`), butter secondary (`oklch(0.86 0.10 88)`), warm cream background. Dark mode inverts to espresso + cream (no slate-blue). Replaces monotone olive/desaturated original.
+- **Typography**: Fraunces display serif for headings (CardTitle, recipe names, "My Cookbook"). JetBrains Mono dropped (vestigial).
+- **Categorical tag colors**: `tagClasses()` helper maps cuisine→jade, protein→terracotta, method→butter, difficulty→muted. Single source of truth shared by `RecipeList`, `RecipeDisplay`, and `recipeProcessor` prompt builder.
+- **Component polish**: warm OKLCH card shadow; jade underline on active tab; user chat bubble → terracotta (`bg-primary`); shortfall badge → chili red theme (`text-destructive`); shelf-life dot → turmeric (`bg-tertiary`).
+
+---
+
 ## V2 — In Progress
 
 ### Decrement-on-cook

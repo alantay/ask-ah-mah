@@ -7,6 +7,7 @@ import {
   InventoryItem,
 } from "@/lib/inventory/schemas";
 import { RecipeIngredient } from "@/lib/recipes/schemas";
+import { tagClasses } from "@/lib/recipes/tagColors";
 import { fetcher } from "@/lib/utils/index";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -41,7 +42,7 @@ const computeShortfall = (
 };
 
 export default function RecipeDisplay() {
-  const { selectedRecipe, exitRecipe } = useRecipeContext();
+  const { selectedRecipe } = useRecipeContext();
   const { userId } = useSessionContext();
   const [servings, setServings] = useState<number>(
     selectedRecipe?.baseServings ?? 2,
@@ -77,31 +78,24 @@ export default function RecipeDisplay() {
   const scale = servings / baseServings;
 
   return (
-    <div className="h-full relative">
-      <div className="absolute right-4 top-4 flex gap-2">
+    <div className="flex flex-col h-full">
+      <div className="flex justify-end p-4 pb-0">
         <Button
           variant="outline"
+          size="sm"
           className="cursor-pointer"
           onClick={copyRecipe}
           aria-label="Copy recipe to clipboard"
         >
           Copy
         </Button>
-        <Button
-          variant="outline"
-          className="cursor-pointer gap-1"
-          onClick={exitRecipe}
-        >
-          Exit
-          <span className="hidden md:block">Recipe</span>
-        </Button>
       </div>
 
-      <div className="h-full overflow-y-auto pt-15 xl:pt-4 pb-10 px-4 ">
+      <div className="flex-1 overflow-y-auto pt-4 pb-10 px-4">
         {selectedRecipe.tags && selectedRecipe.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
             {selectedRecipe.tags.map((tag: string) => (
-              <Badge key={tag} variant="secondary">
+              <Badge key={tag} variant="outline" className={tagClasses(tag)}>
                 {tag}
               </Badge>
             ))}
@@ -111,7 +105,7 @@ export default function RecipeDisplay() {
         {ingredients.length > 0 && (
           <div className="mb-6 rounded-lg border p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold">Ingredients</h3>
+              <h3 className="font-display text-xl font-semibold tracking-tight">Ingredients</h3>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Servings</span>
                 <Button
@@ -158,7 +152,7 @@ export default function RecipeDisplay() {
                     </span>
                     {short != null && (
                       <span
-                        className="text-xs text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded"
+                        className="text-xs text-destructive bg-destructive/10 border border-destructive/30 px-1.5 py-0.5 rounded"
                         title={`You have ${inv?.quantity}${inv?.unit ? ` ${inv.unit}` : ""}`}
                       >
                         short {formatAmount(short)}

@@ -18,33 +18,32 @@ export const MessageInput = ({
       onSubmit={async (e) => {
         e.preventDefault();
         if (input.trim()) {
-          await onSendMessage(input); // Save user message
+          await onSendMessage(input);
           setInput("");
         }
       }}
-      className=" p-4"
+      className="p-4"
     >
-      <div className="flex gap-2">
+      <div className="flex gap-1 items-center bg-muted/50 rounded-xl border border-border/60 px-3 py-1">
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           disabled={disabled}
-          placeholder={
-            disabled ? `Sending your question...` : `Ask Ah Mah a question...`
-          }
-          className="flex-1"
+          placeholder={disabled ? "Sending your question…" : "Ask Ah Mah a question…"}
+          className="flex-1 border-none shadow-none bg-transparent focus-visible:ring-0 px-0"
         />
         <Button
           type="submit"
+          size="icon"
           aria-label="Send message"
-          className="disabled:cursor-not-allowed"
+          className="shrink-0 disabled:cursor-not-allowed rounded-lg"
           disabled={disabled}
         >
           <svg
             aria-hidden="true"
             focusable="false"
-            width="24"
-            height="24"
+            width="18"
+            height="18"
             viewBox="0 0 24 24"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"

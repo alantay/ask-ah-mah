@@ -76,7 +76,7 @@ describe("MessageInput", () => {
 
       const input = screen.getByTestId("input");
       expect(input).toBeInTheDocument();
-      expect(input).toHaveAttribute("placeholder", "Ask Ah Mah a question...");
+      expect(input).toHaveAttribute("placeholder", "Ask Ah Mah a question…");
     });
 
     it("should render submit button with send icon", () => {
@@ -104,7 +104,7 @@ describe("MessageInput", () => {
       expect(form).toBeInTheDocument();
       expect(form).toHaveClass("p-4");
 
-      const flexContainer = form?.querySelector(".flex.gap-2");
+      const flexContainer = form?.querySelector(".flex.gap-1");
       expect(flexContainer).toBeInTheDocument();
     });
 

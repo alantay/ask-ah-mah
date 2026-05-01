@@ -22,7 +22,7 @@ import { convertToUIMessage, getRandomThinkingMessage } from "./utils";
 const Chat = () => {
   const { userId } = useSessionContext();
 
-  const { messages, sendMessage, status, error } = useChat({
+  const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/chat",
       body: {
@@ -185,14 +185,42 @@ const Chat = () => {
     await saveMessage("user", message);
   };
 
+  const dayName = new Date().toLocaleDateString("en-US", { weekday: "long" });
+  const messageCount = allMessages.length - 1; // exclude initial
+
+  const SUGGESTIONS = ["What can I cook tonight?", "I just got groceries", "Something quick for one"];
+
   return (
-    <div className="flex flex-col animate-in fade-in  duration-300 h-full">
+    <div className="flex flex-col animate-in fade-in duration-300 h-full">
+      <div className="hidden sm:flex items-center justify-between px-7 py-3.5 border-b border-dashed border-border shrink-0">
+        <div>
+          <div className="font-display italic font-medium text-[19px] text-foreground leading-tight tracking-tight">
+            {dayName}&rsquo;s kitchen
+          </div>
+          <div className="text-[11.5px] text-ink-faint mt-0.5 tracking-wide">
+            {messageCount > 0 ? `${messageCount} message${messageCount !== 1 ? "s" : ""}` : "Start a conversation"}
+          </div>
+        </div>
+      </div>
       <MessageList
         messages={allMessages}
         status={status}
         userId={userId}
         thinkingMessage={thinkingMessage}
       />
+      {status === "ready" && messageCount === 0 && (
+        <div className="flex gap-2 px-4 pb-1 flex-wrap">
+          {SUGGESTIONS.map((s) => (
+            <button
+              key={s}
+              onClick={() => handleSendMessage(s)}
+              className="px-3 py-1.5 text-[12.5px] text-muted-foreground border border-border rounded-full hover:border-border-soft hover:text-foreground transition-colors cursor-pointer"
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
       <MessageInput
         onSendMessage={handleSendMessage}
         disabled={status !== "ready"}

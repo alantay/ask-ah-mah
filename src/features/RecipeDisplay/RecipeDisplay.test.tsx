@@ -121,10 +121,9 @@ describe("RecipeDisplay", () => {
       expect(screen.getAllByText(/2 tbsp/).length).toBeGreaterThan(0);
     });
 
-    it("renders the copy and exit buttons", () => {
+    it("renders the copy button", () => {
       render(<RecipeDisplay />);
       expect(screen.getByText("Copy")).toBeInTheDocument();
-      expect(screen.getByText("Exit")).toBeInTheDocument();
     });
   });
 
@@ -188,11 +187,4 @@ describe("RecipeDisplay", () => {
     });
   });
 
-  describe("Exit button", () => {
-    it("invokes exitRecipe from context", () => {
-      render(<RecipeDisplay />);
-      fireEvent.click(screen.getByText("Exit"));
-      expect(mockExitRecipe).toHaveBeenCalledTimes(1);
-    });
-  });
 });

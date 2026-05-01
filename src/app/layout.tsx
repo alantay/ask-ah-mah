@@ -2,7 +2,7 @@ import AboutPopOver from "@/components/AboutPopOver";
 import { Toaster } from "@/components/ui/sonner";
 import { SessionProvider } from "@/contexts/SessionContext";
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono, Nunito } from "next/font/google";
+import { Fraunces, Inter, Nunito } from "next/font/google";
 import Image from "next/image";
 import "./globals.css";
 
@@ -11,9 +11,10 @@ const fontSans = Inter({
   subsets: ["latin"],
 });
 
-const fontMono = JetBrains_Mono({
-  variable: "--font-var-mono",
+const fontDisplay = Fraunces({
+  variable: "--font-var-display",
   subsets: ["latin"],
+  weight: ["400", "600", "700"],
 });
 
 const fontLogo = Nunito({
@@ -101,7 +102,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`mx-0 mt-0 sm:mx-2 sm:mt-2 md:mx-4 md:mt-4 ${fontSans.variable} ${fontMono.variable} ${fontLogo.variable} antialiased font-sans
+        className={`mx-0 mt-0 sm:mx-2 sm:mt-2 md:mx-4 md:mt-4 ${fontSans.variable} ${fontDisplay.variable} ${fontLogo.variable} antialiased font-sans
 `}
       >
         <SessionProvider>
@@ -113,23 +114,18 @@ export default function RootLayout({
               },
             }}
           />
-          <div className="pb-2 sm:pb-3 pt-2 border-b xl:container mx-auto px-4 flex justify-between items-end">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold font-logo flex items-end gap-2 text-primary">
-                <div className="relative w-10 h-10 md:w-12 md:h-12">
-                  <Image
-                    src="/granny-icon.png"
-                    alt="Ask Ah Mah"
-                    fill
-                    className="object-contain"
-                  />
-                </div>
-                Ask Ah Mah
-              </h1>
-              <p className="text-muted-foreground text-xs md:text-sm lg:text-base">
-                Your friendly cooking assistant
-              </p>
-            </div>
+          <div className="pb-2 pt-2 border-b xl:container mx-auto px-4 flex justify-between items-center">
+            <h1 className="text-xl md:text-2xl font-bold font-logo flex items-center gap-2 text-primary">
+              <div className="relative w-8 h-8 md:w-9 md:h-9">
+                <Image
+                  src="/granny-icon.png"
+                  alt="Ask Ah Mah"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              Ask Ah Mah
+            </h1>
             <AboutPopOver className="hidden lg:flex" />
           </div>
           {children}
