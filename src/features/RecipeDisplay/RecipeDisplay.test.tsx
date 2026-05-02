@@ -52,14 +52,13 @@ jest.mock("swr", () => ({
   default: jest.fn(() => ({ data: undefined, error: undefined })),
 }));
 
-const mockExitRecipe = jest.fn();
 const mockSelectedRecipe = jest.fn();
 
 jest.mock("@/contexts/RecipeContext", () => ({
   useRecipeContext: () => ({
     selectedRecipe: mockSelectedRecipe(),
     setSelectedRecipe: jest.fn(),
-    exitRecipe: mockExitRecipe,
+    exitRecipe: jest.fn(),
   }),
 }));
 

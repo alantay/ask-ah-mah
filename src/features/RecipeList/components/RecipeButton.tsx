@@ -5,7 +5,7 @@ import { tagClasses } from "@/lib/recipes/tagColors";
 import {
   getRandomRecipeProcessingMessage,
   isTempId,
-} from "../../Chat/constants";
+} from "@/features/Chat/constants";
 
 interface RecipeButtonProps {
   recipe: RecipeWithId;

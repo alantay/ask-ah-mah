@@ -1,5 +1,5 @@
 import { RecipeWithId } from "@/lib/recipes/schemas";
-import { getRandomRecipeProcessingMessage, isTempId } from "../../Chat/constants";
+import { getRandomRecipeProcessingMessage, isTempId } from "@/features/Chat/constants";
 
 interface RecipeCardProps {
   recipe: RecipeWithId;

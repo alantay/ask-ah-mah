@@ -19,6 +19,8 @@ import { MessageList } from "./components/MessageList";
 import { INITIAL_MESSAGE, LOADING_MESSAGES } from "./constants";
 import { convertToUIMessage, getRandomThinkingMessage } from "./utils";
 
+const SUGGESTIONS = ["What can I cook tonight?", "I just got groceries", "Something quick for one"];
+
 const Chat = () => {
   const { userId } = useSessionContext();
 
@@ -187,8 +189,6 @@ const Chat = () => {
 
   const dayName = new Date().toLocaleDateString("en-US", { weekday: "long" });
   const messageCount = allMessages.length - 1; // exclude initial
-
-  const SUGGESTIONS = ["What can I cook tonight?", "I just got groceries", "Something quick for one"];
 
   return (
     <div className="flex flex-col animate-in fade-in duration-300 h-full">
