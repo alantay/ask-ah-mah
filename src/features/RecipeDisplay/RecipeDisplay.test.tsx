@@ -52,14 +52,13 @@ jest.mock("swr", () => ({
   default: jest.fn(() => ({ data: undefined, error: undefined })),
 }));
 
-const mockExitRecipe = jest.fn();
 const mockSelectedRecipe = jest.fn();
 
 jest.mock("@/contexts/RecipeContext", () => ({
   useRecipeContext: () => ({
     selectedRecipe: mockSelectedRecipe(),
     setSelectedRecipe: jest.fn(),
-    exitRecipe: mockExitRecipe,
+    exitRecipe: jest.fn(),
   }),
 }));
 
@@ -121,10 +120,9 @@ describe("RecipeDisplay", () => {
       expect(screen.getAllByText(/2 tbsp/).length).toBeGreaterThan(0);
     });
 
-    it("renders the copy and exit buttons", () => {
+    it("renders the copy button", () => {
       render(<RecipeDisplay />);
       expect(screen.getByText("Copy")).toBeInTheDocument();
-      expect(screen.getByText("Exit")).toBeInTheDocument();
     });
   });
 
@@ -188,11 +186,4 @@ describe("RecipeDisplay", () => {
     });
   });
 
-  describe("Exit button", () => {
-    it("invokes exitRecipe from context", () => {
-      render(<RecipeDisplay />);
-      fireEvent.click(screen.getByText("Exit"));
-      expect(mockExitRecipe).toHaveBeenCalledTimes(1);
-    });
-  });
 });

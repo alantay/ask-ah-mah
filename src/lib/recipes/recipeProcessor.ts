@@ -1,6 +1,7 @@
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
+import { TAG_SETS } from "./tagColors";
 
 // Extract metadata from a recipe. We don't ask the model to re-emit the
 // recipe text — passing raw instructions through is more reliable and the
@@ -46,15 +47,9 @@ const RecipeMetadataSchema = z.object({
 
 export type RecipeMetadata = z.infer<typeof RecipeMetadataSchema>;
 
-const TAG_CATEGORIES = `
-CUISINE: italian, chinese, japanese, mexican, indian, thai, french, mediterranean, american, korean, vietnamese, middle-eastern, greek, spanish, moroccan, malaysian, singaporean
-PROTEIN: chicken, beef, pork, fish, seafood, vegetarian, vegan, eggs, tofu, beans, lentils
-METHOD: baked, fried, grilled, steamed, boiled, roasted, sauteed, stir-fried, braised, slow-cooked, pressure-cooked, air-fried, no-cook, raw, marinated, fermented, pickled
-MEAL: breakfast, lunch, dinner, snack, appetizer, dessert, side-dish, main-course, soup, salad, beverage, condiment
-DIFFICULTY: beginner, easy, intermediate, advanced, quick (under 30 min), one-pot, make-ahead
-STYLE: crispy, creamy, spicy, sweet, savory, tangy, hearty, light, refreshing, warming
-EQUIPMENT: wok, instant-pot, cast-iron, slow-cooker, blender, oven-free, grill
-`;
+const TAG_CATEGORIES = Object.entries(TAG_SETS)
+  .map(([cat, tags]) => `${cat.toUpperCase()}: ${tags.join(", ")}`)
+  .join("\n");
 
 export async function processRecipe(
   recipeName: string,

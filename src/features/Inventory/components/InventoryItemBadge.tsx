@@ -11,12 +11,12 @@ export const InventoryItemBadge = ({
   onRemove,
 }: InventoryItemBadgeProps) => {
   return (
-    <Badge key={item.id} variant="outline" className="relative pr-8 pl-3 py-2">
+    <Badge key={item.id} variant="outline" className="relative pr-8 pl-3 py-1.5 bg-background border-border rounded-md shadow-[0_1px_0_oklch(0.82_0.04_70)] text-foreground">
       {item.shelfLife === "short" && (
         <span
           aria-label="Short shelf life"
           title="Short shelf life — use soon"
-          className="mr-1.5 inline-block h-2 w-2 rounded-full bg-amber-500"
+          className="mr-1.5 inline-block h-2 w-2 rounded-full bg-tertiary"
         />
       )}
       {item.name}
