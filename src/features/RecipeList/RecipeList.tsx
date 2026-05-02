@@ -67,7 +67,16 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
           <p className="font-display italic text-[15px] text-muted-foreground mt-2">
             {isEmpty
               ? "0 saved recipes — your shelf is waiting."
-              : `${allRecipes.length} saved recipe${allRecipes.length !== 1 ? "s" : ""}`}
+              : (() => {
+                  const base = `${allRecipes.length} saved recipe${allRecipes.length !== 1 ? "s" : ""}`;
+                  const latest = allRecipes.reduce((max, r) => {
+                    const t = r.createdAt ? new Date(r.createdAt).getTime() : 0;
+                    return t > max ? t : max;
+                  }, 0);
+                  if (!latest) return base;
+                  const day = new Date(latest).toLocaleDateString("en-US", { weekday: "long" });
+                  return `${base} · last added ${day}`;
+                })()}
           </p>
         </div>
         {!isEmpty && (

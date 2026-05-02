@@ -80,6 +80,15 @@ Full surface redesign based on Claude Design output. Key changes:
 
 ## V2 — In Progress
 
+### Recipe card enrichment — description + total time (May 2026)
+`RecipeCard` now shows a short evocative description and total-cook-time badge instead of a raw ingredient list.
+
+- **`description`** and **`totalTimeMinutes`** added to `Recipe` schema (Prisma + TypeScript types).
+- `processRecipe` extracts both on save via `generateObject` — description is post-hoc (not demanded from Ah Mah inline) to keep chat output natural.
+- System prompt rule added: `**Total time:** ~X min` in every recipe so `processRecipe` has a reliable anchor.
+- `RecipeCard` prefers `recipe.description`; falls back to ingredient-name blurb for older saves. Footer: clock icon + formatted duration + tag pills; `servings · ingredients` line dropped.
+- Cookbook subtitle gains `· last added <weekday>` from new `createdAt` field.
+
 ### Decrement-on-cook
 The inventory-accuracy lever we KIV'd from V1. Without it, users have to manually remove items, the inventory drifts into fiction within a week, and recipe suggestions degrade.
 
@@ -123,6 +132,9 @@ Smaller blast radius for V1. Saving-before-scaling is a one-tap friction, and it
 
 ### Why drop `cleanedInstructions` from `processRecipe`
 Was the dominant `generateObject` failure mode — long re-emission output truncated or produced malformed JSON, killing tag/ingredient extraction with it. Original purpose (stripping `✅` / `🛒` markers from old prompts) became vestigial after the prompt rewrite. Recipe text now passes through unchanged.
+
+### Why description is generated post-hoc, not by Ah Mah inline
+Asking Ah Mah to produce a card blurb inside the recipe block would add a new required field to her output format — another thing to get wrong and another parser edge-case. `processRecipe` already runs on save against the full recipe text; it's a better context window for a concise creative sentence than an inline instruction buried in a 52-line system prompt.
 
 ### Why drop the 🛒 "missing ingredient" marker
 The structured shortfall badge in `RecipeDisplay` replaces it — computed from real inventory units, not the model's guess. One signal beats two competing ones.

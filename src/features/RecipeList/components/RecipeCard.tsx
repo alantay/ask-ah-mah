@@ -8,16 +8,22 @@ interface RecipeCardProps {
   dogeared?: boolean;
 }
 
+function formatDuration(minutes: number): string {
+  if (minutes < 60) return `${minutes} m`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m > 0 ? `${h} h ${m} m` : `${h} h`;
+}
+
 export default function RecipeCard({ recipe, onSelect, onDelete, dogeared }: RecipeCardProps) {
   const isOptimistic = isTempId(recipe.id);
   const ingredients = Array.isArray(recipe.ingredients) ? recipe.ingredients as { name: string }[] : [];
   const servings = recipe.baseServings ?? 2;
 
-  const blurb = ingredients.length > 0
-    ? ingredients.slice(0, 4).map((i) => i.name).join(", ") + (ingredients.length > 4 ? "…" : ".")
-    : `${servings} serving${servings !== 1 ? "s" : ""}.`;
-
-  const meta = `${servings} serving${servings !== 1 ? "s" : ""}${ingredients.length > 0 ? ` · ${ingredients.length} ingredients` : ""}`;
+  const blurb = recipe.description ||
+    (ingredients.length > 0
+      ? ingredients.slice(0, 4).map((i) => i.name).join(", ") + (ingredients.length > 4 ? "…" : ".")
+      : `${servings} serving${servings !== 1 ? "s" : ""}.`);
 
   return (
     <article
@@ -83,7 +89,15 @@ export default function RecipeCard({ recipe, onSelect, onDelete, dogeared }: Rec
 
         {/* Footer */}
         <div className="mt-auto pt-2.5 border-t border-dashed border-border flex items-center gap-2.5 flex-wrap">
-          <span className="font-mono text-[11px] text-ink-faint">{meta}</span>
+          {recipe.totalTimeMinutes && (
+            <span className="flex items-center gap-1 font-mono text-[11px] text-ink-faint shrink-0">
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none" className="shrink-0">
+                <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.4" />
+                <path d="M8 4.5V8l2.5 2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {formatDuration(recipe.totalTimeMinutes)}
+            </span>
+          )}
           {recipe.tags?.slice(0, 3).map((tag) => (
             <span
               key={tag}

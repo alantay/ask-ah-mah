@@ -16,6 +16,9 @@ export type Recipe = {
   recipeId?: string;
   baseServings: number;
   ingredients: RecipeIngredient[];
+  description?: string;
+  totalTimeMinutes?: number;
+  createdAt?: Date;
 };
 
 export type RecipeWithId = Recipe & { id: string };
