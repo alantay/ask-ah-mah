@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { DEFAULT_INVENTORY } from "./defaults";
 import { AddInventoryItem } from "./schemas";
 
 export async function getInventory(userId: string) {
@@ -64,6 +65,12 @@ export async function addInventoryItem(
       });
     }
   }
+}
+
+export async function seedDefaultInventory(userId: string) {
+  const count = await prisma.inventoryItem.count({ where: { userId } });
+  if (count > 0) return;
+  await addInventoryItem(DEFAULT_INVENTORY, userId);
 }
 
 export async function removeInventoryItem(
