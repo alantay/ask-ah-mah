@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     metadata = await processRecipe(name, instructions);
   } catch (error) {
     console.error("processRecipe failed, saving without metadata:", error);
-    metadata = { tags: [], baseServings: 2, ingredients: [] };
+    metadata = { tags: [], baseServings: 2, ingredients: [], description: "" };
   }
 
   const recipe = await saveRecipe({
@@ -35,6 +35,8 @@ export async function POST(req: NextRequest) {
     recipeId,
     baseServings: metadata.baseServings,
     ingredients: metadata.ingredients,
+    description: metadata.description,
+    totalTimeMinutes: metadata.totalTimeMinutes,
   });
 
   return NextResponse.json(recipe);

@@ -36,6 +36,8 @@ const defaultProcessed = {
   tags: [] as string[],
   baseServings: 2,
   ingredients: [] as { name: string; amount?: number; unit?: string }[],
+  description: "",
+  totalTimeMinutes: undefined as number | undefined,
 };
 
 // Helper to create mock NextRequest
@@ -224,6 +226,8 @@ describe("Recipe API Routes", () => {
         recipeId: undefined,
         baseServings: 2,
         ingredients: [],
+        description: "",
+        totalTimeMinutes: undefined,
       });
       expect(mockedSaveRecipe).toHaveBeenCalledTimes(1);
     });
@@ -266,6 +270,8 @@ describe("Recipe API Routes", () => {
         recipeId: undefined,
         baseServings: 2,
         ingredients: [],
+        description: "",
+        totalTimeMinutes: undefined,
       });
     });
 
@@ -351,6 +357,8 @@ describe("Recipe API Routes", () => {
         recipeId: undefined,
         baseServings: 2,
         ingredients: [],
+        description: "",
+        totalTimeMinutes: undefined,
       });
     });
 
@@ -390,6 +398,8 @@ describe("Recipe API Routes", () => {
         recipeId: undefined,
         baseServings: 2,
         ingredients: [],
+        description: "",
+        totalTimeMinutes: undefined,
       });
     });
 
@@ -419,6 +429,8 @@ describe("Recipe API Routes", () => {
         recipeId: undefined,
         baseServings: 2,
         ingredients: [],
+        description: "",
+        totalTimeMinutes: undefined,
       });
     });
 

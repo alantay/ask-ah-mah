@@ -71,9 +71,13 @@ function HomeContent() {
         </DrawerContent>
       </Drawer>
 
-      {/* Recipe detail sheet — triggered from Cookbook tab */}
+      {/* Recipe detail sheet — wide right-side sheet over faded cookbook */}
       <Sheet open={!!selectedRecipe} onOpenChange={(open) => !open && exitRecipe()}>
-        <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto p-0">
+        <SheetContent
+          side="right"
+          showCloseButton={false}
+          className="w-full sm:max-w-[min(900px,75vw)] overflow-hidden p-0 bg-chat paper"
+        >
           <RecipeDisplay />
         </SheetContent>
       </Sheet>

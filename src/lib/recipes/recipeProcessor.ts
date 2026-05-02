@@ -43,6 +43,21 @@ const RecipeMetadataSchema = z.object({
     .describe(
       "Structured ingredient list. Use the exact unit strings the recipe uses.",
     ),
+  description: z
+    .string()
+    .max(140)
+    .default("")
+    .describe(
+      "One evocative sentence (≤140 chars) — not a summary of steps. e.g. 'Sunday lunch staple — rice poached in chicken stock, finished with ginger-scallion oil.'",
+    ),
+  totalTimeMinutes: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe(
+      "Total time start to finish in minutes. Extract from a '**Total time:**' line if present. Omit if unstated.",
+    ),
 });
 
 export type RecipeMetadata = z.infer<typeof RecipeMetadataSchema>;
@@ -61,6 +76,8 @@ TASKS:
 1. Choose 3-8 tags from the categories below (use exact tag names, lowercase, hyphenated).
 2. Identify baseServings — how many servings the recipe makes (infer 2 or 4 if unstated).
 3. Extract ingredients as { name, amount?, unit? }. Use the exact unit strings the recipe uses. Omit amount/unit for non-quantified items like "salt to taste".
+4. Write a description: one evocative sentence ≤140 chars. Capture the soul of the dish — not a step list. e.g. "Sunday lunch staple — rice poached in chicken stock, finished with ginger-scallion oil."
+5. Extract totalTimeMinutes from a "**Total time:**" line if present. Omit if not stated.
 
 TAG CATEGORIES:
 ${TAG_CATEGORIES}

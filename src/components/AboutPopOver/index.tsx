@@ -33,14 +33,13 @@ export default function AboutPopOver({
         <Button
           size="icon"
           variant="ghost"
-          className={`cursor-pointer ${className || ""}`}
+          className={`cursor-pointer text-muted-foreground hover:bg-transparent hover:text-foreground ${className || ""}`}
           aria-label="About Ask Ah Mah"
         >
           <svg
             width={svgSize}
             height={svgSize}
             viewBox="0 0 24 24"
-            className="text-tertiary"
             xmlns="http://www.w3.org/2000/svg"
           >
             <path

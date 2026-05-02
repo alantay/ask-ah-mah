@@ -100,17 +100,14 @@ describe("RecipeDisplay", () => {
 
     it("renders recipe instructions via Streamdown", () => {
       render(<RecipeDisplay />);
-      expect(screen.getByTestId("streamdown")).toHaveTextContent(
-        "Scrambled Eggs",
-      );
+      // Only the instructions steps are rendered (title/ingredients are stripped)
+      expect(screen.getByTestId("streamdown")).toHaveTextContent("Heat butter");
     });
 
     it("renders tags", () => {
       render(<RecipeDisplay />);
-      const badges = screen.getAllByTestId("badge");
-      expect(badges).toHaveLength(2);
-      expect(badges[0]).toHaveTextContent("breakfast");
-      expect(badges[1]).toHaveTextContent("easy");
+      expect(screen.getByText("breakfast")).toBeInTheDocument();
+      expect(screen.getByText("easy")).toBeInTheDocument();
     });
 
     it("renders structured ingredients", () => {

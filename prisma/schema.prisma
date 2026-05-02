@@ -34,14 +34,17 @@ model Message{
 }
 
 model Recipe {
-  id           String   @id @default(cuid())
-  userId       String
-  name         String
-  instructions String
-  tags         String[]
-  recipeId     String?
-  baseServings Int      @default(2)
-  ingredients  Json     @default("[]")
+  id               String   @id @default(cuid())
+  userId           String
+  name             String
+  instructions     String
+  tags             String[]
+  recipeId         String?
+  baseServings     Int      @default(2)
+  ingredients      Json     @default("[]")
+  description      String?
+  totalTimeMinutes Int?
+  createdAt        DateTime @default(now())
 
   @@map("recipes")
   @@index([userId])
