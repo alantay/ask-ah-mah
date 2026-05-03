@@ -1,14 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { useRecipeContext } from "@/contexts/RecipeContext";
 import { useSessionContext } from "@/contexts/SessionContext";
-import {
-  GetInventoryResponse,
-  InventoryItem,
-} from "@/lib/inventory/schemas";
+import { GetInventoryResponse, InventoryItem } from "@/lib/inventory/schemas";
 import { RecipeIngredient } from "@/lib/recipes/schemas";
 import { fetcher } from "@/lib/utils/index";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Streamdown } from "streamdown";
 import useSWR from "swr";
@@ -64,10 +61,6 @@ export default function RecipeDisplay() {
     selectedRecipe?.baseServings ?? 2,
   );
 
-  useEffect(() => {
-    setServings(selectedRecipe?.baseServings ?? 2);
-  }, [selectedRecipe?.id, selectedRecipe?.baseServings]);
-
   const { data: inventoryData } = useSWR<GetInventoryResponse>(
     userId ? `/api/inventory?userId=${userId}` : null,
     fetcher,
@@ -95,7 +88,8 @@ export default function RecipeDisplay() {
   const ingredientStatus = ingredients.map((ing) => {
     const scaled = ing.amount != null ? ing.amount * scale : undefined;
     const inv = findInventoryMatch(ing, allInventory);
-    const short = scaled != null ? computeShortfall(scaled, ing.unit, inv) : null;
+    const short =
+      scaled != null ? computeShortfall(scaled, ing.unit, inv) : null;
     return { ing, scaled, inv, short };
   });
   const inPantryCount = ingredientStatus.filter((s) => s.inv).length;
@@ -128,7 +122,12 @@ export default function RecipeDisplay() {
             aria-label="Close"
           >
             <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-              <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path
+                d="M3 3l10 10M13 3L3 13"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
             </svg>
           </button>
         </div>
@@ -152,7 +151,10 @@ export default function RecipeDisplay() {
           />
           <div
             className="relative w-full px-9 pt-6 pb-5 text-white"
-            style={{ background: "linear-gradient(to top, oklch(0 0 0 / 0.3), transparent)" }}
+            style={{
+              background:
+                "linear-gradient(to top, oklch(0 0 0 / 0.3), transparent)",
+            }}
           >
             {selectedRecipe.tags && selectedRecipe.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-2.5">
@@ -181,7 +183,12 @@ export default function RecipeDisplay() {
           {selectedRecipe.description && (
             <div className="flex gap-3.5 items-start mb-6 pb-5 border-b border-dashed border-border">
               <div className="relative w-10 h-10 shrink-0">
-                <Image src="/granny-icon.png" alt="" fill className="object-contain" />
+                <Image
+                  src="/granny-icon.png"
+                  alt=""
+                  fill
+                  className="object-contain"
+                />
               </div>
               <div>
                 <div className="font-sans text-[10.5px] font-bold tracking-[0.16em] uppercase text-ink-faint mb-1">
@@ -211,7 +218,7 @@ export default function RecipeDisplay() {
                 Yields
               </span>
               <span className="font-display font-semibold text-[18px] text-foreground tabular-nums mt-0.5">
-                {baseServings} {baseServings === 1 ? "serving" : "servings"}
+                {servings} {servings === 1 ? "serving" : "servings"}
               </span>
             </div>
             <div className="flex-1" />
@@ -295,7 +302,8 @@ export default function RecipeDisplay() {
                         className="font-sans text-[10.5px] font-semibold px-[7px] py-[2px] rounded-full tracking-wide shrink-0 text-destructive border border-destructive/30 bg-destructive/10"
                         title={`You have ${inv?.quantity}${inv?.unit ? ` ${inv.unit}` : ""}`}
                       >
-                        short {formatAmount(short)}{ing.unit ? ` ${ing.unit}` : ""}
+                        short {formatAmount(short)}
+                        {ing.unit ? ` ${ing.unit}` : ""}
                       </span>
                     )}
                   </li>
@@ -310,7 +318,9 @@ export default function RecipeDisplay() {
               Method
             </h2>
             <div className="recipe-prose">
-              <Streamdown>{extractInstructions(selectedRecipe.instructions || "")}</Streamdown>
+              <Streamdown>
+                {extractInstructions(selectedRecipe.instructions || "")}
+              </Streamdown>
             </div>
           </section>
         </div>
