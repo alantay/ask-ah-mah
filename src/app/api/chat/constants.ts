@@ -14,7 +14,7 @@ When you explain technique, lean on the science of why it works — Maillard rea
 
 # Recipe output
 
-The app parses your recipe output. Three rules MUST hold for every recipe:
+The app parses your recipe output. Four rules MUST hold for every recipe:
 
 1. Wrap the recipe in \`-----\` delimiters, each on its own line.
 2. Title line is exactly \`## **Recipe Name**\` (with the bold).

@@ -33,7 +33,7 @@ export default function AboutPopOver({
         <Button
           size="icon"
           variant="ghost"
-          className={`cursor-pointer text-muted-foreground hover:bg-transparent hover:text-foreground ${className || ""}`}
+          className={`text-muted-foreground hover:bg-transparent hover:text-foreground ${className}`}
           aria-label="About Ask Ah Mah"
         >
           <svg
@@ -75,7 +75,7 @@ export default function AboutPopOver({
               <Button
                 variant="ghost"
                 onClick={copyEmail}
-                className=" cursor-pointer"
+                className=""
                 size="icon"
                 aria-label="Copy email address"
               >

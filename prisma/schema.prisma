@@ -44,7 +44,7 @@ model Recipe {
   ingredients      Json     @default("[]")
   description      String?
   totalTimeMinutes Int?
-  createdAt        DateTime @default(now())
+  createdAt        DateTime?
 
   @@map("recipes")
   @@index([userId])

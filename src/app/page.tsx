@@ -78,7 +78,7 @@ function HomeContent() {
           showCloseButton={false}
           className="w-full sm:max-w-[min(900px,75vw)] overflow-hidden p-0 bg-chat paper"
         >
-          <RecipeDisplay />
+          <RecipeDisplay key={selectedRecipe?.id} />
         </SheetContent>
       </Sheet>
     </div>
