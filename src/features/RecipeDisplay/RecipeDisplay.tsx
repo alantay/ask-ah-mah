@@ -20,7 +20,7 @@ const extractInstructions = (markdown: string): string => {
   // Also strips the trailing -----  delimiter if present.
   const match = markdown.match(/\*\*Instructions:\*\*\s*\n([\s\S]*)/i);
   if (match) {
-    return match[1].replace(/^\s*-----\s*$/, "").trim();
+    return match[1].replace(/\n?\s*-----\s*$/, "").trim();
   }
   // Fallback: return the full text (e.g. freeform recipes without the delimiter format)
   return markdown;
@@ -88,11 +88,17 @@ export default function RecipeDisplay() {
   const ingredientStatus = ingredients.map((ing) => {
     const scaled = ing.amount != null ? ing.amount * scale : undefined;
     const inv = findInventoryMatch(ing, allInventory);
-    const short =
-      scaled != null ? computeShortfall(scaled, ing.unit, inv) : null;
-    return { ing, scaled, inv, short };
+    const comparable =
+      scaled != null &&
+      inv?.quantity != null &&
+      !!ing.unit &&
+      !!inv.unit &&
+      ing.unit.toLowerCase() === inv.unit.toLowerCase();
+    const short = comparable ? computeShortfall(scaled, ing.unit, inv) : null;
+    const inPantry = comparable && short == null;
+    return { ing, scaled, inv, short, inPantry };
   });
-  const inPantryCount = ingredientStatus.filter((s) => s.inv).length;
+  const inPantryCount = ingredientStatus.filter((s) => s.inPantry).length;
   const shortCount = ingredientStatus.filter((s) => s.short != null).length;
 
   return (
@@ -273,7 +279,7 @@ export default function RecipeDisplay() {
                 </div>
               </div>
               <ul className="list-none p-0 mt-2 border-t border-border">
-                {ingredientStatus.map(({ ing, scaled, inv, short }, i) => (
+                {ingredientStatus.map(({ ing, scaled, inv, short, inPantry }, i) => (
                   <li
                     key={i}
                     className="flex items-baseline gap-3 py-2.5 border-b border-dashed border-border"
@@ -286,7 +292,7 @@ export default function RecipeDisplay() {
                     <span className="flex-1 font-display text-[15px] text-foreground leading-[1.4]">
                       {ing.name}
                     </span>
-                    {inv && short == null && (
+                    {inPantry && (
                       <span
                         className="font-sans text-[10.5px] font-semibold px-[7px] py-[2px] rounded-full tracking-wide shrink-0 text-accent border"
                         style={{

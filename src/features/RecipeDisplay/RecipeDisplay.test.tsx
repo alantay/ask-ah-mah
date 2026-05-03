@@ -100,8 +100,11 @@ describe("RecipeDisplay", () => {
 
     it("renders recipe instructions via Streamdown", () => {
       render(<RecipeDisplay />);
-      // Only the instructions steps are rendered (title/ingredients are stripped)
-      expect(screen.getByTestId("streamdown")).toHaveTextContent("Heat butter");
+      const method = screen.getByTestId("streamdown");
+      expect(method).toHaveTextContent("Heat butter");
+      expect(method).not.toHaveTextContent("Scrambled Eggs");
+      expect(method).not.toHaveTextContent("Ingredients");
+      expect(method).not.toHaveTextContent("-----");
     });
 
     it("renders tags", () => {
