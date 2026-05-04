@@ -16,7 +16,17 @@ export async function createMessage(
   role: string
 ) {
   const message = await prisma.message.create({
-    data: { conversationId, userId, content, role },
+    data: {
+      conversation: {
+        connectOrCreate: {
+          where: { id: conversationId },
+          create: { id: conversationId, userId },
+        },
+      },
+      userId,
+      content,
+      role,
+    },
   });
 
   return message;
