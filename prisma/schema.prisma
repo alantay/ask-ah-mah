@@ -58,6 +58,7 @@ model Recipe {
   recipeId         String?
   baseServings     Int      @default(2)
   ingredients      Json     @default("[]")
+  steps            Json?
   description      String?
   totalTimeMinutes Int?
   createdAt        DateTime?

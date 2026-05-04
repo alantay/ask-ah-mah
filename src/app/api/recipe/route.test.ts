@@ -79,6 +79,10 @@ describe("Recipe API Routes", () => {
           recipeId: null,
           baseServings: 2,
           ingredients: [],
+          steps: null,
+          description: null,
+          totalTimeMinutes: null,
+          createdAt: null,
         },
         {
           id: "recipe-2",
@@ -89,6 +93,10 @@ describe("Recipe API Routes", () => {
           recipeId: null,
           baseServings: 2,
           ingredients: [],
+          steps: null,
+          description: null,
+          totalTimeMinutes: null,
+          createdAt: null,
         },
       ];
 
@@ -165,6 +173,10 @@ describe("Recipe API Routes", () => {
           recipeId: null,
           baseServings: 2,
           ingredients: [],
+          steps: null,
+          description: null,
+          totalTimeMinutes: null,
+          createdAt: null,
         },
       ];
 
@@ -193,6 +205,10 @@ describe("Recipe API Routes", () => {
         recipeId: null,
         baseServings: 2,
         ingredients: [],
+        steps: null,
+        description: null,
+        totalTimeMinutes: null,
+        createdAt: null,
       };
 
       mockedProcessRecipe.mockResolvedValue({
@@ -242,6 +258,10 @@ describe("Recipe API Routes", () => {
         recipeId: null,
         baseServings: 2,
         ingredients: [],
+        steps: null,
+        description: null,
+        totalTimeMinutes: null,
+        createdAt: null,
       };
 
       mockedProcessRecipe.mockResolvedValue(defaultProcessed);
@@ -327,6 +347,10 @@ describe("Recipe API Routes", () => {
         recipeId: null,
         baseServings: 2,
         ingredients: [],
+        steps: null,
+        description: null,
+        totalTimeMinutes: null,
+        createdAt: null,
       };
 
       mockedProcessRecipe.mockResolvedValue(defaultProcessed);
@@ -376,6 +400,10 @@ describe("Recipe API Routes", () => {
         recipeId: null,
         baseServings: 2,
         ingredients: [],
+        steps: null,
+        description: null,
+        totalTimeMinutes: null,
+        createdAt: null,
       };
 
       mockedProcessRecipe.mockResolvedValue(defaultProcessed);
