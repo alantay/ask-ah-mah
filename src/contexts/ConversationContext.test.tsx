@@ -197,4 +197,45 @@ describe("ConversationContext", () => {
       expect(mockFetch).not.toHaveBeenCalled();
     });
   });
+
+  describe("archiveActiveConversation", () => {
+    it("PATCHes with { archived: true } then POSTs to create a new conversation", async () => {
+      localStorageMock.getItem.mockReturnValueOnce("conv-to-archive");
+
+      const newConv = makeConversation("conv-fresh");
+
+      // First call: PATCH archive
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({}),
+      });
+      // Second call: POST startNewConversation
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ conversation: newConv }),
+      });
+
+      const { result } = renderHook(() => useConversationContext(), { wrapper });
+
+      await act(async () => {
+        await result.current.archiveActiveConversation();
+      });
+
+      // First fetch: PATCH with archived: true
+      expect(mockFetch).toHaveBeenNthCalledWith(1, "/api/conversation/conv-to-archive", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ archived: true }),
+      });
+
+      // Second fetch: POST /api/conversation to create a new one
+      expect(mockFetch).toHaveBeenNthCalledWith(2, "/api/conversation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: mockUserId }),
+      });
+
+      expect(result.current.activeConversationId).toBe("conv-fresh");
+    });
+  });
 });

@@ -40,7 +40,7 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
   // Only fetch from API if we don't already have a stored conversation id
   const shouldFetch = userId && !activeConversationId;
   const swrKey = shouldFetch
-    ? `/api/conversation/active?userId=${userId}`
+    ? `/api/conversation?active=true&userId=${userId}`
     : null;
 
   const { data, isLoading } = useSWR<{ conversation: ConversationEntity }>(
