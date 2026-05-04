@@ -209,3 +209,13 @@ blockquote {
   border-left: 3px solid var(--accent);
   padding-left: 0.5em;
 }
+
+/* Recipe letter — scaled amount pulse animation */
+@keyframes scaledPulse {
+  0%   { background-color: oklch(0.86 0.14 60 / 0.7); }
+  100% { background-color: oklch(0.95 0.05 88 / 0.5); }
+}
+
+.scaled-num-pulse {
+  animation: scaledPulse 0.5s ease-out;
+}
