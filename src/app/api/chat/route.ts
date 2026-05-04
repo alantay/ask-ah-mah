@@ -7,8 +7,7 @@ import {
   AddInventoryItemSchemaObj,
   RemoveInventoryItemSchemaObj,
 } from "@/lib/inventory/schemas";
-import { autoTitleConversation } from "@/lib/conversations";
-import { getMessages } from "@/lib/messages/messages";
+import { getMessages } from "@/lib/messages";
 import { openai } from "@ai-sdk/openai";
 import {
   convertToModelMessages,
@@ -91,13 +90,6 @@ export async function POST(req: NextRequest) {
           },
         },
       },
-    });
-
-    // Fire auto-title after first exchange (non-blocking)
-    getMessages(conversationId).then((msgs) => {
-      if (msgs.length === 2) {
-        autoTitleConversation(conversationId).catch(() => {});
-      }
     });
 
     return result.toUIMessageStreamResponse();

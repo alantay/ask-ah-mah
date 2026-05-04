@@ -20,6 +20,21 @@ jest.mock("@/lib/messages", () => ({
   getMessages: jest.fn(),
 }));
 
+// Mock conversations lib (pulls in ai SDK which requires TransformStream)
+jest.mock("@/lib/conversations", () => ({
+  autoTitleConversation: jest.fn().mockResolvedValue(undefined),
+}));
+
+// Mock prisma
+jest.mock("@/lib/db", () => ({
+  __esModule: true,
+  default: {
+    message: {
+      count: jest.fn().mockResolvedValue(0),
+    },
+  },
+}));
+
 const mockedCreateMessage = jest.mocked(createMessage);
 const mockedGetMessages = jest.mocked(getMessages);
 
