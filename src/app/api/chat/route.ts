@@ -7,6 +7,7 @@ import {
   AddInventoryItemSchemaObj,
   RemoveInventoryItemSchemaObj,
 } from "@/lib/inventory/schemas";
+import { autoTitleConversation } from "@/lib/conversations";
 import { getMessages } from "@/lib/messages/messages";
 import { openai } from "@ai-sdk/openai";
 import {
@@ -25,9 +26,13 @@ const CONTEXT_WINDOW = 15; // ai can only remember 15 messages for context
 export async function POST(req: NextRequest) {
   try {
     const model = openai("gpt-4.1-mini");
-    const { messages, userId }: { messages: UIMessage[]; userId: string } =
+    const {
+      messages,
+      userId,
+      conversationId,
+    }: { messages: UIMessage[]; userId: string; conversationId: string } =
       await req.json();
-    const previousMessages = await getMessages(userId);
+    const previousMessages = await getMessages(conversationId);
 
     const uiMessages = previousMessages.slice(-CONTEXT_WINDOW).map((msg) => ({
       id: msg.id,
@@ -87,6 +92,14 @@ export async function POST(req: NextRequest) {
         },
       },
     });
+
+    // Fire auto-title after first exchange (non-blocking)
+    getMessages(conversationId).then((msgs) => {
+      if (msgs.length === 2) {
+        autoTitleConversation(conversationId).catch(() => {});
+      }
+    });
+
     return result.toUIMessageStreamResponse();
   } catch (error) {
     console.error("Chat API error:", error);
