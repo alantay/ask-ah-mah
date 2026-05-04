@@ -339,7 +339,7 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
                 {i + 1}
               </span>
               <span style={{ fontWeight: 600 }}>{step.title}.</span>{' '}
-              <span style={{ fontStyle: 'italic', color: 'var(--foreground)' }}>{step.body}</span>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontStyle: 'normal', color: 'var(--foreground)' }}>{step.body}</span>
               {step.tip && (
                 <span
                   style={{
