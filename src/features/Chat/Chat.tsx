@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { useConversationContext } from "@/contexts/ConversationContext";
 import { useSessionContext } from "@/contexts/SessionContext";
+import { ConversationsMobileSheet } from "@/features/Conversations";
 import {
   AddInventoryItemSchemaObj,
   RemoveInventoryItemSchemaObj,
@@ -12,7 +13,7 @@ import { upperCaseFirstLetter } from "@/lib/utils";
 import { fetcher } from "@/lib/utils/index";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
 import { z } from "zod";
@@ -39,6 +40,7 @@ const Chat = () => {
     renameActiveConversation,
     archiveActiveConversation,
   } = useConversationContext();
+  const [convSheetOpen, setConvSheetOpen] = useState(false);
 
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
@@ -229,7 +231,16 @@ const Chat = () => {
             </div>
           </div>
         </div>
-        {/* TODO Slice 3: Mobile conversations button */}
+        {/* Mobile: conversations button */}
+          <button
+            onClick={() => setConvSheetOpen(true)}
+            className="lg:hidden p-1.5 text-ink-faint hover:text-foreground transition-colors cursor-pointer"
+            aria-label="Open conversations"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
         <div className="flex gap-2">
           <Button
             variant="outline"
@@ -271,6 +282,7 @@ const Chat = () => {
         onSendMessage={handleSendMessage}
         disabled={status !== "ready"}
       />
+      <ConversationsMobileSheet open={convSheetOpen} onOpenChange={setConvSheetOpen} />
     </div>
   );
 };

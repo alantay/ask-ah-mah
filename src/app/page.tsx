@@ -10,7 +10,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConversationProvider } from "@/contexts/ConversationContext";
 import { RecipeProvider, useRecipeContext } from "@/contexts/RecipeContext";
 import ChatWrapper from "@/features/Chat/components/ChatWrapper";
+import { ConversationsRail } from "@/features/Conversations";
 import InventoryWrapper from "@/features/Inventory/components/InventoryWrapper";
+import { PantryDrawer } from "@/features/Inventory";
 import RecipeDisplay from "@/features/RecipeDisplay/RecipeDisplay";
 import RecipeList from "@/features/RecipeList/RecipeList";
 import { useState } from "react";
@@ -31,8 +33,12 @@ function HomeContent() {
 
           {/* ── Chat tab ── */}
           <TabsContent value="chat" className="flex-1 min-h-0 mt-0">
-            <div className="flex h-full border border-border rounded-lg overflow-hidden">
-              <section className="flex-7 min-w-0 relative flex flex-col bg-chat border-r border-border paper">
+            <div className="flex h-full border border-border rounded-lg overflow-hidden relative">
+              {/* Left: Conversations rail — hidden on mobile */}
+              <ConversationsRail />
+
+              {/* Middle: Chat — flex-1 */}
+              <section className="flex-1 min-w-0 relative flex flex-col bg-chat paper">
                 <ChatWrapper />
                 {/* Mobile: pantry button above the input */}
                 <Button
@@ -48,10 +54,8 @@ function HomeContent() {
                 </Button>
               </section>
 
-              {/* Desktop: inventory sidebar */}
-              <aside className="flex-3 min-w-0 hidden lg:flex flex-col overflow-y-auto bg-muted paper">
-                <InventoryWrapper />
-              </aside>
+              {/* Right: Pantry drawer — hidden on mobile */}
+              <PantryDrawer />
             </div>
           </TabsContent>
 
