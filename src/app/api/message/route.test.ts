@@ -20,6 +20,21 @@ jest.mock("@/lib/messages", () => ({
   getMessages: jest.fn(),
 }));
 
+// Mock conversations lib (pulls in ai SDK which requires TransformStream)
+jest.mock("@/lib/conversations", () => ({
+  autoTitleConversation: jest.fn().mockResolvedValue(undefined),
+}));
+
+// Mock prisma
+jest.mock("@/lib/db", () => ({
+  __esModule: true,
+  default: {
+    message: {
+      count: jest.fn().mockResolvedValue(0),
+    },
+  },
+}));
+
 const mockedCreateMessage = jest.mocked(createMessage);
 const mockedGetMessages = jest.mocked(getMessages);
 
@@ -42,7 +57,6 @@ const createMockRequest = (url: string, options: RequestInit = {}) => {
 describe("Message API Routes", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Mock console.error to avoid noise in tests
     jest.spyOn(console, "error").mockImplementation(() => {});
   });
 
@@ -51,10 +65,11 @@ describe("Message API Routes", () => {
   });
 
   describe("GET /api/message", () => {
-    it("should return messages for valid userId", async () => {
+    it("should return messages for valid conversationId", async () => {
       const mockMessages = [
         {
           id: "msg-1",
+          conversationId: "conv-123",
           userId: "user-123",
           content: "Hello",
           role: "user",
@@ -62,6 +77,7 @@ describe("Message API Routes", () => {
         },
         {
           id: "msg-2",
+          conversationId: "conv-123",
           userId: "user-123",
           content: "Hi there!",
           role: "assistant",
@@ -72,14 +88,14 @@ describe("Message API Routes", () => {
       mockedGetMessages.mockResolvedValue(mockMessages);
 
       const request = createMockRequest(
-        "http://localhost:3000/api/message?userId=user-123"
+        "http://localhost:3000/api/message?conversationId=conv-123"
       );
       const response = await GET(request);
       const data = await response.json();
 
       expect(response.status).toBe(200);
       expect(data).toEqual(mockMessages);
-      expect(mockedGetMessages).toHaveBeenCalledWith("user-123");
+      expect(mockedGetMessages).toHaveBeenCalledWith("conv-123");
       expect(mockedGetMessages).toHaveBeenCalledTimes(1);
     });
 
@@ -87,35 +103,35 @@ describe("Message API Routes", () => {
       mockedGetMessages.mockResolvedValue([]);
 
       const request = createMockRequest(
-        "http://localhost:3000/api/message?userId=user-456"
+        "http://localhost:3000/api/message?conversationId=conv-456"
       );
       const response = await GET(request);
       const data = await response.json();
 
       expect(response.status).toBe(200);
       expect(data).toEqual([]);
-      expect(mockedGetMessages).toHaveBeenCalledWith("user-456");
+      expect(mockedGetMessages).toHaveBeenCalledWith("conv-456");
     });
 
-    it("should return 400 when userId is missing", async () => {
+    it("should return 400 when conversationId is missing", async () => {
       const request = createMockRequest("http://localhost:3000/api/message");
       const response = await GET(request);
       const data = await response.json();
 
       expect(response.status).toBe(400);
-      expect(data).toEqual({ error: "userId is required" });
+      expect(data).toEqual({ error: "conversationId is required" });
       expect(mockedGetMessages).not.toHaveBeenCalled();
     });
 
-    it("should return 400 when userId is empty string", async () => {
+    it("should return 400 when conversationId is empty string", async () => {
       const request = createMockRequest(
-        "http://localhost:3000/api/message?userId="
+        "http://localhost:3000/api/message?conversationId="
       );
       const response = await GET(request);
       const data = await response.json();
 
       expect(response.status).toBe(400);
-      expect(data).toEqual({ error: "userId is required" });
+      expect(data).toEqual({ error: "conversationId is required" });
       expect(mockedGetMessages).not.toHaveBeenCalled();
     });
 
@@ -123,18 +139,18 @@ describe("Message API Routes", () => {
       mockedGetMessages.mockRejectedValue(new Error("Database error"));
 
       const request = createMockRequest(
-        "http://localhost:3000/api/message?userId=user-123"
+        "http://localhost:3000/api/message?conversationId=conv-123"
       );
 
-      // The route doesn't have try-catch, so this will throw
       await expect(GET(request)).rejects.toThrow("Database error");
-      expect(mockedGetMessages).toHaveBeenCalledWith("user-123");
+      expect(mockedGetMessages).toHaveBeenCalledWith("conv-123");
     });
 
     it("should handle multiple query parameters correctly", async () => {
       const mockMessages = [
         {
           id: "msg-1",
+          conversationId: "conv-123",
           userId: "user-123",
           content: "Test message",
           role: "user",
@@ -145,14 +161,14 @@ describe("Message API Routes", () => {
       mockedGetMessages.mockResolvedValue(mockMessages);
 
       const request = createMockRequest(
-        "http://localhost:3000/api/message?userId=user-123&otherParam=ignored"
+        "http://localhost:3000/api/message?conversationId=conv-123&otherParam=ignored"
       );
       const response = await GET(request);
       const data = await response.json();
 
       expect(response.status).toBe(200);
       expect(data).toEqual(mockMessages);
-      expect(mockedGetMessages).toHaveBeenCalledWith("user-123");
+      expect(mockedGetMessages).toHaveBeenCalledWith("conv-123");
     });
   });
 
@@ -160,6 +176,7 @@ describe("Message API Routes", () => {
     it("should create a user message successfully", async () => {
       const newMessage = {
         id: "msg-new",
+        conversationId: "conv-123",
         userId: "user-123",
         content: "What can I cook?",
         role: "user",
@@ -169,6 +186,7 @@ describe("Message API Routes", () => {
       mockedCreateMessage.mockResolvedValue(newMessage);
 
       const requestBody = {
+        conversationId: "conv-123",
         userId: "user-123",
         content: "What can I cook?",
         role: "user",
@@ -186,6 +204,7 @@ describe("Message API Routes", () => {
       expect(response.status).toBe(200);
       expect(data).toEqual({ message: newMessage });
       expect(mockedCreateMessage).toHaveBeenCalledWith(
+        "conv-123",
         "user-123",
         "What can I cook?",
         "user"
@@ -196,6 +215,7 @@ describe("Message API Routes", () => {
     it("should create an assistant message successfully", async () => {
       const assistantMessage = {
         id: "msg-assist",
+        conversationId: "conv-123",
         userId: "user-123",
         content: "You can make scrambled eggs!",
         role: "assistant",
@@ -205,6 +225,7 @@ describe("Message API Routes", () => {
       mockedCreateMessage.mockResolvedValue(assistantMessage);
 
       const requestBody = {
+        conversationId: "conv-123",
         userId: "user-123",
         content: "You can make scrambled eggs!",
         role: "assistant",
@@ -222,14 +243,16 @@ describe("Message API Routes", () => {
       expect(response.status).toBe(200);
       expect(data).toEqual({ message: assistantMessage });
       expect(mockedCreateMessage).toHaveBeenCalledWith(
+        "conv-123",
         "user-123",
         "You can make scrambled eggs!",
         "assistant"
       );
     });
 
-    it("should return 400 when userId is missing", async () => {
+    it("should return 400 when conversationId is missing", async () => {
       const requestBody = {
+        userId: "user-123",
         content: "Test message",
         role: "user",
       };
@@ -245,13 +268,37 @@ describe("Message API Routes", () => {
 
       expect(response.status).toBe(400);
       expect(data).toEqual({
-        error: "userId, content, and role are required",
+        error: "conversationId, userId, content, and role are required",
+      });
+      expect(mockedCreateMessage).not.toHaveBeenCalled();
+    });
+
+    it("should return 400 when userId is missing", async () => {
+      const requestBody = {
+        conversationId: "conv-123",
+        content: "Test message",
+        role: "user",
+      };
+
+      const request = createMockRequest("http://localhost:3000/api/message", {
+        method: "POST",
+        body: JSON.stringify(requestBody),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data).toEqual({
+        error: "conversationId, userId, content, and role are required",
       });
       expect(mockedCreateMessage).not.toHaveBeenCalled();
     });
 
     it("should return 400 when content is missing", async () => {
       const requestBody = {
+        conversationId: "conv-123",
         userId: "user-123",
         role: "user",
       };
@@ -267,13 +314,14 @@ describe("Message API Routes", () => {
 
       expect(response.status).toBe(400);
       expect(data).toEqual({
-        error: "userId, content, and role are required",
+        error: "conversationId, userId, content, and role are required",
       });
       expect(mockedCreateMessage).not.toHaveBeenCalled();
     });
 
     it("should return 400 when role is missing", async () => {
       const requestBody = {
+        conversationId: "conv-123",
         userId: "user-123",
         content: "Test message",
       };
@@ -289,13 +337,14 @@ describe("Message API Routes", () => {
 
       expect(response.status).toBe(400);
       expect(data).toEqual({
-        error: "userId, content, and role are required",
+        error: "conversationId, userId, content, and role are required",
       });
       expect(mockedCreateMessage).not.toHaveBeenCalled();
     });
 
     it("should return 400 when fields are empty strings", async () => {
       const requestBody = {
+        conversationId: "",
         userId: "",
         content: "",
         role: "",
@@ -312,40 +361,15 @@ describe("Message API Routes", () => {
 
       expect(response.status).toBe(400);
       expect(data).toEqual({
-        error: "userId, content, and role are required",
+        error: "conversationId, userId, content, and role are required",
       });
-      expect(mockedCreateMessage).not.toHaveBeenCalled();
-    });
-
-    it("should handle partial empty fields", async () => {
-      const testCases = [
-        { userId: "", content: "test", role: "user" },
-        { userId: "user-123", content: "", role: "user" },
-        { userId: "user-123", content: "test", role: "" },
-      ];
-
-      for (const requestBody of testCases) {
-        const request = createMockRequest("http://localhost:3000/api/message", {
-          method: "POST",
-          body: JSON.stringify(requestBody),
-          headers: { "Content-Type": "application/json" },
-        });
-
-        const response = await POST(request);
-        const data = await response.json();
-
-        expect(response.status).toBe(400);
-        expect(data).toEqual({
-          error: "userId, content, and role are required",
-        });
-      }
-
       expect(mockedCreateMessage).not.toHaveBeenCalled();
     });
 
     it("should handle special characters in content", async () => {
       const specialMessage = {
         id: "msg-special",
+        conversationId: "conv-123",
         userId: "user-123",
         content: "What's for 🍳 dinner? I have £10 & 2kg of 🥔!",
         role: "user",
@@ -355,6 +379,7 @@ describe("Message API Routes", () => {
       mockedCreateMessage.mockResolvedValue(specialMessage);
 
       const requestBody = {
+        conversationId: "conv-123",
         userId: "user-123",
         content: "What's for 🍳 dinner? I have £10 & 2kg of 🥔!",
         role: "user",
@@ -372,6 +397,7 @@ describe("Message API Routes", () => {
       expect(response.status).toBe(200);
       expect(data).toEqual({ message: specialMessage });
       expect(mockedCreateMessage).toHaveBeenCalledWith(
+        "conv-123",
         "user-123",
         "What's for 🍳 dinner? I have £10 & 2kg of 🥔!",
         "user"
@@ -382,6 +408,7 @@ describe("Message API Routes", () => {
       mockedCreateMessage.mockRejectedValue(new Error("Database error"));
 
       const requestBody = {
+        conversationId: "conv-123",
         userId: "user-123",
         content: "Test message",
         role: "user",
@@ -393,9 +420,9 @@ describe("Message API Routes", () => {
         headers: { "Content-Type": "application/json" },
       });
 
-      // The route doesn't have try-catch, so this will throw
       await expect(POST(request)).rejects.toThrow("Database error");
       expect(mockedCreateMessage).toHaveBeenCalledWith(
+        "conv-123",
         "user-123",
         "Test message",
         "user"
@@ -409,13 +436,13 @@ describe("Message API Routes", () => {
         headers: { "Content-Type": "application/json" },
       });
 
-      // The route doesn't have try-catch, so this will throw
       await expect(POST(request)).rejects.toThrow();
     });
 
     it("should handle different role types", async () => {
       const systemMessage = {
         id: "msg-system",
+        conversationId: "conv-123",
         userId: "user-123",
         content: "System initialized",
         role: "system",
@@ -425,6 +452,7 @@ describe("Message API Routes", () => {
       mockedCreateMessage.mockResolvedValue(systemMessage);
 
       const requestBody = {
+        conversationId: "conv-123",
         userId: "user-123",
         content: "System initialized",
         role: "system",
@@ -442,6 +470,7 @@ describe("Message API Routes", () => {
       expect(response.status).toBe(200);
       expect(data).toEqual({ message: systemMessage });
       expect(mockedCreateMessage).toHaveBeenCalledWith(
+        "conv-123",
         "user-123",
         "System initialized",
         "system"

@@ -44,6 +44,33 @@
 
 ## V2 — In Progress
 
+### Multi-conversation backend (Slice 1) (May 2026)
+- [x] `Conversation` Prisma model added (`id`, `userId`, `title?`, `archived`, `createdAt`, `updatedAt`).
+- [x] `Message` model updated: `conversationId` FK added (cascades on delete); old `userId`-only scoping replaced.
+- [x] Migration `20260504000000_add_conversations` includes backfill for existing messages.
+- [x] `src/lib/conversations/conversations.ts`: `listConversations`, `getOrCreateActiveConversation`, `createConversation`, `renameConversation`, `archiveConversation`, `autoTitleConversation`.
+- [x] `getMessages` / `createMessage` now scoped to `conversationId` (userId still stored for convenience).
+- [x] `POST /api/chat` accepts `conversationId`; fires `autoTitleConversation` non-blocking after first exchange.
+- [x] `GET|POST /api/conversation` for listing/creating conversations.
+- [x] `PATCH /api/conversation/[id]` for rename/archive.
+- [x] `GET|POST /api/message` updated to `conversationId`-scoped params.
+
+### Three-rail layout / Conversations UI (Slice 2 + 3) (May 2026)
+- [x] `ConversationContext` provides `activeConversationId`, `setActiveConversation`, `startNewConversation`, `renameActiveConversation`, `archiveActiveConversation`.
+- [x] `ConversationTitle.tsx` — inline-editable title in chat header; `getTitleFallback` exported.
+- [x] `src/features/Conversations/` — new feature folder: `ConversationItem`, `Conversations`, `ConversationsRail`, `ConversationsMobileSheet`, `constants`, `utils` (formatTime/formatWhen).
+- [x] `ConversationsRail` — 260px left sidebar, `hidden lg:flex`, shows grouped (today/yesterday/earlier) list with search.
+- [x] `ConversationsMobileSheet` — left Sheet for mobile; hamburger button in chat header triggers it (`lg:hidden`).
+- [x] `PantryDrawer` — 36px collapsed tab on right edge; clicks open 320px absolute overlay (no chat reflow); state persisted in `localStorage`.
+- [x] `page.tsx` — three-rail composition: ConversationsRail | ChatWrapper | PantryDrawer; old inventory aside removed.
+- [x] Migration `20260504000000_add_conversations` — must be applied via `npx prisma migrate deploy` (not `db push`) due to backfill step.
+- [x] Bug fixed (May 2026): `Conversations.tsx` was reading `data?.grouped` but API returns `{ conversations: GroupedConversations }` — fixed to `data?.conversations`.
+- [x] Bug fixed (May 2026): `src/app/api/message/route.ts` used default import for prisma — fixed to named `{ prisma }`.
+
+### Known remaining issues (as of May 2026)
+- [ ] `ConversationContext.activeConversation` is only populated when the context fetches it from the API on first load (no stored localStorage id). After that it's `null` — the chat header shows fallback title correctly but `_count.messages` in the rail may lag until SWR revalidates.
+- [ ] Rail SWR key is not invalidated after each new message is saved — message count on ConversationItem stays at 0 until hard refresh. Fix: call `mutate('/api/conversation?userId=...')` after `saveMessage` in Chat.tsx, or add `refreshInterval`.
+- [ ] `autoTitleConversation` fires after first assistant reply — the rail title updates only on next SWR revalidation (focus/refetch), not immediately.
 ### Recipe card enrichment — description + total time (May 2026)
 - [x] `description` and `totalTimeMinutes` exist in schema/types.
 - [x] `processRecipe` extracts description + total time on save.
@@ -82,3 +109,7 @@
 - [x] Legacy missing-ingredient marker removed.
 - [x] No staple/perishable split; shelf-life enum used instead.
 - [x] Strict-unit shortfall shipped first; conversion deferred.
+- [x] Multi-conversation: `userId` kept on `Message` rows even though `conversationId` is now the primary scope — simplifies raw queries and avoids joins for user-scoped cleanup jobs.
+- [x] Three-rail layout: worktree `feat/three-rail-layout` built in isolation (`.worktrees/feat/three-rail-layout/`). Merge to `main` via normal PR — run `git push origin feat/three-rail-layout` then open PR on GitHub. No special worktree merge steps needed.
+- [x] PantryDrawer: absolute overlay (right side) chosen over reflow — chat width stays stable when pantry opens. Tab stays mounted so right edge doesn't jump.
+- [x] `prisma migrate deploy` required (not `db push`) for the conversations migration — `db push` blocks on the NOT NULL backfill step.

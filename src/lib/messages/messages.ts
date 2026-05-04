@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/db";
 
-export async function getMessages(userId: string) {
+export async function getMessages(conversationId: string) {
   const messages = await prisma.message.findMany({
-    where: { userId },
+    where: { conversationId },
     orderBy: { createdAt: "asc" },
   });
 
@@ -10,12 +10,13 @@ export async function getMessages(userId: string) {
 }
 
 export async function createMessage(
+  conversationId: string,
   userId: string,
   content: string,
   role: string
 ) {
   const message = await prisma.message.create({
-    data: { userId, content, role },
+    data: { conversationId, userId, content, role },
   });
 
   return message;

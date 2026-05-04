@@ -19,10 +19,11 @@ describe("Message Functions", () => {
   });
 
   describe("getMessages", () => {
-    it("should retrieve messages for a user in ascending order", async () => {
+    it("should retrieve messages for a conversation in ascending order", async () => {
       const mockMessages = [
         {
           id: "msg-1",
+          conversationId: "conv-123",
           userId: "user-123",
           content: "Hello",
           role: "user",
@@ -30,6 +31,7 @@ describe("Message Functions", () => {
         },
         {
           id: "msg-2",
+          conversationId: "conv-123",
           userId: "user-123",
           content: "Hi there!",
           role: "assistant",
@@ -39,11 +41,11 @@ describe("Message Functions", () => {
 
       mockedPrisma.message.findMany.mockResolvedValue(mockMessages);
 
-      const result = await getMessages("user-123");
+      const result = await getMessages("conv-123");
 
       expect(result).toEqual(mockMessages);
       expect(mockedPrisma.message.findMany).toHaveBeenCalledWith({
-        where: { userId: "user-123" },
+        where: { conversationId: "conv-123" },
         orderBy: { createdAt: "asc" },
       });
       expect(mockedPrisma.message.findMany).toHaveBeenCalledTimes(1);
@@ -52,11 +54,11 @@ describe("Message Functions", () => {
     it("should return empty array when no messages found", async () => {
       mockedPrisma.message.findMany.mockResolvedValue([]);
 
-      const result = await getMessages("user-456");
+      const result = await getMessages("conv-456");
 
       expect(result).toEqual([]);
       expect(mockedPrisma.message.findMany).toHaveBeenCalledWith({
-        where: { userId: "user-456" },
+        where: { conversationId: "conv-456" },
         orderBy: { createdAt: "asc" },
       });
     });
@@ -65,21 +67,22 @@ describe("Message Functions", () => {
       const dbError = new Error("Database connection failed");
       mockedPrisma.message.findMany.mockRejectedValue(dbError);
 
-      await expect(getMessages("user-123")).rejects.toThrow(
+      await expect(getMessages("conv-123")).rejects.toThrow(
         "Database connection failed"
       );
       expect(mockedPrisma.message.findMany).toHaveBeenCalledWith({
-        where: { userId: "user-123" },
+        where: { conversationId: "conv-123" },
         orderBy: { createdAt: "asc" },
       });
     });
 
-    it("should filter messages by userId correctly", async () => {
+    it("should filter messages by conversationId correctly", async () => {
       const mockMessages = [
         {
           id: "msg-1",
+          conversationId: "conv-123",
           userId: "user-123",
-          content: "User 123 message",
+          content: "Conv 123 message",
           role: "user",
           createdAt: new Date("2024-01-01T10:00:00.000Z"),
         },
@@ -87,16 +90,16 @@ describe("Message Functions", () => {
 
       mockedPrisma.message.findMany.mockResolvedValue(mockMessages);
 
-      await getMessages("user-123");
+      await getMessages("conv-123");
 
       expect(mockedPrisma.message.findMany).toHaveBeenCalledWith({
-        where: { userId: "user-123" },
+        where: { conversationId: "conv-123" },
         orderBy: { createdAt: "asc" },
       });
 
-      // Verify it doesn't get called with different userId
+      // Verify it doesn't get called with different conversationId
       expect(mockedPrisma.message.findMany).not.toHaveBeenCalledWith({
-        where: { userId: "user-456" },
+        where: { conversationId: "conv-456" },
         orderBy: { createdAt: "asc" },
       });
     });
@@ -106,6 +109,7 @@ describe("Message Functions", () => {
     it("should create a user message successfully", async () => {
       const newMessage = {
         id: "msg-new",
+        conversationId: "conv-123",
         userId: "user-123",
         content: "What can I cook?",
         role: "user",
@@ -115,6 +119,7 @@ describe("Message Functions", () => {
       mockedPrisma.message.create.mockResolvedValue(newMessage);
 
       const result = await createMessage(
+        "conv-123",
         "user-123",
         "What can I cook?",
         "user"
@@ -123,6 +128,7 @@ describe("Message Functions", () => {
       expect(result).toEqual(newMessage);
       expect(mockedPrisma.message.create).toHaveBeenCalledWith({
         data: {
+          conversationId: "conv-123",
           userId: "user-123",
           content: "What can I cook?",
           role: "user",
@@ -134,6 +140,7 @@ describe("Message Functions", () => {
     it("should create an assistant message successfully", async () => {
       const assistantMessage = {
         id: "msg-assist",
+        conversationId: "conv-123",
         userId: "user-123",
         content: "You can make scrambled eggs!",
         role: "assistant",
@@ -143,6 +150,7 @@ describe("Message Functions", () => {
       mockedPrisma.message.create.mockResolvedValue(assistantMessage);
 
       const result = await createMessage(
+        "conv-123",
         "user-123",
         "You can make scrambled eggs!",
         "assistant"
@@ -151,6 +159,7 @@ describe("Message Functions", () => {
       expect(result).toEqual(assistantMessage);
       expect(mockedPrisma.message.create).toHaveBeenCalledWith({
         data: {
+          conversationId: "conv-123",
           userId: "user-123",
           content: "You can make scrambled eggs!",
           role: "assistant",
@@ -161,6 +170,7 @@ describe("Message Functions", () => {
     it("should handle empty content", async () => {
       const emptyMessage = {
         id: "msg-empty",
+        conversationId: "conv-123",
         userId: "user-123",
         content: "",
         role: "user",
@@ -169,11 +179,12 @@ describe("Message Functions", () => {
 
       mockedPrisma.message.create.mockResolvedValue(emptyMessage);
 
-      const result = await createMessage("user-123", "", "user");
+      const result = await createMessage("conv-123", "user-123", "", "user");
 
       expect(result).toEqual(emptyMessage);
       expect(mockedPrisma.message.create).toHaveBeenCalledWith({
         data: {
+          conversationId: "conv-123",
           userId: "user-123",
           content: "",
           role: "user",
@@ -182,9 +193,10 @@ describe("Message Functions", () => {
     });
 
     it("should handle long content", async () => {
-      const longContent = "A".repeat(1000); // Very long message
+      const longContent = "A".repeat(1000);
       const longMessage = {
         id: "msg-long",
+        conversationId: "conv-123",
         userId: "user-123",
         content: longContent,
         role: "user",
@@ -193,11 +205,12 @@ describe("Message Functions", () => {
 
       mockedPrisma.message.create.mockResolvedValue(longMessage);
 
-      const result = await createMessage("user-123", longContent, "user");
+      const result = await createMessage("conv-123", "user-123", longContent, "user");
 
       expect(result).toEqual(longMessage);
       expect(mockedPrisma.message.create).toHaveBeenCalledWith({
         data: {
+          conversationId: "conv-123",
           userId: "user-123",
           content: longContent,
           role: "user",
@@ -209,6 +222,7 @@ describe("Message Functions", () => {
       const specialContent = "What's for 🍳 dinner? I have £10 & 2kg of 🥔!";
       const specialMessage = {
         id: "msg-special",
+        conversationId: "conv-123",
         userId: "user-123",
         content: specialContent,
         role: "user",
@@ -217,11 +231,12 @@ describe("Message Functions", () => {
 
       mockedPrisma.message.create.mockResolvedValue(specialMessage);
 
-      const result = await createMessage("user-123", specialContent, "user");
+      const result = await createMessage("conv-123", "user-123", specialContent, "user");
 
       expect(result).toEqual(specialMessage);
       expect(mockedPrisma.message.create).toHaveBeenCalledWith({
         data: {
+          conversationId: "conv-123",
           userId: "user-123",
           content: specialContent,
           role: "user",
@@ -234,11 +249,12 @@ describe("Message Functions", () => {
       mockedPrisma.message.create.mockRejectedValue(dbError);
 
       await expect(
-        createMessage("user-123", "Test message", "user")
+        createMessage("conv-123", "user-123", "Test message", "user")
       ).rejects.toThrow("Failed to create message");
 
       expect(mockedPrisma.message.create).toHaveBeenCalledWith({
         data: {
+          conversationId: "conv-123",
           userId: "user-123",
           content: "Test message",
           role: "user",
@@ -249,6 +265,7 @@ describe("Message Functions", () => {
     it("should handle different role types", async () => {
       const systemMessage = {
         id: "msg-system",
+        conversationId: "conv-123",
         userId: "user-123",
         content: "System initialized",
         role: "system",
@@ -258,6 +275,7 @@ describe("Message Functions", () => {
       mockedPrisma.message.create.mockResolvedValue(systemMessage);
 
       const result = await createMessage(
+        "conv-123",
         "user-123",
         "System initialized",
         "system"
@@ -266,6 +284,7 @@ describe("Message Functions", () => {
       expect(result).toEqual(systemMessage);
       expect(mockedPrisma.message.create).toHaveBeenCalledWith({
         data: {
+          conversationId: "conv-123",
           userId: "user-123",
           content: "System initialized",
           role: "system",
@@ -276,9 +295,9 @@ describe("Message Functions", () => {
 
   describe("Integration scenarios", () => {
     it("should handle typical conversation flow", async () => {
-      // First, user sends a message
       const userMessage = {
         id: "msg-1",
+        conversationId: "conv-123",
         userId: "user-123",
         content: "What can I cook?",
         role: "user",
@@ -288,15 +307,16 @@ describe("Message Functions", () => {
       mockedPrisma.message.create.mockResolvedValueOnce(userMessage);
 
       const createdUserMessage = await createMessage(
+        "conv-123",
         "user-123",
         "What can I cook?",
         "user"
       );
       expect(createdUserMessage).toEqual(userMessage);
 
-      // Then, assistant responds
       const assistantMessage = {
         id: "msg-2",
+        conversationId: "conv-123",
         userId: "user-123",
         content: "You can make scrambled eggs!",
         role: "assistant",
@@ -306,17 +326,17 @@ describe("Message Functions", () => {
       mockedPrisma.message.create.mockResolvedValueOnce(assistantMessage);
 
       const createdAssistantMessage = await createMessage(
+        "conv-123",
         "user-123",
         "You can make scrambled eggs!",
         "assistant"
       );
       expect(createdAssistantMessage).toEqual(assistantMessage);
 
-      // Finally, retrieve all messages
       const allMessages = [userMessage, assistantMessage];
       mockedPrisma.message.findMany.mockResolvedValue(allMessages);
 
-      const retrievedMessages = await getMessages("user-123");
+      const retrievedMessages = await getMessages("conv-123");
       expect(retrievedMessages).toEqual(allMessages);
       expect(retrievedMessages).toHaveLength(2);
     });

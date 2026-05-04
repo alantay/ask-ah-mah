@@ -22,15 +22,31 @@ model InventoryItem {
   @@map("inventory_items")
 }
 
-model Message{
-    id          String   @id @default(cuid())
-    userId      String
-    content     String
-    role        String
-    createdAt   DateTime @default(now())
+model Conversation {
+  id        String    @id @default(cuid())
+  userId    String
+  title     String?
+  archived  Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  messages  Message[]
 
-    @@map("messages")
-    @@index([userId, createdAt])
+  @@index([userId, archived, updatedAt])
+  @@map("conversations")
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  content        String
+  role           String
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([userId, createdAt])
+  @@map("messages")
 }
 
 model Recipe {

@@ -56,3 +56,6 @@ prod.db
 .claude/
 .agents/
 skills-lock.json
+
+# Git worktrees
+.worktrees/

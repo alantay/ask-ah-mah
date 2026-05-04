@@ -1,6 +1,9 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { useConversationContext } from "@/contexts/ConversationContext";
 import { useSessionContext } from "@/contexts/SessionContext";
+import { ConversationsMobileSheet } from "@/features/Conversations";
 import {
   AddInventoryItemSchemaObj,
   RemoveInventoryItemSchemaObj,
@@ -10,31 +13,46 @@ import { upperCaseFirstLetter } from "@/lib/utils";
 import { fetcher } from "@/lib/utils/index";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
 import { z } from "zod";
+import ConversationTitle from "./components/ConversationTitle";
 import { MessageInput } from "./components/MessageInput";
 import { MessageList } from "./components/MessageList";
 import { INITIAL_MESSAGE, LOADING_MESSAGES } from "./constants";
 import { convertToUIMessage, getRandomThinkingMessage } from "./utils";
 
-const SUGGESTIONS = ["What can I cook tonight?", "I just got groceries", "Something quick for one"];
+const SUGGESTIONS = [
+  "What can I cook tonight?",
+  "I just got groceries",
+  "Something quick for one",
+];
+
+// ── Chat ──────────────────────────────────────────────────────────────────────
 
 const Chat = () => {
   const { userId } = useSessionContext();
+  const {
+    activeConversationId,
+    activeConversation,
+    startNewConversation,
+    renameActiveConversation,
+    archiveActiveConversation,
+  } = useConversationContext();
+  const [convSheetOpen, setConvSheetOpen] = useState(false);
 
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/chat",
       body: {
         userId,
+        conversationId: activeConversationId,
       },
     }),
     onError: (error) => {
       console.error("Chat error:", error);
 
-      // Show user-friendly error message
       if (error.message.includes("503")) {
         toast.error(
           "Sorry lah, Ah Mah's cooking brain is taking a break! Try again in a few minutes."
@@ -47,8 +65,6 @@ const Chat = () => {
       const { message } = options;
       let toolCalled = false;
 
-      // console.log("message", message);
-
       if (message.role === "assistant") {
         const content = message.parts
           .filter((part) => part.type === "text")
@@ -58,17 +74,6 @@ const Chat = () => {
           await saveMessage("assistant", content);
         }
       }
-      // const metadata = message.metadata as MetadataWithToolCalls;
-      // Example: Inspect metadata or parts for tool usage info
-      // console.log("Full message meta", metadata);
-
-      // If toolCalls array is present:
-      // Leaving this here for now. Didn't seem to hit this condition.
-      // if (metadata?.toolCalls?.length) {
-      //   console.log("Tools used in this message:", metadata.toolCalls);
-      // } else {
-      //   console.log("No tools used in this message.");
-      // }
 
       message.parts.forEach((part) => {
         if (part.type.startsWith("tool-")) {
@@ -109,7 +114,6 @@ const Chat = () => {
               }
               break;
             case "tool-getInventory":
-              // we mutate for other tools
               break;
           }
           toolCalled = true;
@@ -120,7 +124,9 @@ const Chat = () => {
   });
 
   const { data, isLoading: messagesLoading } = useSWR<SavedMessage[]>(
-    userId ? `/api/message?userId=${userId}` : null,
+    userId && activeConversationId
+      ? `/api/message?conversationId=${activeConversationId}`
+      : null,
     fetcher,
     {
       shouldRetryOnError: true,
@@ -133,9 +139,14 @@ const Chat = () => {
       await fetch("/api/message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, role, content }),
+        body: JSON.stringify({
+          userId,
+          conversationId: activeConversationId,
+          role,
+          content,
+        }),
       });
-      mutate(`/api/message?userId=${userId}`);
+      mutate(`/api/message?conversationId=${activeConversationId}`);
     } catch (error) {
       console.error("Failed to save message:", error);
     }
@@ -145,8 +156,8 @@ const Chat = () => {
     return getRandomThinkingMessage();
   }, []);
 
-  // Show loading state while session is loading
-  if (messagesLoading || !userId) {
+  // Show loading state while session or conversation is loading
+  if (messagesLoading || !userId || !activeConversationId) {
     return (
       <div className="flex h-[600px] items-center justify-center">
         <div className="animate-pulse">
@@ -161,7 +172,6 @@ const Chat = () => {
   }
 
   const savedMessages = (data || []).map(convertToUIMessage);
-  // Only show saved messages if there are no current UI messages (to avoid duplicates)
   const currentMessages = messages.filter((currentMsg) => {
     const currentContent = currentMsg.parts
       .filter((part) => part.type === "text")
@@ -181,25 +191,72 @@ const Chat = () => {
   });
 
   const allMessages = [INITIAL_MESSAGE, ...savedMessages, ...currentMessages];
+  const messageCount = allMessages.length - 1; // exclude initial
+
+  const startedAt = activeConversation?.createdAt
+    ? new Date(activeConversation.createdAt).toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      })
+    : null;
 
   const handleSendMessage = async (message: string) => {
     sendMessage({ text: message });
     await saveMessage("user", message);
   };
 
-  const dayName = new Date().toLocaleDateString("en-US", { weekday: "long" });
-  const messageCount = allMessages.length - 1; // exclude initial
-
   return (
-    <div className="flex flex-col animate-in fade-in duration-300 h-full">
+    <div
+      key={activeConversationId}
+      className="flex flex-col animate-in fade-in duration-300 h-full"
+    >
       <div className="hidden sm:flex items-center justify-between px-7 py-3.5 border-b border-dashed border-border shrink-0">
-        <div>
-          <div className="font-display italic font-medium text-[19px] text-foreground leading-tight tracking-tight">
-            {dayName}&rsquo;s kitchen
+        <div className="flex items-center gap-3">
+          {/* Active indicator dot */}
+          <div
+            className="w-2 h-2 rounded-full bg-primary shrink-0"
+            style={{ boxShadow: "oklch(0.56 0.135 35 / 0.18) 0 0 0 4px" }}
+          />
+          <div>
+            <ConversationTitle
+              title={activeConversation?.title}
+              createdAt={activeConversation?.createdAt}
+              onRename={renameActiveConversation}
+            />
+            <div className="text-[11.5px] text-ink-faint mt-0.5 tracking-wide">
+              {messageCount > 0
+                ? `${messageCount} message${messageCount !== 1 ? "s" : ""}${startedAt ? ` · started ${startedAt}` : ""}`
+                : "Start a conversation"}
+            </div>
           </div>
-          <div className="text-[11.5px] text-ink-faint mt-0.5 tracking-wide">
-            {messageCount > 0 ? `${messageCount} message${messageCount !== 1 ? "s" : ""}` : "Start a conversation"}
-          </div>
+        </div>
+        {/* Mobile: conversations button */}
+          <button
+            onClick={() => setConvSheetOpen(true)}
+            className="lg:hidden p-1.5 text-ink-faint hover:text-foreground transition-colors cursor-pointer"
+            aria-label="Open conversations"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={archiveActiveConversation}
+            className="cursor-pointer"
+          >
+            Archive
+          </Button>
+          <Button
+            size="sm"
+            onClick={startNewConversation}
+            className="bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
+          >
+            + New conversation
+          </Button>
         </div>
       </div>
       <MessageList
@@ -225,6 +282,7 @@ const Chat = () => {
         onSendMessage={handleSendMessage}
         disabled={status !== "ready"}
       />
+      <ConversationsMobileSheet open={convSheetOpen} onOpenChange={setConvSheetOpen} />
     </div>
   );
 };
