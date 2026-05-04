@@ -86,22 +86,29 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
 
   const renameActiveConversation = async (title: string) => {
     if (!activeConversationId) return;
-    await fetch(`/api/conversation/${activeConversationId}`, {
+    const res = await fetch(`/api/conversation/${activeConversationId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title }),
     });
-    globalMutate(swrKey);
-    if (userId) globalMutate(`/api/conversation?userId=${userId}`);
+    if (!res.ok) return;
+    // Revalidate all conversation-related SWR keys (swrKey may be null when
+    // activeConversationId was loaded from localStorage, so we use a predicate).
+    globalMutate(
+      (key: unknown) => typeof key === "string" && key.includes("/api/conversation"),
+      undefined,
+      { revalidate: true }
+    );
   };
 
   const archiveActiveConversation = async () => {
     if (!activeConversationId) return;
-    await fetch(`/api/conversation/${activeConversationId}`, {
+    const res = await fetch(`/api/conversation/${activeConversationId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ archived: true }),
     });
+    if (!res.ok) return;
     // Clear stored id so startNewConversation creates fresh
     setActiveConversationId(null);
     localStorage.removeItem(LOCAL_STORAGE_KEY);
