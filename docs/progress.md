@@ -71,7 +71,6 @@
 - [ ] `ConversationContext.activeConversation` is only populated when the context fetches it from the API on first load (no stored localStorage id). After that it's `null` — the chat header shows fallback title correctly but `_count.messages` in the rail may lag until SWR revalidates.
 - [ ] Rail SWR key is not invalidated after each new message is saved — message count on ConversationItem stays at 0 until hard refresh. Fix: call `mutate('/api/conversation?userId=...')` after `saveMessage` in Chat.tsx, or add `refreshInterval`.
 - [ ] `autoTitleConversation` fires after first assistant reply — the rail title updates only on next SWR revalidation (focus/refetch), not immediately.
-
 ### Recipe card enrichment — description + total time (May 2026)
 - [x] `description` and `totalTimeMinutes` exist in schema/types.
 - [x] `processRecipe` extracts description + total time on save.
