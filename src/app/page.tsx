@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/drawer";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ConversationProvider } from "@/contexts/ConversationContext";
 import { RecipeProvider, useRecipeContext } from "@/contexts/RecipeContext";
 import ChatWrapper from "@/features/Chat/components/ChatWrapper";
 import InventoryWrapper from "@/features/Inventory/components/InventoryWrapper";
@@ -88,7 +89,9 @@ function HomeContent() {
 export default function Home() {
   return (
     <RecipeProvider>
-      <HomeContent />
+      <ConversationProvider>
+        <HomeContent />
+      </ConversationProvider>
     </RecipeProvider>
   );
 }
