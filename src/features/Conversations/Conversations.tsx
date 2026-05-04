@@ -14,8 +14,7 @@ interface ConversationsProps {
 }
 
 type ConversationsResponse = {
-  conversations: ConversationEntity[];
-  grouped: {
+  conversations: {
     today: ConversationEntity[];
     yesterday: ConversationEntity[];
     earlier: ConversationEntity[];
@@ -46,7 +45,7 @@ export function Conversations({ onItemClick }: ConversationsProps) {
     onItemClick?.();
   };
 
-  const grouped = data?.grouped ?? { today: [], yesterday: [], earlier: [] };
+  const grouped = data?.conversations ?? { today: [], yesterday: [], earlier: [] };
   const buckets: [keyof typeof BUCKET_LABELS, ConversationEntity[]][] = [
     ["today", filterConversations(grouped.today)],
     ["yesterday", filterConversations(grouped.yesterday)],

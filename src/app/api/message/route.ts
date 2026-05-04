@@ -1,6 +1,6 @@
 import { autoTitleConversation } from "@/lib/conversations";
 import { createMessage, getMessages } from "@/lib/messages";
-import prisma from "@/lib/db";
+import { prisma } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
