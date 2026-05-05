@@ -264,6 +264,7 @@ const Chat = () => {
         status={status}
         userId={userId}
         thinkingMessage={thinkingMessage}
+        onSend={handleSendMessage}
       />
       {status === "ready" && messageCount === 0 && (
         <div className="flex gap-2 px-4 pb-1 flex-wrap">
