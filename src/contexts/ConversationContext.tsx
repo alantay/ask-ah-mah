@@ -9,6 +9,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { toast } from "sonner";
 import useSWR, { mutate as globalMutate } from "swr";
 
 const LOCAL_STORAGE_KEY = "ask-ah-mah-active-conversation";
@@ -20,6 +21,7 @@ interface ConversationContextType {
   setActiveConversation: (id: string) => void;
   startNewConversation: () => Promise<void>;
   renameActiveConversation: (title: string) => Promise<void>;
+  autoTitleActiveConversation: (title: string) => Promise<void>;
   archiveActiveConversation: () => Promise<void>;
 }
 
@@ -101,6 +103,20 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  const autoTitleActiveConversation = async (title: string) => {
+    if (!activeConversationId) return;
+    await fetch(`/api/conversation/${activeConversationId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, autoTitle: true }),
+    });
+    globalMutate(
+      (key: unknown) => typeof key === "string" && key.includes("/api/conversation"),
+      undefined,
+      { revalidate: true }
+    );
+  };
+
   const archiveActiveConversation = async () => {
     if (!activeConversationId) return;
     const res = await fetch(`/api/conversation/${activeConversationId}`, {
@@ -109,6 +125,7 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify({ archived: true }),
     });
     if (!res.ok) return;
+    toast.success("Conversation archived");
     // Clear stored id so startNewConversation creates fresh
     setActiveConversationId(null);
     localStorage.removeItem(LOCAL_STORAGE_KEY);
@@ -127,6 +144,7 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
         setActiveConversation,
         startNewConversation,
         renameActiveConversation,
+        autoTitleActiveConversation,
         archiveActiveConversation,
       }}
     >

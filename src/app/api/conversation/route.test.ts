@@ -5,7 +5,7 @@ import {
   listConversations,
 } from "@/lib/conversations";
 import { NextRequest } from "next/server";
-import type { GroupedConversations } from "@/lib/conversations";
+import type { ConversationEntity } from "@/lib/conversations";
 
 jest.mock("next/server", () => ({
   NextRequest: jest.fn(),
@@ -43,7 +43,7 @@ const createMockRequest = (url: string, options: RequestInit = {}) => {
   } as NextRequest;
 };
 
-const emptyGrouped: GroupedConversations = { today: [], yesterday: [], earlier: [] };
+const emptyList: ConversationEntity[] = [];
 
 function makeConversation(overrides: Partial<{
   id: string;
@@ -90,15 +90,9 @@ describe("Conversation API Routes", () => {
   });
 
   describe("GET /api/conversation", () => {
-    it("should return grouped conversations for valid userId", async () => {
+    it("should return flat conversations for valid userId", async () => {
       const conv = makeConversation({ id: "conv-1" });
-      const grouped: GroupedConversations = {
-        today: [conv],
-        yesterday: [],
-        earlier: [],
-      };
-
-      mockedListConversations.mockResolvedValue(grouped);
+      mockedListConversations.mockResolvedValue([conv]);
 
       const request = createMockRequest(
         "http://localhost:3000/api/conversation?userId=user-1"
@@ -107,7 +101,7 @@ describe("Conversation API Routes", () => {
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(data).toEqual({ conversations: grouped });
+      expect(data).toEqual({ conversations: [conv] });
       expect(mockedListConversations).toHaveBeenCalledWith("user-1");
     });
 
@@ -123,8 +117,8 @@ describe("Conversation API Routes", () => {
       expect(mockedListConversations).not.toHaveBeenCalled();
     });
 
-    it("should return empty grouped conversations when none exist", async () => {
-      mockedListConversations.mockResolvedValue(emptyGrouped);
+    it("should return empty list when no conversations exist", async () => {
+      mockedListConversations.mockResolvedValue(emptyList);
 
       const request = createMockRequest(
         "http://localhost:3000/api/conversation?userId=user-empty"
@@ -133,7 +127,7 @@ describe("Conversation API Routes", () => {
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(data).toEqual({ conversations: emptyGrouped });
+      expect(data).toEqual({ conversations: emptyList });
     });
   });
 

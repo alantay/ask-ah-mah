@@ -1,9 +1,7 @@
 "use client";
 
-import { getTitleFallback } from "@/features/Chat/components/ConversationTitle";
 import type { ConversationEntity } from "@/lib/conversations";
 import { cn } from "@/lib/utils";
-import { formatWhen } from "../utils";
 
 interface ConversationItemProps {
   conversation: ConversationEntity;
@@ -12,9 +10,7 @@ interface ConversationItemProps {
 }
 
 export function ConversationItem({ conversation, isActive, onClick }: ConversationItemProps) {
-  const title = conversation.title ?? getTitleFallback(new Date(conversation.createdAt));
-  const when = formatWhen(conversation.updatedAt);
-  const msgCount = conversation._count?.messages;
+  const title = conversation.title ?? "New chat";
 
   return (
     <div
@@ -26,17 +22,9 @@ export function ConversationItem({ conversation, isActive, onClick }: Conversati
           : "bg-card border border-border"
       )}
     >
-      <div className="flex items-start justify-between gap-1">
-        <span className="font-display italic font-medium text-base text-foreground leading-tight tracking-tight flex-1 min-w-0 truncate">
-          {title}
-        </span>
-        <span className="font-mono text-[10.5px] text-ink-faint tabular-nums shrink-0 mt-0.5">
-          {when}
-        </span>
-      </div>
-      {msgCount !== undefined && (
-        <div className="text-[11px] text-ink-faint mt-1">{msgCount} msg</div>
-      )}
+      <span className="font-display italic font-medium text-base text-foreground leading-tight tracking-tight block truncate">
+        {title}
+      </span>
     </div>
   );
 }

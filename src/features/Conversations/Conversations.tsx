@@ -6,7 +6,7 @@ import type { ConversationEntity } from "@/lib/conversations";
 import { fetcher } from "@/lib/utils/index";
 import { useState } from "react";
 import useSWR from "swr";
-import { BUCKET_LABELS, CONVERSATIONS_SEARCH_PLACEHOLDER } from "./constants";
+import { CONVERSATIONS_SEARCH_PLACEHOLDER } from "./constants";
 import { ConversationItem } from "./components/ConversationItem";
 
 interface ConversationsProps {
@@ -14,11 +14,7 @@ interface ConversationsProps {
 }
 
 type ConversationsResponse = {
-  conversations: {
-    today: ConversationEntity[];
-    yesterday: ConversationEntity[];
-    earlier: ConversationEntity[];
-  };
+  conversations: ConversationEntity[];
 };
 
 export function Conversations({ onItemClick }: ConversationsProps) {
@@ -32,26 +28,24 @@ export function Conversations({ onItemClick }: ConversationsProps) {
     fetcher
   );
 
-  const filterConversations = (conversations: ConversationEntity[]) => {
-    if (!search.trim()) return conversations;
-    const q = search.toLowerCase();
-    return conversations.filter((c) =>
-      (c.title ?? "").toLowerCase().includes(q)
-    );
-  };
+  const allConversations = data?.conversations ?? [];
+
+  const filtered = search.trim()
+    ? allConversations.filter((c) =>
+        (c.title ?? "New chat").toLowerCase().includes(search.toLowerCase())
+      )
+    : allConversations;
 
   const handleItemClick = (id: string) => {
     setActiveConversation(id);
     onItemClick?.();
   };
 
-  const grouped = data?.conversations ?? { today: [], yesterday: [], earlier: [] };
-  const buckets: [keyof typeof BUCKET_LABELS, ConversationEntity[]][] = [
-    ["today", filterConversations(grouped.today)],
-    ["yesterday", filterConversations(grouped.yesterday)],
-    ["earlier", filterConversations(grouped.earlier)],
-  ];
-  const hasAny = buckets.some(([, items]) => items.length > 0);
+  const handleNewConversation = () => {
+    const active = allConversations.find((c) => c.id === activeConversationId);
+    if ((active?._count?.messages ?? 1) === 0) return;
+    startNewConversation();
+  };
 
   return (
     <>
@@ -64,7 +58,7 @@ export function Conversations({ onItemClick }: ConversationsProps) {
           <div className="text-xs text-ink-faint mt-0.5">Each kitchen session, kept</div>
         </div>
         <button
-          onClick={startNewConversation}
+          onClick={handleNewConversation}
           className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center text-lg font-medium shrink-0 hover:bg-primary/90 transition-colors cursor-pointer"
           aria-label="New conversation"
         >
@@ -96,29 +90,20 @@ export function Conversations({ onItemClick }: ConversationsProps) {
       {/* List */}
       {isLoading ? (
         <div className="italic text-ink-faint text-sm">Loading…</div>
-      ) : !hasAny ? (
-        <div className="italic text-ink-faint text-sm">No conversations yet</div>
+      ) : filtered.length === 0 ? (
+        <div className="italic text-ink-faint text-sm">
+          {search ? "No results" : "No conversations yet"}
+        </div>
       ) : (
-        <div className="flex flex-col">
-          {buckets.map(([key, items]) =>
-            items.length === 0 ? null : (
-              <div key={key} className="mt-3 first:mt-0">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground mb-2">
-                  {BUCKET_LABELS[key]}
-                </div>
-                <div className="flex flex-col gap-2">
-                  {items.map((conv) => (
-                    <ConversationItem
-                      key={conv.id}
-                      conversation={conv}
-                      isActive={conv.id === activeConversationId}
-                      onClick={() => handleItemClick(conv.id)}
-                    />
-                  ))}
-                </div>
-              </div>
-            )
-          )}
+        <div className="flex flex-col gap-2">
+          {filtered.map((conv) => (
+            <ConversationItem
+              key={conv.id}
+              conversation={conv}
+              isActive={conv.id === activeConversationId}
+              onClick={() => handleItemClick(conv.id)}
+            />
+          ))}
         </div>
       )}
     </>

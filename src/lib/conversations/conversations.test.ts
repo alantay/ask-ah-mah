@@ -62,42 +62,26 @@ describe("Conversation Functions", () => {
   });
 
   describe("listConversations", () => {
-    it("groups conversations into today/yesterday/earlier", async () => {
+    it("returns conversations as a flat list ordered by updatedAt desc", async () => {
       const now = new Date();
-      const todayUTC = new Date(
-        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 12)
-      );
-      const yesterdayUTC = new Date(todayUTC.getTime() - 24 * 60 * 60 * 1000);
-      const earlierDate = new Date(todayUTC.getTime() - 3 * 24 * 60 * 60 * 1000);
+      const todayConv = makeConversation({ id: "conv-today", updatedAt: now });
+      const olderConv = makeConversation({ id: "conv-older", updatedAt: new Date(now.getTime() - 48 * 60 * 60 * 1000) });
 
-      const todayConv = makeConversation({ id: "conv-today", updatedAt: todayUTC });
-      const yesterdayConv = makeConversation({ id: "conv-yesterday", updatedAt: yesterdayUTC });
-      const earlierConv = makeConversation({ id: "conv-earlier", updatedAt: earlierDate });
-
-      mockedPrisma.conversation.findMany.mockResolvedValue([
-        todayConv,
-        yesterdayConv,
-        earlierConv,
-      ]);
+      mockedPrisma.conversation.findMany.mockResolvedValue([todayConv, olderConv]);
 
       const result = await listConversations("user-1");
 
-      expect(result.today).toHaveLength(1);
-      expect(result.today[0].id).toBe("conv-today");
-      expect(result.yesterday).toHaveLength(1);
-      expect(result.yesterday[0].id).toBe("conv-yesterday");
-      expect(result.earlier).toHaveLength(1);
-      expect(result.earlier[0].id).toBe("conv-earlier");
+      expect(result).toHaveLength(2);
+      expect(result[0].id).toBe("conv-today");
+      expect(result[1].id).toBe("conv-older");
     });
 
-    it("returns empty buckets when no conversations", async () => {
+    it("returns empty list when no conversations", async () => {
       mockedPrisma.conversation.findMany.mockResolvedValue([]);
 
       const result = await listConversations("user-1");
 
-      expect(result.today).toHaveLength(0);
-      expect(result.yesterday).toHaveLength(0);
-      expect(result.earlier).toHaveLength(0);
+      expect(result).toHaveLength(0);
     });
 
     it("excludes archived conversations by default", async () => {

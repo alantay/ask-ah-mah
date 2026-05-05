@@ -13,7 +13,7 @@ import { upperCaseFirstLetter } from "@/lib/utils";
 import { fetcher } from "@/lib/utils/index";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
 import { z } from "zod";
@@ -38,9 +38,11 @@ const Chat = () => {
     activeConversation,
     startNewConversation,
     renameActiveConversation,
+    autoTitleActiveConversation,
     archiveActiveConversation,
   } = useConversationContext();
   const [convSheetOpen, setConvSheetOpen] = useState(false);
+  const autoTitledConversations = useRef<Set<string>>(new Set());
 
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
@@ -156,6 +158,13 @@ const Chat = () => {
     return getRandomThinkingMessage();
   }, []);
 
+  const handleRecipeDetected = useCallback((recipeTitle: string) => {
+    if (!activeConversationId) return;
+    if (autoTitledConversations.current.has(activeConversationId)) return;
+    autoTitledConversations.current.add(activeConversationId);
+    autoTitleActiveConversation(recipeTitle);
+  }, [activeConversationId, autoTitleActiveConversation]);
+
   // Show loading state while session or conversation is loading
   if (messagesLoading || !userId || !activeConversationId) {
     return (
@@ -246,13 +255,15 @@ const Chat = () => {
             variant="outline"
             size="sm"
             onClick={archiveActiveConversation}
-            className="cursor-pointer"
+            disabled={messageCount === 0}
+            title={messageCount === 0 ? "Nothing to archive yet" : undefined}
+            className="cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Archive
           </Button>
           <Button
             size="sm"
-            onClick={startNewConversation}
+            onClick={() => { if (messageCount > 0) startNewConversation(); }}
             className="bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
           >
             + New conversation
@@ -265,6 +276,7 @@ const Chat = () => {
         userId={userId}
         thinkingMessage={thinkingMessage}
         onSend={handleSendMessage}
+        onRecipeDetected={handleRecipeDetected}
       />
       {status === "ready" && messageCount === 0 && (
         <div className="flex gap-2 px-4 pb-1 flex-wrap">

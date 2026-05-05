@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
   }
 
   const conversations = await listConversations(userId);
-  return NextResponse.json({ conversations });
+  return NextResponse.json({ conversations }); // flat array, ordered by updatedAt desc
 }
 
 export async function POST(req: NextRequest) {

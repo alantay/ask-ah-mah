@@ -39,15 +39,14 @@ describe("ConversationItem", () => {
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
-  it("shows title and message count", () => {
+  it("shows title", () => {
     render(
       <ConversationItem conversation={baseConv} isActive={false} onClick={() => {}} />
     );
     expect(screen.getByText("Sambal night")).toBeInTheDocument();
-    expect(screen.getByText("5 msg")).toBeInTheDocument();
   });
 
-  it("falls back to generated title when title is null", () => {
+  it("falls back to 'New chat' when title is null", () => {
     render(
       <ConversationItem
         conversation={{ ...baseConv, title: null }}
@@ -55,6 +54,6 @@ describe("ConversationItem", () => {
         onClick={() => {}}
       />
     );
-    expect(screen.getByText(/kitchen/i)).toBeInTheDocument();
+    expect(screen.getByText("New chat")).toBeInTheDocument();
   });
 });

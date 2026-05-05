@@ -13,44 +13,13 @@ export type ConversationEntity = {
   _count?: { messages: number };
 };
 
-export type GroupedConversations = {
-  today: ConversationEntity[];
-  yesterday: ConversationEntity[];
-  earlier: ConversationEntity[];
-};
-
-function groupByRecency(conversations: ConversationEntity[]): GroupedConversations {
-  const now = new Date();
-  const todayStart = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
-  );
-  const yesterdayStart = new Date(todayStart.getTime() - 24 * 60 * 60 * 1000);
-
-  const today: ConversationEntity[] = [];
-  const yesterday: ConversationEntity[] = [];
-  const earlier: ConversationEntity[] = [];
-
-  for (const conv of conversations) {
-    const updatedAt = conv.updatedAt;
-    if (updatedAt >= todayStart) {
-      today.push(conv);
-    } else if (updatedAt >= yesterdayStart) {
-      yesterday.push(conv);
-    } else {
-      earlier.push(conv);
-    }
-  }
-
-  return { today, yesterday, earlier };
-}
-
 export async function listConversations(
   userId: string,
   options?: { includeArchived?: boolean }
-): Promise<GroupedConversations> {
+): Promise<ConversationEntity[]> {
   const includeArchived = options?.includeArchived ?? false;
 
-  const conversations = await prisma.conversation.findMany({
+  return prisma.conversation.findMany({
     where: {
       userId,
       ...(includeArchived ? {} : { archived: false }),
@@ -58,8 +27,6 @@ export async function listConversations(
     orderBy: { updatedAt: "desc" },
     include: { _count: { select: { messages: true } } },
   });
-
-  return groupByRecency(conversations);
 }
 
 export async function getOrCreateActiveConversation(
@@ -100,6 +67,19 @@ export async function renameConversation(
   });
 
   return conversation;
+}
+
+export async function autoTitleIfNull(
+  id: string,
+  title: string
+): Promise<ConversationEntity | null> {
+  const existing = await prisma.conversation.findUnique({ where: { id } });
+  if (!existing || existing.title !== null) return null;
+  return prisma.conversation.update({
+    where: { id },
+    data: { title },
+    include: { _count: { select: { messages: true } } },
+  });
 }
 
 export async function archiveConversation(
