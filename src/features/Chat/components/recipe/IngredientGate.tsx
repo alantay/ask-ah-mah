@@ -5,7 +5,6 @@ import { GetInventoryResponse, InventoryItem } from '@/lib/inventory/schemas';
 import { GateData } from '@/lib/recipes/schemas';
 import { fetcher } from '@/lib/utils/index';
 import Image from 'next/image';
-import { toast } from 'sonner';
 import useSWR from 'swr';
 import { computePantry } from './pantryUtils';
 
@@ -296,11 +295,7 @@ export function IngredientGate({ data, onSend }: IngredientGateProps) {
             }
             title="I'm missing some"
             sub="Suggest swaps, or send me to the shop."
-            onClick={() =>
-              toast.info(
-                'Coming soon — substitutions and shopping list are on the way!',
-              )
-            }
+            onClick={() => onSend("I'm missing some.")}
           />
         </div>
 
