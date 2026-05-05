@@ -115,7 +115,7 @@ App: **“Ask Ah Mah”** — converts pantry items into recipes via chat.
 - Ensure branch matches scope
   - otherwise suggest new branch (`feat/...`, `fix/...`)
 - Never push directly to `main`
-- Keep branches short-lived (1–2 days) and merge `main` frequently during development to minimize conflicts
+- Always `git pull` (or `git fetch` + `git merge main`) before pushing to avoid conflicts
 
 ---
 
