@@ -15,6 +15,9 @@ export async function PATCH(
   if (typeof title === "string") {
     if (autoTitle) {
       const conversation = await autoTitleIfNull(id, title);
+      if (!conversation) {
+        return new NextResponse(null, { status: 204 });
+      }
       return NextResponse.json({ conversation });
     }
     const conversation = await renameConversation(id, title);
