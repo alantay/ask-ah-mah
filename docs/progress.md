@@ -5,42 +5,12 @@
 
 ## V1 — Shipped (April 2026)
 
-### Structured recipes
-- [x] `Recipe` schema has `baseServings: Int` + `ingredients: Json` (`[{ name, amount?, unit? }]`).
-- [x] `RecipeDisplay` has +/- servings stepper that scales ingredient amounts client-side.
-- [x] Strict-unit-match shortfall badges in recipe view (`unit` must match exactly, both numeric, inventory quantity required).
-- [x] Multi-recipe-per-message save support (separate save buttons per recipe block).
-- [x] `processRecipe` extracts tags/baseServings/ingredients on save; recipe text is stored unchanged.
-
-### Freeform inventory entry
-- [x] `POST /api/inventory/parse` converts freeform text to structured items via `generateObject`.
-- [x] Inventory add flow uses freeform textarea (replacing old 4-field form).
-- [x] `shelfLife: 'short' | 'medium' | 'long'` is inferred on add.
-- [x] `quantity`/`unit` are optional (unset = unlimited).
-- [x] Amber dot shown on `InventoryItemBadge` when `shelfLife === 'short'`.
-
-### System prompt rewrite
-- [x] Prompt condensed and unified (single source of truth, no conflicting templates).
-- [x] Light Singlish tone maintained.
-- [x] Technique explanations emphasize the "why".
-- [x] `getInventory` usage is targeted (recipe/inventory-relevant scenarios).
-
-### Ops / cleanup
-- [x] Schema columns added: `shelfLife`, `baseServings`, `ingredients`.
-- [x] Legacy 🛒 marker removed (shortfall badge is the source of truth).
-- [x] `cleanedInstructions` removed from `processRecipe`.
-- [x] Recipe save degrades gracefully when metadata extraction fails.
-- [x] Cursor-specific rules moved to docs and config cleaned up.
-
-### Default inventory seeding
-- [x] 6 starter items seeded idempotently (salt, oil, soy sauce, wok, pot, chef's knife).
-- [x] `POST /api/inventory/seed` exists and `useSession` triggers on first session.
-
-### UI overhaul / polish (Kopitiam Modern)
-- [x] Tokenized color system + paper texture applied.
-- [x] Chat/Cookbook tab structure + responsive pantry behavior.
-- [x] Pantry and cookbook tray zoning + flattened sidebar treatment.
-- [x] Assistant typography and chat input refinements shipped.
+The persistent-kitchen MVP. Highlights:
+- Structured recipes (`baseServings` + `ingredients` JSON, +/- servings stepper, strict-unit shortfall badges, multi-recipe save).
+- Freeform inventory entry via `POST /api/inventory/parse`; optional `quantity`/`unit`; `shelfLife` enum with amber-dot UI for short-life items.
+- Unified system prompt (light Singlish, technique-why focus, targeted `getInventory` use).
+- Default inventory seed on first session (`POST /api/inventory/seed`).
+- Kopitiam Modern surface redesign (tokenized colors, paper texture, chat/cookbook tabs, responsive pantry).
 
 ## V2 — In Progress
 
@@ -67,10 +37,6 @@
 - [x] Bug fixed (May 2026): `Conversations.tsx` was reading `data?.grouped` but API returns `{ conversations: GroupedConversations }` — fixed to `data?.conversations`.
 - [x] Bug fixed (May 2026): `src/app/api/message/route.ts` used default import for prisma — fixed to named `{ prisma }`.
 
-### Known remaining issues (as of May 2026)
-- [ ] `ConversationContext.activeConversation` is only populated when the context fetches it from the API on first load (no stored localStorage id). After that it's `null` — the chat header shows fallback title correctly but `_count.messages` in the rail may lag until SWR revalidates.
-- [ ] Rail SWR key is not invalidated after each new message is saved — message count on ConversationItem stays at 0 until hard refresh. Fix: call `mutate('/api/conversation?userId=...')` after `saveMessage` in Chat.tsx, or add `refreshInterval`.
-- [ ] `autoTitleConversation` fires after first assistant reply — the rail title updates only on next SWR revalidation (focus/refetch), not immediately.
 ### Recipe card enrichment — description + total time (May 2026)
 - [x] `description` and `totalTimeMinutes` exist in schema/types.
 - [x] `processRecipe` extracts description + total time on save.
@@ -100,16 +66,20 @@
 - [ ] Recipe markdown export.
 - [ ] Recipe sharing/community.
 
-## Decision Log (recorded)
-- [x] Optional quantity design: unset quantity means "unlimited".
-- [x] Aging alerts intentionally deferred in V1.
-- [x] Structured-on-save chosen over streaming extraction for V1.
-- [x] `cleanedInstructions` removed due to reliability issues.
-- [x] Description generated post-hoc (not inline in assistant response).
-- [x] Legacy missing-ingredient marker removed.
-- [x] No staple/perishable split; shelf-life enum used instead.
-- [x] Strict-unit shortfall shipped first; conversion deferred.
-- [x] Multi-conversation: `userId` kept on `Message` rows even though `conversationId` is now the primary scope — simplifies raw queries and avoids joins for user-scoped cleanup jobs.
-- [x] Three-rail layout: worktree `feat/three-rail-layout` built in isolation (`.worktrees/feat/three-rail-layout/`). Merge to `main` via normal PR — run `git push origin feat/three-rail-layout` then open PR on GitHub. No special worktree merge steps needed.
-- [x] PantryDrawer: absolute overlay (right side) chosen over reflow — chat width stays stable when pantry opens. Tab stays mounted so right edge doesn't jump.
-- [x] `prisma migrate deploy` required (not `db push`) for the conversations migration — `db push` blocks on the NOT NULL backfill step.
+## Known Issues
+
+- `ConversationContext.activeConversation` (`ConversationContext.tsx:66`) is bound to the initial one-shot SWR fetch. When `activeConversationId` is already set (e.g. restored from localStorage), the fetch is skipped and `activeConversation` stays `null` — the chat header shows the fallback title correctly but features that read `activeConversation` fields (e.g. `createdAt`) won't populate until the context re-fetches.
+- Rail SWR key (`/api/conversation?userId=...`) is not invalidated after messages are saved (`Chat.tsx:149` only mutates the message list). Message counts on `ConversationItem` stay stale until focus/refetch. Fix: call `mutate('/api/conversation?userId=...')` after `saveMessage`, or add `refreshInterval`.
+- `autoTitleConversation` fires server-side after the first assistant reply — no client-side mutate trigger exists, so the rail title only updates on the next SWR revalidation (focus/refetch), not immediately.
+
+## Decisions
+
+- **Optional quantity = "unlimited"**: unset `quantity` means the item has no limit. Avoids forcing a count on pantry staples where "do I have enough?" is never the question.
+- **Structured-on-save over streaming extraction**: metadata (`baseServings`, `ingredients`, `description`, `totalTimeMinutes`) is extracted when the user saves a recipe, not streamed inline. Simpler streaming path; extraction failures degrade gracefully without breaking the chat.
+- **Strict-unit shortfall first; cross-unit conversion deferred**: `unit` must match exactly for shortfall calculation. Cross-unit conversion (e.g. `g` vs `kg`) is a V3+ problem — the complexity isn't justified until users actually hit it.
+- **No staple/perishable split; `shelfLife` enum instead**: `'short' | 'medium' | 'long'` is inferred on add. Avoids a binary that doesn't fit many items (e.g. opened sauces); the amber dot surfaces urgency without forcing a category.
+- **Description generated post-hoc, not inline in assistant response**: `processRecipe` extracts description on save. Keeping the assistant response format simple reduces prompt complexity and lets the extraction be richer than what would fit in a streamed recipe block.
+- **Aging alerts deferred from V1**: `shelfLife` + `dateAdded` are stored, but alert UI is V3+. V1 scope was inventory + recipes; alerts add a notification surface that needs its own design pass.
+- **`userId` retained on `Message` rows** even though `conversationId` is now the primary scope. Simplifies raw queries and avoids joins for user-scoped cleanup jobs.
+- **`prisma migrate deploy` over `db push`** for the conversations migration: `db push` blocks on the `NOT NULL` backfill step in `20260504000000_add_conversations`.
+- **PantryDrawer absolute overlay over reflow**: pantry opens as a right-edge overlay so chat width stays stable. Tab stays mounted so the right edge doesn't jump on open/close.
