@@ -19,6 +19,7 @@ model InventoryItem {
   lastUpdated DateTime @updatedAt
   userId      String
 
+  @@unique([userId, name, type])
   @@map("inventory_items")
 }
 

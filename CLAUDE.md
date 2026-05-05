@@ -18,7 +18,8 @@ Guidance for working in this repository.
 
 **Database**
 
-- `npm run db:local` / `npm run db:prod` — `prisma generate && prisma db push`
+- `npm run db:local` / `npm run db:prod` — `prisma generate && prisma db push` (prototyping/schema exploration only — skips migration history)
+- For production deploys use `prisma generate && prisma migrate deploy`; this runs automatically in `npm run build`
 - `npm run db:studio` — open Prisma Studio (`prisma/dev.db`)
 
 ---

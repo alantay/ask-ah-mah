@@ -22,7 +22,7 @@ const SectionLabel = ({ children, count }: { children: ReactNode; count?: number
   </div>
 );
 
-const Inventory = () => {
+const Inventory = ({ onClose }: { onClose?: () => void }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [draft, setDraft] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -101,24 +101,37 @@ const Inventory = () => {
   return (
     <div className="flex flex-col gap-4 animate-in fade-in duration-300 p-5 h-full">
       {/* Pantry header */}
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-2">
         <div>
           <div className="font-display italic font-medium text-[22px] text-foreground leading-tight tracking-tight">
             Pantry
           </div>
           <div className="text-xs text-ink-faint mt-0.5">What&rsquo;s on Ah Mah&rsquo;s shelves</div>
         </div>
-        {!isAdding && (
-          <button
-            onClick={() => setIsAdding(true)}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-foreground bg-card border border-border rounded-lg shadow-[0_1px_0_oklch(0.82_0.04_70)] hover:bg-background transition-colors cursor-pointer"
-          >
-            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-              <path d="M6 1.5V10.5M1.5 6H10.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-            </svg>
-            Add
-          </button>
-        )}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="w-6 h-6 rounded-md bg-card border border-border flex items-center justify-center text-ink-faint hover:text-foreground transition-colors cursor-pointer"
+              aria-label="Close pantry"
+            >
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
+                <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          )}
+          {!isAdding && (
+            <button
+              onClick={() => setIsAdding(true)}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-foreground bg-card border border-border rounded-lg shadow-[0_1px_0_oklch(0.82_0.04_70)] hover:bg-background transition-colors cursor-pointer"
+            >
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                <path d="M6 1.5V10.5M1.5 6H10.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+              </svg>
+              Add
+            </button>
+          )}
+        </div>
       </div>
 
       {isAdding && (
