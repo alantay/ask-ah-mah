@@ -39,6 +39,7 @@ interface MessageListProps {
   thinkingMessage: string;
   userId: string;
   onSend?: (text: string) => void;
+  onRecipeDetected?: (title: string) => void;
 }
 
 // ── Parsed block types ────────────────────────────────────────────────────────
@@ -129,6 +130,7 @@ export const MessageList = ({
   userId,
   thinkingMessage,
   onSend = () => {},
+  onRecipeDetected,
 }: MessageListProps) => {
   const { data: recipeSaved, mutate } = useSWR<RecipeWithId[]>(
     `/api/recipe?userId=${userId}`,
@@ -144,6 +146,23 @@ export const MessageList = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const shouldAutoScroll = useRef(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  useEffect(() => {
+    if (!onRecipeDetected) return;
+    for (const msg of messages) {
+      if (msg.role !== "assistant") continue;
+      const text = msg.parts
+        .filter((p) => p.type === "text")
+        .map((p) => p.text)
+        .join("");
+      const blocks = extractRecipeBlocks(text);
+      const recipe = blocks.find((b) => b.kind === "recipe");
+      if (recipe && recipe.kind === "recipe") {
+        onRecipeDetected(recipe.payload.title);
+        return;
+      }
+    }
+  }, [messages, onRecipeDetected]);
 
   const extractRecipeName = (recipeStr: string): string => {
     const nameMatch = recipeStr.match(/^##\s+(.*)/m);

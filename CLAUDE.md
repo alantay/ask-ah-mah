@@ -116,6 +116,7 @@ App: **“Ask Ah Mah”** — converts pantry items into recipes via chat.
 - Ensure branch matches scope
   - otherwise suggest new branch (`feat/...`, `fix/...`)
 - Never push directly to `main`
+- Always `git pull` (or `git fetch` + `git merge main`) before pushing to avoid conflicts
 
 ---
 

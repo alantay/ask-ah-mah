@@ -4,12 +4,8 @@ import { useRef, useState } from "react";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-export function getTitleFallback(createdAt: Date | undefined): string {
-  if (!createdAt) return "Today's kitchen";
-  const day = new Date(createdAt).toLocaleDateString("en-US", {
-    weekday: "long",
-  });
-  return `${day}'s kitchen`;
+export function getTitleFallback(_createdAt?: Date): string {
+  return "New chat";
 }
 
 // ── ConversationTitle ─────────────────────────────────────────────────────────
