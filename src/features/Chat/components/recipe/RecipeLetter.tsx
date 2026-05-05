@@ -466,19 +466,6 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: 'var(--muted-foreground)',
-                    letterSpacing: '0.06em',
-                    textTransform: 'uppercase',
-                    marginBottom: 4,
-                  }}
-                >
-                  Ah Mah · step {i + 1}
-                </div>
-                <div
-                  style={{
                     fontFamily: 'Fraunces, serif',
                     fontWeight: 600,
                     fontSize: 16,
@@ -504,32 +491,16 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
                   <div
                     style={{
                       marginTop: 8,
-                      padding: '8px 12px',
-                      background: 'oklch(0.96 0.05 88)',
-                      border: '1px dashed oklch(0.75 0.08 88)',
-                      borderRadius: 8,
+                      paddingLeft: 12,
+                      borderLeft: '3px solid oklch(0.65 0.10 60)',
                       fontFamily: 'Fraunces, serif',
                       fontStyle: 'italic',
-                      fontSize: 13,
-                      color: 'var(--foreground)',
-                      lineHeight: 1.45,
+                      fontSize: 14,
+                      color: 'var(--muted-foreground)',
+                      lineHeight: 1.5,
                     }}
                   >
-                    <span
-                      style={{
-                        fontFamily: 'Inter, sans-serif',
-                        fontStyle: 'normal',
-                        fontSize: 9.5,
-                        fontWeight: 700,
-                        letterSpacing: '0.16em',
-                        textTransform: 'uppercase',
-                        color: 'oklch(0.45 0.10 60)',
-                        marginRight: 6,
-                      }}
-                    >
-                      Tip
-                    </span>
-                    {step.tip}
+                    — {step.tip}
                   </div>
                 )}
               </div>
