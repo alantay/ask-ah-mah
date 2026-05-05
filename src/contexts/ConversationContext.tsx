@@ -55,6 +55,17 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     { revalidateOnFocus: false }
   );
 
+  // Always fetch the conversations list so activeConversation reflects title updates
+  const { data: listData } = useSWR<{ conversations: ConversationEntity[] }>(
+    userId ? `/api/conversation?userId=${userId}` : null,
+    async (url: string) => {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to fetch conversations");
+      return res.json();
+    },
+    { revalidateOnFocus: false }
+  );
+
   // When the API returns a conversation, store it
   useEffect(() => {
     if (data?.conversation?.id && !activeConversationId) {
@@ -63,9 +74,10 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     }
   }, [data, activeConversationId]);
 
-  // The active conversation entity — from the SWR data (when we fetched it) or null
-  // We expose the full entity only when it came from the API response
-  const activeConversation = data?.conversation ?? null;
+  // Derive activeConversation from the list so title updates reflect immediately
+  const activeConversation = activeConversationId
+    ? (listData?.conversations?.find(c => c.id === activeConversationId) ?? null)
+    : null;
 
   const setActiveConversation = (id: string) => {
     setActiveConversationId(id);

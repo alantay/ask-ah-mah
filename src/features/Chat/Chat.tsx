@@ -45,6 +45,7 @@ const Chat = () => {
   const autoTitledConversations = useRef<Set<string>>(new Set());
 
   const { messages, sendMessage, status } = useChat({
+    id: activeConversationId ?? undefined,
     transport: new DefaultChatTransport({
       api: "/api/chat",
       body: {
