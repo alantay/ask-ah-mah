@@ -115,6 +115,7 @@ App: **“Ask Ah Mah”** — converts pantry items into recipes via chat.
 - Ensure branch matches scope
   - otherwise suggest new branch (`feat/...`, `fix/...`)
 - Never push directly to `main`
+- Keep branches short-lived (1–2 days) and merge `main` frequently during development to minimize conflicts
 
 ---
 
