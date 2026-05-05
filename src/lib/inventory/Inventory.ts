@@ -16,54 +16,43 @@ export async function getInventory(userId: string) {
   };
 }
 
+function normalizeName(raw: string): string {
+  const trimmed = raw.trim().replace(/\s+/g, " ");
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+}
+
 export async function addInventoryItem(
   itemsNonNormalisedName: AddInventoryItem[],
   userId: string
 ) {
   const items = itemsNonNormalisedName.map((item) => ({
     ...item,
-    name: item.name.charAt(0).toUpperCase() + item.name.slice(1).toLowerCase(),
+    name: normalizeName(item.name),
   }));
-  const existingItems = await prisma.inventoryItem.findMany({
-    where: {
-      OR: items.map(({ name, type }) => ({
-        name,
-        type,
-        userId,
-      })),
-    },
-  });
   const nowIso = new Date().toISOString();
 
   for (const item of items) {
-    const existingItem = existingItems.find(
-      (ei) =>
-        ei.name === item.name && ei.type === item.type && ei.userId === userId
-    );
-    if (existingItem) {
-      await prisma.inventoryItem.update({
-        where: { id: existingItem.id },
-        data: {
-          quantity: item.quantity ?? null,
-          unit: item.unit ?? null,
-          shelfLife: item.shelfLife,
-          lastUpdated: nowIso,
-        },
-      });
-    } else {
-      await prisma.inventoryItem.create({
-        data: {
-          name: item.name,
-          type: item.type,
-          quantity: item.quantity ?? null,
-          unit: item.unit ?? null,
-          shelfLife: item.shelfLife,
-          dateAdded: nowIso,
-          lastUpdated: nowIso,
-          userId,
-        },
-      });
-    }
+    await prisma.inventoryItem.upsert({
+      where: {
+        userId_name_type: { userId, name: item.name, type: item.type },
+      },
+      update: {
+        quantity: item.quantity ?? null,
+        unit: item.unit ?? null,
+        shelfLife: item.shelfLife,
+        lastUpdated: nowIso,
+      },
+      create: {
+        name: item.name,
+        type: item.type,
+        quantity: item.quantity ?? null,
+        unit: item.unit ?? null,
+        shelfLife: item.shelfLife,
+        dateAdded: nowIso,
+        lastUpdated: nowIso,
+        userId,
+      },
+    });
   }
 }
 
@@ -77,9 +66,7 @@ export async function removeInventoryItem(
   itemsNonNormalisedName: string[],
   userId: string
 ) {
-  const itemsNames = itemsNonNormalisedName.map(
-    (item) => item.charAt(0).toUpperCase() + item.slice(1).toLowerCase()
-  );
+  const itemsNames = itemsNonNormalisedName.map(normalizeName);
 
   await prisma.inventoryItem.deleteMany({
     where: {

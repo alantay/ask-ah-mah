@@ -48,22 +48,7 @@ export function PantryDrawer() {
       {/* Open overlay — absolute over chat */}
       {open && (
         <div className="hidden lg:flex absolute right-9 top-0 bottom-0 w-80 flex-col bg-muted paper border-l border-border z-20 overflow-y-auto">
-          <button
-            onClick={() => setOpen(false)}
-            className="absolute top-2 right-2 w-6 h-6 rounded-md bg-card border border-border flex items-center justify-center text-ink-faint hover:text-foreground transition-colors cursor-pointer"
-            aria-label="Close pantry"
-          >
-            <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
-              <path
-                d="M6 4l4 4-4 4"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-          <InventoryWrapper />
+          <InventoryWrapper onClose={() => setOpen(false)} />
         </div>
       )}
     </>
