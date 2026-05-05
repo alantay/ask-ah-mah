@@ -116,7 +116,7 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
   };
 
   const autoTitleActiveConversation = async (title: string) => {
-    if (!activeConversationId) return;
+    if (!activeConversationId) return false;
     try {
       const res = await fetch(`/api/conversation/${activeConversationId}`, {
         method: "PATCH",

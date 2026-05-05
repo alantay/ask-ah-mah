@@ -238,7 +238,6 @@ const Chat = () => {
           <div>
             <ConversationTitle
               title={activeConversation?.title}
-              createdAt={activeConversation?.createdAt}
               onRename={renameActiveConversation}
             />
             <div className="text-[11.5px] text-ink-faint mt-0.5 tracking-wide">

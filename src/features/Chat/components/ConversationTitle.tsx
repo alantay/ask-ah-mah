@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-export function getTitleFallback(_createdAt?: Date): string {
+export function getTitleFallback(): string {
   return "New chat";
 }
 
@@ -12,13 +12,11 @@ export function getTitleFallback(_createdAt?: Date): string {
 
 interface ConversationTitleProps {
   title: string | null | undefined;
-  createdAt: Date | string | undefined;
   onRename: (title: string) => Promise<void>;
 }
 
 export default function ConversationTitle({
   title,
-  createdAt,
   onRename,
 }: ConversationTitleProps) {
   const [editing, setEditing] = useState(false);
@@ -26,8 +24,7 @@ export default function ConversationTitle({
   const inputRef = useRef<HTMLInputElement>(null);
   const committingRef = useRef(false);
 
-  const displayTitle =
-    title ?? getTitleFallback(createdAt ? new Date(createdAt) : undefined);
+  const displayTitle = title ?? getTitleFallback();
 
   const startEditing = () => {
     setValue(displayTitle);
