@@ -43,6 +43,7 @@ const Chat = () => {
   } = useConversationContext();
   const [convSheetOpen, setConvSheetOpen] = useState(false);
   const autoTitledConversations = useRef<Set<string>>(new Set());
+  const autoTitlingConversations = useRef<Set<string>>(new Set());
 
   const { messages, sendMessage, status } = useChat({
     id: activeConversationId ?? undefined,
@@ -162,8 +163,14 @@ const Chat = () => {
   const handleRecipeDetected = useCallback((recipeTitle: string) => {
     if (!activeConversationId) return;
     if (autoTitledConversations.current.has(activeConversationId)) return;
-    autoTitledConversations.current.add(activeConversationId);
-    autoTitleActiveConversation(recipeTitle);
+    if (autoTitlingConversations.current.has(activeConversationId)) return;
+    autoTitlingConversations.current.add(activeConversationId);
+    void autoTitleActiveConversation(recipeTitle).then((success) => {
+      autoTitlingConversations.current.delete(activeConversationId);
+      if (success) {
+        autoTitledConversations.current.add(activeConversationId);
+      }
+    });
   }, [activeConversationId, autoTitleActiveConversation]);
 
   // Show loading state while session or conversation is loading
@@ -264,8 +271,10 @@ const Chat = () => {
           </Button>
           <Button
             size="sm"
-            onClick={() => { if (messageCount > 0) startNewConversation(); }}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
+            onClick={() => startNewConversation()}
+            disabled={messageCount === 0}
+            title={messageCount === 0 ? "Start a conversation first" : undefined}
+            className="bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           >
             + New conversation
           </Button>
