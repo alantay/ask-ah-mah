@@ -100,11 +100,11 @@ App: **“Ask Ah Mah”** — converts pantry items into recipes via chat.
 
 ## Git Workflow
 
-- Suggest commits at logical checkpoints (don’t auto-commit)
-- Ensure branch matches scope
-  - otherwise suggest new branch (`feat/...`, `fix/...`)
-- Never push directly to `main`
-- Always `git pull` (or `git fetch` + `git merge main`) before pushing to avoid conflicts
+- **Clean Start:** Always start new tasks from a fresh `main`. Sequence: `git checkout main` -> `git pull` -> `git checkout -b <branch>`.
+- **Frequent Sync:** For long-running tasks, merge `main` into your feature branch frequently.
+- **Local Resolution:** Resolve all conflicts locally (merge `main` into feature branch) before pushing. PRs must be "Clean" and "Mergeable".
+- **Commit Style:** Use `type(scope): description` (feat, fix, refactor, docs, test, chore).
+- **Process:** Suggest commits at logical checkpoints; do not auto-commit. Never push to `main`.
 
 ---
 
