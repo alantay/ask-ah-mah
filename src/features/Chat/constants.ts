@@ -64,6 +64,38 @@ export const RECIPE_PROCESSING_MESSAGES = [
   "Predicting the perfect recipe tags...",
 ];
 
+// Normalised phrases — slot after "Ah Mah ·" in the typing loader eyebrow
+export const NORMALISED_THINKING_MESSAGES = [
+  'checking her recipe book…',
+  'rummaging through her memory…',
+  'tasting and adjusting…',
+  'stirring up some ideas…',
+  'simmering on this…',
+  'thinking hard…',
+  'wracking her brain…',
+  'putting on her thinking cap…',
+  'scratching her head…',
+  'thinking about this…',
+  'consulting her kitchen wisdom…',
+  'digging through her cooking secrets…',
+  'mixing up something good…',
+  'seasoning her thoughts…',
+  'letting ideas marinate…',
+  'cooking up an answer…',
+  'hunting through her pantry…',
+  'brewing up some suggestions…',
+  'chopping through the possibilities…',
+  'warming up her ideas…',
+] as const;
+
+// Status stream lines for the C loader variant
+export const STATUS_LINES = [
+  'looking at what you have…',
+  'thinking of something nice…',
+  'checking the pantry…',
+  'writing the steps…',
+] as const;
+
 // ID generation patterns
 export const generateTempId = (prefix: string = "temp"): string =>
   `${prefix}-${Date.now()}`;

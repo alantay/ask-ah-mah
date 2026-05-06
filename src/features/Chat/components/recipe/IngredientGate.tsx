@@ -11,6 +11,7 @@ import { computePantry } from './pantryUtils';
 interface IngredientGateProps {
   data: GateData;
   onSend: (text: string) => void;
+  onExpectRecipe?: () => void;
 }
 
 function GrannyAvatar() {
@@ -110,7 +111,7 @@ function GateButton({ icon, title, sub, primary, onClick }: GateButtonProps) {
   );
 }
 
-export function IngredientGate({ data, onSend }: IngredientGateProps) {
+export function IngredientGate({ data, onSend, onExpectRecipe }: IngredientGateProps) {
   const { userId } = useSessionContext();
   const { data: inventoryData } = useSWR<GetInventoryResponse>(
     userId ? `/api/inventory?userId=${userId}` : null,
@@ -277,7 +278,7 @@ export function IngredientGate({ data, onSend }: IngredientGateProps) {
             }
             title="I have everything"
             sub="Write me the full recipe."
-            onClick={() => onSend('I have everything.')}
+            onClick={() => { onExpectRecipe?.(); onSend('I have everything.'); }}
           />
           <GateButton
             icon={
@@ -295,7 +296,7 @@ export function IngredientGate({ data, onSend }: IngredientGateProps) {
             }
             title="I'm missing some"
             sub="Suggest swaps, or send me to the shop."
-            onClick={() => onSend("I'm missing some.")}
+            onClick={() => { onSend("I'm missing some."); }}
           />
         </div>
 

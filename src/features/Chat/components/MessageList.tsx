@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
 import { generateTempId } from "../constants";
+import { ChatLoader, SkeletonRecipeCard } from "./loaders";
 import { IngredientGate } from "./recipe/IngredientGate";
 import { RecipeLetter } from "./recipe/RecipeLetter";
 import { SuggestionsBlock } from "./recipe/SuggestionsBlock";
@@ -36,9 +37,11 @@ import { SuggestionsBlock } from "./recipe/SuggestionsBlock";
 interface MessageListProps {
   messages: UIMessage[];
   status: string;
-  thinkingMessage: string;
+  submittedAt: number | null;
+  expectingRecipe: boolean;
   userId: string;
   onSend?: (text: string) => void;
+  onExpectRecipe?: () => void;
   onRecipeDetected?: (title: string) => void;
 }
 
@@ -101,6 +104,15 @@ function stripFences(text: string): string {
     .trim();
 }
 
+// Returns the index of an unclosed ```recipe\n fence, or -1 if none.
+function getOpenRecipeFenceIdx(text: string): number {
+  const marker = '```recipe\n';
+  const openIdx = text.lastIndexOf(marker);
+  if (openIdx === -1) return -1;
+  const afterOpen = text.slice(openIdx + marker.length);
+  return afterOpen.includes('\n```') ? -1 : openIdx;
+}
+
 // ── SWR fetcher for save ──────────────────────────────────────────────────────
 
 const saveRecipeCall = async (
@@ -127,9 +139,11 @@ const saveRecipeCall = async (
 export const MessageList = ({
   messages,
   status,
+  submittedAt,
+  expectingRecipe,
   userId,
-  thinkingMessage,
   onSend = () => {},
+  onExpectRecipe,
   onRecipeDetected,
 }: MessageListProps) => {
   const { data: recipeSaved, mutate } = useSWR<RecipeWithId[]>(
@@ -295,9 +309,22 @@ export const MessageList = ({
               .map((p) => (p as { type: "text"; text: string }).text)
               .join("");
 
-            const blocks = extractRecipeBlocks(textContent);
+            const isLastMsg = message === messages[messages.length - 1];
+            const isStreamingLast =
+              status === "streaming" && isLastMsg && message.role === "assistant";
+            const openFenceIdx = isStreamingLast
+              ? getOpenRecipeFenceIdx(textContent)
+              : -1;
+            const hasOpenFence = openFenceIdx !== -1;
+
+            // For the open-fence case, parse the prefix so any completed blocks
+            // (e.g. a closed ```gate```) still render as interactive components.
+            const prefixText = hasOpenFence
+              ? textContent.slice(0, openFenceIdx)
+              : textContent;
+            const blocks = extractRecipeBlocks(prefixText);
             const hasNewBlocks = blocks.some((b) => b.kind !== "legacy");
-            const proseText = hasNewBlocks ? stripFences(textContent) : textContent;
+            const proseText = hasNewBlocks ? stripFences(prefixText) : prefixText;
 
             return (
               <Message
@@ -310,24 +337,25 @@ export const MessageList = ({
                 }`}
               >
                 <MessageContent variant="flat">
-                  {/* Prose text (fences stripped when new-style blocks present) */}
+                  {/* Prose — strip completed fences when new-style blocks present;
+                      when an open fence is detected, prefixText is already trimmed */}
                   {hasNewBlocks
                     ? proseText
-                      ? (
-                        <Response key={`${message.id}-prose`}>
-                          {proseText}
-                        </Response>
-                      )
+                      ? <Response key={`${message.id}-prose`}>{proseText}</Response>
                       : null
-                    : message.parts.map((part, index) =>
-                        part.type === "text" ? (
-                          <Response key={`${message.id}-${index}`}>
-                            {(part as { type: "text"; text: string }).text}
-                          </Response>
-                        ) : null,
-                      )}
+                    : hasOpenFence
+                      ? proseText
+                        ? <Response key={`${message.id}-prose`}>{proseText}</Response>
+                        : null
+                      : message.parts.map((part, index) =>
+                          part.type === "text" ? (
+                            <Response key={`${message.id}-${index}`}>
+                              {(part as { type: "text"; text: string }).text}
+                            </Response>
+                          ) : null,
+                        )}
 
-                  {/* New-style blocks */}
+                  {/* Parsed blocks (prefix text when fence open, full text otherwise) */}
                   {blocks.map((block, bi) => {
                     const blockKey = `${message.id}-block-${bi}`;
                     if (block.kind === "suggestions") {
@@ -347,21 +375,19 @@ export const MessageList = ({
                           key={blockKey}
                           data={block.payload}
                           onSend={onSend}
+                          onExpectRecipe={onExpectRecipe}
                         />
                       );
                     }
                     if (block.kind === "recipe") {
                       const recipeKey = `${message.id}-${bi}`;
                       const isSaved =
-                        recipeSaved?.some((r) => r.recipeId === recipeKey) ??
-                        false;
+                        recipeSaved?.some((r) => r.recipeId === recipeKey) ?? false;
                       return (
                         <RecipeLetter
                           key={blockKey}
                           recipe={block.payload}
-                          onSave={() =>
-                            saveStructuredRecipe(block.payload, recipeKey)
-                          }
+                          onSave={() => saveStructuredRecipe(block.payload, recipeKey)}
                           isSaved={isSaved}
                         />
                       );
@@ -369,8 +395,12 @@ export const MessageList = ({
                     return null;
                   })}
 
+                  {/* Skeleton appended while recipe fence is still open */}
+                  {hasOpenFence && <SkeletonRecipeCard />}
+
                   {/* Legacy recipe save buttons */}
-                  {blocks.some((b) => b.kind === "legacy") &&
+                  {!hasOpenFence &&
+                    blocks.some((b) => b.kind === "legacy") &&
                     status === "ready" && (
                       <div className="flex flex-wrap gap-2">
                         {blocks
@@ -380,39 +410,22 @@ export const MessageList = ({
                             const recipeKey = `${message.id}-${idx}`;
                             const recipeName = extractRecipeName(block.recipeStr);
                             const saved =
-                              recipeSaved?.some(
-                                (r) => r.recipeId === recipeKey,
-                              ) ?? false;
+                              recipeSaved?.some((r) => r.recipeId === recipeKey) ?? false;
                             return (
                               <Button
                                 key={recipeKey}
                                 className="cursor-pointer my-2"
-                                onClick={() =>
-                                  saved ||
-                                  saveRecipe(block.recipeStr, recipeKey)
-                                }
+                                onClick={() => saved || saveRecipe(block.recipeStr, recipeKey)}
                               >
                                 {saved ? (
-                                  <svg
-                                    width="20"
-                                    height="20"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                  >
+                                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                                     <path
                                       d="M5 21V5C5 4.45 5.196 3.97933 5.588 3.588C5.98 3.19667 6.45067 3.00067 7 3H17C17.55 3 18.021 3.196 18.413 3.588C18.805 3.98 19.0007 4.45067 19 5V21L12 18L5 21Z"
                                       fill="currentColor"
                                     />
                                   </svg>
                                 ) : (
-                                  <svg
-                                    width="20"
-                                    height="20"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                  >
+                                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                                     <path
                                       d="M17 18L12 15.82L7 18V5H17M17 3H7C6.46957 3 5.96086 3.21071 5.58579 3.58579C5.21071 3.96086 5 4.46957 5 5V21L12 18L19 21V5C19 4.46957 18.7893 3.96086 18.4142 3.58579C18.0391 3.21071 17.5304 3 17 3Z"
                                       fill="currentColor"
@@ -424,15 +437,6 @@ export const MessageList = ({
                             );
                           })}
                       </div>
-                    )}
-
-                  {/* Thinking spinner */}
-                  {status === "streaming" &&
-                    message === messages[messages.length - 1] &&
-                    message.role === "assistant" && (
-                      <span className="animate-pulse text-muted-foreground">
-                        {thinkingMessage}
-                      </span>
                     )}
                 </MessageContent>
                 <MessageAvatar
@@ -446,6 +450,14 @@ export const MessageList = ({
               </Message>
             );
           })}
+
+          {/* Ghost loader bubble — visible only during submitted state */}
+          {status === "submitted" && (
+            <div className="py-4">
+              <ChatLoader submittedAt={submittedAt} expectingRecipe={expectingRecipe} />
+            </div>
+          )}
+
           <div ref={messagesEndRef} />
         </div>
       </ConversationContent>

@@ -122,7 +122,8 @@ describe("MessageList", () => {
   const defaultProps = {
     userId: "test-user-123",
     status: "ready",
-    thinkingMessage: "Thinking...",
+    submittedAt: null,
+    expectingRecipe: false,
     messages: [],
   };
 
@@ -419,80 +420,20 @@ describe("MessageList", () => {
   });
 
   describe("Streaming Status", () => {
-    it("should show thinking message during streaming", () => {
-      const streamingMessage = createMockMessage({
-        role: "assistant",
-        parts: [{ type: "text", text: "Let me think about that..." }],
-      });
-
+    it("should show loader ghost bubble during submitted state", () => {
       render(
         <MessageList
           {...defaultProps}
-          messages={[streamingMessage]}
-          status="streaming"
-          thinkingMessage="AI is cooking up something special..."
+          messages={[]}
+          status="submitted"
+          submittedAt={Date.now()}
         />
       );
 
-      expect(
-        screen.getByText("AI is cooking up something special...")
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText("AI is cooking up something special...")
-      ).toHaveClass("animate-pulse", "text-muted-foreground");
+      expect(screen.getByTestId("loader-ghost")).toBeInTheDocument();
     });
 
-    it("should only show thinking message on last assistant message", () => {
-      const messages = [
-        createMockMessage({
-          id: "msg-1",
-          role: "assistant",
-          parts: [{ type: "text", text: "First response" }],
-        }),
-        createMockMessage({
-          id: "msg-2",
-          role: "user",
-          parts: [{ type: "text", text: "User message" }],
-        }),
-        createMockMessage({
-          id: "msg-3",
-          role: "assistant",
-          parts: [{ type: "text", text: "Last response" }],
-        }),
-      ];
-
-      render(
-        <MessageList
-          {...defaultProps}
-          messages={messages}
-          status="streaming"
-          thinkingMessage="Thinking..."
-        />
-      );
-
-      // Should only appear once, on the last assistant message
-      expect(screen.getAllByText("Thinking...")).toHaveLength(1);
-    });
-
-    it("should not show thinking message for user messages", () => {
-      const userMessage = createMockMessage({
-        role: "user",
-        parts: [{ type: "text", text: "Hello!" }],
-      });
-
-      render(
-        <MessageList
-          {...defaultProps}
-          messages={[userMessage]}
-          status="streaming"
-          thinkingMessage="Thinking..."
-        />
-      );
-
-      expect(screen.queryByText("Thinking...")).not.toBeInTheDocument();
-    });
-
-    it("should not show thinking message when not streaming", () => {
+    it("should not show loader ghost bubble when not submitted", () => {
       const assistantMessage = createMockMessage({
         role: "assistant",
         parts: [{ type: "text", text: "Hello!" }],
@@ -503,11 +444,43 @@ describe("MessageList", () => {
           {...defaultProps}
           messages={[assistantMessage]}
           status="ready"
-          thinkingMessage="Thinking..."
         />
       );
 
-      expect(screen.queryByText("Thinking...")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("loader-ghost")).not.toBeInTheDocument();
+    });
+
+    it("should not show loader ghost bubble during streaming", () => {
+      const streamingMessage = createMockMessage({
+        role: "assistant",
+        parts: [{ type: "text", text: "Let me think about that..." }],
+      });
+
+      render(
+        <MessageList
+          {...defaultProps}
+          messages={[streamingMessage]}
+          status="streaming"
+        />
+      );
+
+      expect(screen.queryByTestId("loader-ghost")).not.toBeInTheDocument();
+    });
+
+    it("should show skeleton recipe card when expectingRecipe during submitted", () => {
+      render(
+        <MessageList
+          {...defaultProps}
+          messages={[]}
+          status="submitted"
+          submittedAt={Date.now()}
+          expectingRecipe={true}
+        />
+      );
+
+      expect(screen.getByTestId("loader-ghost")).toBeInTheDocument();
+      expect(screen.getByText("Ah Mah is writing it out")).toBeInTheDocument();
+      expect(screen.getByText("Let me write the whole thing out for you —")).toBeInTheDocument();
     });
   });
 
