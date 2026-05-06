@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-import useSWR from 'swr';
 import { useSessionContext } from '@/contexts/SessionContext';
 import { GetInventoryResponse, InventoryItem } from '@/lib/inventory/schemas';
+import { cn } from '@/lib/utils';
 import { fetcher } from '@/lib/utils/index';
+import { useState } from 'react';
+import useSWR from 'swr';
 import { ScaledNum } from './ScaledNum';
 import { scaleAmount } from './scaleAmount';
 
@@ -51,69 +52,25 @@ function ServingsStepper({
   const ratio = servings / baseServings;
   const ratioLabel = ratio.toFixed(2).replace(/\.?0+$/, '');
 
+  const BUTTON_BASE =
+    'w-7 border-none bg-transparent cursor-pointer text-foreground text-[16px] font-semibold disabled:cursor-not-allowed disabled:text-muted-foreground';
+
   return (
-    <div
-      style={{
-        display: 'inline-flex',
-        alignItems: 'stretch',
-        border: '1px solid var(--border)',
-        borderRadius: 8,
-        background: 'var(--card)',
-        overflow: 'hidden',
-        boxShadow: '0 1px 0 var(--border-soft)',
-        height: 30,
-      }}
-    >
+    <div className="inline-flex items-stretch border border-border rounded-lg bg-card overflow-hidden shadow-[0_1px_0_var(--border-soft)] h-[30px]">
       <button
         onClick={onDecrement}
         disabled={servings <= 1}
-        style={{
-          width: 28,
-          border: 'none',
-          background: 'transparent',
-          cursor: servings <= 1 ? 'not-allowed' : 'pointer',
-          color: servings <= 1 ? 'var(--muted-foreground)' : 'var(--foreground)',
-          fontSize: 16,
-          fontWeight: 600,
-          borderRight: '1px solid var(--border)',
-          opacity: servings <= 1 ? 0.5 : 1,
-        }}
+        className={cn(BUTTON_BASE, 'border-r border-border disabled:opacity-50')}
         aria-label="Decrease servings"
       >
         −
       </button>
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minWidth: 64,
-          padding: '0 8px',
-          lineHeight: 1,
-        }}
-      >
-        <span
-          style={{
-            fontFamily: 'Fraunces, serif',
-            fontWeight: 600,
-            fontSize: 14,
-            color: 'var(--foreground)',
-            fontVariantNumeric: 'tabular-nums',
-          }}
-        >
+      <div className="flex flex-col justify-center items-center min-w-[64px] px-2 leading-none">
+        <span className="font-display font-semibold text-[14px] text-foreground tabular-nums">
           {servings} {servings === 1 ? 'serving' : 'servings'}
         </span>
         {servings !== baseServings && (
-          <span
-            style={{
-              fontFamily: 'ui-monospace, monospace',
-              fontSize: 9,
-              color: 'var(--muted-foreground)',
-              marginTop: 2,
-              letterSpacing: '0.04em',
-            }}
-          >
+          <span className="font-mono text-[9px] text-muted-foreground mt-0.5 tracking-wider">
             ×{ratioLabel} from {baseServings}
           </span>
         )}
@@ -121,16 +78,7 @@ function ServingsStepper({
       <button
         onClick={onIncrement}
         disabled={servings >= 12}
-        style={{
-          width: 28,
-          border: 'none',
-          background: 'transparent',
-          cursor: servings >= 12 ? 'not-allowed' : 'pointer',
-          color: servings >= 12 ? 'var(--muted-foreground)' : 'var(--foreground)',
-          fontSize: 16,
-          fontWeight: 600,
-          borderLeft: '1px solid var(--border)',
-        }}
+        className={cn(BUTTON_BASE, 'border-l border-border')}
         aria-label="Increase servings"
       >
         +
@@ -140,41 +88,22 @@ function ServingsStepper({
 }
 
 function HaveTag({ have }: { have: boolean }) {
+  const BASE =
+    'font-sans text-[9.5px] font-bold px-1.5 py-0.5 rounded-full tracking-wider shrink-0';
   if (have) {
     return (
       <span
-        style={{
-          fontFamily: 'Inter, sans-serif',
-          fontSize: 9.5,
-          fontWeight: 700,
-          padding: '1px 6px',
-          color: 'var(--accent)',
-          background: 'oklch(0.94 0.04 168)',
-          border: '1px solid oklch(0.78 0.07 168)',
-          borderRadius: 999,
-          letterSpacing: '0.04em',
-          flexShrink: 0,
-        }}
+        className={cn(
+          BASE,
+          'text-accent bg-[oklch(0.94_0.04_168)] border border-[oklch(0.78_0.07_168)]'
+        )}
       >
         HAVE
       </span>
     );
   }
   return (
-    <span
-      style={{
-        fontFamily: 'Inter, sans-serif',
-        fontSize: 9.5,
-        fontWeight: 700,
-        padding: '1px 6px',
-        color: 'var(--muted-foreground)',
-        background: 'transparent',
-        border: '1px solid var(--border)',
-        borderRadius: 999,
-        letterSpacing: '0.04em',
-        flexShrink: 0,
-      }}
-    >
+    <span className={cn(BASE, 'text-muted-foreground bg-transparent border border-border')}>
       NEED
     </span>
   );
@@ -182,7 +111,7 @@ function HaveTag({ have }: { have: boolean }) {
 
 function ingredientHave(name: string, inventoryNames: string[]): boolean {
   const n = name.trim().toLowerCase();
-  return inventoryNames.some((inv) => inv.includes(n) || n.includes(inv));
+  return inventoryNames.some(inv => inv.includes(n) || n.includes(inv));
 }
 
 export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
@@ -191,86 +120,42 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
   const { userId } = useSessionContext();
   const { data: inventoryData } = useSWR<GetInventoryResponse>(
     userId ? `/api/inventory?userId=${userId}` : null,
-    fetcher,
+    fetcher
   );
 
   const inventoryItems: InventoryItem[] = [
     ...(inventoryData?.ingredientInventory ?? []),
     ...(inventoryData?.kitchenwareInventory ?? []),
   ];
-  const inventoryNames = inventoryItems.map((i) => i.name.trim().toLowerCase());
+  const inventoryNames = inventoryItems.map(i => i.name.trim().toLowerCase());
 
-  const haveCount = recipe.ingredients.filter((ing) =>
-    ingredientHave(ing.name, inventoryNames),
+  const haveCount = recipe.ingredients.filter(ing =>
+    ingredientHave(ing.name, inventoryNames)
   ).length;
 
   const timeLabel = recipe.totalTimeMinutes ? `${recipe.totalTimeMinutes} min` : null;
+  const EYEBROW_BASE = 'font-sans text-[10px] font-bold tracking-widest uppercase';
 
   return (
-    <div
-      className="bg-chat"
-      style={{
-        borderTop: '1px solid var(--border-soft)',
-        borderBottom: '1px solid var(--border-soft)',
-        padding: '20px 26px 22px',
-        position: 'relative',
-      }}
-    >
+    <div className="bg-chat border-y border-border-soft p-[20px_26px_22px] relative">
       {/* Ribbon header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          marginBottom: 14,
-          paddingBottom: 10,
-          borderBottom: '1px dashed var(--border)',
-        }}
-      >
-        <div
-          style={{
-            width: 22,
-            height: 22,
-            borderRadius: 999,
-            background: 'var(--primary)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#fff',
-            flexShrink: 0,
-          }}
-        >
+      <div className="flex items-center gap-2.5 mb-3.5 pb-2.5 border-b border-dashed border-border">
+        <div className="size-5.5 rounded-full bg-primary flex items-center justify-center text-white shrink-0">
           <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-            <path d="M3 2v12l5-3 5 3V2z" stroke="currentColor" strokeWidth="1.4" fill="currentColor" />
+            <path
+              d="M3 2v12l5-3 5 3V2z"
+              stroke="currentColor"
+              strokeWidth="1.4"
+              fill="currentColor"
+            />
           </svg>
         </div>
 
-        <div
-          style={{
-            fontFamily: 'Inter, sans-serif',
-            fontSize: 10.5,
-            fontWeight: 700,
-            letterSpacing: '0.16em',
-            textTransform: 'uppercase',
-            color: 'var(--muted-foreground)',
-          }}
-        >
-          The way I make it
-        </div>
+        <div className={cn(EYEBROW_BASE, 'text-muted-foreground')}>The way I make it</div>
 
-        <div style={{ flex: 1 }} />
+        <div className="flex-1" />
 
-        {timeLabel && (
-          <div
-            style={{
-              fontFamily: 'ui-monospace, monospace',
-              fontSize: 10.5,
-              color: 'var(--muted-foreground)',
-            }}
-          >
-            {timeLabel}
-          </div>
-        )}
+        {timeLabel && <div className="font-mono text-[10px] text-muted-foreground">{timeLabel}</div>}
 
         <ServingsStepper
           servings={servings}
@@ -281,137 +166,49 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
       </div>
 
       {/* Title */}
-      <div
-        style={{
-          fontFamily: 'Fraunces, serif',
-          fontSize: 28,
-          fontWeight: 600,
-          color: 'var(--foreground)',
-          lineHeight: 1.05,
-          letterSpacing: '-0.015em',
-          marginBottom: 8,
-        }}
-      >
+      <div className="font-display text-3xl font-semibold text-foreground leading-[1.05] tracking-tight mb-2">
         {recipe.title}
       </div>
 
       {/* Description */}
       {recipe.description && (
-        <div
-          style={{
-            fontFamily: 'Fraunces, serif',
-            fontStyle: 'italic',
-            fontSize: 14,
-            color: 'var(--muted-foreground)',
-            lineHeight: 1.5,
-            marginBottom: 18,
-          }}
-        >
+        <div className="font-display italic text-sm text-muted-foreground leading-relaxed mb-4.5">
           {recipe.description}
         </div>
       )}
 
       {/* Ingredients — neat 2-column grid card */}
       {recipe.ingredients.length > 0 && (
-        <div style={{ marginBottom: 22 }}>
-          <div
-            style={{
-              fontFamily: 'Inter, sans-serif',
-              fontSize: 11,
-              fontWeight: 600,
-              color: 'var(--muted-foreground)',
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              marginBottom: 8,
-              display: 'flex',
-              alignItems: 'baseline',
-              gap: 10,
-            }}
-          >
+        <div className="mb-5.5">
+          <div className={cn(EYEBROW_BASE, 'text-muted-foreground mb-2 flex items-baseline gap-2.5')}>
             <span>What to gather</span>
             {userId && inventoryItems.length > 0 && (
-              <span
-                style={{
-                  fontFamily: 'Inter, sans-serif',
-                  fontStyle: 'normal',
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: 'var(--accent)',
-                  padding: '1px 7px',
-                  background: 'oklch(0.94 0.04 168)',
-                  border: '1px solid oklch(0.78 0.07 168)',
-                  borderRadius: 999,
-                  letterSpacing: 0,
-                  textTransform: 'none',
-                }}
-              >
+              <span className="font-sans italic-normal text-[10px] font-semibold text-accent px-1.5 py-0.25 bg-[oklch(0.94_0.04_168)] border border-[oklch(0.78_0.07_168)] rounded-full tracking-normal normal-case">
                 {haveCount}/{recipe.ingredients.length} in your pantry
               </span>
             )}
           </div>
-          <div
-            style={{
-              background: 'var(--card)',
-              border: '1px solid var(--border)',
-              borderRadius: 10,
-              padding: '10px 14px',
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '4px 18px',
-              boxShadow: '0 1px 0 var(--border-soft)',
-            }}
-          >
+          <div className="bg-card border border-border rounded-xl p-3.5 grid grid-cols-2 gap-x-4.5 gap-y-1 shadow-[0_1px_0_var(--border-soft)]">
             {recipe.ingredients.map((ing, i) => {
               const scaledAmt = ing.amount ? scaleAmount(ing.amount, ratio) : '';
-              const amountLabel = scaledAmt
-                ? `${scaledAmt}${ing.unit ? ' ' + ing.unit : ''}`
-                : '';
+              const amountLabel = scaledAmt ? `${scaledAmt}${ing.unit ? ' ' + ing.unit : ''}` : '';
               const have = ingredientHave(ing.name, inventoryNames);
               const isLastTwo = i >= recipe.ingredients.length - 2;
               return (
                 <div
                   key={i}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'baseline',
-                    gap: 8,
-                    padding: '6px 0',
-                    borderBottom: isLastTwo
-                      ? 'none'
-                      : '1px dashed var(--border)',
-                  }}
+                  className={cn(
+                    'flex items-baseline gap-2 py-1.5 border-b border-dashed border-border',
+                    isLastTwo && 'border-none'
+                  )}
                 >
-                  <span
-                    style={{
-                      flex: '0 0 64px',
-                      fontFamily: 'ui-monospace, monospace',
-                      fontSize: 11.5,
-                      fontWeight: 600,
-                      color: 'var(--foreground)',
-                      textAlign: 'right',
-                      fontVariantNumeric: 'tabular-nums',
-                    }}
-                  >
+                  <span className="flex-[0_0_64px] font-mono text-xs font-semibold text-foreground text-right tabular-nums">
                     {amountLabel ? <ScaledNum>{amountLabel}</ScaledNum> : ''}
                   </span>
-                  <span
-                    style={{
-                      flex: 1,
-                      fontFamily: 'Fraunces, serif',
-                      fontSize: 13.5,
-                      color: 'var(--foreground)',
-                      lineHeight: 1.3,
-                    }}
-                  >
+                  <span className="flex-1 font-display text-sm text-foreground leading-tight">
                     {ing.name}
                     {ing.note && (
-                      <span
-                        style={{
-                          color: 'var(--muted-foreground)',
-                          fontStyle: 'italic',
-                          fontSize: 12.5,
-                        }}
-                      >
+                      <span className="text-muted-foreground italic text-xs">
                         , {ing.note}
                       </span>
                     )}
@@ -426,80 +223,21 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
 
       {/* Steps — each step a conversational bubble with a numbered ink-stamp */}
       {recipe.steps.length > 0 && (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 18,
-          }}
-        >
+        <div className="flex flex-col gap-4.5">
           {recipe.steps.map((step, i) => (
-            <div
-              key={i}
-              style={{
-                display: 'flex',
-                gap: 12,
-                alignItems: 'flex-start',
-              }}
-            >
-              <div
-                style={{
-                  flexShrink: 0,
-                  width: 36,
-                  height: 36,
-                  background: 'var(--primary)',
-                  color: '#fff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontFamily: 'Fraunces, serif',
-                  fontWeight: 700,
-                  fontSize: 17,
-                  borderRadius: '50% 50% 50% 8px',
-                  transform: 'rotate(-3deg)',
-                  boxShadow:
-                    'inset 0 -2px 0 color-mix(in oklch, var(--primary) 70%, black), 0 1px 0 color-mix(in oklch, var(--primary) 70%, black)',
-                }}
-              >
+            <div key={i} className="flex gap-3 items-start">
+              <div className="shrink-0 size-9 bg-primary text-white flex items-center justify-center font-display font-bold text-lg rounded-[50%_50%_50%_8px] -rotate-3 shadow-[inset_0_-2px_0_oklch(0.405_0.130_32),0_1px_0_oklch(0.405_0.130_32)]">
                 {i + 1}
               </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    fontFamily: 'Fraunces, serif',
-                    fontWeight: 600,
-                    fontSize: 16,
-                    color: 'var(--foreground)',
-                    marginBottom: 4,
-                    letterSpacing: '-0.005em',
-                  }}
-                >
+              <div className="flex-1 min-w-0">
+                <div className="font-display font-semibold text-base text-foreground mb-1 tracking-tight">
                   {step.title}
                 </div>
-                <div
-                  style={{
-                    fontFamily: 'Fraunces, serif',
-                    fontStyle: 'italic',
-                    fontSize: 16,
-                    color: 'var(--foreground)',
-                    lineHeight: 1.55,
-                  }}
-                >
+                <div className="font-display italic text-base text-foreground leading-relaxed">
                   {step.body}
                 </div>
                 {step.tip && (
-                  <div
-                    style={{
-                      marginTop: 8,
-                      paddingLeft: 12,
-                      borderLeft: '3px solid oklch(0.65 0.10 60)',
-                      fontFamily: 'Fraunces, serif',
-                      fontStyle: 'italic',
-                      fontSize: 14,
-                      color: 'var(--muted-foreground)',
-                      lineHeight: 1.5,
-                    }}
-                  >
+                  <div className="mt-2 pl-3 border-l-[3px] border-[oklch(0.65_0.10_60)] font-display italic text-sm text-muted-foreground leading-relaxed">
                     — {step.tip}
                   </div>
                 )}
@@ -511,36 +249,20 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
 
       {/* Action bar — only when onSave is provided */}
       {onSave && (
-        <div
-          style={{
-            display: 'flex',
-            gap: 8,
-            alignItems: 'center',
-            paddingTop: 12,
-            marginTop: 18,
-            borderTop: '1px dashed var(--border)',
-          }}
-        >
+        <div className="flex gap-2 items-center pt-3 mt-4.5 border-t border-dashed border-border">
           {isSaved ? (
             <button
               disabled
-              style={{
-                padding: '6px 12px',
-                fontFamily: 'Inter, sans-serif',
-                fontSize: 12,
-                fontWeight: 600,
-                color: 'var(--accent)',
-                background: 'transparent',
-                border: '1px solid var(--border)',
-                borderRadius: 7,
-                cursor: 'not-allowed',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
-                opacity: 0.8,
-              }}
+              className="px-3 py-1.5 font-sans text-xs font-semibold text-accent bg-transparent border border-border rounded-lg cursor-not-allowed inline-flex items-center gap-1 opacity-80"
             >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="11"
+                height="11"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16l-7-3-7 3z" />
               </svg>
               Saved
@@ -548,23 +270,16 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
           ) : (
             <button
               onClick={() => onSave(recipe)}
-              style={{
-                padding: '6px 12px',
-                fontFamily: 'Inter, sans-serif',
-                fontSize: 12,
-                fontWeight: 600,
-                color: '#fff',
-                background: 'var(--primary)',
-                border: '1px solid color-mix(in oklch, var(--primary) 70%, black)',
-                borderRadius: 7,
-                cursor: 'pointer',
-                boxShadow: '0 1px 0 color-mix(in oklch, var(--primary) 70%, black)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
-              }}
+              className="px-3 py-1.5 font-sans text-xs font-semibold text-white bg-primary border border-[oklch(0.405_0.130_32)] rounded-lg cursor-pointer shadow-[0_1px_0_oklch(0.405_0.130_32)] inline-flex items-center gap-1"
             >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="11"
+                height="11"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16l-7-3-7 3z" />
               </svg>
               Save to cookbook

@@ -1,74 +1,38 @@
 'use client';
 
-import type { CSSProperties } from 'react';
-import { useReducedMotion } from './useReducedMotion';
+import { cn } from '@/lib/utils';
 import { ShimmerLine } from './ShimmerLine';
+import { useReducedMotion } from './useReducedMotion';
 
 export function SkeletonRecipeCard() {
   const reduced = useReducedMotion();
 
-  const shimmerStep = (): CSSProperties => ({
-    flexShrink: 0,
-    width: 26,
-    height: 26,
-    background: reduced
-      ? 'var(--border)'
-      : 'linear-gradient(90deg, var(--muted) 0%, var(--card) 50%, var(--muted) 100%)',
-    backgroundSize: reduced ? undefined : '200% 100%',
-    borderRadius: '50% 50% 50% 6px',
-    animation: reduced ? 'none' : 'ahmah-shimmer 1.8s ease-in-out infinite',
-  });
+  const EYEBROW_CLASSES = 'font-sans text-[10px] font-bold tracking-widest uppercase';
+  const SHIMMER_STEP_BASE = 'shrink-0 size-[26px] rounded-[50%_50%_50%_6px]';
+
+  const shimmerStepClassName = cn(
+    SHIMMER_STEP_BASE,
+    reduced
+      ? 'bg-border'
+      : 'bg-[linear-gradient(90deg,var(--muted)_0%,var(--card)_50%,var(--muted)_100%)] bg-[length:200%_100%] animate-[ahmah-shimmer_1.8s_ease-in-out_infinite]'
+  );
 
   return (
-    <div
-      style={{
-        background: 'var(--card)',
-        border: '1px solid var(--border)',
-        borderRadius: 12,
-        padding: '18px 20px',
-        maxWidth: '100%',
-        marginTop: 10,
-        position: 'relative',
-        boxShadow: '0 1px 0 var(--border-soft), 0 14px 24px -22px oklch(0.3 0.05 50 / 0.5)',
-      }}
-    >
+    <div className="bg-card border border-border rounded-xl p-[18px_20px] max-w-full mt-2.5 relative shadow-[0_1px_0_var(--border-soft),0_14px_24px_-22px_oklch(0.3_0.05_50/0.5)]">
       {/* corner tab */}
-      <div
-        style={{
-          position: 'absolute',
-          top: -1,
-          right: 22,
-          width: 28,
-          height: 14,
-          background: 'var(--primary)',
-          borderRadius: '0 0 4px 4px',
-          boxShadow: 'inset 0 -1px 0 oklch(0.45 0.12 32)',
-        }}
-      />
+      <div className="absolute top-[-1px] right-[22px] w-7 h-3.5 bg-primary rounded-b shadow-[inset_0_-1px_0_oklch(0.45_0.12_32)]" />
 
       {/* eyebrow + pen glyph */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-        <div
-          style={{
-            fontFamily: 'Inter, sans-serif',
-            fontSize: 10.5,
-            fontWeight: 700,
-            letterSpacing: '0.16em',
-            textTransform: 'uppercase',
-            color: 'var(--primary)',
-          }}
-        >
-          Ah Mah is writing it out
-        </div>
+      <div className="flex items-center gap-2 mb-3">
+        <div className={cn(EYEBROW_CLASSES, 'text-primary')}>Ah Mah is writing it out</div>
         <svg
           width="13"
           height="13"
           viewBox="0 0 16 16"
           fill="none"
-          style={{
-            transformOrigin: '14px 14px',
-            animation: reduced ? 'none' : 'ahmah-pen 1.2s ease-in-out infinite',
-          }}
+          className={cn(
+            !reduced && 'origin-[14px_14px] animate-[ahmah-pen_1.2s_ease-in-out_infinite]'
+          )}
         >
           <style>{`@keyframes ahmah-pen {
             0%   { transform: translateX(0) rotate(-8deg); }
@@ -88,51 +52,21 @@ export function SkeletonRecipeCard() {
 
       {/* title skeleton */}
       <ShimmerLine width="78%" height={22} />
-      <div style={{ height: 8 }} />
+      <div className="h-2" />
       <ShimmerLine width="58%" height={14} delay={0.1} />
 
       {/* meta strip */}
-      <div
-        style={{
-          display: 'flex',
-          gap: 10,
-          marginTop: 16,
-          marginBottom: 16,
-          padding: '10px 12px',
-          background: 'var(--chat)',
-          border: '1px solid var(--border-soft)',
-          borderRadius: 8,
-        }}
-      >
+      <div className="flex gap-2.5 mt-4 mb-4 p-[10px_12px] bg-chat border border-border-soft rounded-lg">
         <ShimmerLine width={60} height={10} delay={0.15} />
         <ShimmerLine width={60} height={10} delay={0.2} />
         <ShimmerLine width={60} height={10} delay={0.25} />
       </div>
 
       {/* ingredients */}
-      <div
-        style={{
-          fontFamily: 'Inter, sans-serif',
-          fontSize: 10.5,
-          fontWeight: 700,
-          letterSpacing: '0.16em',
-          textTransform: 'uppercase',
-          color: 'var(--muted-foreground)',
-          marginBottom: 10,
-        }}
-      >
-        Ingredients
-      </div>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '10px 24px',
-          marginBottom: 18,
-        }}
-      >
+      <div className={cn(EYEBROW_CLASSES, 'text-muted-foreground mb-2.5')}>Ingredients</div>
+      <div className="grid grid-cols-2 gap-x-6 gap-y-2.5 mb-4.5">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div key={i} className="flex items-center gap-2">
             <ShimmerLine width={48} height={11} delay={i * 0.05} />
             <ShimmerLine width={`${60 + (i % 3) * 12}%`} height={11} delay={i * 0.05 + 0.05} />
           </div>
@@ -140,24 +74,12 @@ export function SkeletonRecipeCard() {
       </div>
 
       {/* method */}
-      <div
-        style={{
-          fontFamily: 'Inter, sans-serif',
-          fontSize: 10.5,
-          fontWeight: 700,
-          letterSpacing: '0.16em',
-          textTransform: 'uppercase',
-          color: 'var(--muted-foreground)',
-          marginBottom: 10,
-        }}
-      >
-        Method
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div className={cn(EYEBROW_CLASSES, 'text-muted-foreground mb-2.5')}>Method</div>
+      <div className="flex flex-col gap-3">
         {[0, 1, 2].map(i => (
-          <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-            <div style={shimmerStep()} />
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div key={i} className="flex gap-3 items-start">
+            <div className={shimmerStepClassName} />
+            <div className="flex-1 flex flex-col gap-1.5">
               <ShimmerLine width="90%" height={11} delay={i * 0.1} />
               <ShimmerLine width="70%" height={11} delay={i * 0.1 + 0.05} />
             </div>
@@ -167,3 +89,4 @@ export function SkeletonRecipeCard() {
     </div>
   );
 }
+

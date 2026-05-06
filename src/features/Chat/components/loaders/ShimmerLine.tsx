@@ -1,5 +1,6 @@
 'use client';
 
+import { cn } from '@/lib/utils';
 import { useReducedMotion } from './useReducedMotion';
 
 interface ShimmerLineProps {
@@ -12,15 +13,16 @@ export function ShimmerLine({ width = '100%', height = 12, delay = 0 }: ShimmerL
   const reduced = useReducedMotion();
   return (
     <div
+      className={cn(
+        'rounded',
+        reduced
+          ? 'bg-border'
+          : 'bg-[linear-gradient(90deg,var(--muted)_0%,var(--card)_50%,var(--muted)_100%)] bg-[length:200%_100%] animate-[ahmah-shimmer_1.8s_ease-in-out_infinite]'
+      )}
       style={{
         width,
         height,
-        borderRadius: 4,
-        background: reduced
-          ? 'var(--border)'
-          : 'linear-gradient(90deg, var(--muted) 0%, var(--card) 50%, var(--muted) 100%)',
-        backgroundSize: reduced ? undefined : '200% 100%',
-        animation: reduced ? 'none' : `ahmah-shimmer 1.8s ease-in-out ${delay}s infinite`,
+        animationDelay: reduced ? undefined : `${delay}s`,
       }}
     />
   );

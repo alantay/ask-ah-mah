@@ -3,6 +3,7 @@
 import { useSessionContext } from '@/contexts/SessionContext';
 import { GetInventoryResponse, InventoryItem } from '@/lib/inventory/schemas';
 import { SuggestionsBlockData, SuggestionOption } from '@/lib/recipes/schemas';
+import { cn } from '@/lib/utils';
 import { fetcher } from '@/lib/utils/index';
 import { TextUIPart, UIMessage } from 'ai';
 import Image from 'next/image';
@@ -19,7 +20,7 @@ interface SuggestionsBlockProps {
 function derivePickedId(
   options: SuggestionOption[],
   allMessages: UIMessage[],
-  messageIndex: number,
+  messageIndex: number
 ): string | null {
   const laterMessages = allMessages.slice(messageIndex + 1);
   for (const msg of laterMessages) {
@@ -27,7 +28,7 @@ function derivePickedId(
     const text =
       msg.parts
         ?.filter((p): p is TextUIPart => p.type === 'text')
-        .map((p) => p.text)
+        .map(p => p.text)
         .join('') ?? '';
     for (const opt of options) {
       if (text.toLowerCase().includes(opt.title.toLowerCase())) {
@@ -40,22 +41,13 @@ function derivePickedId(
 
 function GrannyAvatar() {
   return (
-    <div
-      style={{
-        width: 36,
-        height: 36,
-        borderRadius: '50%',
-        overflow: 'hidden',
-        flexShrink: 0,
-        border: '1px solid var(--border)',
-      }}
-    >
+    <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 border border-border">
       <Image
         src="/granny-avatar.png"
         alt="Ah Mah"
         width={36}
         height={36}
-        style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+        className="object-cover size-full"
       />
     </div>
   );
@@ -76,184 +68,70 @@ function SuggestionCard({
   inventoryItems,
   onSend,
 }: SuggestionCardProps) {
-  const { have, total, missing } = computePantry(
-    option.keyIngredients,
-    inventoryItems,
-  );
+  const { have, total, missing } = computePantry(option.keyIngredients, inventoryItems);
   const haveAll = have === total && total > 0;
 
   return (
     <div
-      style={{
-        background: 'var(--card)',
-        border: `1px solid ${isPicked ? 'var(--primary)' : 'var(--border)'}`,
-        borderRadius: 10,
-        padding: '14px 16px 14px',
-        position: 'relative',
-        boxShadow: isPicked
-          ? '0 0 0 2px oklch(0.56 0.135 35 / 0.18), 0 1px 0 var(--border-soft)'
-          : '0 1px 0 var(--border-soft), 0 14px 24px -22px oklch(0.3 0.05 50 / 0.4)',
-        opacity: isDimmed ? 0.5 : 1,
-        transition: 'all 180ms ease',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 6,
-        pointerEvents: isDimmed ? 'none' : 'auto',
-      }}
+      className={cn(
+        'bg-card rounded-xl p-4 relative transition-all duration-180 flex flex-col gap-1.5',
+        isPicked
+          ? 'border border-primary shadow-[0_0_0_2px_oklch(0.56_0.135_35/0.18),0_1px_0_var(--border-soft)]'
+          : 'border border-border shadow-[0_1px_0_var(--border-soft),0_14px_24px_-22px_oklch(0.3_0.05_50/0.4)]',
+        isDimmed ? 'opacity-50 pointer-events-none' : 'opacity-100 pointer-events-auto'
+      )}
     >
       {/* Corner tab */}
-      <div
-        style={{
-          position: 'absolute',
-          top: -1,
-          right: 18,
-          width: 22,
-          height: 11,
-          background: 'var(--primary)',
-          borderRadius: '0 0 3px 3px',
-          boxShadow: 'inset 0 -1px 0 oklch(0.45 0.12 32)',
-        }}
-      />
+      <div className="absolute top-[-1px] right-[18px] w-5.5 h-2.5 bg-primary rounded-b shadow-[inset_0_-1px_0_oklch(0.45_0.12_32)]" />
 
       {/* Tags + time row */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            gap: 6,
-            alignItems: 'center',
-            flexWrap: 'wrap',
-          }}
-        >
-          {option.tags.map((t) => (
+      <div className="flex items-center justify-between">
+        <div className="flex gap-1.5 items-center flex-wrap">
+          {option.tags.map(t => (
             <span
               key={t}
-              style={{
-                fontFamily: 'Inter, sans-serif',
-                fontSize: 9.5,
-                fontWeight: 600,
-                padding: '1px 6px',
-                color: 'var(--muted-foreground)',
-                background: 'transparent',
-                border: '1px solid var(--border)',
-                borderRadius: 999,
-                letterSpacing: '0.04em',
-                textTransform: 'lowercase',
-              }}
+              className="font-sans text-[10px] font-semibold px-1.5 py-0.25 text-muted-foreground bg-transparent border border-border rounded-full tracking-wider lowercase"
             >
               {t}
             </span>
           ))}
         </div>
-        <span
-          style={{
-            fontFamily: 'ui-monospace, monospace',
-            fontSize: 10.5,
-            color: 'var(--ink-faint)',
-          }}
-        >
-          ⏱ {option.time}
-        </span>
+        <span className="font-mono text-[10px] text-ink-faint">⏱ {option.time}</span>
       </div>
 
       {/* Title */}
-      <div
-        style={{
-          fontFamily: 'Fraunces, serif',
-          fontWeight: 600,
-          fontSize: 19,
-          color: 'var(--foreground)',
-          lineHeight: 1.15,
-          letterSpacing: '-0.01em',
-        }}
-      >
+      <div className="font-display font-semibold text-xl text-foreground leading-tight tracking-tight">
         {option.title}
       </div>
 
       {/* Blurb */}
-      <div
-        style={{
-          fontFamily: 'Fraunces, serif',
-          fontStyle: 'italic',
-          fontSize: 13,
-          color: 'var(--muted-foreground)',
-          lineHeight: 1.4,
-        }}
-      >
+      <div className="font-display italic text-sm text-muted-foreground leading-relaxed">
         {option.blurb}
       </div>
 
       {/* Ah Mah note */}
       {option.note && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            marginTop: 2,
-            fontFamily: 'Fraunces, serif',
-            fontStyle: 'italic',
-            fontSize: 12,
-            color: 'var(--ink-faint)',
-          }}
-        >
-          <span
-            style={{
-              fontFamily: 'Inter, sans-serif',
-              fontStyle: 'normal',
-              fontSize: 9,
-              fontWeight: 700,
-              letterSpacing: '0.16em',
-              textTransform: 'uppercase',
-              color: 'oklch(0.45 0.10 60)',
-              padding: '1px 5px',
-              background: 'oklch(0.96 0.05 88)',
-              border: '1px dashed oklch(0.75 0.08 88)',
-              borderRadius: 4,
-            }}
-          >
+        <div className="flex items-center gap-1.5 mt-0.5 font-display italic text-xs text-ink-faint">
+          <span className="font-sans not-italic text-[9px] font-bold tracking-widest uppercase text-[oklch(0.45_0.10_60)] px-1.25 py-0.25 bg-[oklch(0.96_0.05_88)] border border-dashed border-[oklch(0.75_0.08_88)] rounded">
             Ah Mah
           </span>
-          <span style={{ flex: 1 }}>{option.note}</span>
+          <span className="flex-1">{option.note}</span>
         </div>
       )}
 
       {/* Footer row */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          marginTop: 10,
-          paddingTop: 10,
-          borderTop: '1px dashed var(--border)',
-        }}
-      >
+      <div className="flex items-center gap-2 mt-2.5 pt-2.5 border-t border-dashed border-border">
         <span
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            fontFamily: 'Inter, sans-serif',
-            fontSize: 11,
-            fontWeight: 600,
-            color: haveAll ? 'var(--accent)' : 'oklch(0.42 0.18 25)',
-          }}
+          className={cn(
+            'inline-flex items-center gap-1.5 font-sans text-xs font-semibold',
+            haveAll ? 'text-accent' : 'text-[oklch(0.42_0.18_25)]'
+          )}
         >
           <span
-            style={{
-              width: 7,
-              height: 7,
-              borderRadius: '50%',
-              background: haveAll ? 'var(--accent)' : 'oklch(0.6 0.18 25)',
-              flexShrink: 0,
-            }}
+            className={cn(
+              'size-[7px] rounded-full shrink-0',
+              haveAll ? 'bg-accent' : 'bg-[oklch(0.6_0.18_25)]'
+            )}
           />
           {total === 0
             ? 'Pantry check N/A'
@@ -261,26 +139,15 @@ function SuggestionCard({
               ? `All ${total} in pantry`
               : `${have}/${total} in pantry · short ${missing.length}`}
         </span>
-        <div style={{ flex: 1 }} />
+        <div className="flex-1" />
         <button
           onClick={() => onSend(`${option.title} — let's go.`)}
-          style={{
-            padding: '6px 12px',
-            fontFamily: 'Inter, sans-serif',
-            fontSize: 12,
-            fontWeight: 600,
-            color: isPicked ? 'oklch(0.405 0.130 32)' : '#fff',
-            background: isPicked ? 'oklch(0.94 0.06 35)' : 'var(--primary)',
-            border: '1px solid oklch(0.405 0.130 32)',
-            borderRadius: 7,
-            cursor: 'pointer',
-            boxShadow: isPicked
-              ? 'none'
-              : '0 1px 0 oklch(0.405 0.130 32)',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 5,
-          }}
+          className={cn(
+            'px-3 py-1.5 font-sans text-xs font-semibold rounded-lg cursor-pointer inline-flex items-center gap-1',
+            isPicked
+              ? 'text-[oklch(0.405_0.130_32)] bg-[oklch(0.94_0.06_35)] border border-[oklch(0.405_0.130_32)] shadow-none'
+              : 'text-white bg-primary border border-[oklch(0.405_0.130_32)] shadow-[0_1px_0_oklch(0.405_0.130_32)]'
+          )}
         >
           {isPicked ? '✓ Picked' : 'I want to cook this →'}
         </button>
@@ -298,7 +165,7 @@ export function SuggestionsBlock({
   const { userId } = useSessionContext();
   const { data: inventoryData } = useSWR<GetInventoryResponse>(
     userId ? `/api/inventory?userId=${userId}` : null,
-    fetcher,
+    fetcher
   );
 
   const inventoryItems: InventoryItem[] = [
@@ -315,54 +182,23 @@ export function SuggestionsBlock({
   });
 
   return (
-    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+    <div className="flex gap-3 items-start">
       <GrannyAvatar />
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div className="flex-1 min-w-0">
         {/* Header */}
-        <div
-          style={{
-            fontFamily: 'Inter, sans-serif',
-            fontSize: 11,
-            fontWeight: 600,
-            color: 'var(--muted-foreground)',
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            marginBottom: 4,
-          }}
-        >
+        <div className="flex items-center gap-2 font-sans text-xs font-semibold text-muted-foreground tracking-widest uppercase mb-1">
           <span>Ah Mah</span>
-          <span
-            style={{
-              fontWeight: 400,
-              color: 'var(--ink-faint)',
-              letterSpacing: '0.02em',
-              textTransform: 'none',
-            }}
-          >
-            · {time}
-          </span>
+          <span className="font-normal text-ink-faint tracking-wider normal-case">· {time}</span>
         </div>
 
         {/* Intro */}
-        <div
-          style={{
-            fontFamily: 'Fraunces, serif',
-            fontStyle: 'italic',
-            fontSize: 17,
-            lineHeight: 1.5,
-            color: 'var(--foreground)',
-            marginBottom: 12,
-          }}
-        >
+        <div className="font-display italic text-lg leading-relaxed text-foreground mb-3">
           {data.intro}
         </div>
 
         {/* Cards */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {data.options.map((option) => (
+        <div className="flex flex-col gap-2.5">
+          {data.options.map(option => (
             <SuggestionCard
               key={option.id}
               option={option}
@@ -375,18 +211,8 @@ export function SuggestionsBlock({
         </div>
 
         {/* Footer hint */}
-        <div
-          style={{
-            marginTop: 10,
-            fontFamily: 'Fraunces, serif',
-            fontStyle: 'italic',
-            fontSize: 13,
-            color: 'var(--ink-faint)',
-            lineHeight: 1.5,
-          }}
-        >
-          Or tell me what you&apos;re in the mood for and I&apos;ll think of
-          others.
+        <div className="mt-2.5 font-display italic text-sm text-ink-faint leading-relaxed">
+          Or tell me what you&apos;re in the mood for and I&apos;ll think of others.
         </div>
       </div>
     </div>

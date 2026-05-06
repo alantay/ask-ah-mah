@@ -238,10 +238,7 @@ const Chat = () => {
       <div className="hidden sm:flex items-center justify-between px-7 py-3.5 border-b border-dashed border-border shrink-0">
         <div className="flex items-center gap-3">
           {/* Active indicator dot */}
-          <div
-            className="w-2 h-2 rounded-full bg-primary shrink-0"
-            style={{ boxShadow: "oklch(0.56 0.135 35 / 0.18) 0 0 0 4px" }}
-          />
+          <div className="w-2 h-2 rounded-full bg-primary shrink-0 shadow-[0_0_0_4px_oklch(0.56_0.135_35/0.18)]" />
           <div>
             <ConversationTitle
               title={activeConversation?.title}

@@ -5,32 +5,13 @@ import { SkeletonRecipeCard } from './SkeletonRecipeCard';
 
 export function WritingItOut() {
   return (
-    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', maxWidth: 600 }}>
+    <div className="flex gap-3 items-start max-w-2xl">
       <MessageAvatar src="/granny-avatar.png" name="👵" className="size-9 mt-0.5 shrink-0" />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            fontFamily: 'Inter, sans-serif',
-            fontSize: 11,
-            fontWeight: 600,
-            color: 'var(--muted-foreground)',
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
-            marginBottom: 4,
-          }}
-        >
+      <div className="flex-1 min-w-0">
+        <div className="font-sans text-xs font-semibold text-muted-foreground tracking-widest uppercase mb-1">
           Ah Mah · just a moment
         </div>
-        <div
-          style={{
-            fontFamily: 'Fraunces, serif',
-            fontStyle: 'italic',
-            fontSize: 16,
-            color: 'var(--foreground)',
-            lineHeight: 1.5,
-            marginBottom: 4,
-          }}
-        >
+        <div className="font-display italic text-base text-foreground leading-relaxed mb-1">
           Let me write the whole thing out for you —
         </div>
         <SkeletonRecipeCard />

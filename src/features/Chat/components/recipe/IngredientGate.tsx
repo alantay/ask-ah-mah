@@ -3,6 +3,7 @@
 import { useSessionContext } from '@/contexts/SessionContext';
 import { GetInventoryResponse, InventoryItem } from '@/lib/inventory/schemas';
 import { GateData } from '@/lib/recipes/schemas';
+import { cn } from '@/lib/utils';
 import { fetcher } from '@/lib/utils/index';
 import Image from 'next/image';
 import useSWR from 'swr';
@@ -16,22 +17,13 @@ interface IngredientGateProps {
 
 function GrannyAvatar() {
   return (
-    <div
-      style={{
-        width: 36,
-        height: 36,
-        borderRadius: '50%',
-        overflow: 'hidden',
-        flexShrink: 0,
-        border: '1px solid var(--border)',
-      }}
-    >
+    <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 border border-border">
       <Image
         src="/granny-avatar.png"
         alt="Ah Mah"
         width={36}
         height={36}
-        style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+        className="object-cover size-full"
       />
     </div>
   );
@@ -49,60 +41,32 @@ function GateButton({ icon, title, sub, primary, onClick }: GateButtonProps) {
   return (
     <button
       onClick={onClick}
-      style={{
-        flex: 1,
-        textAlign: 'left',
-        padding: '14px 16px',
-        background: primary ? 'var(--primary)' : 'var(--card)',
-        border: `1px solid ${primary ? 'oklch(0.405 0.130 32)' : 'var(--border)'}`,
-        borderRadius: 10,
-        cursor: 'pointer',
-        boxShadow: primary
-          ? '0 1px 0 oklch(0.405 0.130 32), 0 14px 24px -22px oklch(0.3 0.05 50 / 0.4)'
-          : '0 1px 0 var(--border-soft)',
-        display: 'flex',
-        gap: 12,
-        alignItems: 'flex-start',
-        color: primary ? '#fff' : 'var(--foreground)',
-        transition: 'transform 100ms ease',
-      }}
+      className={cn(
+        'flex-1 text-left p-[14px_16px] rounded-[10px] cursor-pointer flex gap-3 items-start transition-transform duration-100',
+        primary
+          ? 'bg-primary border border-[oklch(0.405_0.130_32)] text-white shadow-[0_1px_0_oklch(0.405_0.130_32),0_14px_24px_-22px_oklch(0.3_0.05_50/0.4)]'
+          : 'bg-card border border-border text-foreground shadow-[0_1px_0_var(--border-soft)]'
+      )}
     >
       <div
-        style={{
-          width: 32,
-          height: 32,
-          borderRadius: 8,
-          flexShrink: 0,
-          background: primary ? 'oklch(1 0 0 / 0.18)' : 'var(--chat)',
-          border: `1px solid ${primary ? 'oklch(1 0 0 / 0.3)' : 'var(--border)'}`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: primary ? '#fff' : 'var(--primary)',
-        }}
+        className={cn(
+          'w-8 h-8 rounded-lg shrink-0 flex items-center justify-center',
+          primary
+            ? 'bg-white/18 border border-white/30 text-white'
+            : 'bg-chat border border-border text-primary'
+        )}
       >
         {icon}
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            fontFamily: 'Fraunces, serif',
-            fontWeight: 600,
-            fontSize: 15,
-            lineHeight: 1.2,
-            letterSpacing: '-0.005em',
-            marginBottom: 3,
-          }}
-        >
+      <div className="flex-1 min-w-0">
+        <div className="font-display font-semibold text-[15px] leading-[1.2] tracking-[-0.005em] mb-0.5">
           {title}
         </div>
         <div
-          style={{
-            fontFamily: 'Inter, sans-serif',
-            fontSize: 12,
-            color: primary ? 'oklch(1 0 0 / 0.85)' : 'var(--muted-foreground)',
-            lineHeight: 1.4,
-          }}
+          className={cn(
+            'font-sans text-[12px] leading-[1.4]',
+            primary ? 'text-white/85' : 'text-muted-foreground'
+          )}
         >
           {sub}
         </div>
@@ -135,125 +99,51 @@ export function IngredientGate({ data, onSend, onExpectRecipe }: IngredientGateP
   });
 
   return (
-    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+    <div className="flex gap-3 items-start">
       <GrannyAvatar />
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div className="flex-1 min-w-0">
         {/* Header */}
-        <div
-          style={{
-            fontFamily: 'Inter, sans-serif',
-            fontSize: 11,
-            fontWeight: 600,
-            color: 'var(--muted-foreground)',
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            marginBottom: 4,
-          }}
-        >
+        <div className="flex items-center gap-2 font-sans text-xs font-semibold text-muted-foreground tracking-widest uppercase mb-1">
           <span>Ah Mah</span>
-          <span
-            style={{
-              fontWeight: 400,
-              color: 'var(--ink-faint)',
-              letterSpacing: '0.02em',
-              textTransform: 'none',
-            }}
-          >
-            · {time}
-          </span>
+          <span className="font-normal text-ink-faint tracking-wider normal-case">· {time}</span>
         </div>
 
         {/* Intro message */}
-        <div
-          style={{
-            fontFamily: 'Fraunces, serif',
-            fontStyle: 'italic',
-            fontSize: 17,
-            lineHeight: 1.5,
-            color: 'var(--foreground)',
-            marginBottom: 14,
-          }}
-        >
+        <div className="font-display italic text-lg leading-relaxed text-foreground mb-3.5">
           {haveAll ? (
             <>
-              Good choice —{' '}
-              <b style={{ fontStyle: 'normal', fontWeight: 600 }}>
-                {data.title}
-              </b>
-              . Looks like you have everything. Shall I write it out?
+              Good choice — <b className="font-semibold not-italic">{data.title}</b>. Looks like you
+              have everything. Shall I write it out?
             </>
           ) : (
             <>
-              Lovely —{' '}
-              <b style={{ fontStyle: 'normal', fontWeight: 600 }}>
-                {data.title}
-              </b>
-              . Quick check before I write it out — are you missing anything?
+              Lovely — <b className="font-semibold not-italic">{data.title}</b>. Quick check before
+              I write it out — are you missing anything?
             </>
           )}
         </div>
 
         {/* Pantry summary strip */}
-        <div
-          style={{
-            background: 'var(--chat)',
-            border: '1px solid var(--border)',
-            borderRadius: 10,
-            padding: '10px 14px',
-            marginBottom: 12,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 14,
-            fontFamily: 'Inter, sans-serif',
-            fontSize: 12.5,
-          }}
-        >
+        <div className="flex items-center gap-3.5 p-3.5 bg-chat border border-border rounded-xl mb-3 font-sans text-sm">
           <div
-            style={{
-              width: 36,
-              height: 36,
-              flexShrink: 0,
-              borderRadius: 8,
-              background: haveAll
-                ? 'oklch(0.94 0.04 168)'
-                : 'oklch(0.96 0.05 88)',
-              border: `1px solid ${haveAll ? 'oklch(0.78 0.07 168)' : 'oklch(0.75 0.08 88)'}`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontFamily: 'Fraunces, serif',
-              fontWeight: 700,
-              fontSize: 14,
-              color: haveAll ? 'var(--accent)' : 'oklch(0.45 0.10 60)',
-              fontVariantNumeric: 'tabular-nums',
-            }}
+            className={cn(
+              'size-9 shrink-0 rounded-lg flex items-center justify-center font-display font-bold text-sm tabular-nums',
+              haveAll
+                ? 'bg-[oklch(0.94_0.04_168)] border border-[oklch(0.78_0.07_168)] text-accent'
+                : 'bg-[oklch(0.96_0.05_88)] border border-[oklch(0.75_0.08_88)] text-[oklch(0.45_0.10_60)]'
+            )}
           >
             {have}/{total}
           </div>
-          <div style={{ flex: 1 }}>
-            <div
-              style={{
-                fontFamily: 'Inter, sans-serif',
-                fontWeight: 600,
-                fontSize: 12.5,
-                color: 'var(--foreground)',
-                marginBottom: 2,
-              }}
-            >
-              Pantry check
-            </div>
-            <div style={{ color: 'var(--muted-foreground)', fontSize: 11.5 }}>
+          <div className="flex-1">
+            <div className="font-semibold text-sm text-foreground mb-0.5">Pantry check</div>
+            <div className="text-muted-foreground text-xs">
               {haveAll ? (
                 'Everything looks accounted for, dear.'
               ) : (
                 <>
                   Looks like you&apos;re short on{' '}
-                  <b style={{ color: 'var(--foreground)' }}>
-                    {missing.join(', ')}
-                  </b>
+                  <b className="text-foreground">{missing.join(', ')}</b>
                 </>
               )}
             </div>
@@ -261,7 +151,7 @@ export function IngredientGate({ data, onSend, onExpectRecipe }: IngredientGateP
         </div>
 
         {/* Action buttons */}
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div className="flex gap-2.5">
           <GateButton
             primary
             icon={
@@ -278,7 +168,10 @@ export function IngredientGate({ data, onSend, onExpectRecipe }: IngredientGateP
             }
             title="I have everything"
             sub="Write me the full recipe."
-            onClick={() => { onExpectRecipe?.(); onSend('I have everything.'); }}
+            onClick={() => {
+              onExpectRecipe?.();
+              onSend('I have everything.');
+            }}
           />
           <GateButton
             icon={
@@ -296,26 +189,17 @@ export function IngredientGate({ data, onSend, onExpectRecipe }: IngredientGateP
             }
             title="I'm missing some"
             sub="Suggest swaps, or send me to the shop."
-            onClick={() => { onSend("I'm missing some."); }}
+            onClick={() => {
+              onSend("I'm missing some.");
+            }}
           />
         </div>
 
         {/* Tertiary link */}
-        <div style={{ display: 'flex', gap: 14, marginTop: 10, paddingLeft: 4 }}>
+        <div className="flex gap-3.5 mt-2.5 pl-1">
           <button
             onClick={() => onSend('Show me other recipes.')}
-            style={{
-              padding: 0,
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              fontFamily: 'Inter, sans-serif',
-              fontSize: 11.5,
-              fontWeight: 500,
-              color: 'var(--ink-faint)',
-              textDecoration: 'underline',
-              textUnderlineOffset: 3,
-            }}
+            className="p-0 bg-transparent border-none cursor-pointer font-sans text-xs font-medium text-ink-faint underline underline-offset-4"
           >
             ← Show me other recipes
           </button>
