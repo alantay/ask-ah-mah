@@ -6,27 +6,11 @@ Guidance for working in this repository.
 
 ## Commands
 
-- `pnpm dev` — start Next.js (Turbopack)
-- `pnpm build` — `prisma generate && prisma migrate deploy` → `next build`
-- `pnpm lint` — ESLint (flat config)
-- `pnpm test` — Jest (`test:watch`, `test:coverage`, `test:ci` available)
-
-**Run specific test**
-
-- `pnpm jest path/to/file.test.ts`
-- `pnpm jest -t "test name"`
-
-**Database**
-
-- `pnpm db:local` / `pnpm db:prod` — `prisma generate && prisma db push` (prototyping/schema exploration only — skips migration history)
-- For production deploys use `prisma generate && prisma migrate deploy`; this runs automatically in `pnpm build`
-- `pnpm db:studio` — open Prisma Studio (`prisma/dev.db`)
+- use `pnpm` instead of `npm`
 
 ---
 
 ## Architecture
-
-Next.js 15 (App Router) + React 19 + Vercel AI SDK.
 
 App: **“Ask Ah Mah”** — converts pantry items into recipes via chat.
 
