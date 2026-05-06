@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { getRandomNormalisedPhrase } from '../../utils';
 import { StatusStream } from './StatusStream';
 import { Typing } from './Typing';
@@ -32,7 +32,10 @@ export function ChatLoader({ submittedAt, expectingRecipe }: ChatLoaderProps) {
     };
   }, [submittedAt, expectingRecipe]);
 
-  if (expectingRecipe) return <WritingItOut />;
-  if (elapsed >= SLOW_THRESHOLD_MS) return <StatusStream />;
-  return <Typing phrase={phrase} />;
+  let inner: React.ReactNode;
+  if (expectingRecipe) inner = <WritingItOut />;
+  else if (elapsed >= SLOW_THRESHOLD_MS) inner = <StatusStream />;
+  else inner = <Typing phrase={phrase} />;
+
+  return <div data-testid="loader-ghost">{inner}</div>;
 }

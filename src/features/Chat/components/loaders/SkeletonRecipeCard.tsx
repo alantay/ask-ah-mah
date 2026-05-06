@@ -1,18 +1,19 @@
 'use client';
 
+import type { CSSProperties } from 'react';
 import { useReducedMotion } from './useReducedMotion';
 import { ShimmerLine } from './ShimmerLine';
 
 export function SkeletonRecipeCard() {
   const reduced = useReducedMotion();
 
-  const shimmerStep = (): React.CSSProperties => ({
+  const shimmerStep = (): CSSProperties => ({
     flexShrink: 0,
     width: 26,
     height: 26,
     background: reduced
       ? 'var(--border)'
-      : `linear-gradient(90deg, oklch(0.92 0.025 75) 0%, oklch(0.97 0.020 80) 50%, oklch(0.92 0.025 75) 100%)`,
+      : 'linear-gradient(90deg, var(--muted) 0%, var(--card) 50%, var(--muted) 100%)',
     backgroundSize: reduced ? undefined : '200% 100%',
     borderRadius: '50% 50% 50% 6px',
     animation: reduced ? 'none' : 'ahmah-shimmer 1.8s ease-in-out infinite',

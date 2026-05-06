@@ -296,7 +296,7 @@ export function IngredientGate({ data, onSend, onExpectRecipe }: IngredientGateP
             }
             title="I'm missing some"
             sub="Suggest swaps, or send me to the shop."
-            onClick={() => { onExpectRecipe?.(); onSend("I'm missing some."); }}
+            onClick={() => { onSend("I'm missing some."); }}
           />
         </div>
 

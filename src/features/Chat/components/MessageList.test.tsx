@@ -430,8 +430,7 @@ describe("MessageList", () => {
         />
       );
 
-      // The Typing loader shows "Ah Mah" eyebrow text
-      expect(screen.getByText("Ah Mah")).toBeInTheDocument();
+      expect(screen.getByTestId("loader-ghost")).toBeInTheDocument();
     });
 
     it("should not show loader ghost bubble when not submitted", () => {
@@ -448,8 +447,7 @@ describe("MessageList", () => {
         />
       );
 
-      // No "Ah Mah" eyebrow from the loader (message content itself may have different text)
-      expect(screen.queryByText("Ah Mah · just a moment")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("loader-ghost")).not.toBeInTheDocument();
     });
 
     it("should not show loader ghost bubble during streaming", () => {
@@ -466,7 +464,7 @@ describe("MessageList", () => {
         />
       );
 
-      expect(screen.queryByText("Ah Mah · just a moment")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("loader-ghost")).not.toBeInTheDocument();
     });
 
     it("should show skeleton recipe card when expectingRecipe during submitted", () => {
@@ -480,6 +478,7 @@ describe("MessageList", () => {
         />
       );
 
+      expect(screen.getByTestId("loader-ghost")).toBeInTheDocument();
       expect(screen.getByText("Ah Mah is writing it out")).toBeInTheDocument();
       expect(screen.getByText("Let me write the whole thing out for you —")).toBeInTheDocument();
     });

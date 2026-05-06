@@ -18,10 +18,7 @@ export function ShimmerLine({ width = '100%', height = 12, delay = 0 }: ShimmerL
         borderRadius: 4,
         background: reduced
           ? 'var(--border)'
-          : `linear-gradient(90deg,
-              oklch(0.92 0.025 75) 0%,
-              oklch(0.97 0.020 80) 50%,
-              oklch(0.92 0.025 75) 100%)`,
+          : 'linear-gradient(90deg, var(--muted) 0%, var(--card) 50%, var(--muted) 100%)',
         backgroundSize: reduced ? undefined : '200% 100%',
         animation: reduced ? 'none' : `ahmah-shimmer 1.8s ease-in-out ${delay}s infinite`,
       }}
