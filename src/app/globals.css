@@ -226,6 +226,11 @@ blockquote {
 @keyframes ahmah-spin {
   to { transform: rotate(360deg); }
 }
+@keyframes ahmah-pen {
+  0%   { transform: translateX(0) rotate(-8deg); }
+  50%  { transform: translateX(2px) rotate(-6deg); }
+  100% { transform: translateX(0) rotate(-8deg); }
+}
 
 /* Recipe letter — scaled amount pulse animation */
 @keyframes scaledPulse {
