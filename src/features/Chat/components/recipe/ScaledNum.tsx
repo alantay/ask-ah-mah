@@ -24,8 +24,7 @@ export function ScaledNum({ children }: ScaledNumProps) {
   return (
     <span
       key={pulseKey}
-      className="font-mono not-italic font-semibold text-foreground bg-secondary/50 px-1 rounded-sm scaled-num-pulse"
-      style={{ fontSize: '0.9em' }}
+      className="font-mono not-italic font-semibold text-foreground bg-secondary/50 px-1 rounded-sm scaled-num-pulse text-[0.9em]"
     >
       {children}
     </span>

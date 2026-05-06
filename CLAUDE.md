@@ -65,7 +65,11 @@ App: **“Ask Ah Mah”** — converts pantry items into recipes via chat.
 
 ---
 
-## Conventions
+## Styling
+
+- **Prefer Tokens:** Use Tailwind utility classes and project tokens over inline styles.
+- **Limit Inline Styles:** Use only for dynamic values (dimensions, delays) or rare edge cases.
+- **Readability:** Consolidate long class stacks into local constants within components.
 
 - Commits: `type(scope): description`
   - `feat`, `fix`, `refactor`, `docs`, `test`, `chore`

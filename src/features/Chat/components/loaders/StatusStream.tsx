@@ -1,6 +1,7 @@
 'use client';
 
 import { MessageAvatar } from '@/components/ai-elements/message';
+import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 import { STATUS_LINES } from '../../constants';
 import { useReducedMotion } from './useReducedMotion';
@@ -15,45 +16,23 @@ export function StatusStream() {
   }, []);
 
   return (
-    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', maxWidth: 560 }}>
+    <div className="flex gap-3 items-start max-w-xl">
       <MessageAvatar src="/granny-avatar.png" name="👵" className="size-9 mt-0.5 shrink-0" />
-      <div style={{ flex: 1 }}>
-        <div
-          style={{
-            fontFamily: 'Inter, sans-serif',
-            fontSize: 11,
-            fontWeight: 600,
-            color: 'var(--muted-foreground)',
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
-            marginBottom: 6,
-          }}
-        >
+      <div className="flex-1">
+        <div className="font-sans text-xs font-semibold text-muted-foreground tracking-widest uppercase mb-1.5">
           Ah Mah
         </div>
 
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            padding: '12px 16px',
-            background: 'var(--card)',
-            border: '1px solid var(--border)',
-            borderRadius: '14px 14px 14px 4px',
-            boxShadow: '0 1px 0 var(--border-soft)',
-            minWidth: 260,
-          }}
-        >
+        <div className="flex items-center gap-3 py-3 px-4 bg-card border border-border rounded-2xl rounded-bl-sm shadow-[0_1px_0_var(--border-soft)] min-w-[260px]">
           {/* Spinner ring */}
-          <div style={{ position: 'relative', width: 22, height: 22, flexShrink: 0 }}>
+          <div className="relative size-[22px] shrink-0">
             <svg
               width="22"
               height="22"
               viewBox="0 0 22 22"
-              style={{
-                animation: reduced ? 'none' : 'ahmah-pulse-soft 1.6s ease-in-out infinite',
-              }}
+              className={cn(
+                !reduced && 'animate-[ahmah-pulse-soft_1.6s_ease-in-out_infinite]'
+              )}
             >
               <circle cx="11" cy="11" r="8" fill="none" stroke="var(--border-soft)" strokeWidth="2" />
               <circle
@@ -65,32 +44,25 @@ export function StatusStream() {
                 strokeWidth="2"
                 strokeDasharray="14 36"
                 strokeLinecap="round"
-                style={{
-                  transformOrigin: '11px 11px',
-                  animation: reduced ? 'none' : 'ahmah-spin 1.2s linear infinite',
-                }}
+                className={cn(
+                  'origin-[11px_11px]',
+                  !reduced && 'animate-[ahmah-spin_1.2s_linear_infinite]'
+                )}
               />
             </svg>
           </div>
 
           {/* Cycling status text */}
-          <div style={{ flex: 1, position: 'relative', minHeight: 22 }}>
+          <div className="flex-1 relative min-h-6">
             {STATUS_LINES.map((line, i) => (
               <div
                 key={i}
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  fontFamily: 'Fraunces, serif',
-                  fontStyle: 'italic',
-                  fontSize: 15,
-                  color: 'var(--foreground)',
-                  opacity: i === idx ? 1 : 0,
-                  transform: reduced ? 'none' : (i === idx ? 'translateY(0)' : 'translateY(4px)'),
-                  transition: reduced ? 'opacity 0.2s ease' : 'opacity 0.4s ease, transform 0.4s ease',
-                }}
+                className={cn(
+                  'absolute inset-0 flex items-center font-display italic text-base text-foreground transition-[opacity,transform]',
+                  reduced ? 'duration-200' : 'duration-400',
+                  i === idx ? 'opacity-100' : 'opacity-0',
+                  !reduced && (i === idx ? 'translate-y-0' : 'translate-y-1')
+                )}
               >
                 {line}
               </div>
@@ -99,17 +71,14 @@ export function StatusStream() {
         </div>
 
         {/* Progress dots */}
-        <div style={{ display: 'flex', gap: 6, marginTop: 10, marginLeft: 4 }}>
+        <div className="flex gap-1.5 mt-2.5 ml-1">
           {STATUS_LINES.map((_, i) => (
             <div
               key={i}
-              style={{
-                width: 22,
-                height: 3,
-                borderRadius: 2,
-                background: i <= idx ? 'var(--primary)' : 'var(--border-soft)',
-                transition: 'background 0.4s ease',
-              }}
+              className={cn(
+                'w-[22px] h-[3px] rounded-sm transition-colors duration-400',
+                i <= idx ? 'bg-primary' : 'bg-[var(--border-soft)]'
+              )}
             />
           ))}
         </div>
