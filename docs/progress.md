@@ -44,6 +44,13 @@ The persistent-kitchen MVP. Highlights:
 - [x] `RecipeCard` uses description with fallback blurb and shows total time badge.
 - [x] Cookbook subtitle includes `last added <weekday>` from `createdAt`.
 
+### Chat surface style-system refactor (May 2026)
+- [x] Migrated all inline styles in `src/features/Chat` to Tailwind CSS utility classes and project tokens.
+- [x] Refactored all chat loaders: `StatusStream`, `Typing`, `WritingItOut`, `ShimmerLine`, and `SkeletonRecipeCard`.
+- [x] Refactored all recipe rendering blocks: `IngredientGate`, `RecipeLetter`, `SuggestionsBlock`, and `ScaledNum`.
+- [x] Established styling guardrails in `CLAUDE.md` to prefer tokens over inline styles.
+- [x] Mapped arbitrary values to standard Tailwind tokens for improved maintainability.
+
 ### Decrement-on-cook
 - [ ] Add `Cooked This` button in `RecipeDisplay` for saved recipes.
 - [ ] Add explicit confirmation flow for inferred "I cooked X" messages (`yes / no / edit`).
