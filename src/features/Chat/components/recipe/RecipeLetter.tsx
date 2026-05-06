@@ -40,7 +40,6 @@ export interface RecipeLetterProps {
 
 function ServingsStepper({
   servings,
-  baseServings,
   onDecrement,
   onIncrement,
 }: {
@@ -49,9 +48,6 @@ function ServingsStepper({
   onDecrement: () => void;
   onIncrement: () => void;
 }) {
-  const ratio = servings / baseServings;
-  const ratioLabel = ratio.toFixed(2).replace(/\.?0+$/, '');
-
   const BUTTON_BASE =
     'w-7 border-none bg-transparent cursor-pointer text-foreground text-[16px] font-semibold disabled:cursor-not-allowed disabled:text-muted-foreground';
 
@@ -65,15 +61,10 @@ function ServingsStepper({
       >
         −
       </button>
-      <div className="flex flex-col justify-center items-center min-w-[64px] px-2 leading-none">
+      <div className="flex justify-center items-center min-w-[40px] px-2">
         <span className="font-display font-semibold text-[14px] text-foreground tabular-nums">
-          {servings} {servings === 1 ? 'serving' : 'servings'}
+          {servings}
         </span>
-        {servings !== baseServings && (
-          <span className="font-mono text-[9px] text-muted-foreground mt-0.5 tracking-wider">
-            ×{ratioLabel} from {baseServings}
-          </span>
-        )}
       </div>
       <button
         onClick={onIncrement}
@@ -188,7 +179,7 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
               </span>
             )}
           </div>
-          <div className="bg-card border border-border rounded-xl p-3.5 grid grid-cols-2 gap-x-4.5 gap-y-1 shadow-[0_1px_0_var(--border-soft)]">
+          <div className="bg-card border border-border rounded-xl p-3.5 grid grid-cols-1 sm:grid-cols-2 gap-x-4.5 gap-y-1 shadow-[0_1px_0_var(--border-soft)]">
             {recipe.ingredients.map((ing, i) => {
               const scaledAmt = ing.amount ? scaleAmount(ing.amount, ratio) : '';
               const amountLabel = scaledAmt ? `${scaledAmt}${ing.unit ? ' ' + ing.unit : ''}` : '';
