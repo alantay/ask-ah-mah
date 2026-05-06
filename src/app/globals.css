@@ -210,6 +210,23 @@ blockquote {
   padding-left: 0.5em;
 }
 
+/* Loader animations */
+@keyframes ahmah-dot {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.35; }
+  40%           { transform: translateY(-3px); opacity: 1; }
+}
+@keyframes ahmah-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes ahmah-pulse-soft {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+@keyframes ahmah-spin {
+  to { transform: rotate(360deg); }
+}
+
 /* Recipe letter — scaled amount pulse animation */
 @keyframes scaledPulse {
   0%   { background-color: oklch(0.86 0.14 60 / 0.7); }

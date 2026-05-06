@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Ask Ah Mah · Surface Redesign</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500;1,9..144,600&family=Inter:wght@400;500;600;700&family=Nunito:wght@700;800&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: Inter, system-ui, sans-serif;
+    background: oklch(0.92 0.02 70);
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="tokens.jsx"></script>
+<script type="text/babel" src="chrome.jsx"></script>
+<script type="text/babel" src="inventory.jsx"></script>
+<script type="text/babel" src="chat.jsx"></script>
+<script type="text/babel" src="screens.jsx"></script>
+<script type="text/babel" src="recipe-page.jsx"></script>
+<script type="text/babel" src="conversations.jsx"></script>
+<script type="text/babel" src="three-rail.jsx"></script>
+<script type="text/babel" src="inline-recipe.jsx"></script>
+<script type="text/babel" src="suggestion-flow.jsx"></script>
+<script type="text/babel" src="loading-recipe.jsx"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { DesignCanvas, DCSection, DCArtboard } = window;
+
+function App() {
+  return (
+    <DesignCanvas title="Ask Ah Mah · Surface Redesign" subtitle="Warm, tactile, lived-in. Six surfaces. Six fixes.">
+      <DCSection id="spec" title="The system">
+        <DCArtboard id="tokens" label="Surface tokens" width={700} height={H_DESKTOP}>
+          <TokenSpec />
+        </DCArtboard>
+        <DCArtboard id="fixes" label="Fixes per problem" width={700} height={H_DESKTOP}>
+          <FixesList />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="desktop" title="Desktop">
+        <DCArtboard id="chat-desktop" label="Chat — full hierarchy in play" width={W_DESKTOP} height={H_DESKTOP}>
+          <DesktopChat />
+        </DCArtboard>
+        <DCArtboard id="inline-expanded" label="Inline recipe — expanded card (ingredients + steps)" width={W_DESKTOP} height={H_DESKTOP}>
+          <InlineRecipeFrame variant="expanded" label="A · Expanded" />
+        </DCArtboard>
+        <DCArtboard id="inline-letter" label="Inline recipe — Ah Mah's handwritten note" width={W_DESKTOP} height={H_DESKTOP}>
+          <InlineRecipeFrame variant="letter" label="B · Letter" />
+        </DCArtboard>
+        <DCArtboard id="inline-tabbed" label="Inline recipe — tabbed (ingredients / method / tips)" width={W_DESKTOP} height={H_DESKTOP}>
+          <InlineRecipeFrame variant="tabbed" label="C · Tabbed" />
+        </DCArtboard>
+        <DCArtboard id="inline-conversational" label="Inline recipe — Ah Mah dictates step by step" width={W_DESKTOP} height={H_DESKTOP}>
+          <InlineRecipeFrame variant="conversational" label="D · Conversational" />
+        </DCArtboard>
+        <DCArtboard id="suggestion-browse" label="Suggestion flow — three headlines, no pick yet" width={W_DESKTOP} height={H_DESKTOP}>
+          <SuggestionFlowFrame stage="browse" label="E · Browsing" />
+        </DCArtboard>
+        <DCArtboard id="suggestion-gate" label="Suggestion flow — picked, ingredient gate visible" width={W_DESKTOP} height={H_DESKTOP}>
+          <SuggestionFlowFrame stage="pick" label="F · Pantry check" />
+        </DCArtboard>
+        <DCArtboard id="suggestion-cooking" label="Suggestion flow — gate answered, recipe opens" width={W_DESKTOP} height={H_DESKTOP}>
+          <SuggestionFlowFrame stage="cooking" label="G · Cooking" />
+        </DCArtboard>
+        <DCArtboard id="loading-comparison" label="Loading — all four side-by-side" width={760} height={1180}>
+          <LoadingComparison />
+        </DCArtboard>
+        <DCArtboard id="loading-typing" label="Loading A · Typing dots (in-context)" width={W_DESKTOP} height={H_DESKTOP}>
+          <LoadingFrame variant="typing" label="A · Typing" />
+        </DCArtboard>
+        <DCArtboard id="loading-writing" label="Loading B · Writing it out (skeleton card)" width={W_DESKTOP} height={H_DESKTOP}>
+          <LoadingFrame variant="writing" label="B · Writing" />
+        </DCArtboard>
+        <DCArtboard id="loading-status" label="Loading C · Status stream" width={W_DESKTOP} height={H_DESKTOP}>
+          <LoadingFrame variant="status" label="C · Status" />
+        </DCArtboard>
+        <DCArtboard id="loading-pen" label="Loading D · Pen on paper" width={W_DESKTOP} height={H_DESKTOP}>
+          <LoadingFrame variant="pen" label="D · Pen" />
+        </DCArtboard>
+        <DCArtboard id="cookbook-filled" label="Cookbook — with content" width={W_DESKTOP} height={H_DESKTOP}>
+          <DesktopCookbook />
+        </DCArtboard>
+        <DCArtboard id="cookbook-empty" label="Cookbook — empty state with structure" width={W_DESKTOP} height={H_DESKTOP}>
+          <DesktopCookbook empty />
+        </DCArtboard>
+        <DCArtboard id="recipe-page" label="Recipe — opened from cookbook" width={W_DESKTOP} height={H_DESKTOP}>
+          <RecipePage />
+        </DCArtboard>
+        <DCArtboard id="conversations" label="Conversations — what 'Tuesday's kitchen' is for" width={W_DESKTOP} height={H_DESKTOP}>
+          <ConversationsDrawer />
+        </DCArtboard>
+        <DCArtboard id="three-rail" label="Layout exploration — Conversations + Chat + Pantry" width={1640} height={1320}>
+          <ThreeRailExploration />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="mobile" title="Mobile">
+        <DCArtboard id="chat-mobile" label="Chat — phone" width={390} height={820}>
+          <MobileChat />
+        </DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

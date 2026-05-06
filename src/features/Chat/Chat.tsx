@@ -13,7 +13,7 @@ import { upperCaseFirstLetter } from "@/lib/utils";
 import { fetcher } from "@/lib/utils/index";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
 import { z } from "zod";
@@ -21,7 +21,7 @@ import ConversationTitle from "./components/ConversationTitle";
 import { MessageInput } from "./components/MessageInput";
 import { MessageList } from "./components/MessageList";
 import { INITIAL_MESSAGE, LOADING_MESSAGES } from "./constants";
-import { convertToUIMessage, getRandomThinkingMessage } from "./utils";
+import { convertToUIMessage } from "./utils";
 
 const SUGGESTIONS = [
   "What can I cook tonight?",
@@ -42,6 +42,8 @@ const Chat = () => {
     archiveActiveConversation,
   } = useConversationContext();
   const [convSheetOpen, setConvSheetOpen] = useState(false);
+  const [submittedAt, setSubmittedAt] = useState<number | null>(null);
+  const [expectingRecipe, setExpectingRecipe] = useState(false);
   const autoTitledConversations = useRef<Set<string>>(new Set());
   const autoTitlingConversations = useRef<Set<string>>(new Set());
 
@@ -156,9 +158,13 @@ const Chat = () => {
     }
   };
 
-  const thinkingMessage = useMemo(() => {
-    return getRandomThinkingMessage();
-  }, []);
+  // Clear loader state once the response starts streaming
+  useEffect(() => {
+    if (status !== "submitted") {
+      setSubmittedAt(null);
+      setExpectingRecipe(false);
+    }
+  }, [status]);
 
   const handleRecipeDetected = useCallback((recipeTitle: string) => {
     if (!activeConversationId) return;
@@ -219,6 +225,7 @@ const Chat = () => {
     : null;
 
   const handleSendMessage = async (message: string) => {
+    setSubmittedAt(Date.now());
     sendMessage({ text: message });
     await saveMessage("user", message);
   };
@@ -282,9 +289,11 @@ const Chat = () => {
       <MessageList
         messages={allMessages}
         status={status}
+        submittedAt={submittedAt}
+        expectingRecipe={expectingRecipe}
         userId={userId}
-        thinkingMessage={thinkingMessage}
         onSend={handleSendMessage}
+        onExpectRecipe={() => setExpectingRecipe(true)}
         onRecipeDetected={handleRecipeDetected}
       />
       {status === "ready" && messageCount === 0 && (
