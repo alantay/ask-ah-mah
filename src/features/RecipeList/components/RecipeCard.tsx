@@ -5,7 +5,6 @@ interface RecipeCardProps {
   recipe: RecipeWithId;
   onSelect: (recipe: RecipeWithId) => void;
   onDelete: (recipeId: string) => void;
-  dogeared?: boolean;
 }
 
 function formatDuration(minutes: number): string {
@@ -15,7 +14,7 @@ function formatDuration(minutes: number): string {
   return m > 0 ? `${h} h ${m} m` : `${h} h`;
 }
 
-export default function RecipeCard({ recipe, onSelect, onDelete, dogeared }: RecipeCardProps) {
+export default function RecipeCard({ recipe, onSelect, onDelete }: RecipeCardProps) {
   const isOptimistic = isTempId(recipe.id);
   const ingredients = Array.isArray(recipe.ingredients) ? recipe.ingredients as { name: string }[] : [];
   const servings = recipe.baseServings ?? 2;
@@ -30,23 +29,9 @@ export default function RecipeCard({ recipe, onSelect, onDelete, dogeared }: Rec
       className="bg-card border border-border rounded-lg overflow-hidden flex flex-col relative group cursor-pointer shadow-[0_1px_0_var(--color-border-soft),0_18px_28px_-24px_oklch(0.3_0.05_50/0.5)] transition-shadow hover:shadow-[0_1px_0_var(--color-border-soft),0_24px_36px_-24px_oklch(0.3_0.05_50/0.6)]"
       onClick={() => !isOptimistic && onSelect(recipe)}
     >
-      {/* Dog-ear fold in top-right corner */}
-      {dogeared && (
-        <div
-          className="absolute top-0 right-0 w-[22px] h-[22px] z-10"
-          style={{
-            background: `linear-gradient(225deg, var(--color-muted) 50%, transparent 50%)`,
-            borderTopRightRadius: 10,
-            borderBottom: `1px solid var(--color-border)`,
-            borderLeft: `1px solid var(--color-border)`,
-          }}
-        />
-      )}
-
       {/* Delete button — revealed on hover */}
       <button
         className="absolute top-2 right-2 z-20 p-1.5 rounded-md bg-card border border-border opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-muted-foreground hover:text-foreground"
-        style={{ display: dogeared ? 'none' : undefined }}
         onClick={(e) => { e.stopPropagation(); onDelete(recipe.id); }}
         aria-label={`Delete ${recipe.name}`}
       >
