@@ -6,21 +6,21 @@ Guidance for working in this repository.
 
 ## Commands
 
-- `npm run dev` — start Next.js (Turbopack)
-- `npm run build` — `prisma generate && prisma migrate deploy` → `next build`
-- `npm run lint` — ESLint (flat config)
-- `npm test` — Jest (`test:watch`, `test:coverage`, `test:ci` available)
+- `pnpm dev` — start Next.js (Turbopack)
+- `pnpm build` — `prisma generate && prisma migrate deploy` → `next build`
+- `pnpm lint` — ESLint (flat config)
+- `pnpm test` — Jest (`test:watch`, `test:coverage`, `test:ci` available)
 
 **Run specific test**
 
-- `npx jest path/to/file.test.ts`
-- `npx jest -t "test name"`
+- `pnpm jest path/to/file.test.ts`
+- `pnpm jest -t "test name"`
 
 **Database**
 
-- `npm run db:local` / `npm run db:prod` — `prisma generate && prisma db push` (prototyping/schema exploration only — skips migration history)
-- For production deploys use `prisma generate && prisma migrate deploy`; this runs automatically in `npm run build`
-- `npm run db:studio` — open Prisma Studio (`prisma/dev.db`)
+- `pnpm db:local` / `pnpm db:prod` — `prisma generate && prisma db push` (prototyping/schema exploration only — skips migration history)
+- For production deploys use `prisma generate && prisma migrate deploy`; this runs automatically in `pnpm build`
+- `pnpm db:studio` — open Prisma Studio (`prisma/dev.db`)
 
 ---
 
@@ -137,3 +137,19 @@ App: **“Ask Ah Mah”** — converts pantry items into recipes via chat.
 - Let the LLM drive mutations via tools
 - Avoid cross-feature coupling
 - Optimize for readability
+
+---
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default label vocabulary (needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context repo — one `CONTEXT.md` + `docs/adr/` at the root. See `docs/agents/domain.md`.
