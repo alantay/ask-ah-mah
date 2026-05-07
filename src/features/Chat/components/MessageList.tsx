@@ -11,15 +11,12 @@ import {
 } from "@/components/ai-elements/message";
 import { Response } from "@/components/ai-elements/response";
 import { Button } from "@/components/ui/button";
-import type {
-  RecipeBlock,
-  RecipeWithId,
-} from "@/lib/recipes/schemas";
 import {
   extractRecipeBlocks,
   getOpenRecipeFenceIdx,
   stripFences,
 } from "@/lib/recipes/parseBlocks";
+import type { RecipeBlock, RecipeWithId } from "@/lib/recipes/schemas";
 import { fetcher } from "@/lib/utils/index";
 import type { UIMessage } from "ai";
 import { useEffect, useRef, useState } from "react";
@@ -236,14 +233,17 @@ export const MessageList = ({
             const textContent = message.parts
               .filter(
                 (p): p is { type: "text"; text: string } =>
-                  p.type === "text" && typeof (p as { text?: string }).text === "string",
+                  p.type === "text" &&
+                  typeof (p as { text?: string }).text === "string",
               )
               .map((p) => (p as { type: "text"; text: string }).text)
               .join("");
 
             const isLastMsg = message === messages[messages.length - 1];
             const isStreamingLast =
-              status === "streaming" && isLastMsg && message.role === "assistant";
+              status === "streaming" &&
+              isLastMsg &&
+              message.role === "assistant";
             const openFenceIdx = isStreamingLast
               ? getOpenRecipeFenceIdx(textContent)
               : -1;
@@ -256,7 +256,28 @@ export const MessageList = ({
               : textContent;
             const blocks = extractRecipeBlocks(prefixText);
             const hasNewBlocks = blocks.some((b) => b.kind !== "legacy");
-            const proseText = hasNewBlocks ? stripFences(prefixText) : prefixText;
+            const proseText = hasNewBlocks
+              ? stripFences(prefixText)
+              : prefixText;
+            const hasProposeRecipeToolPart = message.parts.some(
+              (part) => part.type === "tool-proposeRecipe",
+            );
+
+            if (
+              process.env.NODE_ENV !== "production" &&
+              hasProposeRecipeToolPart &&
+              (hasNewBlocks || hasOpenFence)
+            ) {
+              console.warn(
+                "[MessageList] proposeRecipe tool part ignored due to fence/block mode",
+                {
+                  messageId: message.id,
+                  messageIndex,
+                  hasNewBlocks,
+                  hasOpenFence,
+                },
+              );
+            }
 
             return (
               <Message
@@ -271,43 +292,58 @@ export const MessageList = ({
                 <MessageContent variant="flat">
                   {/* Prose — strip completed fences when new-style blocks present;
                       when an open fence is detected, prefixText is already trimmed */}
-                  {hasNewBlocks
-                    ? proseText
-                      ? <Response key={`${message.id}-prose`}>{proseText}</Response>
-                      : null
-                    : hasOpenFence
-                      ? proseText
-                        ? <Response key={`${message.id}-prose`}>{proseText}</Response>
-                        : null
-                      : message.parts.map((part, index) => {
-                          if (part.type === "text") {
-                            const stripped = stripFences((part as { type: "text"; text: string }).text);
-                            if (!stripped) return null;
-                            return (
-                              <Response key={`${message.id}-${index}`}>
-                                {stripped}
-                              </Response>
-                            );
-                          }
-                          if (part.type === "tool-proposeRecipe") {
-                            const toolPart = part as unknown as {
-                              type: "tool-proposeRecipe";
-                              state: string;
-                              input: { recipeId: string; title: string; keyIngredients: string[] };
-                            };
-                            if (toolPart.state === "input-available" || toolPart.state === "output-available") {
-                              return (
-                                <IngredientGate
-                                  key={`${message.id}-${index}`}
-                                  data={toolPart.input}
-                                  onSend={onSend}
-                                  onExpectRecipe={onExpectRecipe}
-                                />
-                              );
-                            }
-                          }
-                          return null;
-                        })}
+                  {hasNewBlocks ? (
+                    proseText ? (
+                      <Response key={`${message.id}-prose`}>
+                        {proseText}
+                      </Response>
+                    ) : null
+                  ) : hasOpenFence ? (
+                    proseText ? (
+                      <Response key={`${message.id}-prose`}>
+                        {proseText}
+                      </Response>
+                    ) : null
+                  ) : (
+                    message.parts.map((part, index) => {
+                      if (part.type === "text") {
+                        const stripped = stripFences(
+                          (part as { type: "text"; text: string }).text,
+                        ).trim();
+                        if (!stripped) return null;
+                        return (
+                          <Response key={`${message.id}-${index}`}>
+                            {stripped}
+                          </Response>
+                        );
+                      }
+                      if (part.type === "tool-proposeRecipe") {
+                        const toolPart = part as unknown as {
+                          type: "tool-proposeRecipe";
+                          state: string;
+                          input: {
+                            recipeId: string;
+                            title: string;
+                            keyIngredients: string[];
+                          };
+                        };
+                        if (
+                          toolPart.state === "input-available" ||
+                          toolPart.state === "output-available"
+                        ) {
+                          return (
+                            <IngredientGate
+                              key={`${message.id}-${index}`}
+                              data={toolPart.input}
+                              onSend={onSend}
+                              onExpectRecipe={onExpectRecipe}
+                            />
+                          );
+                        }
+                      }
+                      return null;
+                    })
+                  )}
 
                   {/* Parsed blocks (prefix text when fence open, full text otherwise) */}
                   {blocks.map((block, bi) => {
@@ -326,12 +362,15 @@ export const MessageList = ({
                     if (block.kind === "recipe") {
                       const recipeKey = `${message.id}-${bi}`;
                       const isSaved =
-                        recipeSaved?.some((r) => r.recipeId === recipeKey) ?? false;
+                        recipeSaved?.some((r) => r.recipeId === recipeKey) ??
+                        false;
                       return (
                         <RecipeLetter
                           key={blockKey}
                           recipe={block.payload}
-                          onSave={() => saveStructuredRecipe(block.payload, recipeKey)}
+                          onSave={() =>
+                            saveStructuredRecipe(block.payload, recipeKey)
+                          }
                           isSaved={isSaved}
                         />
                       );
@@ -352,24 +391,41 @@ export const MessageList = ({
                           .map((block, idx) => {
                             if (block.kind !== "legacy") return null;
                             const recipeKey = `${message.id}-${idx}`;
-                            const recipeName = extractRecipeName(block.recipeStr);
+                            const recipeName = extractRecipeName(
+                              block.recipeStr,
+                            );
                             const saved =
-                              recipeSaved?.some((r) => r.recipeId === recipeKey) ?? false;
+                              recipeSaved?.some(
+                                (r) => r.recipeId === recipeKey,
+                              ) ?? false;
                             return (
                               <Button
                                 key={recipeKey}
                                 className="cursor-pointer my-2"
-                                onClick={() => saved || saveRecipe(block.recipeStr, recipeKey)}
+                                onClick={() =>
+                                  saved ||
+                                  saveRecipe(block.recipeStr, recipeKey)
+                                }
                               >
                                 {saved ? (
-                                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                  <svg
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                  >
                                     <path
                                       d="M5 21V5C5 4.45 5.196 3.97933 5.588 3.588C5.98 3.19667 6.45067 3.00067 7 3H17C17.55 3 18.021 3.196 18.413 3.588C18.805 3.98 19.0007 4.45067 19 5V21L12 18L5 21Z"
                                       fill="currentColor"
                                     />
                                   </svg>
                                 ) : (
-                                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                  <svg
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                  >
                                     <path
                                       d="M17 18L12 15.82L7 18V5H17M17 3H7C6.46957 3 5.96086 3.21071 5.58579 3.58579C5.21071 3.96086 5 4.46957 5 5V21L12 18L19 21V5C19 4.46957 18.7893 3.96086 18.4142 3.58579C18.0391 3.21071 17.5304 3 17 3Z"
                                       fill="currentColor"
@@ -398,7 +454,10 @@ export const MessageList = ({
           {/* Ghost loader bubble — visible only during submitted state */}
           {status === "submitted" && (
             <div className="py-4">
-              <ChatLoader submittedAt={submittedAt} expectingRecipe={expectingRecipe} />
+              <ChatLoader
+                submittedAt={submittedAt}
+                expectingRecipe={expectingRecipe}
+              />
             </div>
           )}
 

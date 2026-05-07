@@ -1,17 +1,14 @@
 import {
-  GateSchema,
   RecipeBlockSchema,
   SuggestionsBlockSchema,
 } from "@/lib/recipes/schemas";
 import type {
-  GateData,
   RecipeBlock,
   SuggestionsBlockData,
 } from "@/lib/recipes/schemas";
 
 export type ParsedBlock =
   | { kind: "suggestions"; payload: SuggestionsBlockData; index: number }
-  | { kind: "gate"; payload: GateData; index: number }
   | { kind: "recipe"; payload: RecipeBlock; index: number }
   | { kind: "legacy"; recipeStr: string; index: number };
 
@@ -55,6 +52,8 @@ export function extractRecipeBlocks(text: string): ParsedBlock[] {
 
 export function stripFences(text: string): string {
   return text
+    // Keep stripping legacy `gate` fences for backward-compat and to avoid
+    // rendering unsupported fenced-language blocks from older messages.
     .replace(/^```(?:suggestions|gate|recipe)\n[\s\S]*?\n```/gm, "")
     .trim();
 }
@@ -66,6 +65,3 @@ export function getOpenRecipeFenceIdx(text: string): number {
   const afterOpen = text.slice(openIdx + marker.length);
   return afterOpen.includes("\n```") ? -1 : openIdx;
 }
-
-// GateSchema re-exported so callers of old extractRecipeBlocks can use the gate schema for the proposeRecipe tool
-export { GateSchema };

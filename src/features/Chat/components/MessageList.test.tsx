@@ -55,6 +55,10 @@ jest.mock("./recipe/IngredientGate", () => ({
   ),
 }));
 
+jest.mock("./recipe/SuggestionsBlock", () => ({
+  SuggestionsBlock: () => <div data-testid="suggestions-block" />,
+}));
+
 // Mock AI Elements components
 jest.mock("@/components/ai-elements/conversation", () => ({
   Conversation: ({ children }: { children: React.ReactNode }) => (
@@ -144,6 +148,7 @@ describe("MessageList", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.spyOn(console, "warn").mockImplementation(() => {});
 
     // Default SWR mock
     mockUseSWR.mockReturnValue({
@@ -156,6 +161,10 @@ describe("MessageList", () => {
 
     // Mock scrollIntoView
     Element.prototype.scrollIntoView = jest.fn();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   describe("Basic Rendering", () => {
@@ -487,7 +496,7 @@ describe("MessageList", () => {
       );
 
       expect(screen.getByTestId("loader-ghost")).toBeInTheDocument();
-      expect(screen.getByText("Ah Mah is writing it out")).toBeInTheDocument();
+      expect(screen.getByText("Ah Mah · just a moment")).toBeInTheDocument();
       expect(screen.getByText("Let me write the whole thing out for you —")).toBeInTheDocument();
     });
   });
@@ -665,6 +674,23 @@ describe("MessageList", () => {
       expect(screen.queryByTestId("response")).not.toBeInTheDocument();
     });
 
+    it("should not render response for whitespace-only text after stripping fences", () => {
+      const message = createMockMessage({
+        role: "assistant",
+        parts: [
+          {
+            type: "text",
+            text: "```suggestions\n{\"intro\":\"x\",\"options\":[]}\n```\n\n",
+          },
+        ],
+      });
+
+      render(<MessageList {...defaultProps} messages={[message]} />);
+
+      expect(screen.getByTestId("message")).toBeInTheDocument();
+      expect(screen.queryByTestId("response")).not.toBeInTheDocument();
+    });
+
     it("should handle very long messages", () => {
       const longText = "a".repeat(10000);
       const longMessage = createMockMessage({
@@ -790,6 +816,40 @@ describe("MessageList", () => {
 
       render(<MessageList {...defaultProps} messages={[toolMessage]} />);
 
+      expect(screen.queryByTestId("ingredient-gate")).not.toBeInTheDocument();
+    });
+
+    it("warns when proposeRecipe tool is ignored because message also has new blocks", () => {
+      const toolAndBlockMessage = createMockMessage({
+        role: "assistant",
+        parts: [
+          {
+            type: "text",
+            text: "```suggestions\n{\"intro\":\"Ideas\",\"options\":[{\"id\":\"fried-rice\",\"title\":\"Fried Rice\",\"blurb\":\"Quick one-pan.\",\"time\":\"15 min\",\"tags\":[\"quick\"],\"keyIngredients\":[\"rice\",\"egg\"]}]}\n```",
+          },
+          {
+            type: "tool-proposeRecipe",
+            toolCallId: "call-999",
+            state: "input-available",
+            input: {
+              recipeId: "fried-rice",
+              title: "Fried Rice",
+              keyIngredients: ["rice", "egg"],
+            },
+          } as unknown as { type: "text"; text: string },
+        ],
+      });
+
+      render(<MessageList {...defaultProps} messages={[toolAndBlockMessage]} />);
+
+      expect(console.warn).toHaveBeenCalledWith(
+        "[MessageList] proposeRecipe tool part ignored due to fence/block mode",
+        expect.objectContaining({
+          messageId: toolAndBlockMessage.id,
+          messageIndex: 0,
+          hasNewBlocks: true,
+        }),
+      );
       expect(screen.queryByTestId("ingredient-gate")).not.toBeInTheDocument();
     });
   });
