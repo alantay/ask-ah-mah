@@ -11,17 +11,12 @@ import {
 } from "@/components/ai-elements/message";
 import { Response } from "@/components/ai-elements/response";
 import { Button } from "@/components/ui/button";
-import type {
-  GateData,
-  RecipeBlock,
-  RecipeWithId,
-  SuggestionsBlockData,
-} from "@/lib/recipes/schemas";
 import {
-  GateSchema,
-  RecipeBlockSchema,
-  SuggestionsBlockSchema,
-} from "@/lib/recipes/schemas";
+  extractRecipeBlocks,
+  getOpenRecipeFenceIdx,
+  stripFences,
+} from "@/lib/recipes/parseBlocks";
+import type { RecipeBlock, RecipeWithId } from "@/lib/recipes/schemas";
 import { fetcher } from "@/lib/utils/index";
 import type { UIMessage } from "ai";
 import { useEffect, useRef, useState } from "react";
@@ -46,72 +41,6 @@ interface MessageListProps {
 }
 
 // ── Parsed block types ────────────────────────────────────────────────────────
-
-type ParsedBlock =
-  | { kind: "suggestions"; payload: SuggestionsBlockData; index: number }
-  | { kind: "gate"; payload: GateData; index: number }
-  | { kind: "recipe"; payload: RecipeBlock; index: number }
-  | { kind: "legacy"; recipeStr: string; index: number };
-
-function extractRecipeBlocks(text: string): ParsedBlock[] {
-  const blocks: ParsedBlock[] = [];
-
-  // Match complete fenced JSON blocks: ```suggestions\n{...}\n```
-  const fenceRegex = /^```(suggestions|gate|recipe)\n([\s\S]*?)\n```/gm;
-  let match: RegExpExecArray | null;
-
-  while ((match = fenceRegex.exec(text)) !== null) {
-    const kind = match[1] as "suggestions" | "gate" | "recipe";
-    try {
-      const payload = JSON.parse(match[2]);
-      if (kind === "suggestions") {
-        const result = SuggestionsBlockSchema.safeParse(payload);
-        if (result.success)
-          blocks.push({ kind: "suggestions", payload: result.data, index: match.index });
-      } else if (kind === "gate") {
-        const result = GateSchema.safeParse(payload);
-        if (result.success)
-          blocks.push({ kind: "gate", payload: result.data, index: match.index });
-      } else if (kind === "recipe") {
-        const result = RecipeBlockSchema.safeParse(payload);
-        if (result.success)
-          blocks.push({ kind: "recipe", payload: result.data, index: match.index });
-      }
-    } catch {
-      /* invalid JSON — skip */
-    }
-  }
-
-  // Legacy: -----...------ markdown recipes
-  const legacyParts = text
-    .split(/^-{5,}$/m)
-    .map((p) => p.trim())
-    .filter((p) => /^##\s+/m.test(p));
-
-  // Only add legacy blocks if no new-style blocks were found (avoid double-rendering)
-  if (blocks.length === 0 && legacyParts.length > 0) {
-    legacyParts.forEach((recipeStr, i) => {
-      blocks.push({ kind: "legacy", recipeStr, index: i });
-    });
-  }
-
-  return blocks;
-}
-
-function stripFences(text: string): string {
-  return text
-    .replace(/^```(?:suggestions|gate|recipe)\n[\s\S]*?\n```/gm, "")
-    .trim();
-}
-
-// Returns the index of an unclosed ```recipe\n fence, or -1 if none.
-function getOpenRecipeFenceIdx(text: string): number {
-  const marker = '```recipe\n';
-  const openIdx = text.lastIndexOf(marker);
-  if (openIdx === -1) return -1;
-  const afterOpen = text.slice(openIdx + marker.length);
-  return afterOpen.includes('\n```') ? -1 : openIdx;
-}
 
 // ── SWR fetcher for save ──────────────────────────────────────────────────────
 
@@ -304,27 +233,51 @@ export const MessageList = ({
             const textContent = message.parts
               .filter(
                 (p): p is { type: "text"; text: string } =>
-                  p.type === "text" && typeof (p as { text?: string }).text === "string",
+                  p.type === "text" &&
+                  typeof (p as { text?: string }).text === "string",
               )
               .map((p) => (p as { type: "text"; text: string }).text)
               .join("");
 
             const isLastMsg = message === messages[messages.length - 1];
             const isStreamingLast =
-              status === "streaming" && isLastMsg && message.role === "assistant";
+              status === "streaming" &&
+              isLastMsg &&
+              message.role === "assistant";
             const openFenceIdx = isStreamingLast
               ? getOpenRecipeFenceIdx(textContent)
               : -1;
             const hasOpenFence = openFenceIdx !== -1;
 
             // For the open-fence case, parse the prefix so any completed blocks
-            // (e.g. a closed ```gate```) still render as interactive components.
+            // (e.g. a closed ```suggestions```) still render as interactive components.
             const prefixText = hasOpenFence
               ? textContent.slice(0, openFenceIdx)
               : textContent;
             const blocks = extractRecipeBlocks(prefixText);
             const hasNewBlocks = blocks.some((b) => b.kind !== "legacy");
-            const proseText = hasNewBlocks ? stripFences(prefixText) : prefixText;
+            const proseText = hasNewBlocks
+              ? stripFences(prefixText)
+              : prefixText;
+            const hasProposeRecipeToolPart = message.parts.some(
+              (part) => part.type === "tool-proposeRecipe",
+            );
+
+            if (
+              process.env.NODE_ENV !== "production" &&
+              hasProposeRecipeToolPart &&
+              (hasNewBlocks || hasOpenFence)
+            ) {
+              console.warn(
+                "[MessageList] proposeRecipe tool part ignored due to fence/block mode",
+                {
+                  messageId: message.id,
+                  messageIndex,
+                  hasNewBlocks,
+                  hasOpenFence,
+                },
+              );
+            }
 
             return (
               <Message
@@ -339,21 +292,58 @@ export const MessageList = ({
                 <MessageContent variant="flat">
                   {/* Prose — strip completed fences when new-style blocks present;
                       when an open fence is detected, prefixText is already trimmed */}
-                  {hasNewBlocks
-                    ? proseText
-                      ? <Response key={`${message.id}-prose`}>{proseText}</Response>
-                      : null
-                    : hasOpenFence
-                      ? proseText
-                        ? <Response key={`${message.id}-prose`}>{proseText}</Response>
-                        : null
-                      : message.parts.map((part, index) =>
-                          part.type === "text" ? (
-                            <Response key={`${message.id}-${index}`}>
-                              {(part as { type: "text"; text: string }).text}
-                            </Response>
-                          ) : null,
-                        )}
+                  {hasNewBlocks ? (
+                    proseText ? (
+                      <Response key={`${message.id}-prose`}>
+                        {proseText}
+                      </Response>
+                    ) : null
+                  ) : hasOpenFence ? (
+                    proseText ? (
+                      <Response key={`${message.id}-prose`}>
+                        {proseText}
+                      </Response>
+                    ) : null
+                  ) : (
+                    message.parts.map((part, index) => {
+                      if (part.type === "text") {
+                        const stripped = stripFences(
+                          (part as { type: "text"; text: string }).text,
+                        ).trim();
+                        if (!stripped) return null;
+                        return (
+                          <Response key={`${message.id}-${index}`}>
+                            {stripped}
+                          </Response>
+                        );
+                      }
+                      if (part.type === "tool-proposeRecipe") {
+                        const toolPart = part as unknown as {
+                          type: "tool-proposeRecipe";
+                          state: string;
+                          input: {
+                            recipeId: string;
+                            title: string;
+                            keyIngredients: string[];
+                          };
+                        };
+                        if (
+                          toolPart.state === "input-available" ||
+                          toolPart.state === "output-available"
+                        ) {
+                          return (
+                            <IngredientGate
+                              key={`${message.id}-${index}`}
+                              data={toolPart.input}
+                              onSend={onSend}
+                              onExpectRecipe={onExpectRecipe}
+                            />
+                          );
+                        }
+                      }
+                      return null;
+                    })
+                  )}
 
                   {/* Parsed blocks (prefix text when fence open, full text otherwise) */}
                   {blocks.map((block, bi) => {
@@ -369,25 +359,18 @@ export const MessageList = ({
                         />
                       );
                     }
-                    if (block.kind === "gate") {
-                      return (
-                        <IngredientGate
-                          key={blockKey}
-                          data={block.payload}
-                          onSend={onSend}
-                          onExpectRecipe={onExpectRecipe}
-                        />
-                      );
-                    }
                     if (block.kind === "recipe") {
                       const recipeKey = `${message.id}-${bi}`;
                       const isSaved =
-                        recipeSaved?.some((r) => r.recipeId === recipeKey) ?? false;
+                        recipeSaved?.some((r) => r.recipeId === recipeKey) ??
+                        false;
                       return (
                         <RecipeLetter
                           key={blockKey}
                           recipe={block.payload}
-                          onSave={() => saveStructuredRecipe(block.payload, recipeKey)}
+                          onSave={() =>
+                            saveStructuredRecipe(block.payload, recipeKey)
+                          }
                           isSaved={isSaved}
                         />
                       );
@@ -408,24 +391,41 @@ export const MessageList = ({
                           .map((block, idx) => {
                             if (block.kind !== "legacy") return null;
                             const recipeKey = `${message.id}-${idx}`;
-                            const recipeName = extractRecipeName(block.recipeStr);
+                            const recipeName = extractRecipeName(
+                              block.recipeStr,
+                            );
                             const saved =
-                              recipeSaved?.some((r) => r.recipeId === recipeKey) ?? false;
+                              recipeSaved?.some(
+                                (r) => r.recipeId === recipeKey,
+                              ) ?? false;
                             return (
                               <Button
                                 key={recipeKey}
                                 className="cursor-pointer my-2"
-                                onClick={() => saved || saveRecipe(block.recipeStr, recipeKey)}
+                                onClick={() =>
+                                  saved ||
+                                  saveRecipe(block.recipeStr, recipeKey)
+                                }
                               >
                                 {saved ? (
-                                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                  <svg
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                  >
                                     <path
                                       d="M5 21V5C5 4.45 5.196 3.97933 5.588 3.588C5.98 3.19667 6.45067 3.00067 7 3H17C17.55 3 18.021 3.196 18.413 3.588C18.805 3.98 19.0007 4.45067 19 5V21L12 18L5 21Z"
                                       fill="currentColor"
                                     />
                                   </svg>
                                 ) : (
-                                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                  <svg
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                  >
                                     <path
                                       d="M17 18L12 15.82L7 18V5H17M17 3H7C6.46957 3 5.96086 3.21071 5.58579 3.58579C5.21071 3.96086 5 4.46957 5 5V21L12 18L19 21V5C19 4.46957 18.7893 3.96086 18.4142 3.58579C18.0391 3.21071 17.5304 3 17 3Z"
                                       fill="currentColor"
@@ -454,7 +454,10 @@ export const MessageList = ({
           {/* Ghost loader bubble — visible only during submitted state */}
           {status === "submitted" && (
             <div className="py-4">
-              <ChatLoader submittedAt={submittedAt} expectingRecipe={expectingRecipe} />
+              <ChatLoader
+                submittedAt={submittedAt}
+                expectingRecipe={expectingRecipe}
+              />
             </div>
           )}
 

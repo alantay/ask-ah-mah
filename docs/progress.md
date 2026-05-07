@@ -51,6 +51,15 @@ The persistent-kitchen MVP. Highlights:
 - [x] Established styling guardrails in `CLAUDE.md` to prefer tokens over inline styles.
 - [x] Mapped arbitrary values to standard Tailwind tokens for improved maintainability.
 
+### proposeRecipe tool — eliminate prose clarifying questions (May 2026)
+- [x] Replaced `\`\`\`gate` fenced-block convention with a `proposeRecipe` tool call (no `execute`) registered in `/api/chat/route.ts`.
+- [x] Gate card (`IngredientGate`) now renders from `tool-proposeRecipe` message part instead of parsed fenced text.
+- [x] Removed `gate` branch from `extractRecipeBlocks` and `stripFences`; parser extracted to `src/lib/recipes/parseBlocks.ts`.
+- [x] System prompt routing updated: named dish + ≥80% pantry coverage → `\`\`\`recipe` directly; otherwise → `proposeRecipe` tool.
+- [x] Prompt rule: model must call `proposeRecipe` or emit `\`\`\`recipe` — never ask "do you have X?" in prose.
+- [x] Unit tests added for `parseBlocks.ts` (14 cases including regression guard for removed gate path).
+- [x] `MessageList.test.tsx` extended with 4 cases covering tool-part rendering and absence of legacy gate path.
+
 ### Decrement-on-cook
 - [ ] Add `Cooked This` button in `RecipeDisplay` for saved recipes.
 - [ ] Add explicit confirmation flow for inferred "I cooked X" messages (`yes / no / edit`).

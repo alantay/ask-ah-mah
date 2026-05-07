@@ -195,14 +195,18 @@ const Chat = () => {
   }
 
   const savedMessages = (data || []).map(convertToUIMessage);
-  const currentMessages = messages.filter((currentMsg) => {
-    const currentContent = currentMsg.parts
+
+  // Prefer the rich useChat version (which may have tool parts) over the text-only saved version.
+  // Filter savedMessages to exclude any message whose text is already represented in the
+  // live useChat messages — avoids duplicates while keeping tool-call parts visible.
+  const savedMessagesFiltered = savedMessages.filter((savedMsg) => {
+    const savedContent = savedMsg.parts
       .filter((part) => part.type === "text")
       .map((part) => part.text)
       .join("");
 
-    return !savedMessages.some((savedMsg) => {
-      const savedContent = savedMsg.parts
+    return !messages.some((currentMsg) => {
+      const currentContent = currentMsg.parts
         .filter((part) => part.type === "text")
         .map((part) => part.text)
         .join("");
@@ -213,7 +217,7 @@ const Chat = () => {
     });
   });
 
-  const allMessages = [INITIAL_MESSAGE, ...savedMessages, ...currentMessages];
+  const allMessages = [INITIAL_MESSAGE, ...savedMessagesFiltered, ...messages];
   const messageCount = allMessages.length - 1; // exclude initial
 
   const startedAt = activeConversation?.createdAt

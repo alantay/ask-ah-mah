@@ -22,7 +22,7 @@ export function PantryDrawer() {
 
   const { data } = useSWR<GetInventoryResponse>(
     userId ? `/api/inventory?userId=${userId}` : null,
-    fetcher
+    fetcher,
   );
 
   const count =
@@ -32,10 +32,13 @@ export function PantryDrawer() {
   return (
     <>
       {/* Collapsed tab — always mounted so right edge doesn't jump */}
-      <div
+      <button
+        type="button"
         className="hidden lg:flex flex-col items-center justify-start pt-3.5 w-9 shrink-0 bg-muted paper border-l border-border relative"
         style={{ cursor: open ? "default" : "pointer" }}
-        onClick={() => !open && setOpen(true)}
+        onClick={() => setOpen((prev) => !prev)}
+        aria-expanded={open}
+        aria-label={open ? "Close pantry drawer" : "Open pantry drawer"}
       >
         <span
           className="text-[9.5px] font-bold uppercase tracking-[0.18em] text-ink-faint select-none"
@@ -43,7 +46,7 @@ export function PantryDrawer() {
         >
           Pantry · {count} ›
         </span>
-      </div>
+      </button>
 
       {/* Open overlay — absolute over chat */}
       {open && (
