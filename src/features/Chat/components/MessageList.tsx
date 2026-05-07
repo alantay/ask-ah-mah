@@ -12,16 +12,14 @@ import {
 import { Response } from "@/components/ai-elements/response";
 import { Button } from "@/components/ui/button";
 import type {
-  GateData,
   RecipeBlock,
   RecipeWithId,
-  SuggestionsBlockData,
 } from "@/lib/recipes/schemas";
 import {
-  GateSchema,
-  RecipeBlockSchema,
-  SuggestionsBlockSchema,
-} from "@/lib/recipes/schemas";
+  extractRecipeBlocks,
+  getOpenRecipeFenceIdx,
+  stripFences,
+} from "@/lib/recipes/parseBlocks";
 import { fetcher } from "@/lib/utils/index";
 import type { UIMessage } from "ai";
 import { useEffect, useRef, useState } from "react";
@@ -46,72 +44,6 @@ interface MessageListProps {
 }
 
 // ── Parsed block types ────────────────────────────────────────────────────────
-
-type ParsedBlock =
-  | { kind: "suggestions"; payload: SuggestionsBlockData; index: number }
-  | { kind: "gate"; payload: GateData; index: number }
-  | { kind: "recipe"; payload: RecipeBlock; index: number }
-  | { kind: "legacy"; recipeStr: string; index: number };
-
-function extractRecipeBlocks(text: string): ParsedBlock[] {
-  const blocks: ParsedBlock[] = [];
-
-  // Match complete fenced JSON blocks: ```suggestions\n{...}\n```
-  const fenceRegex = /^```(suggestions|gate|recipe)\n([\s\S]*?)\n```/gm;
-  let match: RegExpExecArray | null;
-
-  while ((match = fenceRegex.exec(text)) !== null) {
-    const kind = match[1] as "suggestions" | "gate" | "recipe";
-    try {
-      const payload = JSON.parse(match[2]);
-      if (kind === "suggestions") {
-        const result = SuggestionsBlockSchema.safeParse(payload);
-        if (result.success)
-          blocks.push({ kind: "suggestions", payload: result.data, index: match.index });
-      } else if (kind === "gate") {
-        const result = GateSchema.safeParse(payload);
-        if (result.success)
-          blocks.push({ kind: "gate", payload: result.data, index: match.index });
-      } else if (kind === "recipe") {
-        const result = RecipeBlockSchema.safeParse(payload);
-        if (result.success)
-          blocks.push({ kind: "recipe", payload: result.data, index: match.index });
-      }
-    } catch {
-      /* invalid JSON — skip */
-    }
-  }
-
-  // Legacy: -----...------ markdown recipes
-  const legacyParts = text
-    .split(/^-{5,}$/m)
-    .map((p) => p.trim())
-    .filter((p) => /^##\s+/m.test(p));
-
-  // Only add legacy blocks if no new-style blocks were found (avoid double-rendering)
-  if (blocks.length === 0 && legacyParts.length > 0) {
-    legacyParts.forEach((recipeStr, i) => {
-      blocks.push({ kind: "legacy", recipeStr, index: i });
-    });
-  }
-
-  return blocks;
-}
-
-function stripFences(text: string): string {
-  return text
-    .replace(/^```(?:suggestions|gate|recipe)\n[\s\S]*?\n```/gm, "")
-    .trim();
-}
-
-// Returns the index of an unclosed ```recipe\n fence, or -1 if none.
-function getOpenRecipeFenceIdx(text: string): number {
-  const marker = '```recipe\n';
-  const openIdx = text.lastIndexOf(marker);
-  if (openIdx === -1) return -1;
-  const afterOpen = text.slice(openIdx + marker.length);
-  return afterOpen.includes('\n```') ? -1 : openIdx;
-}
 
 // ── SWR fetcher for save ──────────────────────────────────────────────────────
 
@@ -318,7 +250,7 @@ export const MessageList = ({
             const hasOpenFence = openFenceIdx !== -1;
 
             // For the open-fence case, parse the prefix so any completed blocks
-            // (e.g. a closed ```gate```) still render as interactive components.
+            // (e.g. a closed ```suggestions```) still render as interactive components.
             const prefixText = hasOpenFence
               ? textContent.slice(0, openFenceIdx)
               : textContent;
@@ -347,13 +279,35 @@ export const MessageList = ({
                       ? proseText
                         ? <Response key={`${message.id}-prose`}>{proseText}</Response>
                         : null
-                      : message.parts.map((part, index) =>
-                          part.type === "text" ? (
-                            <Response key={`${message.id}-${index}`}>
-                              {(part as { type: "text"; text: string }).text}
-                            </Response>
-                          ) : null,
-                        )}
+                      : message.parts.map((part, index) => {
+                          if (part.type === "text") {
+                            const stripped = stripFences((part as { type: "text"; text: string }).text);
+                            if (!stripped) return null;
+                            return (
+                              <Response key={`${message.id}-${index}`}>
+                                {stripped}
+                              </Response>
+                            );
+                          }
+                          if (part.type === "tool-proposeRecipe") {
+                            const toolPart = part as unknown as {
+                              type: "tool-proposeRecipe";
+                              state: string;
+                              input: { recipeId: string; title: string; keyIngredients: string[] };
+                            };
+                            if (toolPart.state === "input-available" || toolPart.state === "output-available") {
+                              return (
+                                <IngredientGate
+                                  key={`${message.id}-${index}`}
+                                  data={toolPart.input}
+                                  onSend={onSend}
+                                  onExpectRecipe={onExpectRecipe}
+                                />
+                              );
+                            }
+                          }
+                          return null;
+                        })}
 
                   {/* Parsed blocks (prefix text when fence open, full text otherwise) */}
                   {blocks.map((block, bi) => {
@@ -366,16 +320,6 @@ export const MessageList = ({
                           allMessages={messages}
                           messageIndex={messageIndex}
                           onSend={onSend}
-                        />
-                      );
-                    }
-                    if (block.kind === "gate") {
-                      return (
-                        <IngredientGate
-                          key={blockKey}
-                          data={block.payload}
-                          onSend={onSend}
-                          onExpectRecipe={onExpectRecipe}
                         />
                       );
                     }

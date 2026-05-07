@@ -7,10 +7,12 @@ import {
   AddInventoryItemSchemaObj,
   RemoveInventoryItemSchemaObj,
 } from "@/lib/inventory/schemas";
+import { GateSchema } from "@/lib/recipes/schemas";
 import { getMessages } from "@/lib/messages";
 import { openai } from "@ai-sdk/openai";
 import {
   convertToModelMessages,
+  hasToolCall,
   stepCountIs,
   streamText,
   UIMessage,
@@ -52,7 +54,7 @@ export async function POST(req: NextRequest) {
       model,
       messages: convertToModelMessages(validatedMessages),
       system: CHAT_SYSTEM_PROMPT,
-      stopWhen: stepCountIs(5),
+      stopWhen: [stepCountIs(5), hasToolCall("proposeRecipe")],
       tools: {
         addInventoryItem: {
           description: `Add items to the user's inventory. Required: name (string), type ("ingredient" or "kitchenware"), and shelfLife ("short" | "medium" | "long" — infer from the item: leafy greens/seafood/dairy = short; meat/most produce = medium; oils/dry goods/spices/kitchenware = long). Optional: quantity (number) and unit (string) — only set quantity if the user explicitly states one.`,
@@ -88,6 +90,12 @@ export async function POST(req: NextRequest) {
               content: "Items removed from inventory",
             };
           },
+        },
+        proposeRecipe: {
+          description:
+            "Propose a specific recipe to the user as a pantry-check gate card. Call this when the user names a dish and pantry coverage is below ~80% of key ingredients. The client renders an interactive card from the input — do NOT call this when coverage is ≥80%; emit a ```recipe block directly instead.",
+          inputSchema: GateSchema,
+          execute: async () => ({ status: "awaiting_user_confirmation" }),
         },
       },
     });

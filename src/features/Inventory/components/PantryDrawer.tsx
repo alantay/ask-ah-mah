@@ -22,7 +22,7 @@ export function PantryDrawer() {
 
   const { data } = useSWR<GetInventoryResponse>(
     userId ? `/api/inventory?userId=${userId}` : null,
-    fetcher
+    fetcher,
   );
 
   const count =
@@ -35,7 +35,7 @@ export function PantryDrawer() {
       <div
         className="hidden lg:flex flex-col items-center justify-start pt-3.5 w-9 shrink-0 bg-muted paper border-l border-border relative"
         style={{ cursor: open ? "default" : "pointer" }}
-        onClick={() => !open && setOpen(true)}
+        onClick={() => setOpen(!open)}
       >
         <span
           className="text-[9.5px] font-bold uppercase tracking-[0.18em] text-ink-faint select-none"

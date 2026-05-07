@@ -47,6 +47,14 @@ jest.mock("@/lib/utils/index", () => ({
   fetcher: jest.fn(),
 }));
 
+jest.mock("./recipe/IngredientGate", () => ({
+  IngredientGate: ({ data }: { data: { title: string; keyIngredients: string[] } }) => (
+    <div data-testid="ingredient-gate" data-title={data.title}>
+      {data.keyIngredients.join(",")}
+    </div>
+  ),
+}));
+
 // Mock AI Elements components
 jest.mock("@/components/ai-elements/conversation", () => ({
   Conversation: ({ children }: { children: React.ReactNode }) => (
@@ -698,6 +706,91 @@ describe("MessageList", () => {
       // The component actually shows the save button if it finds a single -----
       // since it splits on ----- and checks if the second part exists
       expect(screen.getByTestId("button")).toBeInTheDocument();
+    });
+  });
+
+  describe("proposeRecipe tool rendering", () => {
+    it("renders IngredientGate when message contains a proposeRecipe tool part in input-available state", () => {
+      const toolMessage = createMockMessage({
+        role: "assistant",
+        parts: [
+          { type: "text", text: "Quick check before I write it out:" },
+          {
+            type: "tool-proposeRecipe",
+            toolCallId: "call-123",
+            state: "input-available",
+            input: {
+              recipeId: "guacamole",
+              title: "Guacamole",
+              keyIngredients: ["avocado", "lime", "onion", "cilantro", "jalapeño"],
+            },
+          } as unknown as { type: "text"; text: string },
+        ],
+      });
+
+      render(<MessageList {...defaultProps} messages={[toolMessage]} />);
+
+      const gate = screen.getByTestId("ingredient-gate");
+      expect(gate).toBeInTheDocument();
+      expect(gate).toHaveAttribute("data-title", "Guacamole");
+      expect(gate).toHaveTextContent("avocado");
+    });
+
+    it("does NOT render IngredientGate for a gate fenced block (gate path removed)", () => {
+      const gateBlockMessage = createMockMessage({
+        role: "assistant",
+        parts: [
+          {
+            type: "text",
+            text: "```gate\n{\"recipeId\":\"guacamole\",\"title\":\"Guacamole\",\"keyIngredients\":[\"avocado\"]}\n```",
+          },
+        ],
+      });
+
+      render(<MessageList {...defaultProps} messages={[gateBlockMessage]} />);
+
+      expect(screen.queryByTestId("ingredient-gate")).not.toBeInTheDocument();
+    });
+
+    it("renders IngredientGate when tool state is output-available", () => {
+      const toolMessage = createMockMessage({
+        role: "assistant",
+        parts: [
+          {
+            type: "tool-proposeRecipe",
+            toolCallId: "call-456",
+            state: "output-available",
+            input: {
+              recipeId: "fried-rice",
+              title: "Fried Rice",
+              keyIngredients: ["rice", "egg"],
+            },
+            output: null,
+          } as unknown as { type: "text"; text: string },
+        ],
+      });
+
+      render(<MessageList {...defaultProps} messages={[toolMessage]} />);
+
+      expect(screen.getByTestId("ingredient-gate")).toHaveAttribute("data-title", "Fried Rice");
+    });
+
+    it("does not render IngredientGate when tool state is input-streaming", () => {
+      const toolMessage = createMockMessage({
+        role: "assistant",
+        parts: [
+          {
+            type: "tool-proposeRecipe",
+            toolCallId: "call-789",
+            state: "input-streaming",
+            input: undefined,
+          } as unknown as { type: "text"; text: string },
+        ],
+      });
+
+      render(<MessageList {...defaultProps} messages={[toolMessage]} />);
+
+      expect(screen.queryByTestId("ingredient-gate")).not.toBeInTheDocument();
     });
   });
 

@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useSessionContext } from '@/contexts/SessionContext';
-import { GetInventoryResponse, InventoryItem } from '@/lib/inventory/schemas';
-import { cn } from '@/lib/utils';
-import { fetcher } from '@/lib/utils/index';
-import { useState } from 'react';
-import useSWR from 'swr';
-import { ScaledNum } from './ScaledNum';
-import { scaleAmount } from './scaleAmount';
+import { useSessionContext } from "@/contexts/SessionContext";
+import { GetInventoryResponse, InventoryItem } from "@/lib/inventory/schemas";
+import { cn } from "@/lib/utils";
+import { fetcher } from "@/lib/utils/index";
+import { useState } from "react";
+import useSWR from "swr";
+import { ScaledNum } from "./ScaledNum";
+import { scaleAmount } from "./scaleAmount";
 
 interface Ingredient {
   name: string;
@@ -49,14 +49,17 @@ function ServingsStepper({
   onIncrement: () => void;
 }) {
   const BUTTON_BASE =
-    'w-7 border-none bg-transparent cursor-pointer text-foreground text-[16px] font-semibold disabled:cursor-not-allowed disabled:text-muted-foreground';
+    "w-7 border-none bg-transparent cursor-pointer text-foreground text-[16px] font-semibold disabled:cursor-not-allowed disabled:text-muted-foreground";
 
   return (
     <div className="inline-flex items-stretch border border-border rounded-lg bg-card overflow-hidden shadow-[0_1px_0_var(--border-soft)] h-[30px]">
       <button
         onClick={onDecrement}
         disabled={servings <= 1}
-        className={cn(BUTTON_BASE, 'border-r border-border disabled:opacity-50')}
+        className={cn(
+          BUTTON_BASE,
+          "border-r border-border disabled:opacity-50",
+        )}
         aria-label="Decrease servings"
       >
         −
@@ -69,7 +72,7 @@ function ServingsStepper({
       <button
         onClick={onIncrement}
         disabled={servings >= 12}
-        className={cn(BUTTON_BASE, 'border-l border-border')}
+        className={cn(BUTTON_BASE, "border-l border-border")}
         aria-label="Increase servings"
       >
         +
@@ -80,13 +83,13 @@ function ServingsStepper({
 
 function HaveTag({ have }: { have: boolean }) {
   const BASE =
-    'font-sans text-[9.5px] font-bold px-1.5 py-0.5 rounded-full tracking-wider shrink-0';
+    "font-sans text-[9.5px] font-bold px-1.5 py-0.5 rounded-full tracking-wider shrink-0";
   if (have) {
     return (
       <span
         className={cn(
           BASE,
-          'text-accent bg-[oklch(0.94_0.04_168)] border border-[oklch(0.78_0.07_168)]'
+          "text-accent bg-[oklch(0.94_0.04_168)] border border-[oklch(0.78_0.07_168)]",
         )}
       >
         HAVE
@@ -94,7 +97,12 @@ function HaveTag({ have }: { have: boolean }) {
     );
   }
   return (
-    <span className={cn(BASE, 'text-muted-foreground bg-transparent border border-border')}>
+    <span
+      className={cn(
+        BASE,
+        "text-muted-foreground bg-transparent border border-border",
+      )}
+    >
       NEED
     </span>
   );
@@ -102,7 +110,7 @@ function HaveTag({ have }: { have: boolean }) {
 
 function ingredientHave(name: string, inventoryNames: string[]): boolean {
   const n = name.trim().toLowerCase();
-  return inventoryNames.some(inv => inv.includes(n) || n.includes(inv));
+  return inventoryNames.some((inv) => inv.includes(n) || n.includes(inv));
 }
 
 export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
@@ -111,24 +119,27 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
   const { userId } = useSessionContext();
   const { data: inventoryData } = useSWR<GetInventoryResponse>(
     userId ? `/api/inventory?userId=${userId}` : null,
-    fetcher
+    fetcher,
   );
 
   const inventoryItems: InventoryItem[] = [
     ...(inventoryData?.ingredientInventory ?? []),
     ...(inventoryData?.kitchenwareInventory ?? []),
   ];
-  const inventoryNames = inventoryItems.map(i => i.name.trim().toLowerCase());
+  const inventoryNames = inventoryItems.map((i) => i.name.trim().toLowerCase());
 
-  const haveCount = recipe.ingredients.filter(ing =>
-    ingredientHave(ing.name, inventoryNames)
+  const haveCount = recipe.ingredients.filter((ing) =>
+    ingredientHave(ing.name, inventoryNames),
   ).length;
 
-  const timeLabel = recipe.totalTimeMinutes ? `${recipe.totalTimeMinutes} min` : null;
-  const EYEBROW_BASE = 'font-sans text-[10px] font-bold tracking-widest uppercase';
+  const timeLabel = recipe.totalTimeMinutes
+    ? `${recipe.totalTimeMinutes} min`
+    : null;
+  const EYEBROW_BASE =
+    "font-sans text-[10px] font-bold tracking-widest uppercase";
 
   return (
-    <div className="bg-chat border-y border-border-soft p-[20px_26px_22px] relative">
+    <div className=" border-y border-border-soft p-[20px_26px_22px] relative">
       {/* Ribbon header */}
       <div className="flex items-center gap-2.5 mb-3.5 pb-2.5 border-b border-dashed border-border">
         <div className="size-5.5 rounded-full bg-primary flex items-center justify-center text-white shrink-0">
@@ -142,17 +153,23 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
           </svg>
         </div>
 
-        <div className={cn(EYEBROW_BASE, 'text-muted-foreground')}>The way I make it</div>
+        <div className={cn(EYEBROW_BASE, "text-muted-foreground")}>
+          The way I make it
+        </div>
 
         <div className="flex-1" />
 
-        {timeLabel && <div className="font-mono text-[10px] text-muted-foreground">{timeLabel}</div>}
+        {timeLabel && (
+          <div className="font-mono text-[10px] text-muted-foreground">
+            {timeLabel}
+          </div>
+        )}
 
         <ServingsStepper
           servings={servings}
           baseServings={recipe.baseServings}
-          onDecrement={() => setServings(s => Math.max(1, s - 1))}
-          onIncrement={() => setServings(s => Math.min(12, s + 1))}
+          onDecrement={() => setServings((s) => Math.max(1, s - 1))}
+          onIncrement={() => setServings((s) => Math.min(12, s + 1))}
         />
       </div>
 
@@ -171,7 +188,12 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
       {/* Ingredients — neat 2-column grid card */}
       {recipe.ingredients.length > 0 && (
         <div className="mb-5.5">
-          <div className={cn(EYEBROW_BASE, 'text-muted-foreground mb-2 flex items-baseline gap-2.5')}>
+          <div
+            className={cn(
+              EYEBROW_BASE,
+              "text-muted-foreground mb-2 flex items-baseline gap-2.5",
+            )}
+          >
             <span>What to gather</span>
             {userId && inventoryItems.length > 0 && (
               <span className="font-sans italic-normal text-[10px] font-semibold text-accent px-1.5 py-0.25 bg-[oklch(0.94_0.04_168)] border border-[oklch(0.78_0.07_168)] rounded-full tracking-normal normal-case">
@@ -181,20 +203,24 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
           </div>
           <div className="bg-card border border-border rounded-xl p-3.5 grid grid-cols-1 sm:grid-cols-2 gap-x-4.5 gap-y-1 shadow-[0_1px_0_var(--border-soft)]">
             {recipe.ingredients.map((ing, i) => {
-              const scaledAmt = ing.amount ? scaleAmount(ing.amount, ratio) : '';
-              const amountLabel = scaledAmt ? `${scaledAmt}${ing.unit ? ' ' + ing.unit : ''}` : '';
+              const scaledAmt = ing.amount
+                ? scaleAmount(ing.amount, ratio)
+                : "";
+              const amountLabel = scaledAmt
+                ? `${scaledAmt}${ing.unit ? " " + ing.unit : ""}`
+                : "";
               const have = ingredientHave(ing.name, inventoryNames);
               const isLastTwo = i >= recipe.ingredients.length - 2;
               return (
                 <div
                   key={i}
                   className={cn(
-                    'flex items-baseline gap-2 py-1.5 border-b border-dashed border-border',
-                    isLastTwo && 'border-none'
+                    "flex items-baseline gap-2 py-1.5 border-b border-dashed border-border",
+                    isLastTwo && "border-none",
                   )}
                 >
                   <span className="flex-[0_0_64px] font-mono text-xs font-semibold text-foreground text-right tabular-nums">
-                    {amountLabel ? <ScaledNum>{amountLabel}</ScaledNum> : ''}
+                    {amountLabel ? <ScaledNum>{amountLabel}</ScaledNum> : ""}
                   </span>
                   <span className="flex-1 font-display text-sm text-foreground leading-tight">
                     {ing.name}
@@ -204,7 +230,9 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
                       </span>
                     )}
                   </span>
-                  {userId && inventoryItems.length > 0 && <HaveTag have={have} />}
+                  {userId && inventoryItems.length > 0 && (
+                    <HaveTag have={have} />
+                  )}
                 </div>
               );
             })}
