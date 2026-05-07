@@ -1,5 +1,16 @@
 "use client";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useConversationContext } from "@/contexts/ConversationContext";
 import { useSessionContext } from "@/contexts/SessionContext";
@@ -13,6 +24,7 @@ import { upperCaseFirstLetter } from "@/lib/utils";
 import { fetcher } from "@/lib/utils/index";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
+import { Trash2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
@@ -39,9 +51,10 @@ const Chat = () => {
     startNewConversation,
     renameActiveConversation,
     autoTitleActiveConversation,
-    archiveActiveConversation,
+    deleteActiveConversation,
   } = useConversationContext();
   const [convSheetOpen, setConvSheetOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [submittedAt, setSubmittedAt] = useState<number | null>(null);
   const [expectingRecipe, setExpectingRecipe] = useState(false);
   const autoTitledConversations = useRef<Set<string>>(new Set());
@@ -234,6 +247,11 @@ const Chat = () => {
     await saveMessage("user", message);
   };
 
+  const handleDeleteConversation = async () => {
+    await deleteActiveConversation();
+    setDeleteDialogOpen(false);
+  };
+
   return (
     <div
       key={activeConversationId}
@@ -266,16 +284,37 @@ const Chat = () => {
             </svg>
           </button>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={archiveActiveConversation}
-            disabled={messageCount === 0}
-            title={messageCount === 0 ? "Nothing to archive yet" : undefined}
-            className="cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Archive
-          </Button>
+          <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={messageCount === 0}
+                aria-label="Delete conversation"
+                title={messageCount === 0 ? "Nothing to delete yet" : undefined}
+                className="cursor-pointer text-ink-faint hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <Trash2 className="size-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete this conversation?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This cannot be undone. Saved recipes are kept.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDeleteConversation}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           <Button
             size="sm"
             onClick={() => startNewConversation()}

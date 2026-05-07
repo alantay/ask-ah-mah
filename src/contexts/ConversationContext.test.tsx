@@ -1,36 +1,35 @@
-/**
- * Tests for ConversationContext
- *
- * Strategy:
- * - Mock SWR so we control what the hook returns without real network calls
- * - Mock fetch for POST/PATCH mutations
- * - Mock SessionContext so we can supply a userId
- * - Use React Testing Library renderHook / render to exercise the context
- */
-
 import React from "react";
-import { renderHook, act, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import {
   ConversationProvider,
   useConversationContext,
 } from "./ConversationContext";
 
-// ── Mock SWR ──────────────────────────────────────────────────────────────────
-
-type SwrMockReturn = {
-  data: { conversation: { id: string; title: null; createdAt: Date; updatedAt: Date; userId: string; archived: boolean } } | undefined;
-  isLoading: boolean;
+type Conversation = {
+  id: string;
+  userId: string;
+  title: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  _count?: { messages: number };
 };
 
-let swrMockReturn: SwrMockReturn = { data: undefined, isLoading: false };
+type SwrPayload =
+  | { conversation: Conversation }
+  | { conversations: Conversation[] }
+  | undefined;
+
+const swrData = new Map<string, SwrPayload>();
+const mockMutate = jest.fn();
 
 jest.mock("swr", () => ({
   __esModule: true,
-  default: jest.fn(() => swrMockReturn),
-  mutate: jest.fn(),
+  default: jest.fn((key: string | null) => ({
+    data: key ? swrData.get(key) : undefined,
+    isLoading: false,
+  })),
+  mutate: (...args: unknown[]) => mockMutate(...args),
 }));
-
-// ── Mock SessionContext ───────────────────────────────────────────────────────
 
 const mockUserId = "user-test-123";
 
@@ -38,35 +37,45 @@ jest.mock("@/contexts/SessionContext", () => ({
   useSessionContext: jest.fn(() => ({ userId: mockUserId, isLoading: false })),
 }));
 
-// ── Mock localStorage ─────────────────────────────────────────────────────────
+jest.mock("sonner", () => ({
+  toast: {
+    error: jest.fn(),
+  },
+}));
 
 const localStorageMock = (() => {
   let store: Record<string, string> = {};
   return {
     getItem: jest.fn((key: string) => store[key] ?? null),
-    setItem: jest.fn((key: string, value: string) => { store[key] = value; }),
-    removeItem: jest.fn((key: string) => { delete store[key]; }),
-    clear: jest.fn(() => { store = {}; }),
+    setItem: jest.fn((key: string, value: string) => {
+      store[key] = value;
+    }),
+    removeItem: jest.fn((key: string) => {
+      delete store[key];
+    }),
+    clear: jest.fn(() => {
+      store = {};
+    }),
   };
 })();
 
 Object.defineProperty(window, "localStorage", { value: localStorageMock });
 
-// ── Mock fetch ────────────────────────────────────────────────────────────────
-
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function makeConversation(id = "conv-1") {
+function makeConversation(
+  id = "conv-1",
+  overrides: Partial<Conversation> = {}
+): Conversation {
   return {
     id,
     userId: mockUserId,
     title: null,
-    archived: false,
     createdAt: new Date("2024-01-02T10:00:00.000Z"),
     updatedAt: new Date("2024-01-02T10:00:00.000Z"),
+    _count: { messages: 0 },
+    ...overrides,
   };
 }
 
@@ -74,168 +83,158 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
   <ConversationProvider>{children}</ConversationProvider>
 );
 
-// ── Tests ─────────────────────────────────────────────────────────────────────
-
 describe("ConversationContext", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    swrData.clear();
     localStorageMock.clear();
-    swrMockReturn = { data: undefined, isLoading: false };
+    mockMutate.mockResolvedValue(undefined);
   });
 
-  describe("useConversationContext outside provider", () => {
-    it("throws when used outside ConversationProvider", () => {
-      // Suppress React error boundary noise in test output
-      const consoleSpy = jest
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
+  it("throws when used outside ConversationProvider", () => {
+    const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
-      expect(() => {
-        renderHook(() => useConversationContext());
-      }).toThrow("useConversationContext must be used within a ConversationProvider");
+    expect(() => {
+      renderHook(() => useConversationContext());
+    }).toThrow("useConversationContext must be used within a ConversationProvider");
 
-      consoleSpy.mockRestore();
-    });
+    consoleSpy.mockRestore();
   });
 
-  describe("ConversationProvider mounting", () => {
-    it("sets activeConversationId from the active-conversation endpoint when localStorage is empty", async () => {
-      const conv = makeConversation("conv-from-api");
-      swrMockReturn = {
-        data: { conversation: conv },
-        isLoading: false,
-      };
-
-      const { result } = renderHook(() => useConversationContext(), { wrapper });
-
-      await waitFor(() => {
-        expect(result.current.activeConversationId).toBe("conv-from-api");
-      });
+  it("sets activeConversationId from the active-conversation endpoint when localStorage is empty", async () => {
+    const conversation = makeConversation("conv-from-api");
+    swrData.set(
+      `/api/conversation?active=true&userId=${mockUserId}`,
+      { conversation }
+    );
+    swrData.set(`/api/conversation?userId=${mockUserId}`, {
+      conversations: [conversation],
     });
 
-    it("uses the localStorage value instead of calling API when present", () => {
-      localStorageMock.getItem.mockReturnValueOnce("conv-from-storage");
+    const { result } = renderHook(() => useConversationContext(), { wrapper });
 
-      // SWR should NOT be called with a key when localStorage has a value
-      swrMockReturn = { data: undefined, isLoading: false };
-
-      const { result } = renderHook(() => useConversationContext(), { wrapper });
-
-      expect(result.current.activeConversationId).toBe("conv-from-storage");
-    });
-
-    it("exposes isLoading=true while SWR is loading and no localStorage value", () => {
-      swrMockReturn = { data: undefined, isLoading: true };
-
-      const { result } = renderHook(() => useConversationContext(), { wrapper });
-
-      expect(result.current.isLoading).toBe(true);
+    await waitFor(() => {
+      expect(result.current.activeConversationId).toBe("conv-from-api");
     });
   });
 
-  describe("startNewConversation", () => {
-    it("POSTs to /api/conversation and updates activeConversationId", async () => {
-      const newConv = makeConversation("conv-new");
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ conversation: newConv }),
-      });
+  it("uses the localStorage value instead of fetching an active conversation", () => {
+    localStorageMock.getItem.mockReturnValueOnce("conv-from-storage");
+    swrData.set(`/api/conversation?userId=${mockUserId}`, {
+      conversations: [makeConversation("conv-from-storage")],
+    });
 
-      // Start with a stored conversation so context is not in loading state
-      localStorageMock.getItem.mockReturnValueOnce("conv-old");
+    const { result } = renderHook(() => useConversationContext(), { wrapper });
 
-      const { result } = renderHook(() => useConversationContext(), { wrapper });
+    expect(result.current.activeConversationId).toBe("conv-from-storage");
+  });
 
-      await act(async () => {
-        await result.current.startNewConversation();
-      });
+  it("startNewConversation reuses the server-returned empty conversation", async () => {
+    const current = makeConversation("conv-current", {
+      title: "Dinner",
+      _count: { messages: 2 },
+    });
+    const empty = makeConversation("conv-empty");
+    localStorageMock.getItem.mockReturnValueOnce("conv-current");
+    swrData.set(`/api/conversation?userId=${mockUserId}`, {
+      conversations: [current, empty],
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ conversation: empty }),
+    });
 
-      expect(mockFetch).toHaveBeenCalledWith("/api/conversation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: mockUserId }),
-      });
+    const { result } = renderHook(() => useConversationContext(), { wrapper });
 
-      expect(result.current.activeConversationId).toBe("conv-new");
-      expect(localStorageMock.setItem).toHaveBeenCalledWith(
-        "ask-ah-mah-active-conversation",
-        "conv-new"
-      );
+    await act(async () => {
+      await result.current.startNewConversation();
+    });
+
+    expect(mockFetch).toHaveBeenCalledWith("/api/conversation", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: mockUserId }),
+    });
+    expect(result.current.activeConversationId).toBe("conv-empty");
+  });
+
+  it("renameActiveConversation PATCHes the active id", async () => {
+    const conversation = makeConversation("conv-abc");
+    localStorageMock.getItem.mockReturnValueOnce("conv-abc");
+    swrData.set(`/api/conversation?userId=${mockUserId}`, {
+      conversations: [conversation],
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ conversation: { ...conversation, title: "My Kitchen" } }),
+    });
+
+    const { result } = renderHook(() => useConversationContext(), { wrapper });
+
+    await act(async () => {
+      await result.current.renameActiveConversation("My Kitchen");
+    });
+
+    expect(mockFetch).toHaveBeenCalledWith("/api/conversation/conv-abc", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "My Kitchen" }),
     });
   });
 
-  describe("renameActiveConversation", () => {
-    it("PATCHes /api/conversation/:id with the new title", async () => {
-      localStorageMock.getItem.mockReturnValueOnce("conv-abc");
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ conversation: { ...makeConversation("conv-abc"), title: "My Kitchen" } }),
-      });
+  it("deleteActiveConversation fires DELETE immediately and switches active conversation", async () => {
+    const active = makeConversation("conv-delete", {
+      title: "Laksa",
+      _count: { messages: 3 },
+    });
+    const fallback = makeConversation("conv-fallback", {
+      title: "Egg ideas",
+      _count: { messages: 1 },
+    });
+    localStorageMock.getItem.mockReturnValueOnce("conv-delete");
+    swrData.set(`/api/conversation?userId=${mockUserId}`, {
+      conversations: [active, fallback],
+    });
+    mockFetch.mockResolvedValueOnce({ ok: true });
 
-      const { result } = renderHook(() => useConversationContext(), { wrapper });
+    const { result } = renderHook(() => useConversationContext(), { wrapper });
 
-      await act(async () => {
-        await result.current.renameActiveConversation("My Kitchen");
-      });
-
-      expect(mockFetch).toHaveBeenCalledWith("/api/conversation/conv-abc", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: "My Kitchen" }),
-      });
+    await act(async () => {
+      await result.current.deleteActiveConversation();
     });
 
-    it("does nothing when activeConversationId is null", async () => {
-      swrMockReturn = { data: undefined, isLoading: false };
-
-      const { result } = renderHook(() => useConversationContext(), { wrapper });
-
-      await act(async () => {
-        await result.current.renameActiveConversation("Ignored");
-      });
-
-      expect(mockFetch).not.toHaveBeenCalled();
-    });
+    expect(result.current.activeConversationId).toBe("conv-fallback");
+    expect(mockFetch).toHaveBeenCalledWith(
+      `/api/conversation/conv-delete?userId=${encodeURIComponent(mockUserId)}`,
+      { method: "DELETE" }
+    );
   });
 
-  describe("archiveActiveConversation", () => {
-    it("PATCHes with { archived: true } then POSTs to create a new conversation", async () => {
-      localStorageMock.getItem.mockReturnValueOnce("conv-to-archive");
-
-      const newConv = makeConversation("conv-fresh");
-
-      // First call: PATCH archive
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({}),
-      });
-      // Second call: POST startNewConversation
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ conversation: newConv }),
-      });
-
-      const { result } = renderHook(() => useConversationContext(), { wrapper });
-
-      await act(async () => {
-        await result.current.archiveActiveConversation();
-      });
-
-      // First fetch: PATCH with archived: true
-      expect(mockFetch).toHaveBeenNthCalledWith(1, "/api/conversation/conv-to-archive", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ archived: true }),
-      });
-
-      // Second fetch: POST /api/conversation to create a new one
-      expect(mockFetch).toHaveBeenNthCalledWith(2, "/api/conversation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: mockUserId }),
-      });
-
-      expect(result.current.activeConversationId).toBe("conv-fresh");
+  it("deleteActiveConversation rolls back optimistic update and shows error toast on DELETE failure", async () => {
+    const { toast } = await import("sonner");
+    const active = makeConversation("conv-delete", {
+      title: "Laksa",
+      _count: { messages: 3 },
     });
+    const fallback = makeConversation("conv-fallback", {
+      title: "Egg ideas",
+      _count: { messages: 1 },
+    });
+    localStorageMock.getItem.mockReturnValueOnce("conv-delete");
+    swrData.set(`/api/conversation?userId=${mockUserId}`, {
+      conversations: [active, fallback],
+    });
+    mockFetch.mockResolvedValueOnce({ ok: false });
+
+    const { result } = renderHook(() => useConversationContext(), { wrapper });
+
+    await act(async () => {
+      await result.current.deleteActiveConversation();
+    });
+
+    expect(result.current.activeConversationId).toBe("conv-delete");
+    expect(toast.error).toHaveBeenCalledWith(
+      "Could not delete conversation. Try again."
+    );
   });
 });

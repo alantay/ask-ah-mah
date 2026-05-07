@@ -1,7 +1,7 @@
 import { GET, POST } from "./route";
 import {
-  createConversation,
   getOrCreateActiveConversation,
+  getOrCreateEmptyConversation,
   listConversations,
 } from "@/lib/conversations";
 import { NextRequest } from "next/server";
@@ -20,13 +20,13 @@ jest.mock("next/server", () => ({
 
 jest.mock("@/lib/conversations", () => ({
   listConversations: jest.fn(),
-  createConversation: jest.fn(),
   getOrCreateActiveConversation: jest.fn(),
+  getOrCreateEmptyConversation: jest.fn(),
 }));
 
 const mockedListConversations = jest.mocked(listConversations);
-const mockedCreateConversation = jest.mocked(createConversation);
 const mockedGetOrCreateActiveConversation = jest.mocked(getOrCreateActiveConversation);
+const mockedGetOrCreateEmptyConversation = jest.mocked(getOrCreateEmptyConversation);
 
 const createMockRequest = (url: string, options: RequestInit = {}) => {
   const parsedUrl = new URL(url);
@@ -49,7 +49,6 @@ function makeConversation(overrides: Partial<{
   id: string;
   userId: string;
   title: string | null;
-  archived: boolean;
   createdAt: Date;
   updatedAt: Date;
   _count: { messages: number };
@@ -58,7 +57,6 @@ function makeConversation(overrides: Partial<{
     id: "conv-1",
     userId: "user-1",
     title: null,
-    archived: false,
     createdAt: new Date("2024-01-01T10:00:00.000Z"),
     updatedAt: new Date("2024-01-01T10:00:00.000Z"),
     _count: { messages: 0 },
@@ -132,9 +130,9 @@ describe("Conversation API Routes", () => {
   });
 
   describe("POST /api/conversation", () => {
-    it("should create a new conversation for valid userId", async () => {
+    it("should return the reusable empty conversation for valid userId", async () => {
       const newConv = makeConversation({ id: "conv-new", userId: "user-1" });
-      mockedCreateConversation.mockResolvedValue(newConv);
+      mockedGetOrCreateEmptyConversation.mockResolvedValue(newConv);
 
       const request = createMockRequest(
         "http://localhost:3000/api/conversation",
@@ -150,7 +148,7 @@ describe("Conversation API Routes", () => {
 
       expect(response.status).toBe(200);
       expect(data).toEqual({ conversation: newConv });
-      expect(mockedCreateConversation).toHaveBeenCalledWith("user-1");
+      expect(mockedGetOrCreateEmptyConversation).toHaveBeenCalledWith("user-1");
     });
 
     it("should return 400 when userId is missing", async () => {
@@ -168,11 +166,11 @@ describe("Conversation API Routes", () => {
 
       expect(response.status).toBe(400);
       expect(data).toEqual({ error: "userId is required" });
-      expect(mockedCreateConversation).not.toHaveBeenCalled();
+      expect(mockedGetOrCreateEmptyConversation).not.toHaveBeenCalled();
     });
 
     it("should handle database errors gracefully", async () => {
-      mockedCreateConversation.mockRejectedValue(new Error("DB error"));
+      mockedGetOrCreateEmptyConversation.mockRejectedValue(new Error("DB error"));
 
       const request = createMockRequest(
         "http://localhost:3000/api/conversation",

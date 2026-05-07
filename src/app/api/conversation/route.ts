@@ -1,6 +1,6 @@
 import {
-  createConversation,
   getOrCreateActiveConversation,
+  getOrCreateEmptyConversation,
   listConversations,
 } from "@/lib/conversations";
 import { NextRequest, NextResponse } from "next/server";
@@ -26,6 +26,6 @@ export async function POST(req: NextRequest) {
   if (!userId) {
     return NextResponse.json({ error: "userId is required" }, { status: 400 });
   }
-  const conversation = await createConversation(userId);
+  const conversation = await getOrCreateEmptyConversation(userId);
   return NextResponse.json({ conversation });
 }

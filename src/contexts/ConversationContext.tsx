@@ -14,6 +14,10 @@ import useSWR, { mutate as globalMutate } from "swr";
 
 const LOCAL_STORAGE_KEY = "ask-ah-mah-active-conversation";
 
+type ConversationListResponse = {
+  conversations: ConversationEntity[];
+};
+
 interface ConversationContextType {
   activeConversationId: string | null;
   activeConversation: ConversationEntity | null;
@@ -22,7 +26,7 @@ interface ConversationContextType {
   startNewConversation: () => Promise<void>;
   renameActiveConversation: (title: string) => Promise<void>;
   autoTitleActiveConversation: (title: string) => Promise<boolean>;
-  archiveActiveConversation: () => Promise<void>;
+  deleteActiveConversation: () => Promise<void>;
 }
 
 const ConversationContext = createContext<ConversationContextType | undefined>(
@@ -56,8 +60,10 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
   );
 
   // Always fetch the conversations list so activeConversation reflects title updates
-  const { data: listData } = useSWR<{ conversations: ConversationEntity[] }>(
-    userId ? `/api/conversation?userId=${userId}` : null,
+  const listKey = userId ? `/api/conversation?userId=${userId}` : null;
+
+  const { data: listData } = useSWR<ConversationListResponse>(
+    listKey,
     async (url: string) => {
       const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to fetch conversations");
@@ -84,7 +90,24 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(LOCAL_STORAGE_KEY, id);
   };
 
-  const startNewConversation = async () => {
+  const persistActiveConversation = (id: string | null) => {
+    setActiveConversationId(id);
+    if (id) {
+      localStorage.setItem(LOCAL_STORAGE_KEY, id);
+      return;
+    }
+    localStorage.removeItem(LOCAL_STORAGE_KEY);
+  };
+
+  const revalidateConversationKeys = () =>
+    globalMutate(
+      (key: unknown) =>
+        typeof key === "string" && key.includes("/api/conversation"),
+      undefined,
+      { revalidate: true }
+    );
+
+  const startNewConversation = async (options?: { revalidate?: boolean }) => {
     if (!userId) return;
     const res = await fetch("/api/conversation", {
       method: "POST",
@@ -94,8 +117,25 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     if (!res.ok) throw new Error("Failed to create conversation");
     const { conversation } = await res.json();
     setActiveConversation(conversation.id);
-    // Refresh the conversations list rail
-    globalMutate(`/api/conversation?userId=${userId}`);
+    if (listKey) {
+      await globalMutate(
+        listKey,
+        (current?: ConversationListResponse) => {
+          const existing = current?.conversations ?? [];
+          const withoutConversation = existing.filter(
+            (item) => item.id !== conversation.id
+          );
+
+          return {
+            conversations: [conversation, ...withoutConversation],
+          };
+        },
+        false
+      );
+    }
+    if (options?.revalidate !== false) {
+      await revalidateConversationKeys();
+    }
   };
 
   const renameActiveConversation = async (title: string) => {
@@ -106,13 +146,7 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify({ title }),
     });
     if (!res.ok) return;
-    // Revalidate all conversation-related SWR keys (swrKey may be null when
-    // activeConversationId was loaded from localStorage, so we use a predicate).
-    globalMutate(
-      (key: unknown) => typeof key === "string" && key.includes("/api/conversation"),
-      undefined,
-      { revalidate: true }
-    );
+    await revalidateConversationKeys();
   };
 
   const autoTitleActiveConversation = async (title: string) => {
@@ -124,11 +158,7 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ title, autoTitle: true }),
       });
       if (!res.ok) return false;
-      globalMutate(
-        (key: unknown) => typeof key === "string" && key.includes("/api/conversation"),
-        undefined,
-        { revalidate: true }
-      );
+      await revalidateConversationKeys();
       return true;
     } catch (error) {
       console.error("Failed to auto-title conversation:", error);
@@ -136,19 +166,69 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const archiveActiveConversation = async () => {
-    if (!activeConversationId) return;
-    const res = await fetch(`/api/conversation/${activeConversationId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ archived: true }),
-    });
-    if (!res.ok) return;
-    toast.success("Conversation archived");
-    // Clear stored id so startNewConversation creates fresh
-    setActiveConversationId(null);
-    localStorage.removeItem(LOCAL_STORAGE_KEY);
-    await startNewConversation();
+  const deleteActiveConversation = async (): Promise<void> => {
+    if (
+      !userId ||
+      !activeConversationId ||
+      !activeConversation ||
+      (activeConversation._count?.messages ?? 0) === 0
+    ) {
+      return;
+    }
+
+    const previousConversations = listData?.conversations ?? [];
+    const previousActiveConversationId = activeConversationId;
+    const optimisticConversations = previousConversations.filter(
+      (conversation) => conversation.id !== activeConversationId
+    );
+    const nextConversation =
+      optimisticConversations.find(
+        (conversation) => (conversation._count?.messages ?? 0) > 0
+      ) ??
+      optimisticConversations.find(
+        (conversation) =>
+          conversation.title === null &&
+          (conversation._count?.messages ?? 0) === 0
+      ) ??
+      null;
+
+    if (listKey) {
+      await globalMutate(
+        listKey,
+        { conversations: optimisticConversations },
+        false
+      );
+    }
+
+    if (nextConversation) {
+      persistActiveConversation(nextConversation.id);
+    } else {
+      persistActiveConversation(null);
+      await startNewConversation({ revalidate: false });
+    }
+
+    try {
+      const res = await fetch(
+        `/api/conversation/${previousActiveConversationId}?userId=${encodeURIComponent(userId)}`,
+        { method: "DELETE" }
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to delete conversation");
+      }
+
+      await revalidateConversationKeys();
+    } catch {
+      if (listKey) {
+        await globalMutate(
+          listKey,
+          { conversations: previousConversations },
+          false
+        );
+      }
+      persistActiveConversation(previousActiveConversationId);
+      toast.error("Could not delete conversation. Try again.");
+    }
   };
 
   const contextIsLoading =
@@ -164,7 +244,7 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
         startNewConversation,
         renameActiveConversation,
         autoTitleActiveConversation,
-        archiveActiveConversation,
+        deleteActiveConversation,
       }}
     >
       {children}

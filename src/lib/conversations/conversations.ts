@@ -7,23 +7,16 @@ export type ConversationEntity = {
   id: string;
   userId: string;
   title: string | null;
-  archived: boolean;
   createdAt: Date;
   updatedAt: Date;
   _count?: { messages: number };
 };
 
 export async function listConversations(
-  userId: string,
-  options?: { includeArchived?: boolean }
+  userId: string
 ): Promise<ConversationEntity[]> {
-  const includeArchived = options?.includeArchived ?? false;
-
   return prisma.conversation.findMany({
-    where: {
-      userId,
-      ...(includeArchived ? {} : { archived: false }),
-    },
+    where: { userId },
     orderBy: { updatedAt: "desc" },
     include: { _count: { select: { messages: true } } },
   });
@@ -33,7 +26,27 @@ export async function getOrCreateActiveConversation(
   userId: string
 ): Promise<ConversationEntity> {
   const existing = await prisma.conversation.findFirst({
-    where: { userId, archived: false },
+    where: { userId },
+    orderBy: { updatedAt: "desc" },
+    include: { _count: { select: { messages: true } } },
+  });
+
+  if (existing) {
+    return existing;
+  }
+
+  return createConversation(userId);
+}
+
+export async function getOrCreateEmptyConversation(
+  userId: string
+): Promise<ConversationEntity> {
+  const existing = await prisma.conversation.findFirst({
+    where: {
+      userId,
+      title: null,
+      messages: { none: {} },
+    },
     orderBy: { updatedAt: "desc" },
     include: { _count: { select: { messages: true } } },
   });
@@ -82,16 +95,17 @@ export async function autoTitleIfNull(
   });
 }
 
-export async function archiveConversation(
-  id: string
-): Promise<ConversationEntity> {
-  const conversation = await prisma.conversation.update({
-    where: { id },
-    data: { archived: true },
-    include: { _count: { select: { messages: true } } },
+export async function deleteConversation(
+  id: string,
+  userId: string
+): Promise<void> {
+  const result = await prisma.conversation.deleteMany({
+    where: { id, userId },
   });
 
-  return conversation;
+  if (result.count === 0) {
+    throw new Error("Conversation not found");
+  }
 }
 
 export async function autoTitleConversation(id: string): Promise<void> {
