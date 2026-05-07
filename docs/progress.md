@@ -15,18 +15,18 @@ The persistent-kitchen MVP. Highlights:
 ## V2 — In Progress
 
 ### Multi-conversation backend (Slice 1) (May 2026)
-- [x] `Conversation` Prisma model added (`id`, `userId`, `title?`, `archived`, `createdAt`, `updatedAt`).
+- [x] `Conversation` Prisma model added (`id`, `userId`, `title?`, `createdAt`, `updatedAt`).
 - [x] `Message` model updated: `conversationId` FK added (cascades on delete); old `userId`-only scoping replaced.
 - [x] Migration `20260504000000_add_conversations` includes backfill for existing messages.
-- [x] `src/lib/conversations/conversations.ts`: `listConversations`, `getOrCreateActiveConversation`, `createConversation`, `renameConversation`, `archiveConversation`, `autoTitleConversation`.
+- [x] `src/lib/conversations/conversations.ts`: `listConversations`, `getOrCreateActiveConversation`, `getOrCreateEmptyConversation`, `createConversation`, `renameConversation`, `deleteConversation`, `autoTitleConversation`.
 - [x] `getMessages` / `createMessage` now scoped to `conversationId` (userId still stored for convenience).
 - [x] `POST /api/chat` accepts `conversationId`; fires `autoTitleConversation` non-blocking after first exchange.
-- [x] `GET|POST /api/conversation` for listing/creating conversations.
-- [x] `PATCH /api/conversation/[id]` for rename/archive.
+- [x] `GET|POST /api/conversation` for listing/creating conversations, with POST reusing the canonical empty thread instead of creating duplicate empty rows.
+- [x] `PATCH|DELETE /api/conversation/[id]` for rename/hard-delete; archived rows are purged and the archive column/index are removed in migration `20260507000000_replace_archive_with_delete`.
 - [x] `GET|POST /api/message` updated to `conversationId`-scoped params.
 
 ### Three-rail layout / Conversations UI (Slice 2 + 3) (May 2026)
-- [x] `ConversationContext` provides `activeConversationId`, `setActiveConversation`, `startNewConversation`, `renameActiveConversation`, `archiveActiveConversation`.
+- [x] `ConversationContext` provides `activeConversationId`, `setActiveConversation`, `startNewConversation`, `renameActiveConversation`, `deleteActiveConversation`.
 - [x] `ConversationTitle.tsx` — inline-editable title in chat header; `getTitleFallback` exported.
 - [x] `src/features/Conversations/` — new feature folder: `ConversationItem`, `Conversations`, `ConversationsRail`, `ConversationsMobileSheet`, `constants`, `utils` (formatTime/formatWhen).
 - [x] `ConversationsRail` — 260px left sidebar, `hidden lg:flex`, shows grouped (today/yesterday/earlier) list with search.
@@ -34,6 +34,7 @@ The persistent-kitchen MVP. Highlights:
 - [x] `PantryDrawer` — 36px collapsed tab on right edge; clicks open 320px absolute overlay (no chat reflow); state persisted in `localStorage`.
 - [x] `page.tsx` — three-rail composition: ConversationsRail | ChatWrapper | PantryDrawer; old inventory aside removed.
 - [x] Migration `20260504000000_add_conversations` — must be applied via `npx prisma migrate deploy` (not `db push`) due to backfill step.
+- [x] Chat header archive button replaced with a calm trash affordance; clicking the trash icon opens a shadcn AlertDialog confirmation, confirming fires the DELETE immediately, and saved recipes remain untouched. The earlier deferred-undo toast pattern was dropped because it blocked back-to-back deletes during the undo window.
 - [x] Bug fixed (May 2026): `Conversations.tsx` was reading `data?.grouped` but API returns `{ conversations: GroupedConversations }` — fixed to `data?.conversations`.
 - [x] Bug fixed (May 2026): `src/app/api/message/route.ts` used default import for prisma — fixed to named `{ prisma }`.
 

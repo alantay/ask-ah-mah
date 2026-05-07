@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/db";
 import {
-  archiveConversation,
   autoTitleConversation,
   createConversation,
+  deleteConversation,
   getOrCreateActiveConversation,
+  getOrCreateEmptyConversation,
   listConversations,
   renameConversation,
 } from "./conversations";
@@ -16,6 +17,7 @@ jest.mock("@/lib/db", () => ({
       findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      deleteMany: jest.fn(),
     },
     message: {
       findMany: jest.fn(),
@@ -39,7 +41,6 @@ function makeConversation(overrides: Partial<{
   id: string;
   userId: string;
   title: string | null;
-  archived: boolean;
   createdAt: Date;
   updatedAt: Date;
   _count: { messages: number };
@@ -48,7 +49,6 @@ function makeConversation(overrides: Partial<{
     id: "conv-1",
     userId: "user-1",
     title: null,
-    archived: false,
     createdAt: new Date("2024-01-01T10:00:00.000Z"),
     updatedAt: new Date("2024-01-01T10:00:00.000Z"),
     _count: { messages: 0 },
@@ -84,22 +84,10 @@ describe("Conversation Functions", () => {
       expect(result).toHaveLength(0);
     });
 
-    it("excludes archived conversations by default", async () => {
+    it("queries by userId only", async () => {
       mockedPrisma.conversation.findMany.mockResolvedValue([]);
 
       await listConversations("user-1");
-
-      expect(mockedPrisma.conversation.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({ archived: false }),
-        })
-      );
-    });
-
-    it("includes archived conversations when includeArchived is true", async () => {
-      mockedPrisma.conversation.findMany.mockResolvedValue([]);
-
-      await listConversations("user-1", { includeArchived: true });
 
       expect(mockedPrisma.conversation.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -148,6 +136,41 @@ describe("Conversation Functions", () => {
     });
   });
 
+  describe("getOrCreateEmptyConversation", () => {
+    it("returns the existing empty conversation when one exists", async () => {
+      const existing = makeConversation({ id: "conv-empty" });
+      mockedPrisma.conversation.findFirst.mockResolvedValue(existing);
+
+      const result = await getOrCreateEmptyConversation("user-1");
+
+      expect(result.id).toBe("conv-empty");
+      expect(mockedPrisma.conversation.findFirst).toHaveBeenCalledWith({
+        where: {
+          userId: "user-1",
+          title: null,
+          messages: { none: {} },
+        },
+        orderBy: { updatedAt: "desc" },
+        include: { _count: { select: { messages: true } } },
+      });
+      expect(mockedPrisma.conversation.create).not.toHaveBeenCalled();
+    });
+
+    it("creates a new conversation when no empty one exists", async () => {
+      const created = makeConversation({ id: "conv-created" });
+      mockedPrisma.conversation.findFirst.mockResolvedValue(null);
+      mockedPrisma.conversation.create.mockResolvedValue(created);
+
+      const result = await getOrCreateEmptyConversation("user-2");
+
+      expect(result.id).toBe("conv-created");
+      expect(mockedPrisma.conversation.create).toHaveBeenCalledWith({
+        data: { userId: "user-2" },
+        include: { _count: { select: { messages: true } } },
+      });
+    });
+  });
+
   describe("renameConversation", () => {
     it("updates title and returns updated conversation", async () => {
       const updated = makeConversation({ id: "conv-1", title: "My New Title" });
@@ -164,19 +187,23 @@ describe("Conversation Functions", () => {
     });
   });
 
-  describe("archiveConversation", () => {
-    it("sets archived = true and returns updated conversation", async () => {
-      const archived = makeConversation({ id: "conv-1", archived: true });
-      mockedPrisma.conversation.update.mockResolvedValue(archived);
+  describe("deleteConversation", () => {
+    it("deletes the conversation scoped by userId", async () => {
+      mockedPrisma.conversation.deleteMany.mockResolvedValue({ count: 1 });
 
-      const result = await archiveConversation("conv-1");
+      await deleteConversation("conv-1", "user-1");
 
-      expect(result.archived).toBe(true);
-      expect(mockedPrisma.conversation.update).toHaveBeenCalledWith({
-        where: { id: "conv-1" },
-        data: { archived: true },
-        include: { _count: { select: { messages: true } } },
+      expect(mockedPrisma.conversation.deleteMany).toHaveBeenCalledWith({
+        where: { id: "conv-1", userId: "user-1" },
       });
+    });
+
+    it("throws when the conversation does not exist for the user", async () => {
+      mockedPrisma.conversation.deleteMany.mockResolvedValue({ count: 0 });
+
+      await expect(deleteConversation("conv-1", "user-1")).rejects.toThrow(
+        "Conversation not found"
+      );
     });
   });
 
