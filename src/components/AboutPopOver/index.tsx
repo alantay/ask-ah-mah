@@ -18,6 +18,8 @@ export default function AboutPopOver({
   svgSize = "24",
   popoverAlign = "end",
 }: InfoPopoverProps) {
+  const { user, signIn, signOut } = useSessionContext();
+
   const copyEmail = async () => {
     try {
       await navigator.clipboard.writeText("lun.tay.work@gmail.com");
@@ -54,23 +56,46 @@ export default function AboutPopOver({
         align={popoverAlign}
         className="w-[600px] max-w-[95vw]"
       >
-        <div className="space-y-2">
-          <h4 className="font-medium leading-none">About Ask Ah Mah</h4>
-          <div className="text-sm">
-            <p>
-              {`A passion project inspired by my own cooking journey. I loved
-              using AI for cooking help, but it kept forgetting my ingredients!
-              So I built Ask Ah Mah with persistent memory and a caring
-              personality.`}
-            </p>
-            <p className="mt-4">
-              {`But this app is about more than just fixing a technical problem,
-              it's about making cooking feel approachable, where you understand
-              your ingredients, learn the "why" behind each step, and cook with
-              love!`}
-            </p>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <h4 className="font-medium leading-none">About Ask Ah Mah</h4>
+            <div className="text-sm">
+              <p>
+                {`A passion project inspired by my own cooking journey. I loved
+                using AI for cooking help, but it kept forgetting my ingredients!
+                So I built Ask Ah Mah with persistent memory and a caring
+                personality.`}
+              </p>
+              <p className="mt-4">
+                {`But this app is about more than just fixing a technical problem,
+                it's about making cooking feel approachable, where you understand
+                your ingredients, learn the "why" behind each step, and cook with
+                love!`}
+              </p>
+            </div>
+          </div>
 
-            <h3 className="mt-4">{`I'd love your feedback!`}</h3>
+          <div className="pt-4 border-t border-dashed border-border space-y-3">
+            <h4 className="font-medium leading-none">Your Progress</h4>
+            <p className="text-[13px] text-muted-foreground leading-relaxed">
+              {user 
+                ? `Signed in as ${user.user.email}. Your pantry and chats are safe on any device.`
+                : "Sign in to save your pantry and chats so you can continue on your phone while cooking."
+              }
+            </p>
+            {user ? (
+              <Button variant="outline" size="sm" onClick={signOut} className="cursor-pointer">
+                Sign Out
+              </Button>
+            ) : (
+              <Button size="sm" onClick={signIn} className="cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90">
+                Sign In with Google
+              </Button>
+            )}
+          </div>
+
+          <div className="pt-2">
+            <h3 className="text-sm font-medium">{`I'd love your feedback!`}</h3>
             <p>
               <Button
                 variant="ghost"
