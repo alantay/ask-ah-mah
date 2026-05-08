@@ -68,6 +68,13 @@ The persistent-kitchen MVP. Highlights:
 - [ ] Implement unlimited-quantity confirm/remove flow (`did this finish it?`).
 - [ ] Keep freeform off-recipe meal messages as no-op.
 
+### Authenticated Kitchen & Organized Pantry (May 2026)
+- [x] Integrated **Better Auth** with Google OAuth for persistent identity.
+- [x] Implemented **Auto-Merge Migration** to seamlessly link guest data to permanent accounts.
+- [x] Added **AI-Driven Categorization** for ingredients (Protein, Vegetable, Condiment, Misc).
+- [x] Grouped Pantry UI under category headings for improved auditability.
+- [x] Refined "Kopitiam Modern" UI: removed dark green hover, clarified serving labels, rebranded recipe headers.
+
 ### Shopping list from shortfalls
 - [ ] Add one-click `Add missing to shopping list` from `RecipeDisplay`.
 - [ ] Add `ShoppingList` Prisma model (`id`, `userId`, `name`, `quantity?`, `unit?`, `addedAt`, `recipeId?`).
