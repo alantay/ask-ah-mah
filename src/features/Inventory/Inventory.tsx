@@ -170,24 +170,44 @@ const Inventory = ({ onClose }: { onClose?: () => void }) => {
         </Card>
       )}
 
-      {/* Ingredients card */}
-      <section className="bg-card border border-border rounded-xl p-3.5 shadow-[0_1px_0_oklch(0.87_0.03_72),0_8px_18px_-16px_oklch(0.3_0.05_50/0.4)]">
-        <SectionLabel count={ingredientsSorted?.length ?? 0}>Ingredients</SectionLabel>
+      {/* Ingredients section with grouping */}
+      <section className="bg-card border border-border rounded-xl p-3.5 shadow-[0_1px_0_oklch(0.87_0.03_72),0_8px_18px_-16px_oklch(0.3_0.05_50/0.4)] space-y-6">
+        <SectionLabel count={ingredientInventory?.length ?? 0}>Ingredients</SectionLabel>
+        
         {isLoading && <p className="text-xs text-muted-foreground font-display italic">Looking in the pantry…</p>}
-        {!isLoading && ingredientsSorted?.length === 0 ? (
+        
+        {!isLoading && ingredientInventory?.length === 0 ? (
           <p className="text-[13px] font-display italic text-ink-faint leading-snug">
             Add what&rsquo;s in your fridge — Ah Mah understands &ldquo;a bit of ginger&rdquo;.
           </p>
         ) : (
-          <div className="flex flex-wrap gap-1.5">
-            {ingredientsSorted?.map((item: InventoryItem) => (
-              <InventoryItemBadge key={item.id} item={item} onRemove={removeItem} />
-            ))}
-          </div>
+          <>
+            {["Protein", "Vegetable", "Condiment", "Misc"].map((cat) => {
+              const items = ingredientInventory
+                ?.filter((i) => i.category === cat)
+                .sort((a, b) => a.name.localeCompare(b.name));
+
+              if (!items || items.length === 0) return null;
+
+              return (
+                <div key={cat} className="space-y-2.5">
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-ink-faint flex items-center gap-2">
+                    <span className="shrink-0">{cat}</span>
+                    <div className="h-px bg-border/50 flex-1" />
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {items.map((item: InventoryItem) => (
+                      <InventoryItemBadge key={item.id} item={item} onRemove={removeItem} />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </>
         )}
       </section>
 
-      {/* Equipment card */}
+      {/* Equipment section */}
       <section className="bg-card border border-border rounded-xl p-3.5 shadow-[0_1px_0_oklch(0.87_0.03_72),0_8px_18px_-16px_oklch(0.3_0.05_50/0.4)]">
         <SectionLabel count={kitchenwareSorted?.length ?? 0}>Equipment</SectionLabel>
         {isLoading && <p className="text-xs text-muted-foreground font-display italic">Rummaging through the cupboards…</p>}

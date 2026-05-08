@@ -30,15 +30,20 @@ export async function POST(req: NextRequest) {
       prompt: `Parse the following freeform inventory entry into structured items. The user is dumping what they just bought or what they have on hand.
 
 RULES:
-- Each item gets: name, type ("ingredient" | "kitchenware"), shelfLife ("short" | "medium" | "long"), and OPTIONAL quantity + unit.
-- ONLY set quantity/unit when the user explicitly states an amount (e.g., "200g chicken" → quantity=200, unit="g"; "2 chicken breasts" → quantity=2, unit="pieces"). If they say "some bok choy" or just "eggs", LEAVE quantity AND unit UNSET — unset means "they have it, amount unlimited".
+- Each item gets: name, type ("ingredient" | "kitchenware"), shelfLife ("short" | "medium" | "long"), category ("Protein" | "Vegetable" | "Condiment" | "Misc"), and OPTIONAL quantity + unit.
+- ONLY set quantity/unit when the user explicitly states an amount.
 - shelfLife rules:
-  - "short" — leafy greens, herbs, seafood, dairy, cooked leftovers, fresh fish, mushrooms
-  - "medium" — most meat, most fresh produce, eggs, tofu, bread
-  - "long" — oils, dry goods (rice, pasta, flour), spices, sauces, canned/bottled goods, ALL kitchenware
+  - "short" — leafy greens, herbs, seafood, dairy, fresh fish, mushrooms
+  - "medium" — most meat, most fresh produce, eggs, tofu
+  - "long" — oils, dry goods, sauces, canned goods, kitchenware
+- category rules:
+  - "Protein" — meat, poultry, seafood, eggs, tofu, beans, lentils
+  - "Vegetable" — fresh/frozen produce, mushrooms, greens, aromatics (ginger, garlic, onion)
+  - "Condiment" — sauces, oils, spices, seasonings, vinegars, pastes
+  - "Misc" — dry goods, grains, dairy, snacks, ALL kitchenware
 - type rules: kitchenware = pots, pans, utensils, appliances. Everything edible = ingredient.
-- Normalize names to singular, title case where natural ("chicken breasts" → "Chicken breast", "bok choy" → "Bok choy").
-- unit MUST come from this allowlist if used: g, kg, oz, lb, ml, l, cup, tbsp, tsp, piece, pieces, clove, cloves, bottle, bottles, can, cans, pack, packs, bunch, bunches, pinch, dash, slice, slices.
+- Normalize names to singular, title case.
+- unit MUST come from the allowed list: g, kg, oz, lb, ml, l, cup, tbsp, tsp, piece, pieces, clove, cloves, bottle, bottles, can, cans, pack, packs, bunch, bunches, pinch, dash, slice, slices.
 
 USER ENTRY:
 ${text}`,

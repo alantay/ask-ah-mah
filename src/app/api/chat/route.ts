@@ -57,7 +57,13 @@ export async function POST(req: NextRequest) {
       stopWhen: [stepCountIs(5), hasToolCall("proposeRecipe")],
       tools: {
         addInventoryItem: {
-          description: `Add items to the user's inventory. Required: name (string), type ("ingredient" or "kitchenware"), and shelfLife ("short" | "medium" | "long" — infer from the item: leafy greens/seafood/dairy = short; meat/most produce = medium; oils/dry goods/spices/kitchenware = long). Optional: quantity (number) and unit (string) — only set quantity if the user explicitly states one.`,
+          description: `Add items to the user's inventory. 
+Required: 
+- name (string)
+- type ("ingredient" or "kitchenware")
+- shelfLife ("short" | "medium" | "long" — infer: leafy greens/seafood/dairy = short; meat/most produce = medium; oils/dry goods/spices/kitchenware = long)
+- category ("Protein" | "Vegetable" | "Condiment" | "Misc" — infer: meat/seafood/eggs/beans = Protein; fresh produce = Vegetable; sauces/spices/oils/vinegar = Condiment; dry goods/grains/kitchenware = Misc).
+Optional: quantity (number) and unit (string) — only set quantity if the user explicitly states one.`,
           inputSchema: AddInventoryItemSchemaObj,
           execute: async ({ items }) => {
             await addInventoryItem(items, userId);

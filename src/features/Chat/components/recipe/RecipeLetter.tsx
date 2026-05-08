@@ -64,9 +64,9 @@ function ServingsStepper({
       >
         −
       </button>
-      <div className="flex justify-center items-center min-w-[40px] px-2">
-        <span className="font-display font-semibold text-[14px] text-foreground tabular-nums">
-          {servings}
+      <div className="flex justify-center items-center min-w-[80px] px-2">
+        <span className="font-display font-semibold text-[13px] text-foreground tabular-nums">
+          {servings} {servings === 1 ? "serving" : "servings"}
         </span>
       </div>
       <button
@@ -154,7 +154,7 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
         </div>
 
         <div className={cn(EYEBROW_BASE, "text-muted-foreground")}>
-          The way I make it
+          From Ah Mah&apos;s Kitchen
         </div>
 
         <div className="flex-1" />
@@ -165,12 +165,14 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
           </div>
         )}
 
-        <ServingsStepper
-          servings={servings}
-          baseServings={recipe.baseServings}
-          onDecrement={() => setServings((s) => Math.max(1, s - 1))}
-          onIncrement={() => setServings((s) => Math.min(12, s + 1))}
-        />
+        <div className="flex items-center gap-2">
+          <ServingsStepper
+            servings={servings}
+            baseServings={recipe.baseServings}
+            onDecrement={() => setServings((s) => Math.max(1, s - 1))}
+            onIncrement={() => setServings((s) => Math.min(12, s + 1))}
+          />
+        </div>
       </div>
 
       {/* Title */}
