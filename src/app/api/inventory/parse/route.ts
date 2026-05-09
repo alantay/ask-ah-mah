@@ -1,5 +1,7 @@
 import { addInventoryItem } from "@/lib/inventory/Inventory";
 import { AddInventoryItemSchema } from "@/lib/inventory/schemas";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { NextRequest, NextResponse } from "next/server";
@@ -11,12 +13,17 @@ const ParseSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const { text, userId } = await req.json();
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    const { text, userId: clientUserId } = await req.json();
+    const userId = session?.user?.id || clientUserId;
 
     if (!userId) {
       return NextResponse.json(
         { error: "userId is required" },
-        { status: 400 },
+        { status: 401 },
       );
     }
     if (!text || typeof text !== "string" || text.trim().length === 0) {

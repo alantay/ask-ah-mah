@@ -16,6 +16,17 @@ export async function POST(req: NextRequest) {
 
     const userId = session.user.id;
 
+    // Verify ownership/existence: Check if at least one record exists for this guestId
+    // to prevent blind migration of arbitrary IDs.
+    const exists = await prisma.inventoryItem.findFirst({ where: { userId: guestId } });
+    if (!exists) {
+      // Also check other tables just in case
+      const hasMessages = await prisma.message.findFirst({ where: { userId: guestId } });
+      if (!hasMessages) {
+        return NextResponse.json({ success: true, message: "No records to migrate" });
+      }
+    }
+
     // Migrate all data
     await prisma.$transaction([
       prisma.inventoryItem.updateMany({

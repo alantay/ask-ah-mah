@@ -28,24 +28,22 @@ const RECIPE: RecipeLetterProps['recipe'] = {
 };
 
 describe('ServingsStepper inside RecipeLetter', () => {
-  it('shows the initial serving count as a bare number', () => {
+  it('shows the initial serving count with "servings" label', () => {
     render(<RecipeLetter recipe={RECIPE} />);
     const stepper = screen.getByLabelText('Decrease servings').closest('.inline-flex') as HTMLElement;
-    expect(within(stepper).getByText('2')).toBeInTheDocument();
+    expect(within(stepper).getByText('2 servings')).toBeInTheDocument();
   });
 
-  it('does not render the word "servings" or "serving" in the stepper', () => {
+  it('renders the word "servings" or "serving" in the stepper', () => {
     const { container } = render(<RecipeLetter recipe={RECIPE} />);
-    // Check the stepper control area — look for the inline-flex stepper wrapper
     const stepperWrapper = container.querySelector('.inline-flex.items-stretch');
     expect(stepperWrapper).not.toBeNull();
-    expect(stepperWrapper!.textContent).not.toMatch(/servings?/i);
+    expect(stepperWrapper!.textContent).toMatch(/servings?/i);
   });
 
   it('does not render a ratio or "from" line at any count', () => {
     render(<RecipeLetter recipe={RECIPE} />);
     expect(screen.queryByText(/from/)).toBeNull();
-    // Increment to trigger any conditional ratio rendering
     fireEvent.click(screen.getByLabelText('Increase servings'));
     expect(screen.queryByText(/from/)).toBeNull();
     expect(screen.queryByText(/×/)).toBeNull();
@@ -69,14 +67,14 @@ describe('ServingsStepper inside RecipeLetter', () => {
     render(<RecipeLetter recipe={RECIPE} />);
     const stepper = screen.getByLabelText('Increase servings').closest('.inline-flex') as HTMLElement;
     fireEvent.click(screen.getByLabelText('Increase servings'));
-    expect(within(stepper).getByText('3')).toBeInTheDocument();
+    expect(within(stepper).getByText('3 servings')).toBeInTheDocument();
   });
 
   it('clicking decrement updates the displayed count', () => {
     render(<RecipeLetter recipe={RECIPE} />);
     const stepper = screen.getByLabelText('Decrease servings').closest('.inline-flex') as HTMLElement;
     fireEvent.click(screen.getByLabelText('Decrease servings'));
-    expect(within(stepper).getByText('1')).toBeInTheDocument();
+    expect(within(stepper).getByText('1 serving')).toBeInTheDocument();
   });
 });
 

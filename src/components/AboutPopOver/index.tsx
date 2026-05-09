@@ -5,6 +5,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useSessionContext } from "@/contexts/SessionContext";
 import { toast } from "sonner";
 
 interface InfoPopoverProps {

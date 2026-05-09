@@ -91,9 +91,6 @@ const Inventory = ({ onClose }: { onClose?: () => void }) => {
   if (error) return <div>Error: {error.message}</div>;
 
   const { kitchenwareInventory, ingredientInventory } = data || {};
-  const ingredientsSorted = ingredientInventory?.sort((a, b) =>
-    a.name.localeCompare(b.name)
-  );
   const kitchenwareSorted = kitchenwareInventory?.sort((a, b) =>
     a.name.localeCompare(b.name)
   );

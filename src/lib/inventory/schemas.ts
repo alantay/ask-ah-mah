@@ -8,7 +8,6 @@ export const InventoryItemSchema = z.object({
   type: z.enum(["ingredient", "kitchenware"]),
   category: z.enum(["Protein", "Vegetable", "Condiment", "Misc"]).default("Misc"),
   quantity: z.number().positive().optional(),
-...
   unit: z
     .enum([
       // Weight

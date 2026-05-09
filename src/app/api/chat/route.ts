@@ -9,6 +9,8 @@ import {
 } from "@/lib/inventory/schemas";
 import { GateSchema } from "@/lib/recipes/schemas";
 import { getMessages } from "@/lib/messages";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 import { openai } from "@ai-sdk/openai";
 import {
   convertToModelMessages,
@@ -26,13 +28,27 @@ const CONTEXT_WINDOW = 15; // ai can only remember 15 messages for context
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
     const model = openai("gpt-4.1-mini");
     const {
       messages,
-      userId,
+      userId: clientUserId,
       conversationId,
     }: { messages: UIMessage[]; userId: string; conversationId: string } =
       await req.json();
+
+    const userId = session?.user?.id || clientUserId;
+
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ error: "User identity required" }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     const previousMessages = await getMessages(conversationId);
 
     const uiMessages = previousMessages.slice(-CONTEXT_WINDOW).map((msg) => ({
