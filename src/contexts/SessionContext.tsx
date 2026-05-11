@@ -5,19 +5,16 @@ import { createContext, ReactNode, useContext } from "react";
 interface SessionContextType {
   userId: string | null;
   isLoading: boolean;
+  isAuthenticated: boolean;
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
 
 export function SessionProvider({ children }: { children: ReactNode }) {
-  const { userId, isLoading } = useSession();
-
-  // if (isLoading) {
-  //   return <div>Loading session...</div>; // Or a spinner
-  // }
+  const { userId, isLoading, isAuthenticated } = useSession();
 
   return (
-    <SessionContext.Provider value={{ userId, isLoading }}>
+    <SessionContext.Provider value={{ userId, isLoading, isAuthenticated }}>
       {children}
     </SessionContext.Provider>
   );
