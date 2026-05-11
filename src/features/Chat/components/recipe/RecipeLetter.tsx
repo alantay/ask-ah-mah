@@ -154,7 +154,7 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
         </div>
 
         <div className={cn(EYEBROW_BASE, "text-muted-foreground")}>
-          From Ah Mah's Kitchen
+          From Ah Mah&apos;s Kitchen
         </div>
 
         <div className="flex-1" />
