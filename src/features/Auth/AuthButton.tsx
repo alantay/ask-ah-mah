@@ -12,8 +12,7 @@ import { SignInDialog } from "./SignInDialog";
 import { toast } from "sonner";
 
 export function AuthButton() {
-  const { isAuthenticated } = useSessionContext();
-  const { data: session } = authClient.useSession();
+  const { isAuthenticated, user } = useSessionContext();
 
   const handleSignOut = async () => {
     await authClient.signOut();
@@ -25,11 +24,7 @@ export function AuthButton() {
     return <SignInDialog />;
   }
 
-  const initial = (
-    session?.user?.name?.[0] ??
-    session?.user?.email?.[0] ??
-    "?"
-  ).toUpperCase();
+  const initial = (user?.name?.[0] ?? user?.email?.[0] ?? "?").toUpperCase();
 
   return (
     <Popover>

@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 export default function useSession() {
   const { data: session, isPending: authPending } = authClient.useSession();
   const [guestId, setGuestId] = useState<string | null>(null);
-  const [guestLoading, setGuestLoading] = useState(true);
+  const [guestLoading, setGuestLoading] = useState(!session?.user);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -32,6 +32,7 @@ export default function useSession() {
   const isAuthenticated = !!session?.user;
   const userId = isAuthenticated ? session!.user.id : guestId;
   const isLoading = authPending || guestLoading;
+  const user = session?.user ?? null;
 
-  return { userId, isLoading, isAuthenticated };
+  return { userId, isLoading, isAuthenticated, user };
 }

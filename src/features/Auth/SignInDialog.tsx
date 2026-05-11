@@ -22,8 +22,11 @@ export function SignInDialog() {
 
   const handleGoogle = async () => {
     setLoading("google");
-    await authClient.signIn.social({ provider: "google", callbackURL: "/" });
-    setLoading(null);
+    try {
+      await authClient.signIn.social({ provider: "google", callbackURL: "/" });
+    } finally {
+      setLoading(null);
+    }
   };
 
   const handleMagicLink = async () => {

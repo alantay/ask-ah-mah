@@ -1,5 +1,5 @@
 import AboutPopOver from "@/components/AboutPopOver";
-import { AuthButton } from "@/features/Auth/AuthButton";
+import { AuthButton } from "@/features/Auth";
 import { Toaster } from "@/components/ui/sonner";
 import { SessionProvider } from "@/contexts/SessionContext";
 import type { Metadata } from "next";
