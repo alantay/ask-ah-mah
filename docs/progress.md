@@ -75,6 +75,18 @@ The persistent-kitchen MVP. Highlights:
 - [x] Each sub-group: label + dotted-line spacer + count, then the badges. Empty categories hidden.
 - [x] Items with null category (pre-existing rows) fall under Misc.
 
+### Better Auth — Setup & Login UI (May 2026)
+- [x] `better-auth` installed with Prisma adapter (`postgresql` provider).
+- [x] Google OAuth and Email (Magic Link via Resend) providers configured in `src/lib/auth.ts`.
+- [x] `src/lib/auth-client.ts` — client singleton (`better-auth/react`) with `magicLinkClient` plugin.
+- [x] `GET|POST /api/auth/[...all]` — Better Auth Next.js handler via `toNextJsHandler`.
+- [x] `useSession` bridges Better Auth session with localStorage guest fallback; authenticated `userId` = `session.user.id`; exposes `isAuthenticated` and `user`.
+- [x] `SessionContext` gains `isAuthenticated: boolean` and `user` fields.
+- [x] `SignInDialog` — modal with Google OAuth button + email magic link input; resets state on close; `try/finally` on Google redirect.
+- [x] `AuthButton` — shows "Sign in" for guests (opens `SignInDialog`); shows avatar initial + "Sign out" dropdown when authenticated.
+- [x] `AuthButton` placed beside `AboutPopOver` in the global nav (both in a flex container).
+- [x] Auth is purely additive — guests continue to work unchanged. Authenticated users start with a fresh kitchen (guest data migration is #83).
+
 ### Decrement-on-cook
 - [ ] Add `Cooked This` button in `RecipeDisplay` for saved recipes.
 - [ ] Add explicit confirmation flow for inferred "I cooked X" messages (`yes / no / edit`).

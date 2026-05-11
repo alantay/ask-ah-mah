@@ -1,16 +1,15 @@
 "use client";
+import { authClient } from "@/lib/auth-client";
 import { generateShortId } from "@/lib/utils/index";
 import { useEffect, useState } from "react";
 
 export default function useSession() {
-  const [userId, setUserId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: session, isPending: authPending } = authClient.useSession();
+  const [guestId, setGuestId] = useState<string | null>(null);
+  const [guestLoading, setGuestLoading] = useState(!session?.user);
 
   useEffect(() => {
-    // Check if we're in the browser
-    if (typeof window === "undefined") {
-      return;
-    }
+    if (typeof window === "undefined") return;
 
     let sessionId = localStorage.getItem("ask-ah-mah-session");
     const isNew = !sessionId;
@@ -18,8 +17,8 @@ export default function useSession() {
       sessionId = generateShortId();
       localStorage.setItem("ask-ah-mah-session", sessionId);
     }
-    setUserId(sessionId);
-    setIsLoading(false);
+    setGuestId(sessionId);
+    setGuestLoading(false);
 
     if (isNew) {
       fetch("/api/inventory/seed", {
@@ -30,5 +29,10 @@ export default function useSession() {
     }
   }, []);
 
-  return { userId, isLoading };
+  const isAuthenticated = !!session?.user;
+  const userId = isAuthenticated ? session!.user.id : guestId;
+  const isLoading = authPending || guestLoading;
+  const user = session?.user ?? null;
+
+  return { userId, isLoading, isAuthenticated, user };
 }
