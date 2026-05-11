@@ -1,4 +1,5 @@
 import AboutPopOver from "@/components/AboutPopOver";
+import { AuthButton } from "@/features/Auth/AuthButton";
 import { Toaster } from "@/components/ui/sonner";
 import { SessionProvider } from "@/contexts/SessionContext";
 import type { Metadata } from "next";
@@ -126,7 +127,10 @@ export default function RootLayout({
               </div>
               Ask Ah Mah
             </h1>
-            <AboutPopOver className="hidden lg:flex" />
+            <div className="flex items-center gap-2">
+              <AboutPopOver className="hidden lg:flex" />
+              <AuthButton />
+            </div>
           </div>
           {children}
         </SessionProvider>
