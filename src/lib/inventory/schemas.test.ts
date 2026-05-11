@@ -1,6 +1,7 @@
 import {
   AddInventoryItemSchema,
   AddInventoryItemSchemaObj,
+  CategorySchema,
   ChatMessageSchema,
   GetInventoryResponseSchema,
   InventoryActionSchema,
@@ -9,16 +10,17 @@ import {
 } from "./schemas";
 
 describe("Inventory Schemas", () => {
+  const validItem = {
+    id: "item-123",
+    name: "eggs",
+    type: "ingredient" as const,
+    quantity: 6,
+    unit: "pieces" as const,
+    dateAdded: "2024-01-01T10:00:00.000Z",
+    lastUpdated: "2024-01-01T10:00:00.000Z",
+  };
+
   describe("InventoryItemSchema", () => {
-    const validItem = {
-      id: "item-123",
-      name: "eggs",
-      type: "ingredient" as const,
-      quantity: 6,
-      unit: "pieces" as const,
-      dateAdded: "2024-01-01T10:00:00.000Z",
-      lastUpdated: "2024-01-01T10:00:00.000Z",
-    };
 
     it("should validate a complete valid inventory item", () => {
       expect(() => InventoryItemSchema.parse(validItem)).not.toThrow();
@@ -77,6 +79,45 @@ describe("Inventory Schemas", () => {
       });
     });
 
+    it("should accept a valid category", () => {
+      const withCategory = { ...validItem, category: "Protein" as const };
+      expect(() => InventoryItemSchema.parse(withCategory)).not.toThrow();
+    });
+
+    it("should accept all valid category values", () => {
+      const categories = ["Protein", "Carbs", "Vegetable", "Condiments", "Misc"] as const;
+      categories.forEach((category) => {
+        expect(() => InventoryItemSchema.parse({ ...validItem, category })).not.toThrow();
+      });
+    });
+
+    it("should reject an invalid category string", () => {
+      expect(() =>
+        InventoryItemSchema.parse({ ...validItem, category: "Fruit" })
+      ).toThrow();
+    });
+
+    it("should accept item without category (optional)", () => {
+      const { ...itemWithoutCategory } = validItem;
+      expect(() => InventoryItemSchema.parse(itemWithoutCategory)).not.toThrow();
+    });
+  });
+
+  describe("CategorySchema", () => {
+    it("should accept all five valid values", () => {
+      ["Protein", "Carbs", "Vegetable", "Condiments", "Misc"].forEach((v) => {
+        expect(() => CategorySchema.parse(v)).not.toThrow();
+      });
+    });
+
+    it("should reject unknown values", () => {
+      ["protein", "PROTEIN", "Fruit", "Dairy", ""].forEach((v) => {
+        expect(() => CategorySchema.parse(v)).toThrow();
+      });
+    });
+  });
+
+  describe("InventoryItemSchema additional", () => {
     it("should reject invalid datetime strings", () => {
       const invalidItems = [
         { ...validItem, dateAdded: "invalid-date" },

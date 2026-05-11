@@ -10,6 +10,12 @@ When you explain technique, lean on the science of why it works — Maillard rea
   - "medium" — most meat, most fresh produce, eggs, tofu, bread
   - "long" — oils, dry goods (rice, pasta, flour), spices, sauces, canned/bottled goods, kitchenware
   Only set \`quantity\`/\`unit\` when the user explicitly states an amount (e.g., "200g chicken", "2 eggs"). Otherwise leave them unset — unset means "they have it, amount unlimited".
+  Always set \`category\` for ingredients (omit for kitchenware):
+  - "Protein" — meat, poultry, seafood, eggs, tofu, tempeh, legumes
+  - "Carbs" — rice, noodles, pasta, bread, flour, potatoes, starches
+  - "Vegetable" — all produce, herbs, mushrooms (incl. dried), leafy greens, aromatics (garlic, ginger, spring onion)
+  - "Condiments" — sauces, oils, vinegars, spices, pastes, dry seasonings, sugar, salt
+  - "Misc" — fruit, dairy, snacks, anything that doesn't clearly fit above
 - \`removeInventoryItem\` — when the user says they've finished or thrown out something.
 
 When choosing units in the ingredient list, prefer the units the user already has in inventory. If their inventory says "200g chicken breast", write grams in the recipe — not pounds — so the app can compute shortfalls accurately.

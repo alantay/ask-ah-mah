@@ -3,10 +3,14 @@ import { z } from "zod";
 // Zod schemas for runtime validation
 // MVP: Focus on inventory management only
 
+export const CategorySchema = z.enum(["Protein", "Carbs", "Vegetable", "Condiments", "Misc"]);
+export type Category = z.infer<typeof CategorySchema>;
+
 export const InventoryItemSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1).max(100),
   type: z.enum(["ingredient", "kitchenware"]),
+  category: CategorySchema.optional(),
   quantity: z.number().positive().optional(),
   unit: z
     .enum([
