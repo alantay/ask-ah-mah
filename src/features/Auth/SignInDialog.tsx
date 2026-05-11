@@ -38,7 +38,7 @@ export function SignInDialog() {
     });
     setLoading(null);
     if (error) {
-      toast.error("Couldn't send magic link — try again");
+      toast.error("Couldn't send the link — try again");
     } else {
       setEmailSent(true);
     }
@@ -69,7 +69,7 @@ export function SignInDialog() {
         </DialogHeader>
         {emailSent ? (
           <p className="text-sm text-muted-foreground">
-            Magic link sent to <strong>{email}</strong> — check your inbox.
+            Check your email — we sent a sign-in link to <strong>{email}</strong>.
           </p>
         ) : (
           <div className="flex flex-col gap-3">
@@ -101,7 +101,7 @@ export function SignInDialog() {
               disabled={!!loading || !email.trim()}
               className="w-full"
             >
-              {loading === "email" ? "Sending…" : "Send magic link"}
+              {loading === "email" ? "Sending…" : "Email me a sign-in link"}
             </Button>
           </div>
         )}
