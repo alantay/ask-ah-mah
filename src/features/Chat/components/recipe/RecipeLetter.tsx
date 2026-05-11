@@ -154,7 +154,7 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
         </div>
 
         <div className={cn(EYEBROW_BASE, "text-muted-foreground")}>
-          The way I make it
+          From Ah Mah&apos;s Kitchen
         </div>
 
         <div className="flex-1" />
@@ -165,12 +165,17 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
           </div>
         )}
 
-        <ServingsStepper
-          servings={servings}
-          baseServings={recipe.baseServings}
-          onDecrement={() => setServings((s) => Math.max(1, s - 1))}
-          onIncrement={() => setServings((s) => Math.min(12, s + 1))}
-        />
+        <div className="flex flex-col items-end gap-0.5">
+          <span className="font-sans text-[9.5px] font-bold tracking-[0.16em] uppercase text-ink-faint">
+            Servings
+          </span>
+          <ServingsStepper
+            servings={servings}
+            baseServings={recipe.baseServings}
+            onDecrement={() => setServings((s) => Math.max(1, s - 1))}
+            onIncrement={() => setServings((s) => Math.min(12, s + 1))}
+          />
+        </div>
       </div>
 
       {/* Title */}
