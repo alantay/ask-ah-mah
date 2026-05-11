@@ -31,7 +31,7 @@ export default function RecipeCard({ recipe, onSelect, onDelete }: RecipeCardPro
     >
       {/* Delete button — revealed on hover */}
       <button
-        className="absolute top-2 right-2 z-20 p-1.5 rounded-md bg-card border border-border opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-muted-foreground hover:text-foreground"
+        className="absolute top-2 right-2 z-20 p-1.5 rounded-md bg-card border border-border opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-muted-foreground hover:bg-muted/60"
         onClick={(e) => { e.stopPropagation(); onDelete(recipe.id); }}
         aria-label={`Delete ${recipe.name}`}
       >
