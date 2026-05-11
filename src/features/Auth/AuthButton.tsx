@@ -15,14 +15,9 @@ export function AuthButton() {
   const { isAuthenticated, user } = useSessionContext();
 
   const handleSignOut = async () => {
-    try {
-      await authClient.signOut();
-      toast.success("Signed out");
-      window.location.reload();
-    } catch (error) {
-      console.error("Sign out failed:", error);
-      toast.error("Failed to sign out. Please try again.");
-    }
+    await authClient.signOut();
+    toast.success("Signed out");
+    window.location.reload();
   };
 
   if (!isAuthenticated) {
