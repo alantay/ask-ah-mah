@@ -6,6 +6,7 @@ export const RecipeIngredientSchema = z.object({
   category: CategorySchema,
   amount: z.number().positive().optional(),
   unit: z.string().optional(),
+  note: z.string().optional(),
 });
 
 export type RecipeIngredient = z.infer<typeof RecipeIngredientSchema>;

@@ -40,6 +40,7 @@ const defaultProcessed = {
     category: "Protein" | "Carbs" | "Vegetable" | "Condiments" | "Spice" | "Misc";
     amount?: number;
     unit?: string;
+    note?: string;
   }[],
   description: "",
   totalTimeMinutes: undefined as number | undefined,
@@ -200,6 +201,88 @@ describe("Recipe API Routes", () => {
   });
 
   describe("POST /api/recipe", () => {
+    it("should preserve ingredient category and note for structured recipe payloads", async () => {
+      const savedRecipe = {
+        id: "recipe-structured",
+        userId: "user-123",
+        name: "Chicken Rub",
+        instructions: "Dry spice mix for chicken.",
+        tags: ["quick"],
+        recipeId: "chicken-rub",
+        baseServings: 2,
+        ingredients: [
+          {
+            name: "paprika",
+            category: "Spice" as const,
+            amount: 1,
+            unit: "tbsp",
+            note: "smoked",
+          },
+        ],
+        steps: [{ title: "Mix", body: "Combine all ingredients." }],
+        description: "Dry spice mix for chicken.",
+        totalTimeMinutes: 5,
+        createdAt: null,
+      };
+      mockedSaveRecipe.mockResolvedValue(savedRecipe);
+
+      const requestBody = {
+        userId: "user-123",
+        recipeId: "chicken-rub",
+        recipe: {
+          title: "Chicken Rub",
+          description: "Dry spice mix for chicken.",
+          totalTimeMinutes: 5,
+          baseServings: 2,
+          ingredients: [
+            {
+              name: "paprika",
+              category: "Spice",
+              amount: "1",
+              unit: "tbsp",
+              note: "smoked",
+            },
+          ],
+          steps: [{ title: "Mix", body: "Combine all ingredients." }],
+          tags: ["quick"],
+        },
+      };
+
+      const request = createMockRequest("http://localhost:3000/api/recipe", {
+        method: "POST",
+        body: JSON.stringify(requestBody),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.ingredients[0].category).toBe("Spice");
+      expect(data.ingredients[0].note).toBe("smoked");
+      expect(mockedSaveRecipe).toHaveBeenCalledWith({
+        userId: "user-123",
+        name: "Chicken Rub",
+        instructions: "Dry spice mix for chicken.",
+        tags: ["quick"],
+        recipeId: "chicken-rub",
+        baseServings: 2,
+        ingredients: [
+          {
+            name: "paprika",
+            category: "Spice",
+            amount: 1,
+            unit: "tbsp",
+            note: "smoked",
+          },
+        ],
+        steps: [{ title: "Mix", body: "Combine all ingredients." }],
+        description: "Dry spice mix for chicken.",
+        totalTimeMinutes: 5,
+      });
+      expect(mockedProcessRecipe).not.toHaveBeenCalled();
+    });
+
     it("should save a recipe successfully", async () => {
       const savedRecipe = {
         id: "recipe-new",

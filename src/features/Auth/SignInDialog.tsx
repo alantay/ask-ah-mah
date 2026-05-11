@@ -10,18 +10,34 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { authClient } from "@/lib/auth-client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 export function SignInDialog() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const handleGoogle = async () => {
     setLoading(true);
     try {
       await authClient.signIn.social({ provider: "google", callbackURL: "/" });
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to sign in. Please try again.";
+      toast.error(message);
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 

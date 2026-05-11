@@ -1,5 +1,6 @@
 import { deleteRecipe, getRecipes, saveRecipe } from "@/lib/recipes";
 import { processRecipe } from "@/lib/recipes/recipeProcessor";
+import { RecipeIngredientModel } from "@/lib/recipes/schemas";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -30,12 +31,13 @@ export async function POST(req: NextRequest) {
       recipeId,
       baseServings: r.baseServings,
       ingredients: r.ingredients.map(
-        (ing: { name: string; category: string; amount?: string; unit?: string; note?: string }) => ({
+        (ing: RecipeIngredientModel) => ({
           name: ing.name,
           category: ing.category,
           // Convert string amount to number for storage (legacy RecipeIngredient type uses number)
           amount: ing.amount ? parseFloat(ing.amount) || undefined : undefined,
           unit: ing.unit,
+          note: ing.note,
         })
       ),
       steps: r.steps,

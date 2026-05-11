@@ -25,12 +25,18 @@ export default function useSession() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: sessionId }),
+      }).then((res) => {
+        if (!res.ok) {
+          console.error("Failed to seed inventory:", res.status, res.statusText);
+        }
+      }).catch((error) => {
+        console.error("Failed to seed inventory:", error);
       });
     }
   }, []);
 
   const isAuthenticated = !!session?.user;
-  const userId = isAuthenticated ? session!.user.id : guestId;
+  const userId = session?.user?.id ?? guestId;
   const isLoading = authPending || guestLoading;
   const user = session?.user ?? null;
 
