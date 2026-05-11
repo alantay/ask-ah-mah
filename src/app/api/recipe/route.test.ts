@@ -35,7 +35,12 @@ const mockedProcessRecipe = jest.mocked(processRecipe);
 const defaultProcessed = {
   tags: [] as string[],
   baseServings: 2,
-  ingredients: [] as { name: string; amount?: number; unit?: string }[],
+  ingredients: [] as {
+    name: string;
+    category: "Protein" | "Carbs" | "Vegetable" | "Condiments" | "Spice" | "Misc";
+    amount?: number;
+    unit?: string;
+  }[],
   description: "",
   totalTimeMinutes: undefined as number | undefined,
 };

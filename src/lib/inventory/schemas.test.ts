@@ -85,7 +85,7 @@ describe("Inventory Schemas", () => {
     });
 
     it("should accept all valid category values", () => {
-      const categories = ["Protein", "Carbs", "Vegetable", "Condiments", "Misc"] as const;
+      const categories = ["Protein", "Carbs", "Vegetable", "Condiments", "Spice", "Misc"] as const;
       categories.forEach((category) => {
         expect(() => InventoryItemSchema.parse({ ...validItem, category })).not.toThrow();
       });
@@ -104,8 +104,8 @@ describe("Inventory Schemas", () => {
   });
 
   describe("CategorySchema", () => {
-    it("should accept all five valid values", () => {
-      ["Protein", "Carbs", "Vegetable", "Condiments", "Misc"].forEach((v) => {
+    it("should accept all valid values", () => {
+      ["Protein", "Carbs", "Vegetable", "Condiments", "Spice", "Misc"].forEach((v) => {
         expect(() => CategorySchema.parse(v)).not.toThrow();
       });
     });

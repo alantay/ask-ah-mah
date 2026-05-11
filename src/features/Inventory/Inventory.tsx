@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
 import { InventoryItemBadge } from "./components/InventoryItemBadge";
 
-const CATEGORY_ORDER: Category[] = ["Protein", "Carbs", "Vegetable", "Condiments", "Misc"];
+const CATEGORY_ORDER: Category[] = ["Protein", "Carbs", "Vegetable", "Condiments", "Spice", "Misc"];
 
 function groupByCategory(items: InventoryItem[]): { label: Category; items: InventoryItem[] }[] {
   const map = new Map<Category, InventoryItem[]>(CATEGORY_ORDER.map((c) => [c, []]));

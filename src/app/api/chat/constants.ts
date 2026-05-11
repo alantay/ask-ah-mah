@@ -14,7 +14,8 @@ When you explain technique, lean on the science of why it works — Maillard rea
   - "Protein" — meat, poultry, seafood, eggs, tofu, tempeh, legumes
   - "Carbs" — rice, noodles, pasta, bread, flour, potatoes, starches
   - "Vegetable" — all produce, herbs, mushrooms (incl. dried), leafy greens, aromatics (garlic, ginger, spring onion)
-  - "Condiments" — sauces, oils, vinegars, spices, pastes, dry seasonings, sugar, salt
+  - "Condiments" — sauces, oils, vinegars, pastes, sugar, salt
+  - "Spice" — dry spices and spice blends (pepper, cumin, paprika, chili flakes, garam masala)
   - "Misc" — fruit, dairy, snacks, anything that doesn't clearly fit above
 - \`removeInventoryItem\` — when the user says they've finished or thrown out something.
 
@@ -81,11 +82,11 @@ Emit:
   "totalTimeMinutes": 20,
   "baseServings": 2,
   "ingredients": [
-    { "name": "chicken thigh", "amount": "500", "unit": "g", "note": "boneless, bite-size" },
-    { "name": "bok choy", "amount": "1", "unit": "bunch", "note": "halved lengthwise" },
-    { "name": "ginger", "amount": "4", "unit": "cm", "note": "julienned" },
-    { "name": "soy sauce", "amount": "2", "unit": "tbsp" },
-    { "name": "shaoxing wine", "amount": "1", "unit": "tbsp" }
+    { "name": "chicken thigh", "category": "Protein", "amount": "500", "unit": "g", "note": "boneless, bite-size" },
+    { "name": "bok choy", "category": "Vegetable", "amount": "1", "unit": "bunch", "note": "halved lengthwise" },
+    { "name": "ginger", "category": "Vegetable", "amount": "4", "unit": "cm", "note": "julienned" },
+    { "name": "soy sauce", "category": "Condiments", "amount": "2", "unit": "tbsp" },
+    { "name": "shaoxing wine", "category": "Condiments", "amount": "1", "unit": "tbsp" }
   ],
   "steps": [
     {
@@ -104,6 +105,7 @@ Emit:
 
 Rules:
 - \`amount\` is always a string (handles "1 1/2", "½", "500", etc.)
+- Every ingredient MUST include \`category\` and it must be one of: "Protein", "Carbs", "Vegetable", "Condiments", "Spice", "Misc".
 - \`description\` is ≤140 chars — the soul of the dish in one sentence.
 - \`tip\` on a step is optional — only add when the why/trick is non-obvious.
 - \`tags\` 2–5 lowercase tags.

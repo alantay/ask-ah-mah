@@ -1,7 +1,9 @@
 import { z } from "zod";
+import { CategorySchema } from "@/lib/inventory/schemas";
 
 export const RecipeIngredientSchema = z.object({
   name: z.string().min(1),
+  category: CategorySchema,
   amount: z.number().positive().optional(),
   unit: z.string().optional(),
 });
@@ -19,6 +21,7 @@ export type RecipeStep = z.infer<typeof RecipeStepSchema>;
 // Ingredient as emitted by the model (amounts as strings for scaling)
 export const RecipeIngredientModelSchema = z.object({
   name: z.string(),
+  category: CategorySchema,
   amount: z.string().optional(),   // string so "1 1/2" works
   unit: z.string().optional(),
   note: z.string().optional(),

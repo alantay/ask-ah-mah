@@ -30,8 +30,9 @@ export async function POST(req: NextRequest) {
       recipeId,
       baseServings: r.baseServings,
       ingredients: r.ingredients.map(
-        (ing: { name: string; amount?: string; unit?: string; note?: string }) => ({
+        (ing: { name: string; category: string; amount?: string; unit?: string; note?: string }) => ({
           name: ing.name,
+          category: ing.category,
           // Convert string amount to number for storage (legacy RecipeIngredient type uses number)
           amount: ing.amount ? parseFloat(ing.amount) || undefined : undefined,
           unit: ing.unit,
