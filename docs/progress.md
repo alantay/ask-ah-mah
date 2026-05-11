@@ -61,6 +61,15 @@ The persistent-kitchen MVP. Highlights:
 - [x] Unit tests added for `parseBlocks.ts` (14 cases including regression guard for removed gate path).
 - [x] `MessageList.test.tsx` extended with 4 cases covering tool-part rendering and absence of legacy gate path.
 
+### Organised Pantry — Phase 1: Category schema (May 2026)
+- [x] `category String?` column added to `InventoryItem` (`prisma/schema.prisma`); DB synced via `prisma db push`.
+- [x] `CategorySchema` (Protein | Carbs | Vegetable | Condiments | Misc) added to `src/lib/inventory/schemas.ts`; flows through `AddInventoryItemSchema` automatically.
+- [x] `addInventoryItem` upsert (`Inventory.ts`) persists `category` on both create and update paths.
+- [x] `/api/inventory/parse` prompt updated with category rules — model assigns category to every ingredient it parses.
+- [x] `CHAT_SYSTEM_PROMPT` updated with matching category rules for the `addInventoryItem` tool call path.
+- [x] Schema tests extended: all five valid values accepted; invalid string rejected; category optional (kitchenware/null stays valid). (34 tests pass.)
+- Unblocks #81 (pantry drawer grouped headings UI).
+
 ### Decrement-on-cook
 - [ ] Add `Cooked This` button in `RecipeDisplay` for saved recipes.
 - [ ] Add explicit confirmation flow for inferred "I cooked X" messages (`yes / no / edit`).

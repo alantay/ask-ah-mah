@@ -12,6 +12,7 @@ model InventoryItem {
   id          String   @id @default(cuid())
   name        String
   type        String
+  category    String?
   quantity    Int?
   unit        String?
   shelfLife   String   @default("medium")

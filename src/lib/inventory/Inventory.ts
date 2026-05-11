@@ -40,6 +40,7 @@ export async function addInventoryItem(
         quantity: item.quantity ?? null,
         unit: item.unit ?? null,
         shelfLife: item.shelfLife,
+        category: item.category ?? null,
         lastUpdated: nowIso,
       },
       create: {
@@ -48,6 +49,7 @@ export async function addInventoryItem(
         quantity: item.quantity ?? null,
         unit: item.unit ?? null,
         shelfLife: item.shelfLife,
+        category: item.category ?? null,
         dateAdded: nowIso,
         lastUpdated: nowIso,
         userId,

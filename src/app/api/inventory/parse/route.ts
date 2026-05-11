@@ -37,6 +37,12 @@ RULES:
   - "medium" — most meat, most fresh produce, eggs, tofu, bread
   - "long" — oils, dry goods (rice, pasta, flour), spices, sauces, canned/bottled goods, ALL kitchenware
 - type rules: kitchenware = pots, pans, utensils, appliances. Everything edible = ingredient.
+- category rules (REQUIRED for type=ingredient, OMIT for type=kitchenware):
+  - "Protein" — meat, poultry, seafood, eggs, tofu, tempeh, legumes
+  - "Carbs" — rice, noodles, pasta, bread, flour, potatoes, starches
+  - "Vegetable" — all produce, herbs, mushrooms (incl. dried), leafy greens, aromatics (garlic, ginger, spring onion)
+  - "Condiments" — sauces, oils, vinegars, spices, pastes, dry seasonings, sugar, salt
+  - "Misc" — fruit, dairy, snacks, anything that doesn't clearly fit above
 - Normalize names to singular, title case where natural ("chicken breasts" → "Chicken breast", "bok choy" → "Bok choy").
 - unit MUST come from this allowlist if used: g, kg, oz, lb, ml, l, cup, tbsp, tsp, piece, pieces, clove, cloves, bottle, bottles, can, cans, pack, packs, bunch, bunches, pinch, dash, slice, slices.
 
