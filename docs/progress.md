@@ -70,6 +70,11 @@ The persistent-kitchen MVP. Highlights:
 - [x] Schema tests extended: all five valid values accepted; invalid string rejected; category optional (kitchenware/null stays valid). (34 tests pass.)
 - Unblocks #81 (pantry drawer grouped headings UI).
 
+### Organised Pantry — Phase 2: Category headings UI (May 2026)
+- [x] Ingredients section in `Inventory.tsx` now renders category sub-groups (Protein / Carbs / Vegetable / Condiments / Misc) instead of a flat badge list.
+- [x] Each sub-group: label + dotted-line spacer + count, then the badges. Empty categories hidden.
+- [x] Items with null category (pre-existing rows) fall under Misc.
+
 ### Decrement-on-cook
 - [ ] Add `Cooked This` button in `RecipeDisplay` for saved recipes.
 - [ ] Add explicit confirmation flow for inferred "I cooked X" messages (`yes / no / edit`).

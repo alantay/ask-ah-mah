@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSessionContext } from "@/contexts/SessionContext";
 import {
+  Category,
   GetInventoryResponse,
   InventoryItem,
 } from "@/lib/inventory/schemas";
@@ -12,6 +13,19 @@ import { ReactNode, useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
 import { InventoryItemBadge } from "./components/InventoryItemBadge";
+
+const CATEGORY_ORDER: Category[] = ["Protein", "Carbs", "Vegetable", "Condiments", "Misc"];
+
+function groupByCategory(items: InventoryItem[]): { label: Category; items: InventoryItem[] }[] {
+  const map = new Map<Category, InventoryItem[]>(CATEGORY_ORDER.map((c) => [c, []]));
+  for (const item of items) {
+    const key: Category = (item.category as Category) ?? "Misc";
+    map.get(key)?.push(item);
+  }
+  return CATEGORY_ORDER.map((label) => ({ label, items: map.get(label)! })).filter(
+    (g) => g.items.length > 0,
+  );
+}
 
 const SectionLabel = ({ children, count }: { children: ReactNode; count?: number }) => (
   <div className="flex items-center justify-between border-b border-dashed border-border pb-2.5 mb-3">
@@ -170,7 +184,7 @@ const Inventory = ({ onClose }: { onClose?: () => void }) => {
         </Card>
       )}
 
-      {/* Ingredients card */}
+      {/* Ingredients card — grouped by category */}
       <section className="bg-card border border-border rounded-xl p-3.5 shadow-[0_1px_0_oklch(0.87_0.03_72),0_8px_18px_-16px_oklch(0.3_0.05_50/0.4)]">
         <SectionLabel count={ingredientsSorted?.length ?? 0}>Ingredients</SectionLabel>
         {isLoading && <p className="text-xs text-muted-foreground font-display italic">Looking in the pantry…</p>}
@@ -179,9 +193,24 @@ const Inventory = ({ onClose }: { onClose?: () => void }) => {
             Add what&rsquo;s in your fridge — Ah Mah understands &ldquo;a bit of ginger&rdquo;.
           </p>
         ) : (
-          <div className="flex flex-wrap gap-1.5">
-            {ingredientsSorted?.map((item: InventoryItem) => (
-              <InventoryItemBadge key={item.id} item={item} onRemove={removeItem} />
+          <div className="flex flex-col gap-3">
+            {groupByCategory(ingredientsSorted ?? []).map((group) => (
+              <div key={group.label}>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="font-sans text-[9.5px] font-bold tracking-[0.18em] uppercase text-ink-faint shrink-0">
+                    {group.label}
+                  </span>
+                  <span className="flex-1 border-t border-dotted border-border" />
+                  <span className="font-mono text-[10px] text-ink-faint tabular-nums shrink-0">
+                    {group.items.length}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {group.items.map((item) => (
+                    <InventoryItemBadge key={item.id} item={item} onRemove={removeItem} />
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         )}
