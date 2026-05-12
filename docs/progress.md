@@ -70,6 +70,15 @@ The persistent-kitchen MVP. Highlights:
 - [x] Schema tests extended: all five valid values accepted; invalid string rejected; category optional (kitchenware/null stays valid). (34 tests pass.)
 - Unblocks #81 (pantry drawer grouped headings UI).
 
+### Recipe ingredient category + NEED pill improvements (May 2026)
+- [x] `category` required on `RecipeIngredientSchema` and `RecipeIngredientModelSchema`; reuses `CategorySchema` from inventory module.
+- [x] System prompt instructs model to emit `category` per ingredient (one of six values).
+- [x] Spice category added to `CategorySchema` (#94).
+- [x] Token-overlap `ingredientMatches` replaces bidirectional substring match in both `RecipeLetter` and `pantryUtils.computePantry` — fixes "doubanjiang" class of false-NEED bugs.
+- [x] NEED pill is a clickable `<button>`; clicking POSTs to `/api/inventory`, revalidates SWR, shows success/error toast.
+- [x] `RecipeLetter.test.tsx` covers click-to-add POST body, toast feedback, SWR revalidation, in-flight disabled state.
+- **HITL pending:** `TRUNCATE recipes RESTART IDENTITY CASCADE;` — run before deploying to clear legacy rows without `category`.
+
 ### Organised Pantry — Phase 2: Category headings UI (May 2026)
 - [x] Ingredients section in `Inventory.tsx` now renders category sub-groups (Protein / Carbs / Vegetable / Condiments / Misc) instead of a flat badge list.
 - [x] Each sub-group: label + dotted-line spacer + count, then the badges. Empty categories hidden.

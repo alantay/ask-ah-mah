@@ -1,31 +1,67 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { RecipeLetter, RecipeLetterProps } from './RecipeLetter';
 
+const mockUseSessionContext = jest.fn(() => ({ userId: null as string | null }));
 jest.mock('@/contexts/SessionContext', () => ({
-  useSessionContext: () => ({ userId: null }),
+  useSessionContext: () => mockUseSessionContext(),
 }));
 
+const mockMutate = jest.fn();
+const mockUseSWR = jest.fn(() => ({ data: undefined as unknown }));
 jest.mock('swr', () => ({
   __esModule: true,
-  default: jest.fn(() => ({ data: undefined })),
+  default: (...args: unknown[]) => mockUseSWR(...args),
+  useSWRConfig: () => ({ mutate: mockMutate }),
 }));
 
 jest.mock('./ScaledNum', () => ({
   ScaledNum: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
 }));
 
+const mockToastSuccess = jest.fn();
+const mockToastError = jest.fn();
+jest.mock('sonner', () => ({
+  toast: {
+    success: (...args: unknown[]) => mockToastSuccess(...args),
+    error: (...args: unknown[]) => mockToastError(...args),
+  },
+}));
+
 const RECIPE: RecipeLetterProps['recipe'] = {
   title: 'Ginger Chicken',
   baseServings: 2,
   ingredients: [
-    { name: 'chicken thigh', amount: '500', unit: 'g' },
-    { name: 'bok choy', amount: '1', unit: 'bunch' },
+    { name: 'chicken thigh', category: 'Protein', amount: '500', unit: 'g' },
+    { name: 'bok choy', category: 'Vegetable', amount: '1', unit: 'bunch' },
   ],
   steps: [
     { title: 'Marinate', body: 'Toss chicken with soy.' },
     { title: 'Sear', body: 'High heat, one minute per side.' },
   ],
 };
+
+const INVENTORY_WITH_CHICKEN = {
+  ingredientInventory: [
+    {
+      id: '1',
+      name: 'chicken thigh',
+      type: 'ingredient' as const,
+      category: 'Protein' as const,
+      shelfLife: 'medium' as const,
+      dateAdded: new Date().toISOString(),
+      lastUpdated: new Date().toISOString(),
+    },
+  ],
+  kitchenwareInventory: [],
+};
+
+beforeEach(() => {
+  mockUseSessionContext.mockReturnValue({ userId: null });
+  mockUseSWR.mockReturnValue({ data: undefined });
+  mockMutate.mockReset();
+  mockToastSuccess.mockReset();
+  mockToastError.mockReset();
+});
 
 describe('ServingsStepper inside RecipeLetter', () => {
   it('shows the initial serving count as a bare number', () => {
@@ -36,7 +72,6 @@ describe('ServingsStepper inside RecipeLetter', () => {
 
   it('does not render the word "servings" or "serving" in the stepper', () => {
     const { container } = render(<RecipeLetter recipe={RECIPE} />);
-    // Check the stepper control area — look for the inline-flex stepper wrapper
     const stepperWrapper = container.querySelector('.inline-flex.items-stretch');
     expect(stepperWrapper).not.toBeNull();
     expect(stepperWrapper!.textContent).not.toMatch(/servings?/i);
@@ -45,7 +80,6 @@ describe('ServingsStepper inside RecipeLetter', () => {
   it('does not render a ratio or "from" line at any count', () => {
     render(<RecipeLetter recipe={RECIPE} />);
     expect(screen.queryByText(/from/)).toBeNull();
-    // Increment to trigger any conditional ratio rendering
     fireEvent.click(screen.getByLabelText('Increase servings'));
     expect(screen.queryByText(/from/)).toBeNull();
     expect(screen.queryByText(/×/)).toBeNull();
@@ -60,7 +94,6 @@ describe('ServingsStepper inside RecipeLetter', () => {
   it('increment button is disabled at 12 servings', () => {
     render(<RecipeLetter recipe={RECIPE} />);
     const inc = screen.getByLabelText('Increase servings');
-    // Click up to 12
     for (let i = 2; i < 12; i++) fireEvent.click(inc);
     expect(inc).toBeDisabled();
   });
@@ -85,5 +118,67 @@ describe('RecipeLetter ingredient grid', () => {
     render(<RecipeLetter recipe={RECIPE} />);
     expect(screen.getByText('chicken thigh')).toBeInTheDocument();
     expect(screen.getByText('bok choy')).toBeInTheDocument();
+  });
+});
+
+describe('NEED pill click-to-add', () => {
+  beforeEach(() => {
+    mockUseSessionContext.mockReturnValue({ userId: 'user-123' });
+    mockUseSWR.mockReturnValue({ data: INVENTORY_WITH_CHICKEN });
+  });
+
+  it('renders NEED pill for ingredient not in pantry', () => {
+    render(<RecipeLetter recipe={RECIPE} />);
+    expect(screen.getByLabelText('Add bok choy to pantry')).toBeInTheDocument();
+  });
+
+  it('renders HAVE (non-interactive) for ingredient already in pantry', () => {
+    render(<RecipeLetter recipe={RECIPE} />);
+    expect(screen.queryByLabelText('Add chicken thigh to pantry')).not.toBeInTheDocument();
+    expect(screen.getByText('HAVE')).toBeInTheDocument();
+  });
+
+  it('posts correct body and shows success toast on NEED click', async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
+    render(<RecipeLetter recipe={RECIPE} />);
+    fireEvent.click(screen.getByLabelText('Add bok choy to pantry'));
+    await waitFor(() =>
+      expect(mockToastSuccess).toHaveBeenCalledWith('Added bok choy to your pantry'),
+    );
+    expect(global.fetch).toHaveBeenCalledWith(
+      '/api/inventory',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          items: [{ name: 'bok choy', type: 'ingredient', category: 'Vegetable' }],
+          userId: 'user-123',
+        }),
+      }),
+    );
+    expect(mockMutate).toHaveBeenCalledWith('/api/inventory?userId=user-123');
+  });
+
+  it('shows error toast and leaves pill as NEED on fetch failure', async () => {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue({ ok: false, status: 500, json: async () => ({ error: 'Server error' }) });
+    render(<RecipeLetter recipe={RECIPE} />);
+    fireEvent.click(screen.getByLabelText('Add bok choy to pantry'));
+    await waitFor(() => expect(mockToastError).toHaveBeenCalledWith('Server error'));
+    expect(mockMutate).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('Add bok choy to pantry')).toBeInTheDocument();
+  });
+
+  it('NEED pill is disabled while request is in flight', async () => {
+    let resolveRequest!: (v: unknown) => void;
+    global.fetch = jest.fn().mockReturnValue(
+      new Promise((r) => { resolveRequest = r; }),
+    );
+    render(<RecipeLetter recipe={RECIPE} />);
+    const pill = screen.getByLabelText('Add bok choy to pantry');
+    fireEvent.click(pill);
+    expect(pill).toBeDisabled();
+    resolveRequest({ ok: true, json: async () => ({}) });
+    await waitFor(() => expect(mockToastSuccess).toHaveBeenCalled());
   });
 });
