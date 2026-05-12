@@ -1,17 +1,19 @@
 "use client";
 
 import { useSessionContext } from "@/contexts/SessionContext";
-import { GetInventoryResponse, InventoryItem } from "@/lib/inventory/schemas";
+import { Category, GetInventoryResponse, InventoryItem } from "@/lib/inventory/schemas";
 import { ingredientMatches } from "@/lib/recipes/matchIngredient";
 import { cn } from "@/lib/utils";
 import { fetcher } from "@/lib/utils/index";
 import { useState } from "react";
-import useSWR from "swr";
+import { toast } from "sonner";
+import useSWR, { useSWRConfig } from "swr";
 import { ScaledNum } from "./ScaledNum";
 import { scaleAmount } from "./scaleAmount";
 
 interface Ingredient {
   name: string;
+  category?: Category;
   amount?: string;
   unit?: string;
   note?: string;
@@ -82,7 +84,15 @@ function ServingsStepper({
   );
 }
 
-function HaveTag({ have }: { have: boolean }) {
+function HaveTag({
+  have,
+  ingredientName,
+  onAdd,
+}: {
+  have: boolean;
+  ingredientName: string;
+  onAdd?: () => void;
+}) {
   const BASE =
     "font-sans text-[9.5px] font-bold px-1.5 py-0.5 rounded-full tracking-wider shrink-0";
   if (have) {
@@ -98,14 +108,16 @@ function HaveTag({ have }: { have: boolean }) {
     );
   }
   return (
-    <span
+    <button
+      onClick={onAdd}
+      aria-label={`Add ${ingredientName} to pantry`}
       className={cn(
         BASE,
-        "text-muted-foreground bg-transparent border border-border",
+        "text-muted-foreground bg-transparent border border-border cursor-pointer hover:bg-muted hover:text-foreground transition-colors",
       )}
     >
       NEED
-    </span>
+    </button>
   );
 }
 
@@ -117,10 +129,28 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
   const [servings, setServings] = useState(recipe.baseServings);
   const ratio = servings / recipe.baseServings;
   const { userId } = useSessionContext();
-  const { data: inventoryData } = useSWR<GetInventoryResponse>(
-    userId ? `/api/inventory?userId=${userId}` : null,
-    fetcher,
-  );
+  const { mutate } = useSWRConfig();
+  const inventoryKey = userId ? `/api/inventory?userId=${userId}` : null;
+  const { data: inventoryData } = useSWR<GetInventoryResponse>(inventoryKey, fetcher);
+
+  const addToPantry = async (ing: Ingredient) => {
+    if (!userId) return;
+    try {
+      const res = await fetch("/api/inventory", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: [{ name: ing.name, type: "ingredient", ...(ing.category && { category: ing.category }) }],
+          userId,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success(`Added ${ing.name} to your pantry`);
+      mutate(inventoryKey);
+    } catch {
+      toast.error(`Couldn't add ${ing.name} — please try again`);
+    }
+  };
 
   const inventoryItems: InventoryItem[] = [
     ...(inventoryData?.ingredientInventory ?? []),
@@ -236,7 +266,11 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
                     )}
                   </span>
                   {userId && inventoryItems.length > 0 && (
-                    <HaveTag have={have} />
+                    <HaveTag
+                      have={have}
+                      ingredientName={ing.name}
+                      onAdd={have ? undefined : () => addToPantry(ing)}
+                    />
                   )}
                 </div>
               );
