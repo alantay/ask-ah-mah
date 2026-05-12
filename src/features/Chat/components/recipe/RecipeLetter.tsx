@@ -88,10 +88,12 @@ function HaveTag({
   have,
   ingredientName,
   onAdd,
+  pending,
 }: {
   have: boolean;
   ingredientName: string;
   onAdd?: () => void;
+  pending?: boolean;
 }) {
   const BASE =
     "font-sans text-[9.5px] font-bold px-1.5 py-0.5 rounded-full tracking-wider shrink-0";
@@ -109,11 +111,16 @@ function HaveTag({
   }
   return (
     <button
+      type="button"
       onClick={onAdd}
+      disabled={pending}
       aria-label={`Add ${ingredientName} to pantry`}
       className={cn(
         BASE,
-        "text-muted-foreground bg-transparent border border-border cursor-pointer hover:bg-muted hover:text-foreground transition-colors",
+        "text-muted-foreground bg-transparent border border-border transition-colors",
+        pending
+          ? "opacity-50 cursor-not-allowed"
+          : "cursor-pointer hover:bg-muted hover:text-foreground",
       )}
     >
       NEED
@@ -127,6 +134,7 @@ function ingredientHave(name: string, inventoryNames: string[]): boolean {
 
 export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
   const [servings, setServings] = useState(recipe.baseServings);
+  const [inFlight, setInFlight] = useState<Set<string>>(new Set());
   const ratio = servings / recipe.baseServings;
   const { userId } = useSessionContext();
   const { mutate } = useSWRConfig();
@@ -134,7 +142,8 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
   const { data: inventoryData } = useSWR<GetInventoryResponse>(inventoryKey, fetcher);
 
   const addToPantry = async (ing: Ingredient) => {
-    if (!userId) return;
+    if (!userId || inFlight.has(ing.name)) return;
+    setInFlight((prev) => new Set(prev).add(ing.name));
     try {
       const res = await fetch("/api/inventory", {
         method: "POST",
@@ -144,11 +153,17 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
           userId,
         }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null);
+        const msg = payload?.error ?? `Failed to add ${ing.name} (${res.status})`;
+        throw new Error(msg);
+      }
       toast.success(`Added ${ing.name} to your pantry`);
       mutate(inventoryKey);
-    } catch {
-      toast.error(`Couldn't add ${ing.name} — please try again`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : `Couldn't add ${ing.name} — please try again`);
+    } finally {
+      setInFlight((prev) => { const s = new Set(prev); s.delete(ing.name); return s; });
     }
   };
 
@@ -270,6 +285,7 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
                       have={have}
                       ingredientName={ing.name}
                       onAdd={have ? undefined : () => addToPantry(ing)}
+                      pending={inFlight.has(ing.name)}
                     />
                   )}
                 </div>
