@@ -2,6 +2,7 @@
 
 import { useSessionContext } from "@/contexts/SessionContext";
 import { GetInventoryResponse, InventoryItem } from "@/lib/inventory/schemas";
+import { ingredientMatches } from "@/lib/recipes/matchIngredient";
 import { cn } from "@/lib/utils";
 import { fetcher } from "@/lib/utils/index";
 import { useState } from "react";
@@ -109,8 +110,7 @@ function HaveTag({ have }: { have: boolean }) {
 }
 
 function ingredientHave(name: string, inventoryNames: string[]): boolean {
-  const n = name.trim().toLowerCase();
-  return inventoryNames.some((inv) => inv.includes(n) || n.includes(inv));
+  return ingredientMatches(name, inventoryNames);
 }
 
 export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
