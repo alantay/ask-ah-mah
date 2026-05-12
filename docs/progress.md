@@ -77,7 +77,7 @@ The persistent-kitchen MVP. Highlights:
 - [x] Token-overlap `ingredientMatches` replaces bidirectional substring match in both `RecipeLetter` and `pantryUtils.computePantry` — fixes "doubanjiang" class of false-NEED bugs.
 - [x] NEED pill is a clickable `<button>`; clicking POSTs to `/api/inventory`, revalidates SWR, shows success/error toast.
 - [x] `RecipeLetter.test.tsx` covers click-to-add POST body, toast feedback, SWR revalidation, in-flight disabled state.
-- **HITL pending:** `TRUNCATE "Recipe" RESTART IDENTITY CASCADE` — run before deploying to clear legacy rows without `category`.
+- **HITL pending:** `TRUNCATE recipes RESTART IDENTITY CASCADE;` — run before deploying to clear legacy rows without `category`.
 
 ### Organised Pantry — Phase 2: Category headings UI (May 2026)
 - [x] Ingredients section in `Inventory.tsx` now renders category sub-groups (Protein / Carbs / Vegetable / Condiments / Misc) instead of a flat badge list.
