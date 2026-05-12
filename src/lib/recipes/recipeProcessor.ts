@@ -2,6 +2,7 @@ import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { TAG_SETS } from "./tagColors";
+import { CategorySchema } from "@/lib/inventory/schemas";
 
 // Extract metadata from a recipe. We don't ask the model to re-emit the
 // recipe text — passing raw instructions through is more reliable and the
@@ -26,6 +27,9 @@ const RecipeMetadataSchema = z.object({
     .array(
       z.object({
         name: z.string().describe("Ingredient name, e.g. 'chicken breast'"),
+        category: CategorySchema.describe(
+          "Ingredient category. Must be one of: Protein, Carbs, Vegetable, Condiments, Spice, Misc.",
+        ),
         amount: z
           .number()
           .positive()
@@ -75,7 +79,10 @@ export async function processRecipe(
 TASKS:
 1. Choose 3-8 tags from the categories below (use exact tag names, lowercase, hyphenated).
 2. Identify baseServings — how many servings the recipe makes (infer 2 or 4 if unstated).
-3. Extract ingredients as { name, amount?, unit? }. Use the exact unit strings the recipe uses. Omit amount/unit for non-quantified items like "salt to taste".
+3. Extract ingredients as { name, category, amount?, unit? }.
+   - category must be one of: Protein, Carbs, Vegetable, Condiments, Spice, Misc.
+   - Use the exact unit strings the recipe uses.
+   - Omit amount/unit for non-quantified items like "salt to taste".
 4. Write a description: one evocative sentence ≤140 chars. Capture the soul of the dish — not a step list. e.g. "Sunday lunch staple — rice poached in chicken stock, finished with ginger-scallion oil."
 5. Extract totalTimeMinutes from a "**Total time:**" line if present. Omit if not stated.
 

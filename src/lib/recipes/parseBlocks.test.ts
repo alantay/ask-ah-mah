@@ -41,7 +41,7 @@ describe("extractRecipeBlocks", () => {
   "totalTimeMinutes": 5,
   "baseServings": 1,
   "ingredients": [
-    { "name": "egg", "amount": "2", "unit": "pcs" }
+    { "name": "egg", "category": "Protein", "amount": "2", "unit": "pcs" }
   ],
   "steps": [
     { "title": "Beat eggs", "body": "Whisk with a pinch of salt." }
