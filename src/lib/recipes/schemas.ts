@@ -22,7 +22,7 @@ export type RecipeStep = z.infer<typeof RecipeStepSchema>;
 // Ingredient as emitted by the model (amounts as strings for scaling)
 export const RecipeIngredientModelSchema = z.object({
   name: z.string(),
-  category: CategorySchema,
+  category: CategorySchema.optional(),
   amount: z.string().optional(),   // string so "1 1/2" works
   unit: z.string().optional(),
   note: z.string().optional(),
