@@ -48,9 +48,16 @@ export function PantryDrawer() {
         </span>
       </button>
 
-      {/* Open overlay — absolute over chat */}
+      {/* xl+ (≥1280px): squeeze — pantry is a static flex sibling, chat narrows */}
       {open && (
-        <div className="hidden lg:flex absolute right-9 top-0 bottom-0 w-80 flex-col bg-muted paper border-l border-border z-20 overflow-y-auto">
+        <div className="hidden xl:flex w-80 flex-col bg-muted paper border-l border-border overflow-y-auto">
+          <InventoryWrapper onClose={() => setOpen(false)} />
+        </div>
+      )}
+
+      {/* lg–xl (1024–1279px): overlay — pantry floats over chat */}
+      {open && (
+        <div className="hidden lg:flex xl:hidden absolute right-9 top-0 bottom-0 w-80 flex-col bg-muted paper border-l border-border z-20 overflow-y-auto">
           <InventoryWrapper onClose={() => setOpen(false)} />
         </div>
       )}
