@@ -1,10 +1,15 @@
 "use client";
 
 import { useSessionContext } from "@/contexts/SessionContext";
-import { Category, GetInventoryResponse, InventoryItem } from "@/lib/inventory/schemas";
+import {
+  Category,
+  GetInventoryResponse,
+  InventoryItem,
+} from "@/lib/inventory/schemas";
 import { ingredientMatches } from "@/lib/recipes/matchIngredient";
 import { cn } from "@/lib/utils";
 import { fetcher } from "@/lib/utils/index";
+import { TimerIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import useSWR, { useSWRConfig } from "swr";
@@ -52,10 +57,10 @@ function ServingsStepper({
   onIncrement: () => void;
 }) {
   const BUTTON_BASE =
-    "w-7 border-none bg-transparent cursor-pointer text-foreground text-[16px] font-semibold disabled:cursor-not-allowed disabled:text-muted-foreground";
+    "w-7 border-none bg-transparent cursor-pointer text-foreground text-base font-semibold disabled:cursor-not-allowed disabled:text-muted-foreground";
 
   return (
-    <div className="inline-flex items-stretch border border-border rounded-lg bg-card overflow-hidden shadow-[0_1px_0_var(--border-soft)] h-[30px]">
+    <div className="inline-flex items-stretch border border-border rounded-lg bg-card overflow-hidden shadow-[0_1px_0_var(--border-soft)] h-8">
       <button
         onClick={onDecrement}
         disabled={servings <= 1}
@@ -67,7 +72,7 @@ function ServingsStepper({
       >
         −
       </button>
-      <div className="flex justify-center items-center min-w-[40px] px-2">
+      <div className="flex justify-center items-center min-w-4 px-2">
         <span className="font-display font-semibold text-[14px] text-foreground tabular-nums">
           {servings}
         </span>
@@ -139,7 +144,10 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
   const { userId } = useSessionContext();
   const { mutate } = useSWRConfig();
   const inventoryKey = userId ? `/api/inventory?userId=${userId}` : null;
-  const { data: inventoryData } = useSWR<GetInventoryResponse>(inventoryKey, fetcher);
+  const { data: inventoryData } = useSWR<GetInventoryResponse>(
+    inventoryKey,
+    fetcher,
+  );
 
   const addToPantry = async (ing: Ingredient) => {
     if (!userId || inFlight.has(ing.name)) return;
@@ -149,21 +157,36 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          items: [{ name: ing.name, type: "ingredient", ...(ing.category && { category: ing.category }) }],
+          items: [
+            {
+              name: ing.name,
+              type: "ingredient",
+              ...(ing.category && { category: ing.category }),
+            },
+          ],
           userId,
         }),
       });
       if (!res.ok) {
         const payload = await res.json().catch(() => null);
-        const msg = payload?.error ?? `Failed to add ${ing.name} (${res.status})`;
+        const msg =
+          payload?.error ?? `Failed to add ${ing.name} (${res.status})`;
         throw new Error(msg);
       }
       toast.success(`Added ${ing.name} to your pantry`);
       mutate(inventoryKey);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : `Couldn't add ${ing.name} — please try again`);
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : `Couldn't add ${ing.name} — please try again`,
+      );
     } finally {
-      setInFlight((prev) => { const s = new Set(prev); s.delete(ing.name); return s; });
+      setInFlight((prev) => {
+        const s = new Set(prev);
+        s.delete(ing.name);
+        return s;
+      });
     }
   };
 
@@ -183,34 +206,41 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
   const EYEBROW_BASE =
     "font-sans text-[10px] font-bold tracking-widest uppercase";
 
+  const showPantryPill = !!userId;
+
   return (
     <div className=" border-y border-border-soft p-[20px_26px_22px] relative">
-      {/* Ribbon header */}
-      <div className="flex items-center gap-2.5 mb-3.5 pb-2.5 border-b border-dashed border-border">
-        <div className="size-5.5 rounded-full bg-primary flex items-center justify-center text-white shrink-0">
-          <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-            <path
-              d="M3 2v12l5-3 5 3V2z"
-              stroke="currentColor"
-              strokeWidth="1.4"
-              fill="currentColor"
-            />
-          </svg>
+      {/* Title */}
+      <div className="font-display text-3xl font-semibold text-foreground leading-[1.05] tracking-tight mb-2">
+        {recipe.title}
+      </div>
+
+      {/* Description */}
+      {recipe.description && (
+        <div className="font-display italic text-sm text-muted-foreground leading-relaxed mb-3">
+          {recipe.description}
         </div>
+      )}
 
-        <div className={cn(EYEBROW_BASE, "text-muted-foreground")}>
-          From Ah Mah&apos;s Kitchen
-        </div>
-
-        <div className="flex-1" />
-
-        {timeLabel && (
-          <div className="font-mono text-[10px] text-muted-foreground">
-            {timeLabel}
+      {/* Meta row — time · pantry pill on left, servings stepper on right */}
+      <div className="flex items-center gap-3 mb-4 pb-3 border-b border-dashed border-border">
+          <div className="flex items-center gap-2.5 text-muted-foreground">
+            {timeLabel && (
+              <span className="font-mono text-xs flex items-center gap-1">
+                <TimerIcon className="w-3.5 h-3.5" />
+                {timeLabel}
+              </span>
+            )}
+            {timeLabel && showPantryPill && (
+              <span className="text-border">·</span>
+            )}
+            {showPantryPill && (
+              <span className="font-sans text-[10px] font-semibold text-accent px-1.5 py-0.5 bg-[oklch(0.94_0.04_168)] border border-[oklch(0.78_0.07_168)] rounded-full tracking-normal normal-case">
+                {haveCount}/{recipe.ingredients.length} in your pantry
+              </span>
+            )}
           </div>
-        )}
-
-        <div className="flex flex-col items-end gap-0.5">
+          <div className="flex-1" />
           <span className="font-sans text-[9.5px] font-bold tracking-[0.16em] uppercase text-ink-faint">
             Servings
           </span>
@@ -221,19 +251,6 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
             onIncrement={() => setServings((s) => Math.min(12, s + 1))}
           />
         </div>
-      </div>
-
-      {/* Title */}
-      <div className="font-display text-3xl font-semibold text-foreground leading-[1.05] tracking-tight mb-2">
-        {recipe.title}
-      </div>
-
-      {/* Description */}
-      {recipe.description && (
-        <div className="font-display italic text-sm text-muted-foreground leading-relaxed mb-4.5">
-          {recipe.description}
-        </div>
-      )}
 
       {/* Ingredients — neat 2-column grid card */}
       {recipe.ingredients.length > 0 && (
@@ -245,11 +262,6 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
             )}
           >
             <span>What to gather</span>
-            {userId && inventoryItems.length > 0 && (
-              <span className="font-sans italic-normal text-[10px] font-semibold text-accent px-1.5 py-0.25 bg-[oklch(0.94_0.04_168)] border border-[oklch(0.78_0.07_168)] rounded-full tracking-normal normal-case">
-                {haveCount}/{recipe.ingredients.length} in your pantry
-              </span>
-            )}
           </div>
           <div className="bg-card border border-border rounded-xl p-3.5 grid grid-cols-1 sm:grid-cols-2 gap-x-4.5 gap-y-1 shadow-[0_1px_0_var(--border-soft)]">
             {recipe.ingredients.map((ing, i) => {
