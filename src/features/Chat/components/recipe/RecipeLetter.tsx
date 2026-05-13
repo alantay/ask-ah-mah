@@ -206,7 +206,7 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
   const EYEBROW_BASE =
     "font-sans text-[10px] font-bold tracking-widest uppercase";
 
-  const showPantryPill = userId && inventoryItems.length > 0;
+  const showPantryPill = !!userId;
 
   return (
     <div className=" border-y border-border-soft p-[20px_26px_22px] relative">
