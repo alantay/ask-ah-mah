@@ -17,10 +17,15 @@ async function search(query: string): Promise<UnsplashPhoto | null> {
     per_page: "1",
   });
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+
   const res = await fetch(`${UNSPLASH_API}/search/photos?${params}`, {
     headers: { Authorization: `Client-ID ${accessKey}` },
     next: { revalidate: 0 },
+    signal: controller.signal,
   });
+  clearTimeout(timeout);
 
   if (!res.ok) return null;
 

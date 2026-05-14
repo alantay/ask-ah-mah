@@ -30,11 +30,13 @@ jest.mock("@/lib/unsplash/fetchPhoto", () => ({
 }));
 
 import { processRecipe } from "@/lib/recipes/recipeProcessor";
+import { fetchRecipePhoto } from "@/lib/unsplash/fetchPhoto";
 
 const mockedDeleteRecipe = jest.mocked(deleteRecipe);
 const mockedGetRecipes = jest.mocked(getRecipes);
 const mockedSaveRecipe = jest.mocked(saveRecipe);
 const mockedProcessRecipe = jest.mocked(processRecipe);
+const mockedFetchRecipePhoto = jest.mocked(fetchRecipePhoto);
 
 const defaultProcessed = {
   tags: [] as string[],
@@ -296,6 +298,7 @@ describe("Recipe API Routes", () => {
         description: "Dry spice mix for chicken.",
         totalTimeMinutes: 5,
       }, null);
+      expect(mockedFetchRecipePhoto).toHaveBeenCalledWith(["quick"]);
       expect(mockedProcessRecipe).not.toHaveBeenCalled();
     });
 
@@ -352,6 +355,7 @@ describe("Recipe API Routes", () => {
         description: "",
         totalTimeMinutes: undefined,
       }, null);
+      expect(mockedFetchRecipePhoto).toHaveBeenCalledWith(["breakfast"]);
       expect(mockedSaveRecipe).toHaveBeenCalledTimes(1);
     });
 
