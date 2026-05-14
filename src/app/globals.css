@@ -47,6 +47,8 @@
   --radius-xl: calc(var(--radius) + 4px);
 
   --color-tertiary: var(--tertiary);
+  --color-jade: var(--jade);
+  --color-jade-foreground: var(--jade-foreground);
 }
 
 :root {
@@ -82,8 +84,13 @@
   --secondary: oklch(0.86 0.1 88);
   --secondary-foreground: oklch(0.265 0.04 48);
 
-  --accent: oklch(0.5 0.095 168);
-  --accent-foreground: oklch(0.97 0.02 80);
+  /* Jade — decorative accent ink (chips, pills, dots) */
+  --jade: oklch(0.5 0.095 168);
+  --jade-foreground: oklch(0.97 0.02 80);
+
+  /* Accent — neutral interactive hover surface (kraft, paper-toned) */
+  --accent: oklch(0.89 0.028 70);
+  --accent-foreground: oklch(0.265 0.04 48);
   --destructive: oklch(0.56 0.21 25);
 
   /* Stained paper edge — warmer and darker than before */
@@ -125,7 +132,9 @@
   --muted: oklch(0.3 0.025 50);
   --muted-foreground: oklch(0.7 0.03 60);
   --ink-faint: oklch(0.55 0.025 55);
-  --accent: oklch(0.6 0.1 168);
+  --jade: oklch(0.6 0.1 168);
+  --jade-foreground: oklch(0.95 0.025 78);
+  --accent: oklch(0.34 0.025 50);
   --accent-foreground: oklch(0.95 0.025 78);
   --destructive: oklch(0.66 0.18 25);
   --border: oklch(1 0 0 / 12%);
@@ -206,7 +215,7 @@ ol li::marker {
 }
 
 blockquote {
-  border-left: 3px solid var(--accent);
+  border-left: 3px solid var(--jade);
   padding-left: 0.5em;
 }
 

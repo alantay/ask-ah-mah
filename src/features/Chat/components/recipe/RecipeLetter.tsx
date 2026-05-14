@@ -107,7 +107,7 @@ function HaveTag({
       <span
         className={cn(
           BASE,
-          "text-accent bg-[oklch(0.94_0.04_168)] border border-[oklch(0.78_0.07_168)]",
+          "text-jade bg-[oklch(0.94_0.04_168)] border border-[oklch(0.78_0.07_168)]",
         )}
       >
         HAVE
@@ -235,7 +235,7 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
               <span className="text-border">·</span>
             )}
             {showPantryPill && (
-              <span className="font-sans text-[10px] font-semibold text-accent px-1.5 py-0.5 bg-[oklch(0.94_0.04_168)] border border-[oklch(0.78_0.07_168)] rounded-full tracking-normal normal-case">
+              <span className="font-sans text-[10px] font-semibold text-jade px-1.5 py-0.5 bg-[oklch(0.94_0.04_168)] border border-[oklch(0.78_0.07_168)] rounded-full tracking-normal normal-case">
                 {haveCount}/{recipe.ingredients.length} in your pantry
               </span>
             )}
@@ -339,7 +339,7 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
           {isSaved ? (
             <button
               disabled
-              className="px-3 py-1.5 font-sans text-xs font-semibold text-accent bg-transparent border border-border rounded-lg cursor-not-allowed inline-flex items-center gap-1 opacity-80"
+              className="px-3 py-1.5 font-sans text-xs font-semibold text-jade bg-transparent border border-border rounded-lg cursor-not-allowed inline-flex items-center gap-1 opacity-80"
             >
               <svg
                 width="11"
