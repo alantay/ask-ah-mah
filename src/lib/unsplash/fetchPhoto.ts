@@ -41,15 +41,18 @@ async function search(query: string): Promise<UnsplashPhoto | null> {
 }
 
 export async function fetchRecipePhoto(
-  tags: string[],
+  title: string,
+  tags: string[] = [],
 ): Promise<UnsplashPhoto | null> {
   try {
+    const trimmedTitle = title.trim();
     const query =
-      tags.length > 0 ? tags.slice(0, 3).join(" ") : FALLBACK_QUERY;
+      trimmedTitle ||
+      (tags.length > 0 ? tags.slice(0, 3).join(" ") : FALLBACK_QUERY);
     const result = await search(query);
     if (result) return result;
 
-    // Retry with fallback if tag query returned no results
+    // Retry with fallback if primary query returned no results
     if (query !== FALLBACK_QUERY) {
       return await search(FALLBACK_QUERY);
     }

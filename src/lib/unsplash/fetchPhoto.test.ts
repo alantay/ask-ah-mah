@@ -24,10 +24,10 @@ afterEach(() => {
 });
 
 describe("fetchRecipePhoto", () => {
-  it("builds query from first 3 tags and returns photo", async () => {
+  it("uses the recipe title as the primary query", async () => {
     mockUnsplashResponse([MOCK_PHOTO]);
 
-    const result = await fetchRecipePhoto(["stir-fry", "pork", "rice", "spicy"]);
+    const result = await fetchRecipePhoto("Economy Fried Bee Hoon", ["stir-fry", "quick", "budget"]);
 
     expect(result).toEqual({
       url: "https://images.unsplash.com/photo-123",
@@ -36,25 +36,36 @@ describe("fetchRecipePhoto", () => {
     });
 
     const calledUrl = (global.fetch as jest.Mock).mock.calls[0][0] as string;
+    expect(calledUrl).toContain("query=Economy+Fried+Bee+Hoon");
+    expect(calledUrl).not.toContain("budget");
+    expect(calledUrl).not.toContain("stir-fry");
+  });
+
+  it("falls back to tags when title is empty", async () => {
+    mockUnsplashResponse([MOCK_PHOTO]);
+
+    await fetchRecipePhoto("", ["stir-fry", "pork", "rice", "spicy"]);
+
+    const calledUrl = (global.fetch as jest.Mock).mock.calls[0][0] as string;
     expect(calledUrl).toContain("query=stir-fry+pork+rice");
     expect(calledUrl).not.toContain("spicy");
   });
 
-  it("falls back to 'food cooking' when tags are empty", async () => {
+  it("falls back to 'food cooking' when both title and tags are empty", async () => {
     mockUnsplashResponse([MOCK_PHOTO]);
 
-    await fetchRecipePhoto([]);
+    await fetchRecipePhoto("", []);
 
     const calledUrl = (global.fetch as jest.Mock).mock.calls[0][0] as string;
     expect(calledUrl).toContain("query=food+cooking");
   });
 
-  it("retries with 'food cooking' when tag query returns zero results", async () => {
+  it("retries with 'food cooking' when primary query returns zero results", async () => {
     global.fetch = jest.fn()
       .mockResolvedValueOnce({ ok: true, json: async () => ({ results: [] }) } as unknown as Response)
       .mockResolvedValueOnce({ ok: true, json: async () => ({ results: [MOCK_PHOTO] }) } as unknown as Response);
 
-    const result = await fetchRecipePhoto(["obscuredish123"]);
+    const result = await fetchRecipePhoto("obscuredish123", []);
 
     expect(global.fetch).toHaveBeenCalledTimes(2);
     const secondUrl = (global.fetch as jest.Mock).mock.calls[1][0] as string;
@@ -65,7 +76,7 @@ describe("fetchRecipePhoto", () => {
   it("returns null on network error without throwing", async () => {
     global.fetch = jest.fn().mockRejectedValue(new Error("network failure"));
 
-    const result = await fetchRecipePhoto(["pork"]);
+    const result = await fetchRecipePhoto("pork", []);
 
     expect(result).toBeNull();
   });
@@ -76,7 +87,7 @@ describe("fetchRecipePhoto", () => {
       json: async () => ({}),
     } as unknown as Response);
 
-    const result = await fetchRecipePhoto(["pork"]);
+    const result = await fetchRecipePhoto("pork", []);
 
     expect(result).toBeNull();
   });
@@ -85,7 +96,7 @@ describe("fetchRecipePhoto", () => {
     delete process.env.UNSPLASH_ACCESS_KEY;
     global.fetch = jest.fn();
 
-    const result = await fetchRecipePhoto(["pork"]);
+    const result = await fetchRecipePhoto("pork", []);
 
     expect(result).toBeNull();
     expect(global.fetch).not.toHaveBeenCalled();
