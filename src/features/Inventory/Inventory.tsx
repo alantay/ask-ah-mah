@@ -111,6 +111,9 @@ const Inventory = ({ onClose }: { onClose?: () => void }) => {
   const kitchenwareSorted = kitchenwareInventory?.sort((a, b) =>
     a.name.localeCompare(b.name)
   );
+  const hasShortShelfItem =
+    (ingredientInventory ?? []).some((i) => i.shelfLife === "short") ||
+    (kitchenwareInventory ?? []).some((i) => i.shelfLife === "short");
 
   return (
     <div className="flex flex-col gap-4 animate-in fade-in duration-300 p-5 h-full">
@@ -120,7 +123,13 @@ const Inventory = ({ onClose }: { onClose?: () => void }) => {
           <div className="font-display italic font-medium text-[22px] text-foreground leading-tight tracking-tight">
             Pantry
           </div>
-          <div className="text-xs text-ink-faint mt-0.5">What&rsquo;s on Ah Mah&rsquo;s shelves</div>
+          <div className="text-xs text-ink-faint mt-0.5">What&rsquo;s in your kitchen</div>
+          {hasShortShelfItem && (
+            <div className="flex items-center gap-1.5 mt-1 text-[11px] text-ink-faint">
+              <span className="inline-block h-2 w-2 rounded-full bg-tertiary shrink-0" />
+              Short shelf life — use soon
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           {onClose && (
