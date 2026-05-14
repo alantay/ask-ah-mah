@@ -25,7 +25,6 @@ import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
 import { generateTempId } from "../constants";
 import { ChatLoader, SkeletonRecipeCard } from "./loaders";
-import { IngredientGate } from "./recipe/IngredientGate";
 import { RecipeLetter } from "./recipe/RecipeLetter";
 import { SuggestionsBlock } from "./recipe/SuggestionsBlock";
 
@@ -33,10 +32,8 @@ interface MessageListProps {
   messages: UIMessage[];
   status: string;
   submittedAt: number | null;
-  expectingRecipe: boolean;
   userId: string;
   onSend?: (text: string) => void;
-  onExpectRecipe?: () => void;
   onRecipeDetected?: (title: string) => void;
 }
 
@@ -69,10 +66,8 @@ export const MessageList = ({
   messages,
   status,
   submittedAt,
-  expectingRecipe,
   userId,
   onSend = () => {},
-  onExpectRecipe,
   onRecipeDetected,
 }: MessageListProps) => {
   const { data: recipeSaved, mutate } = useSWR<RecipeWithId[]>(
@@ -259,25 +254,6 @@ export const MessageList = ({
             const proseText = hasNewBlocks
               ? stripFences(prefixText)
               : prefixText;
-            const hasProposeRecipeToolPart = message.parts.some(
-              (part) => part.type === "tool-proposeRecipe",
-            );
-
-            if (
-              process.env.NODE_ENV !== "production" &&
-              hasProposeRecipeToolPart &&
-              (hasNewBlocks || hasOpenFence)
-            ) {
-              console.warn(
-                "[MessageList] proposeRecipe tool part ignored due to fence/block mode",
-                {
-                  messageId: message.id,
-                  messageIndex,
-                  hasNewBlocks,
-                  hasOpenFence,
-                },
-              );
-            }
 
             return (
               <Message
@@ -316,30 +292,6 @@ export const MessageList = ({
                             {stripped}
                           </Response>
                         );
-                      }
-                      if (part.type === "tool-proposeRecipe") {
-                        const toolPart = part as unknown as {
-                          type: "tool-proposeRecipe";
-                          state: string;
-                          input: {
-                            recipeId: string;
-                            title: string;
-                            keyIngredients: string[];
-                          };
-                        };
-                        if (
-                          toolPart.state === "input-available" ||
-                          toolPart.state === "output-available"
-                        ) {
-                          return (
-                            <IngredientGate
-                              key={`${message.id}-${index}`}
-                              data={toolPart.input}
-                              onSend={onSend}
-                              onExpectRecipe={onExpectRecipe}
-                            />
-                          );
-                        }
                       }
                       return null;
                     })
@@ -456,7 +408,6 @@ export const MessageList = ({
             <div className="py-4">
               <ChatLoader
                 submittedAt={submittedAt}
-                expectingRecipe={expectingRecipe}
               />
             </div>
           )}

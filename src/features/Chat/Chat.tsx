@@ -56,7 +56,6 @@ const Chat = () => {
   const [convSheetOpen, setConvSheetOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [submittedAt, setSubmittedAt] = useState<number | null>(null);
-  const [expectingRecipe, setExpectingRecipe] = useState(false);
   const autoTitledConversations = useRef<Set<string>>(new Set());
   const autoTitlingConversations = useRef<Set<string>>(new Set());
 
@@ -175,7 +174,6 @@ const Chat = () => {
   useEffect(() => {
     if (status !== "submitted") {
       setSubmittedAt(null);
-      setExpectingRecipe(false);
     }
   }, [status]);
 
@@ -330,10 +328,8 @@ const Chat = () => {
         messages={allMessages}
         status={status}
         submittedAt={submittedAt}
-        expectingRecipe={expectingRecipe}
         userId={userId}
         onSend={handleSendMessage}
-        onExpectRecipe={() => setExpectingRecipe(true)}
         onRecipeDetected={handleRecipeDetected}
       />
       {status === "ready" && messageCount === 0 && (
