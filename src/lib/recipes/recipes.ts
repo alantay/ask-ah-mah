@@ -1,3 +1,4 @@
+import { UnsplashPhoto } from "../unsplash/fetchPhoto";
 import { prisma } from "../db";
 import { Recipe } from "./schemas";
 
@@ -9,9 +10,19 @@ export async function getRecipes(userId: string) {
   return recipes;
 }
 
-export async function saveRecipe(recipe: Recipe) {
+export async function saveRecipe(
+  recipe: Recipe,
+  photo?: UnsplashPhoto | null,
+) {
   return await prisma.recipe.create({
-    data: recipe,
+    data: {
+      ...recipe,
+      ...(photo && {
+        imageUrl: photo.url,
+        photographerName: photo.photographerName,
+        photographerUrl: photo.photographerUrl,
+      }),
+    },
   });
 }
 

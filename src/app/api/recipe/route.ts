@@ -1,6 +1,7 @@
 import { deleteRecipe, getRecipes, saveRecipe } from "@/lib/recipes";
 import { processRecipe } from "@/lib/recipes/recipeProcessor";
 import { RecipeIngredientModel } from "@/lib/recipes/schemas";
+import { fetchRecipePhoto } from "@/lib/unsplash/fetchPhoto";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -23,27 +24,32 @@ export async function POST(req: NextRequest) {
   // New structured path: body.recipe contains the fully-structured object
   if (body.recipe) {
     const r = body.recipe;
-    const recipe = await saveRecipe({
-      userId,
-      name: r.title,
-      instructions: r.description ?? "",  // store description as instructions fallback for legacy reads
-      tags: r.tags ?? [],
-      recipeId,
-      baseServings: r.baseServings,
-      ingredients: r.ingredients.map(
-        (ing: RecipeIngredientModel) => ({
-          name: ing.name,
-          category: ing.category,
-          // Convert string amount to number for storage (legacy RecipeIngredient type uses number)
-          amount: ing.amount ? parseFloat(ing.amount) || undefined : undefined,
-          unit: ing.unit,
-          note: ing.note,
-        })
-      ),
-      steps: r.steps,
-      description: r.description,
-      totalTimeMinutes: r.totalTimeMinutes,
-    });
+    const tags = r.tags ?? [];
+    const photo = await fetchRecipePhoto(tags);
+    const recipe = await saveRecipe(
+      {
+        userId,
+        name: r.title,
+        instructions: r.description ?? "",  // store description as instructions fallback for legacy reads
+        tags,
+        recipeId,
+        baseServings: r.baseServings,
+        ingredients: r.ingredients.map(
+          (ing: RecipeIngredientModel) => ({
+            name: ing.name,
+            category: ing.category,
+            // Convert string amount to number for storage (legacy RecipeIngredient type uses number)
+            amount: ing.amount ? parseFloat(ing.amount) || undefined : undefined,
+            unit: ing.unit,
+            note: ing.note,
+          })
+        ),
+        steps: r.steps,
+        description: r.description,
+        totalTimeMinutes: r.totalTimeMinutes,
+      },
+      photo,
+    );
     return NextResponse.json(recipe);
   }
 
@@ -57,17 +63,21 @@ export async function POST(req: NextRequest) {
     metadata = { tags: [], baseServings: 2, ingredients: [], description: "" };
   }
 
-  const recipe = await saveRecipe({
-    userId,
-    name,
-    instructions,
-    tags: metadata.tags,
-    recipeId,
-    baseServings: metadata.baseServings,
-    ingredients: metadata.ingredients,
-    description: metadata.description,
-    totalTimeMinutes: metadata.totalTimeMinutes,
-  });
+  const legacyPhoto = await fetchRecipePhoto(metadata.tags ?? []);
+  const recipe = await saveRecipe(
+    {
+      userId,
+      name,
+      instructions,
+      tags: metadata.tags,
+      recipeId,
+      baseServings: metadata.baseServings,
+      ingredients: metadata.ingredients,
+      description: metadata.description,
+      totalTimeMinutes: metadata.totalTimeMinutes,
+    },
+    legacyPhoto,
+  );
 
   return NextResponse.json(recipe);
 }

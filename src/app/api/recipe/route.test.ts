@@ -25,6 +25,10 @@ jest.mock("@/lib/recipes/recipeProcessor", () => ({
   processRecipe: jest.fn(),
 }));
 
+jest.mock("@/lib/unsplash/fetchPhoto", () => ({
+  fetchRecipePhoto: jest.fn().mockResolvedValue(null),
+}));
+
 import { processRecipe } from "@/lib/recipes/recipeProcessor";
 
 const mockedDeleteRecipe = jest.mocked(deleteRecipe);
@@ -89,6 +93,9 @@ describe("Recipe API Routes", () => {
           description: null,
           totalTimeMinutes: null,
           createdAt: null,
+          imageUrl: null,
+          photographerName: null,
+          photographerUrl: null,
         },
         {
           id: "recipe-2",
@@ -103,6 +110,9 @@ describe("Recipe API Routes", () => {
           description: null,
           totalTimeMinutes: null,
           createdAt: null,
+          imageUrl: null,
+          photographerName: null,
+          photographerUrl: null,
         },
       ];
 
@@ -183,6 +193,9 @@ describe("Recipe API Routes", () => {
           description: null,
           totalTimeMinutes: null,
           createdAt: null,
+          imageUrl: null,
+          photographerName: null,
+          photographerUrl: null,
         },
       ];
 
@@ -223,6 +236,9 @@ describe("Recipe API Routes", () => {
         description: "Dry spice mix for chicken.",
         totalTimeMinutes: 5,
         createdAt: null,
+        imageUrl: null,
+        photographerName: null,
+        photographerUrl: null,
       };
       mockedSaveRecipe.mockResolvedValue(savedRecipe);
 
@@ -279,7 +295,7 @@ describe("Recipe API Routes", () => {
         steps: [{ title: "Mix", body: "Combine all ingredients." }],
         description: "Dry spice mix for chicken.",
         totalTimeMinutes: 5,
-      });
+      }, null);
       expect(mockedProcessRecipe).not.toHaveBeenCalled();
     });
 
@@ -297,6 +313,9 @@ describe("Recipe API Routes", () => {
         description: null,
         totalTimeMinutes: null,
         createdAt: null,
+        imageUrl: null,
+        photographerName: null,
+        photographerUrl: null,
       };
 
       mockedProcessRecipe.mockResolvedValue({
@@ -332,7 +351,7 @@ describe("Recipe API Routes", () => {
         ingredients: [],
         description: "",
         totalTimeMinutes: undefined,
-      });
+      }, null);
       expect(mockedSaveRecipe).toHaveBeenCalledTimes(1);
     });
 
@@ -350,6 +369,9 @@ describe("Recipe API Routes", () => {
         description: null,
         totalTimeMinutes: null,
         createdAt: null,
+        imageUrl: null,
+        photographerName: null,
+        photographerUrl: null,
       };
 
       mockedProcessRecipe.mockResolvedValue(defaultProcessed);
@@ -380,7 +402,7 @@ describe("Recipe API Routes", () => {
         ingredients: [],
         description: "",
         totalTimeMinutes: undefined,
-      });
+      }, null);
     });
 
     it("should return 400 when userId is missing", async () => {
@@ -439,6 +461,9 @@ describe("Recipe API Routes", () => {
         description: null,
         totalTimeMinutes: null,
         createdAt: null,
+        imageUrl: null,
+        photographerName: null,
+        photographerUrl: null,
       };
 
       mockedProcessRecipe.mockResolvedValue(defaultProcessed);
@@ -471,7 +496,7 @@ describe("Recipe API Routes", () => {
         ingredients: [],
         description: "",
         totalTimeMinutes: undefined,
-      });
+      }, null);
     });
 
     it("should handle special characters in recipe", async () => {
@@ -492,6 +517,9 @@ describe("Recipe API Routes", () => {
         description: null,
         totalTimeMinutes: null,
         createdAt: null,
+        imageUrl: null,
+        photographerName: null,
+        photographerUrl: null,
       };
 
       mockedProcessRecipe.mockResolvedValue(defaultProcessed);
@@ -516,7 +544,7 @@ describe("Recipe API Routes", () => {
         ingredients: [],
         description: "",
         totalTimeMinutes: undefined,
-      });
+      }, null);
     });
 
     it("should handle database errors during save", async () => {
@@ -547,7 +575,7 @@ describe("Recipe API Routes", () => {
         ingredients: [],
         description: "",
         totalTimeMinutes: undefined,
-      });
+      }, null);
     });
 
     it("should handle malformed JSON", async () => {

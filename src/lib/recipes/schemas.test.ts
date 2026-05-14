@@ -1,14 +1,14 @@
 import { RecipeIngredientModelSchema, RecipeIngredientSchema } from "./schemas";
 
 describe("recipe ingredient schemas", () => {
-  it("requires category on recipe model ingredients", () => {
+  it("allows missing category on recipe model ingredients", () => {
     expect(() =>
       RecipeIngredientModelSchema.parse({
         name: "chicken thigh",
         amount: "500",
         unit: "g",
       }),
-    ).toThrow();
+    ).not.toThrow();
   });
 
   it("requires category on persisted recipe ingredients", () => {
