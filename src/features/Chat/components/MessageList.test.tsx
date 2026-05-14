@@ -47,14 +47,6 @@ jest.mock("@/lib/utils/index", () => ({
   fetcher: jest.fn(),
 }));
 
-jest.mock("./recipe/IngredientGate", () => ({
-  IngredientGate: ({ data }: { data: { title: string; keyIngredients: string[] } }) => (
-    <div data-testid="ingredient-gate" data-title={data.title}>
-      {data.keyIngredients.join(",")}
-    </div>
-  ),
-}));
-
 jest.mock("./recipe/SuggestionsBlock", () => ({
   SuggestionsBlock: () => <div data-testid="suggestions-block" />,
 }));
@@ -135,7 +127,6 @@ describe("MessageList", () => {
     userId: "test-user-123",
     status: "ready",
     submittedAt: null,
-    expectingRecipe: false,
     messages: [],
   };
 
@@ -484,21 +475,6 @@ describe("MessageList", () => {
       expect(screen.queryByTestId("loader-ghost")).not.toBeInTheDocument();
     });
 
-    it("should show skeleton recipe card when expectingRecipe during submitted", () => {
-      render(
-        <MessageList
-          {...defaultProps}
-          messages={[]}
-          status="submitted"
-          submittedAt={Date.now()}
-          expectingRecipe={true}
-        />
-      );
-
-      expect(screen.getByTestId("loader-ghost")).toBeInTheDocument();
-      expect(screen.getByText("Ah Mah · just a moment")).toBeInTheDocument();
-      expect(screen.getByText("Let me write the whole thing out for you —")).toBeInTheDocument();
-    });
   });
 
   describe("Scrolling Behavior", () => {
@@ -735,124 +711,6 @@ describe("MessageList", () => {
     });
   });
 
-  describe("proposeRecipe tool rendering", () => {
-    it("renders IngredientGate when message contains a proposeRecipe tool part in input-available state", () => {
-      const toolMessage = createMockMessage({
-        role: "assistant",
-        parts: [
-          { type: "text", text: "Quick check before I write it out:" },
-          {
-            type: "tool-proposeRecipe",
-            toolCallId: "call-123",
-            state: "input-available",
-            input: {
-              recipeId: "guacamole",
-              title: "Guacamole",
-              keyIngredients: ["avocado", "lime", "onion", "cilantro", "jalapeño"],
-            },
-          } as unknown as { type: "text"; text: string },
-        ],
-      });
-
-      render(<MessageList {...defaultProps} messages={[toolMessage]} />);
-
-      const gate = screen.getByTestId("ingredient-gate");
-      expect(gate).toBeInTheDocument();
-      expect(gate).toHaveAttribute("data-title", "Guacamole");
-      expect(gate).toHaveTextContent("avocado");
-    });
-
-    it("does NOT render IngredientGate for a gate fenced block (gate path removed)", () => {
-      const gateBlockMessage = createMockMessage({
-        role: "assistant",
-        parts: [
-          {
-            type: "text",
-            text: "```gate\n{\"recipeId\":\"guacamole\",\"title\":\"Guacamole\",\"keyIngredients\":[\"avocado\"]}\n```",
-          },
-        ],
-      });
-
-      render(<MessageList {...defaultProps} messages={[gateBlockMessage]} />);
-
-      expect(screen.queryByTestId("ingredient-gate")).not.toBeInTheDocument();
-    });
-
-    it("renders IngredientGate when tool state is output-available", () => {
-      const toolMessage = createMockMessage({
-        role: "assistant",
-        parts: [
-          {
-            type: "tool-proposeRecipe",
-            toolCallId: "call-456",
-            state: "output-available",
-            input: {
-              recipeId: "fried-rice",
-              title: "Fried Rice",
-              keyIngredients: ["rice", "egg"],
-            },
-            output: null,
-          } as unknown as { type: "text"; text: string },
-        ],
-      });
-
-      render(<MessageList {...defaultProps} messages={[toolMessage]} />);
-
-      expect(screen.getByTestId("ingredient-gate")).toHaveAttribute("data-title", "Fried Rice");
-    });
-
-    it("does not render IngredientGate when tool state is input-streaming", () => {
-      const toolMessage = createMockMessage({
-        role: "assistant",
-        parts: [
-          {
-            type: "tool-proposeRecipe",
-            toolCallId: "call-789",
-            state: "input-streaming",
-            input: undefined,
-          } as unknown as { type: "text"; text: string },
-        ],
-      });
-
-      render(<MessageList {...defaultProps} messages={[toolMessage]} />);
-
-      expect(screen.queryByTestId("ingredient-gate")).not.toBeInTheDocument();
-    });
-
-    it("warns when proposeRecipe tool is ignored because message also has new blocks", () => {
-      const toolAndBlockMessage = createMockMessage({
-        role: "assistant",
-        parts: [
-          {
-            type: "text",
-            text: "```suggestions\n{\"intro\":\"Ideas\",\"options\":[{\"id\":\"fried-rice\",\"title\":\"Fried Rice\",\"blurb\":\"Quick one-pan.\",\"time\":\"15 min\",\"tags\":[\"quick\"],\"keyIngredients\":[\"rice\",\"egg\"]}]}\n```",
-          },
-          {
-            type: "tool-proposeRecipe",
-            toolCallId: "call-999",
-            state: "input-available",
-            input: {
-              recipeId: "fried-rice",
-              title: "Fried Rice",
-              keyIngredients: ["rice", "egg"],
-            },
-          } as unknown as { type: "text"; text: string },
-        ],
-      });
-
-      render(<MessageList {...defaultProps} messages={[toolAndBlockMessage]} />);
-
-      expect(console.warn).toHaveBeenCalledWith(
-        "[MessageList] proposeRecipe tool part ignored due to fence/block mode",
-        expect.objectContaining({
-          messageId: toolAndBlockMessage.id,
-          messageIndex: 0,
-          hasNewBlocks: true,
-        }),
-      );
-      expect(screen.queryByTestId("ingredient-gate")).not.toBeInTheDocument();
-    });
-  });
 
   describe("Accessibility", () => {
     it("should have proper container attributes", () => {
