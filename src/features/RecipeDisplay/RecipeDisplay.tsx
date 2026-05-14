@@ -222,7 +222,7 @@ function LegacyRecipeBody({
               <div className="flex items-center gap-3.5 font-sans text-[12px] text-muted-foreground">
                 {inPantryCount > 0 && (
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-accent" />
+                    <span className="w-2 h-2 rounded-full bg-jade" />
                     {inPantryCount} in pantry
                   </span>
                 )}
@@ -250,7 +250,7 @@ function LegacyRecipeBody({
                   </span>
                   {inPantry && (
                     <span
-                      className="font-sans text-[10.5px] font-semibold px-[7px] py-[2px] rounded-full tracking-wide shrink-0 text-accent border"
+                      className="font-sans text-[10.5px] font-semibold px-[7px] py-[2px] rounded-full tracking-wide shrink-0 text-jade border"
                       style={{
                         background: "oklch(0.94 0.04 168)",
                         borderColor: "oklch(0.78 0.07 168)",

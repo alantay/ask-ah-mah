@@ -281,7 +281,7 @@ const Chat = () => {
               <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </button>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-1.5">
           <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
             <AlertDialogTrigger asChild>
               <Button
@@ -290,7 +290,7 @@ const Chat = () => {
                 disabled={messageCount === 0}
                 aria-label="Delete conversation"
                 title={messageCount === 0 ? "Nothing to delete yet" : undefined}
-                className="cursor-pointer text-ink-faint hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed"
+                className="cursor-pointer text-ink-faint hover:text-destructive hover:bg-destructive/10 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Trash2 className="size-4" />
               </Button>

@@ -124,13 +124,13 @@ function SuggestionCard({
         <span
           className={cn(
             'inline-flex items-center gap-1.5 font-sans text-xs font-semibold',
-            haveAll ? 'text-accent' : 'text-[oklch(0.42_0.18_25)]'
+            haveAll ? 'text-jade' : 'text-[oklch(0.42_0.18_25)]'
           )}
         >
           <span
             className={cn(
               'size-[7px] rounded-full shrink-0',
-              haveAll ? 'bg-accent' : 'bg-[oklch(0.6_0.18_25)]'
+              haveAll ? 'bg-jade' : 'bg-[oklch(0.6_0.18_25)]'
             )}
           />
           {total === 0
