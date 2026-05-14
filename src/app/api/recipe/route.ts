@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   if (body.recipe) {
     const r = body.recipe;
     const tags = r.tags ?? [];
-    const photo = await fetchRecipePhoto(tags);
+    const photo = await fetchRecipePhoto(r.title, tags);
     const recipe = await saveRecipe(
       {
         userId,
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
     metadata = { tags: [], baseServings: 2, ingredients: [], description: "" };
   }
 
-  const legacyPhoto = await fetchRecipePhoto(metadata.tags ?? []);
+  const legacyPhoto = await fetchRecipePhoto(name, metadata.tags ?? []);
   const recipe = await saveRecipe(
     {
       userId,
