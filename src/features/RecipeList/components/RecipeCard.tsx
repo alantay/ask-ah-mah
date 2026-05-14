@@ -1,5 +1,6 @@
 import { RecipeWithId } from "@/lib/recipes/schemas";
 import { getRandomRecipeProcessingMessage, isTempId } from "@/features/Chat/constants";
+import Image from "next/image";
 
 interface RecipeCardProps {
   recipe: RecipeWithId;
@@ -41,19 +42,43 @@ export default function RecipeCard({ recipe, onSelect, onDelete }: RecipeCardPro
       </button>
 
       {/* Image strip */}
-      <div
-        className="h-28 border-b border-border flex items-center justify-center shrink-0"
-        style={{
-          background:
-            "repeating-linear-gradient(135deg, oklch(0.84 0.05 60) 0 8px, oklch(0.80 0.05 60) 8px 16px)",
-        }}
-      >
-        {isOptimistic && (
-          <span className="font-mono text-[10px] tracking-widest text-foreground/40 uppercase">
-            Saving…
-          </span>
-        )}
-      </div>
+      {recipe.imageUrl ? (
+        <div className="h-28 border-b border-border shrink-0 relative overflow-hidden">
+          <Image
+            src={recipe.imageUrl}
+            alt={recipe.name}
+            fill
+            className="object-cover"
+            sizes="(max-width: 640px) 100vw, 320px"
+          />
+          {recipe.photographerName && recipe.photographerUrl && (
+            <a
+              href={recipe.photographerUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="absolute bottom-1 right-2 font-sans text-[9px] text-white/70 hover:text-white transition-colors leading-none"
+              style={{ textShadow: "0 1px 2px rgba(0,0,0,0.6)" }}
+            >
+              Photo by {recipe.photographerName}
+            </a>
+          )}
+        </div>
+      ) : (
+        <div
+          className="h-28 border-b border-border flex items-center justify-center shrink-0"
+          style={{
+            background:
+              "repeating-linear-gradient(135deg, oklch(0.84 0.05 60) 0 8px, oklch(0.80 0.05 60) 8px 16px)",
+          }}
+        >
+          {isOptimistic && (
+            <span className="font-mono text-[10px] tracking-widest text-foreground/40 uppercase">
+              Saving…
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Content */}
       <div className="flex flex-col flex-1 p-5 gap-2.5">

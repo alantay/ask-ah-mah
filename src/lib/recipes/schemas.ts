@@ -82,4 +82,9 @@ export type Recipe = {
   createdAt?: Date;
 };
 
-export type RecipeWithId = Recipe & { id: string };
+export type RecipeWithId = Recipe & {
+  id: string;
+  imageUrl?: string | null;
+  photographerName?: string | null;
+  photographerUrl?: string | null;
+};
