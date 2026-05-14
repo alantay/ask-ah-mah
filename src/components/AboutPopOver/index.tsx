@@ -52,7 +52,7 @@ export default function AboutPopOver({
       <PopoverContent
         side="bottom"
         align={popoverAlign}
-        className="w-[600px] max-w-[95vw]"
+        className="w-150 max-w-[95vw]"
       >
         <div className="space-y-2">
           <h4 className="font-medium leading-none">About Ask Ah Mah</h4>
