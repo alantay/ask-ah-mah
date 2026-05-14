@@ -1,5 +1,17 @@
 "use client";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -13,11 +25,15 @@ export function getTitleFallback(): string {
 interface ConversationTitleProps {
   title: string | null | undefined;
   onRename: (title: string) => Promise<void>;
+  onDelete: () => Promise<void>;
+  canDelete: boolean;
 }
 
 export default function ConversationTitle({
   title,
   onRename,
+  onDelete,
+  canDelete,
 }: ConversationTitleProps) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState("");
@@ -100,6 +116,35 @@ export default function ConversationTitle({
           />
         </svg>
       </button>
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <button
+            disabled={!canDelete}
+            aria-label="Delete conversation"
+            title={!canDelete ? "Nothing to delete yet" : undefined}
+            className="text-ink-faint hover:text-destructive hover:bg-destructive/10 rounded-sm p-0.5 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Trash2 size={12} />
+          </button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this conversation?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This cannot be undone. Saved recipes are kept.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={onDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
