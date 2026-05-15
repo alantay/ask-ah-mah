@@ -136,7 +136,7 @@ function SuggestionCard({
           {total === 0
             ? 'Pantry check N/A'
             : haveAll
-              ? `All ${total} in pantry`
+              ? 'All set ✓'
               : `${have}/${total} in pantry · short ${missing.length}`}
         </span>
         <div className="flex-1" />
