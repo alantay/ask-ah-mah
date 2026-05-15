@@ -50,7 +50,7 @@ function groupByCategory(items: InventoryItem[]): { label: Category; items: Inve
 }
 
 const SectionLabel = ({ children, count }: { children: ReactNode; count?: number }) => (
-  <div className="flex items-center justify-between border-b border-dashed border-border pb-2.5 mb-3">
+  <div className="flex items-center justify-between border-b border-dashed border-border pb-2 mb-2.5">
     <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">{children}</span>
     {count !== undefined && (
       <span className="font-mono text-[11px] text-ink-faint tabular-nums">{count}</span>
@@ -138,7 +138,7 @@ const Inventory = ({ onClose }: { onClose?: () => void }) => {
     (kitchenwareInventory ?? []).some((i) => i.shelfLife === "short");
 
   return (
-    <div className="flex flex-col gap-4 animate-in fade-in duration-300 p-5 h-full">
+    <div className="flex flex-col gap-3 animate-in fade-in duration-300 p-4 h-full">
       {/* Pantry header */}
       <div className="flex items-start justify-between gap-2">
         <div>
@@ -216,7 +216,7 @@ const Inventory = ({ onClose }: { onClose?: () => void }) => {
       )}
 
       {/* Ingredients card — grouped by category */}
-      <section className="bg-card border border-border rounded-xl p-3.5 shadow-[0_1px_0_oklch(0.87_0.03_72),0_8px_18px_-16px_oklch(0.3_0.05_50/0.4)]">
+      <section className="bg-card border border-border rounded-xl p-3 shadow-[0_1px_0_oklch(0.87_0.03_72),0_8px_18px_-16px_oklch(0.3_0.05_50/0.4)]">
         <SectionLabel count={ingredientsSorted?.length ?? 0}>Ingredients</SectionLabel>
         {isLoading && <p className="text-xs text-muted-foreground font-display italic">Looking in the pantry…</p>}
         {!isLoading && ingredientsSorted?.length === 0 ? (
@@ -224,10 +224,10 @@ const Inventory = ({ onClose }: { onClose?: () => void }) => {
             Add what&rsquo;s in your fridge — Ah Mah understands &ldquo;a bit of ginger&rdquo;.
           </p>
         ) : (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2">
             {groupByCategory(ingredientsSorted ?? []).map((group) => (
               <div key={group.label}>
-                <div className="flex items-center gap-2 mb-1.5">
+                <div className="flex items-center gap-2 mb-1">
                   <span className="font-sans text-[9.5px] font-bold tracking-[0.18em] uppercase text-ink-faint shrink-0">
                     {group.label}
                   </span>
@@ -236,7 +236,7 @@ const Inventory = ({ onClose }: { onClose?: () => void }) => {
                     {group.items.length}
                   </span>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-1">
                   {group.items.map((item) => (
                     <InventoryItemBadge key={item.id} item={item} onRemove={removeItem} />
                   ))}
@@ -248,7 +248,7 @@ const Inventory = ({ onClose }: { onClose?: () => void }) => {
       </section>
 
       {/* Equipment card */}
-      <section className="bg-card border border-border rounded-xl p-3.5 shadow-[0_1px_0_oklch(0.87_0.03_72),0_8px_18px_-16px_oklch(0.3_0.05_50/0.4)]">
+      <section className="bg-card border border-border rounded-xl p-3 shadow-[0_1px_0_oklch(0.87_0.03_72),0_8px_18px_-16px_oklch(0.3_0.05_50/0.4)]">
         <SectionLabel count={kitchenwareSorted?.length ?? 0}>Equipment</SectionLabel>
         {isLoading && <p className="text-xs text-muted-foreground font-display italic">Rummaging through the cupboards…</p>}
         {!isLoading && kitchenwareSorted?.length === 0 ? (
@@ -256,7 +256,7 @@ const Inventory = ({ onClose }: { onClose?: () => void }) => {
             Got a wok? A pressure cooker? Tell Ah Mah what you cook with.
           </p>
         ) : (
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1">
             {kitchenwareSorted?.map((item: InventoryItem) => (
               <InventoryItemBadge key={item.id} item={item} onRemove={removeItem} />
             ))}
