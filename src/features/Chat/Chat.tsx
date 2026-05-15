@@ -261,8 +261,6 @@ const Chat = () => {
         <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
           <ConversationTitle
             title={activeConversation?.title}
-            onTap={() => setConvSheetOpen(true)}
-            withChevron
             editing={titleEditing}
             onEditingChange={setTitleEditing}
             onRename={renameActiveConversation}
