@@ -38,6 +38,13 @@ The persistent-kitchen MVP. Highlights:
 - [x] Bug fixed (May 2026): `Conversations.tsx` was reading `data?.grouped` but API returns `{ conversations: GroupedConversations }` — fixed to `data?.conversations`.
 - [x] Bug fixed (May 2026): `src/app/api/message/route.ts` used default import for prisma — fixed to named `{ prisma }`.
 
+### RecipeDisplay (cookbook): strip pantry awareness + mobile padding (May 2026)
+- [x] `RecipeDisplay` no longer fetches inventory or shows HAVE/NEED badges — cookbook is recipe storage, not meal planning.
+- [x] `LegacyRecipeBody` and the `RecipeLetter`-based structured path collapsed into a single `RecipeBody`: legacy recipes use `Streamdown` markdown fallback; structured recipes (with `steps`) render numbered step cards.
+- [x] Mobile padding: `px-4 sm:px-9` throughout (was `px-6 sm:px-9`).
+- [x] Servings stepper moved inline with "What to gather" ingredients heading — saves vertical space on mobile.
+- [x] All 16 `RecipeDisplay` tests pass; SWR/session mocks removed; structured-steps and no-pantry assertions added.
+
 ### Recipe card enrichment — description + total time (May 2026)
 - [x] `description` and `totalTimeMinutes` exist in schema/types.
 - [x] `processRecipe` extracts description + total time on save.
