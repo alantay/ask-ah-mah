@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 
 function formatRelativeTime(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
+  if (isNaN(d.getTime())) return "";
   const now = new Date();
   const diffMs = now.getTime() - d.getTime();
   const mins = Math.floor(diffMs / 60_000);
@@ -52,7 +53,7 @@ export function ConversationItem({ conversation, isActive, onClick }: Conversati
       {messageCount > 0 && (
         <div className="flex items-center gap-2 mt-1.5">
           <span className="font-sans text-[10px] text-ink-faint tabular-nums">
-            {messageCount} {messageCount === 1 ? "msg" : "msg"}
+            {messageCount} msg
           </span>
         </div>
       )}
