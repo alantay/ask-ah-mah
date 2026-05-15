@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { useConversationContext } from "@/contexts/ConversationContext";
 import { useSessionContext } from "@/contexts/SessionContext";
 import { ConversationsMobileSheet } from "@/features/Conversations";
@@ -17,7 +16,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
 import { z } from "zod";
-import ConversationTitle from "./components/ConversationTitle";
+import ConversationTitle, { ConversationActionsMenu } from "./components/ConversationTitle";
 import { MessageInput } from "./components/MessageInput";
 import { MessageList } from "./components/MessageList";
 import { INITIAL_MESSAGE, LOADING_MESSAGES } from "./constants";
@@ -42,6 +41,7 @@ const Chat = () => {
     deleteActiveConversation,
   } = useConversationContext();
   const [convSheetOpen, setConvSheetOpen] = useState(false);
+  const [titleEditing, setTitleEditing] = useState(false);
   const [submittedAt, setSubmittedAt] = useState<number | null>(null);
   const autoTitledConversations = useRef<Set<string>>(new Set());
   const autoTitlingConversations = useRef<Set<string>>(new Set());
@@ -241,43 +241,45 @@ const Chat = () => {
       key={activeConversationId}
       className="flex flex-col animate-in fade-in duration-300 h-full"
     >
-      <div className="hidden sm:flex items-center justify-between px-7 py-3.5 border-b border-dashed border-border shrink-0">
-        <div className="flex items-center gap-3">
-          {/* Active indicator dot */}
-          <div className="w-2 h-2 rounded-full bg-primary shrink-0 shadow-[0_0_0_4px_oklch(0.56_0.135_35/0.18)]" />
-          <div>
-            <ConversationTitle
-              title={activeConversation?.title}
-              onRename={renameActiveConversation}
-              onDelete={handleDeleteConversation}
-              canDelete={messageCount > 0}
-            />
-            <div className="text-[11.5px] text-ink-faint mt-0.5 tracking-wide">
-              {messageCount > 0
-                ? `${messageCount} message${messageCount !== 1 ? "s" : ""}${startedAt ? ` · started ${startedAt}` : ""}`
-                : "Start a conversation"}
-            </div>
+      {/* Chat header — single row at all widths */}
+      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-dashed border-border shrink-0">
+        {/* Hamburger — hidden when persistent sidebar is present */}
+        <button
+          onClick={() => setConvSheetOpen(true)}
+          className="lg:hidden flex items-center justify-center w-9 h-9 rounded-lg text-ink-faint hover:text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
+          aria-label="Open conversations"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </button>
+
+        {/* Active indicator dot */}
+        <div className="w-2 h-2 rounded-full bg-primary shrink-0 shadow-[0_0_0_4px_oklch(0.56_0.135_35/0.18)]" />
+
+        {/* Title + meta — flex-1 min-w-0 ensures truncation before buttons */}
+        <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
+          <ConversationTitle
+            title={activeConversation?.title}
+            editing={titleEditing}
+            onEditingChange={setTitleEditing}
+            onRename={renameActiveConversation}
+          />
+          <div className="text-[11px] text-ink-faint tracking-wide truncate">
+            {messageCount > 0
+              ? `${messageCount} message${messageCount !== 1 ? "s" : ""}${startedAt ? ` · started ${startedAt}` : ""}`
+              : "Start a conversation"}
           </div>
         </div>
-        {/* Mobile: conversations button */}
-          <button
-            onClick={() => setConvSheetOpen(true)}
-            className="lg:hidden p-1.5 text-ink-faint hover:text-foreground transition-colors cursor-pointer"
-            aria-label="Open conversations"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-          </button>
-          <Button
-            size="sm"
-            onClick={() => startNewConversation()}
-            disabled={messageCount === 0}
-            title={messageCount === 0 ? "Start a conversation first" : undefined}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            + New conversation
-          </Button>
+
+        {/* Overflow menu — new / rename / delete */}
+        <ConversationActionsMenu
+          onNewConversation={() => startNewConversation()}
+          canStartNew={messageCount > 0}
+          onStartRename={() => setTitleEditing(true)}
+          onDelete={handleDeleteConversation}
+          canDelete={messageCount > 0}
+        />
       </div>
       <MessageList
         messages={allMessages}
