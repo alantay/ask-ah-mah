@@ -47,11 +47,6 @@ jest.mock("@/components/ui/badge", () => ({
   ),
 }));
 
-jest.mock("swr", () => ({
-  __esModule: true,
-  default: jest.fn(() => ({ data: undefined, error: undefined })),
-}));
-
 const mockSelectedRecipe = jest.fn();
 
 jest.mock("@/contexts/RecipeContext", () => ({
@@ -60,10 +55,6 @@ jest.mock("@/contexts/RecipeContext", () => ({
     setSelectedRecipe: jest.fn(),
     exitRecipe: jest.fn(),
   }),
-}));
-
-jest.mock("@/contexts/SessionContext", () => ({
-  useSessionContext: () => ({ userId: "user-123" }),
 }));
 
 const baseRecipe = {
@@ -98,7 +89,7 @@ describe("RecipeDisplay", () => {
       expect(container.firstChild).toBeNull();
     });
 
-    it("renders recipe instructions via Streamdown", () => {
+    it("renders recipe instructions via Streamdown for legacy recipes", () => {
       render(<RecipeDisplay />);
       const method = screen.getByTestId("streamdown");
       expect(method).toHaveTextContent("Heat butter");
@@ -115,7 +106,6 @@ describe("RecipeDisplay", () => {
 
     it("renders structured ingredients", () => {
       render(<RecipeDisplay />);
-      // Structured list shows scaled amount + unit
       expect(screen.getAllByText(/3 piece/).length).toBeGreaterThan(0);
       expect(screen.getAllByText(/2 tbsp/).length).toBeGreaterThan(0);
     });
@@ -123,6 +113,43 @@ describe("RecipeDisplay", () => {
     it("renders the copy button", () => {
       render(<RecipeDisplay />);
       expect(screen.getByText("Copy")).toBeInTheDocument();
+    });
+
+    it("renders no pantry badges or inventory-based UI", () => {
+      render(<RecipeDisplay />);
+      expect(screen.queryByText(/in pantry/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/\bNEED\b/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/\bHAVE\b/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/short/i)).not.toBeInTheDocument();
+    });
+
+    it("renders the ingredients section as 'What to gather'", () => {
+      render(<RecipeDisplay />);
+      expect(screen.getByText("What to gather")).toBeInTheDocument();
+    });
+  });
+
+  describe("Structured steps", () => {
+    it("renders step title and body when steps are present", () => {
+      mockSelectedRecipe.mockReturnValue({
+        ...baseRecipe,
+        steps: [
+          { title: "Heat the pan", body: "Put butter in a pan on medium heat.", tip: "Don't let it brown." },
+          { title: "Add eggs", body: "Beat and pour in eggs." },
+        ],
+      });
+      render(<RecipeDisplay />);
+      expect(screen.getByText("Heat the pan")).toBeInTheDocument();
+      expect(screen.getByText("Put butter in a pan on medium heat.")).toBeInTheDocument();
+      expect(screen.getByText("Don't let it brown.")).toBeInTheDocument();
+      expect(screen.getByText("Add eggs")).toBeInTheDocument();
+      expect(screen.queryByTestId("streamdown")).not.toBeInTheDocument();
+    });
+
+    it("falls back to Streamdown when steps array is empty", () => {
+      mockSelectedRecipe.mockReturnValue({ ...baseRecipe, steps: [] });
+      render(<RecipeDisplay />);
+      expect(screen.getByTestId("streamdown")).toBeInTheDocument();
     });
   });
 
@@ -135,22 +162,20 @@ describe("RecipeDisplay", () => {
     it("scales ingredient amounts when servings increase", () => {
       render(<RecipeDisplay />);
       fireEvent.click(screen.getByLabelText("Increase servings"));
-      // Doubling baseServings 2 → 3 → eggs scales 3 × 1.5 = 4.5
       expect(screen.getByText(/4\.5 piece/)).toBeInTheDocument();
     });
 
     it("scales ingredient amounts when servings decrease", () => {
       render(<RecipeDisplay />);
       fireEvent.click(screen.getByLabelText("Decrease servings"));
-      // 3 eggs * (1/2) = 1.5
       expect(screen.getByText(/1\.5 piece/)).toBeInTheDocument();
     });
 
     it("does not go below 1 serving", () => {
       render(<RecipeDisplay />);
       const dec = screen.getByLabelText("Decrease servings");
-      fireEvent.click(dec); // 1
-      fireEvent.click(dec); // should clamp at 1
+      fireEvent.click(dec);
+      fireEvent.click(dec);
       expect(dec).toBeDisabled();
     });
   });
@@ -160,9 +185,7 @@ describe("RecipeDisplay", () => {
       render(<RecipeDisplay />);
       fireEvent.click(screen.getByText("Copy"));
       await waitFor(() => {
-        expect(mockClipboard.writeText).toHaveBeenCalledWith(
-          baseRecipe.instructions,
-        );
+        expect(mockClipboard.writeText).toHaveBeenCalledWith(baseRecipe.instructions);
       });
     });
 
@@ -170,9 +193,7 @@ describe("RecipeDisplay", () => {
       render(<RecipeDisplay />);
       fireEvent.click(screen.getByText("Copy"));
       await waitFor(() => {
-        expect(toast.success).toHaveBeenCalledWith(
-          "Recipe copied to clipboard!",
-        );
+        expect(toast.success).toHaveBeenCalledWith("Recipe copied to clipboard!");
       });
     });
 
@@ -185,5 +206,4 @@ describe("RecipeDisplay", () => {
       });
     });
   });
-
 });
