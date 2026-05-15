@@ -28,6 +28,7 @@ interface ConversationItemProps {
 export function ConversationItem({ conversation, isActive, onClick }: ConversationItemProps) {
   const title = conversation.title ?? "New chat";
   const messageCount = conversation._count?.messages ?? 0;
+  const snippet = conversation.lastMessageSnippet;
 
   return (
     <div
@@ -49,9 +50,16 @@ export function ConversationItem({ conversation, isActive, onClick }: Conversati
         </span>
       </div>
 
+      {/* Snippet */}
+      {snippet && (
+        <p className="mt-0.5 font-sans text-[11px] text-ink-faint leading-snug truncate">
+          {snippet}
+        </p>
+      )}
+
       {/* Footer — message count */}
       {messageCount > 0 && (
-        <div className="flex items-center gap-2 mt-1.5">
+        <div className="flex items-center gap-1.5 mt-1.5">
           <span className="font-sans text-[10px] text-ink-faint tabular-nums">
             {messageCount} msg
           </span>

@@ -73,4 +73,22 @@ describe("ConversationItem", () => {
     );
     expect(screen.queryByText(/msg/)).not.toBeInTheDocument();
   });
+
+  it("shows snippet when lastMessageSnippet is present", () => {
+    render(
+      <ConversationItem
+        conversation={{ ...baseConv, lastMessageSnippet: "Here is a great recipe for you" }}
+        isActive={false}
+        onClick={() => {}}
+      />
+    );
+    expect(screen.getByText("Here is a great recipe for you")).toBeInTheDocument();
+  });
+
+  it("hides snippet when lastMessageSnippet is absent", () => {
+    render(
+      <ConversationItem conversation={baseConv} isActive={false} onClick={() => {}} />
+    );
+    expect(screen.queryByText(/Here is a great/)).not.toBeInTheDocument();
+  });
 });
