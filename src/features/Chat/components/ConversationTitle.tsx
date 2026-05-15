@@ -9,12 +9,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useRef, useState } from "react";
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
 
 export function getTitleFallback(): string {
   return "New chat";
@@ -24,18 +26,23 @@ export function getTitleFallback(): string {
 
 interface ConversationTitleProps {
   title: string | null | undefined;
+  /** When provided, title becomes a tappable button */
+  onTap?: () => void;
+  /** Show a ▾ chevron to signal tappability */
+  withChevron?: boolean;
+  editing: boolean;
+  onEditingChange: (editing: boolean) => void;
   onRename: (title: string) => Promise<void>;
-  onDelete: () => Promise<void>;
-  canDelete: boolean;
 }
 
 export default function ConversationTitle({
   title,
+  onTap,
+  withChevron,
+  editing,
+  onEditingChange,
   onRename,
-  onDelete,
-  canDelete,
 }: ConversationTitleProps) {
-  const [editing, setEditing] = useState(false);
   const [value, setValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const committingRef = useRef(false);
@@ -44,7 +51,7 @@ export default function ConversationTitle({
 
   const startEditing = () => {
     setValue(displayTitle);
-    setEditing(true);
+    onEditingChange(true);
     setTimeout(() => inputRef.current?.select(), 0);
   };
 
@@ -55,7 +62,7 @@ export default function ConversationTitle({
     if (trimmed && trimmed !== displayTitle) {
       await onRename(trimmed);
     }
-    setEditing(false);
+    onEditingChange(false);
     committingRef.current = false;
   };
 
@@ -64,7 +71,7 @@ export default function ConversationTitle({
       e.preventDefault();
       commitRename();
     } else if (e.key === "Escape") {
-      setEditing(false);
+      onEditingChange(false);
     }
   };
 
@@ -72,7 +79,7 @@ export default function ConversationTitle({
     return (
       <input
         ref={inputRef}
-        className="font-display italic font-medium text-[19px] text-foreground leading-tight tracking-tight bg-transparent border-b border-border outline-none w-full max-w-[280px]"
+        className="font-display italic font-medium text-[16.5px] text-foreground leading-tight tracking-tight bg-transparent border-b border-border outline-none w-full min-w-0"
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onBlur={commitRename}
@@ -82,51 +89,88 @@ export default function ConversationTitle({
     );
   }
 
-  return (
-    <div className="flex items-center gap-1.5">
-      <span className="font-display italic font-medium text-[19px] text-foreground leading-tight tracking-tight">
+  const titleEl = (
+    <div className="flex items-center gap-1.5 min-w-0">
+      <span className="font-display italic font-medium text-[16.5px] text-foreground leading-tight tracking-tight truncate">
         {displayTitle}
       </span>
-      <button
-        onClick={startEditing}
-        className="text-ink-faint hover:text-muted-foreground transition-colors cursor-pointer"
-        aria-label="Rename conversation"
-      >
-        {/* Pencil icon 12×12 */}
+      {withChevron && (
         <svg
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
+          width="11"
+          height="11"
+          viewBox="0 0 16 16"
           fill="none"
-          xmlns="http://www.w3.org/2000/svg"
+          className="text-ink-faint shrink-0"
         >
           <path
-            d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+            d="M4 6l4 4 4-4"
             stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
-            stroke="currentColor"
-            strokeWidth="2"
+            strokeWidth="1.7"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
         </svg>
+      )}
+    </div>
+  );
+
+  if (onTap) {
+    return (
+      <button
+        onClick={onTap}
+        className="flex flex-col items-start min-w-0 text-left bg-transparent border-none p-0 cursor-pointer"
+      >
+        {titleEl}
       </button>
-      <AlertDialog>
-        <AlertDialogTrigger asChild>
+    );
+  }
+
+  return titleEl;
+}
+
+// ── ConversationActionsMenu ───────────────────────────────────────────────────
+
+interface ConversationActionsMenuProps {
+  onStartRename: () => void;
+  onDelete: () => Promise<void>;
+  canDelete: boolean;
+}
+
+export function ConversationActionsMenu({
+  onStartRename,
+  onDelete,
+  canDelete,
+}: ConversationActionsMenuProps) {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
           <button
-            disabled={!canDelete}
-            aria-label="Delete conversation"
-            title={!canDelete ? "Nothing to delete yet" : undefined}
-            className="text-ink-faint hover:text-destructive hover:bg-destructive/10 rounded-sm p-0.5 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center justify-center w-9 h-9 rounded-lg text-ink-faint hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+            aria-label="More options"
           >
-            <Trash2 size={12} />
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+              <circle cx="3" cy="8" r="1.4" />
+              <circle cx="8" cy="8" r="1.4" />
+              <circle cx="13" cy="8" r="1.4" />
+            </svg>
           </button>
-        </AlertDialogTrigger>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={onStartRename}>Rename</DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={!canDelete}
+            className="text-destructive focus:text-destructive"
+            onClick={() => setDeleteDialogOpen(true)}
+          >
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this conversation?</AlertDialogTitle>
@@ -145,6 +189,6 @@ export default function ConversationTitle({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 }

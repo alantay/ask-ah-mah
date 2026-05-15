@@ -84,6 +84,14 @@ The persistent-kitchen MVP. Highlights:
 - [x] Each sub-group: label + dotted-line spacer + count, then the badges. Empty categories hidden.
 - [x] Items with null category (pre-existing rows) fall under Misc.
 
+### Mobile fixes — Round 1: chat header (May 2026)
+- [x] Chat header now renders at all widths below `lg` (was `hidden sm:flex` — true mobile had no header).
+- [x] Hamburger (`lg:hidden`) pinned leftmost; tapping title (with ▾ chevron) opens the same `ConversationsMobileSheet` — one destination, two entry points.
+- [x] `+ New conversation` full-text button replaced with a `+` icon button (primary fill) at all widths.
+- [x] Rename and Delete moved from inline `ConversationTitle` controls into a `⋯` `DropdownMenu` overflow.
+- [x] `ConversationTitle` refactored: pure visual display with optional tappable/chevron props; `ConversationActionsMenu` is a new export holding the dropdown + AlertDialog delete confirm.
+- [x] `dropdown-menu` shadcn primitive added.
+
 ### Better Auth — Setup & Login UI (May 2026)
 - [x] `better-auth` installed with Prisma adapter (`postgresql` provider).
 - [x] Google OAuth and Email (Magic Link via Resend) providers configured in `src/lib/auth.ts`.
