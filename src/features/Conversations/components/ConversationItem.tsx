@@ -3,6 +3,22 @@
 import type { ConversationEntity } from "@/lib/conversations";
 import { cn } from "@/lib/utils";
 
+function formatRelativeTime(date: Date | string): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  if (isNaN(d.getTime())) return "";
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const mins = Math.floor(diffMs / 60_000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return "Yesterday";
+  if (days < 7) return d.toLocaleDateString("en-US", { weekday: "short" });
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
 interface ConversationItemProps {
   conversation: ConversationEntity;
   isActive: boolean;
@@ -11,6 +27,7 @@ interface ConversationItemProps {
 
 export function ConversationItem({ conversation, isActive, onClick }: ConversationItemProps) {
   const title = conversation.title ?? "New chat";
+  const messageCount = conversation._count?.messages ?? 0;
 
   return (
     <div
@@ -22,9 +39,24 @@ export function ConversationItem({ conversation, isActive, onClick }: Conversati
           : "bg-card border border-border"
       )}
     >
-      <span className="font-display italic font-medium text-base text-foreground leading-tight tracking-tight block truncate">
-        {title}
-      </span>
+      {/* Title row */}
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="font-display font-medium text-base text-foreground leading-tight tracking-tight truncate">
+          {title}
+        </span>
+        <span className="font-sans text-[10.5px] text-ink-faint shrink-0 tabular-nums">
+          {formatRelativeTime(conversation.updatedAt)}
+        </span>
+      </div>
+
+      {/* Footer — message count */}
+      {messageCount > 0 && (
+        <div className="flex items-center gap-2 mt-1.5">
+          <span className="font-sans text-[10px] text-ink-faint tabular-nums">
+            {messageCount} msg
+          </span>
+        </div>
+      )}
     </div>
   );
 }

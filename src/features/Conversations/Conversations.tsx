@@ -17,6 +17,32 @@ type ConversationsResponse = {
   conversations: ConversationEntity[];
 };
 
+type DateGroup = "Today" | "Yesterday" | "Earlier";
+const DATE_GROUPS: DateGroup[] = ["Today", "Yesterday", "Earlier"];
+
+function getDateGroup(date: Date | string): DateGroup {
+  const d = typeof date === "string" ? new Date(date) : date;
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfYesterday = new Date(startOfToday.getTime() - 86_400_000);
+  const startOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  if (startOfDay >= startOfToday) return "Today";
+  if (startOfDay >= startOfYesterday) return "Yesterday";
+  return "Earlier";
+}
+
+function groupConversations(conversations: ConversationEntity[]) {
+  const map = new Map<DateGroup, ConversationEntity[]>(
+    DATE_GROUPS.map((g) => [g, []])
+  );
+  for (const conv of conversations) {
+    map.get(getDateGroup(conv.updatedAt))!.push(conv);
+  }
+  return DATE_GROUPS.map((label) => ({ label, items: map.get(label)! })).filter(
+    (g) => g.items.length > 0
+  );
+}
+
 export function Conversations({ onItemClick }: ConversationsProps) {
   const { userId } = useSessionContext();
   const { activeConversationId, setActiveConversation, startNewConversation } =
@@ -36,6 +62,8 @@ export function Conversations({ onItemClick }: ConversationsProps) {
       )
     : allConversations;
 
+  const groups = groupConversations(filtered);
+
   const handleItemClick = (id: string) => {
     setActiveConversation(id);
     onItemClick?.();
@@ -48,7 +76,7 @@ export function Conversations({ onItemClick }: ConversationsProps) {
   };
 
   return (
-    <>
+    <div className="flex flex-col h-full gap-3">
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div>
@@ -88,24 +116,35 @@ export function Conversations({ onItemClick }: ConversationsProps) {
       </div>
 
       {/* List */}
-      {isLoading ? (
-        <div className="italic text-ink-faint text-sm">Loading…</div>
-      ) : filtered.length === 0 ? (
-        <div className="italic text-ink-faint text-sm">
-          {search ? "No results" : "No conversations yet"}
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {filtered.map((conv) => (
-            <ConversationItem
-              key={conv.id}
-              conversation={conv}
-              isActive={conv.id === activeConversationId}
-              onClick={() => handleItemClick(conv.id)}
-            />
-          ))}
-        </div>
-      )}
-    </>
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        {isLoading ? (
+          <div className="italic text-ink-faint text-sm">Loading…</div>
+        ) : filtered.length === 0 ? (
+          <div className="italic text-ink-faint text-sm">
+            {search ? "No results" : "No conversations yet"}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {groups.map((group) => (
+              <div key={group.label}>
+                <div className="font-sans text-[9.5px] font-bold tracking-[0.18em] uppercase text-ink-faint mb-1.5 px-0.5">
+                  {group.label}
+                </div>
+                <div className="flex flex-col gap-2">
+                  {group.items.map((conv) => (
+                    <ConversationItem
+                      key={conv.id}
+                      conversation={conv}
+                      isActive={conv.id === activeConversationId}
+                      onClick={() => handleItemClick(conv.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

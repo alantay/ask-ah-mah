@@ -55,4 +55,22 @@ describe("ConversationItem", () => {
     );
     expect(screen.getByText("New chat")).toBeInTheDocument();
   });
+
+  it("shows message count", () => {
+    render(
+      <ConversationItem conversation={baseConv} isActive={false} onClick={() => {}} />
+    );
+    expect(screen.getByText(/5 msg/)).toBeInTheDocument();
+  });
+
+  it("hides message count when zero messages", () => {
+    render(
+      <ConversationItem
+        conversation={{ ...baseConv, _count: { messages: 0 } }}
+        isActive={false}
+        onClick={() => {}}
+      />
+    );
+    expect(screen.queryByText(/msg/)).not.toBeInTheDocument();
+  });
 });
