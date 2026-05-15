@@ -11,7 +11,7 @@ export const InventoryItemBadge = ({
   onRemove,
 }: InventoryItemBadgeProps) => {
   return (
-    <Badge key={item.id} variant="outline" className="relative pr-8 pl-3 py-1.5 bg-background border-border rounded-md shadow-[0_1px_0_oklch(0.82_0.04_70)] text-foreground">
+    <Badge key={item.id} variant="outline" className="relative pr-6 pl-2.5 py-0.5 bg-background border-border rounded-md shadow-[0_1px_0_oklch(0.82_0.04_70)] text-foreground text-[12px]">
       {item.shelfLife === "short" && (
         <span
           aria-label="Short shelf life"
@@ -27,12 +27,12 @@ export const InventoryItemBadge = ({
 
       <button
         onClick={() => onRemove(item.name)}
-        className="absolute right-1 cursor-pointer p-1 hover:bg-secondary rounded group"
+        className="absolute right-0.5 cursor-pointer p-0.5 hover:bg-secondary rounded group"
       >
         <svg
           className="text-gray-400 group-hover:text-gray-500"
-          width="16"
-          height="16"
+          width="12"
+          height="12"
           viewBox="0 0 20 20"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
