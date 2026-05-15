@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { fetcher } from "@/lib/utils/index";
 import { TimerIcon } from "lucide-react";
 import { useState } from "react";
+import { CookingMode } from "./CookingMode";
 import { toast } from "sonner";
 import useSWR, { useSWRConfig } from "swr";
 import { ScaledNum } from "./ScaledNum";
@@ -141,6 +142,7 @@ function ingredientHave(name: string, inventoryNames: string[]): boolean {
 export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterProps) {
   const [servings, setServings] = useState(recipe.baseServings);
   const [inFlight, setInFlight] = useState<Set<string>>(new Set());
+  const [cooking, setCooking] = useState(false);
   const ratio = servings / recipe.baseServings;
   const { userId } = useSessionContext();
   const { mutate } = useSWRConfig();
@@ -220,8 +222,9 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
         return parts.join(" ");
       })
       .join("\n");
-    navigator.clipboard.writeText(lines).then(() =>
-      toast.success("Shopping list copied to clipboard"),
+    navigator.clipboard.writeText(lines).then(
+      () => toast.success("Shopping list copied to clipboard"),
+      () => toast.error("Couldn't copy — try selecting and copying manually"),
     );
   };
 
@@ -238,6 +241,17 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
     "font-sans text-[10px] font-bold tracking-widest uppercase";
 
   const showPantryPill = !!userId;
+  const canCook = recipe.steps.length > 0;
+
+  if (cooking) {
+    return (
+      <CookingMode
+        title={recipe.title}
+        steps={recipe.steps}
+        onExit={() => setCooking(false)}
+      />
+    );
+  }
 
   return (
     <div className=" border-y border-border-soft p-[20px_26px_22px] relative">
@@ -398,42 +412,41 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
         </div>
       )}
 
-      {/* Action bar — only when onSave is provided */}
-      {onSave && (
+      {/* Action bar */}
+      {(onSave || canCook) && (
         <div className="flex gap-2 items-center pt-3 mt-4.5 border-t border-dashed border-border">
-          {isSaved ? (
-            <button
-              disabled
-              className="px-3 py-1.5 font-sans text-xs font-semibold text-jade bg-transparent border border-border rounded-lg cursor-not-allowed inline-flex items-center gap-1 opacity-80"
-            >
-              <svg
-                width="11"
-                height="11"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                stroke="currentColor"
-                strokeWidth="2"
+          {onSave && (
+            isSaved ? (
+              <button
+                disabled
+                className="px-3 py-1.5 font-sans text-xs font-semibold text-jade bg-transparent border border-border rounded-lg cursor-not-allowed inline-flex items-center gap-1 opacity-80"
               >
-                <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16l-7-3-7 3z" />
-              </svg>
-              Saved
-            </button>
-          ) : (
-            <button
-              onClick={() => onSave(recipe)}
-              className="px-3 py-1.5 font-sans text-xs font-semibold text-foreground bg-card border border-border rounded-lg cursor-pointer shadow-[0_1px_0_var(--border-soft)] hover:bg-muted/50 transition-colors inline-flex items-center gap-1"
-            >
-              <svg
-                width="11"
-                height="11"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2">
+                  <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16l-7-3-7 3z" />
+                </svg>
+                Saved
+              </button>
+            ) : (
+              <button
+                onClick={() => onSave(recipe)}
+                className="px-3 py-1.5 font-sans text-xs font-semibold text-foreground bg-card border border-border rounded-lg cursor-pointer shadow-[0_1px_0_var(--border-soft)] hover:bg-muted/50 transition-colors inline-flex items-center gap-1"
               >
-                <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16l-7-3-7 3z" />
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16l-7-3-7 3z" />
+                </svg>
+                Save to cookbook
+              </button>
+            )
+          )}
+          {canCook && (
+            <button
+              onClick={() => setCooking(true)}
+              className="ml-auto px-3 py-1.5 font-sans text-xs font-semibold text-white bg-primary border border-[oklch(0.405_0.130_32)] rounded-lg cursor-pointer shadow-[0_1px_0_oklch(0.405_0.130_32)] hover:bg-[oklch(0.50_0.130_32)] transition-colors inline-flex items-center gap-1.5"
+            >
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                <path d="M5 3l8 5-8 5V3z" fill="currentColor"/>
               </svg>
-              Save to cookbook
+              Start cooking
             </button>
           )}
         </div>
