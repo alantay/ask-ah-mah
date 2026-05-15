@@ -324,6 +324,7 @@ export const MessageList = ({
                             saveStructuredRecipe(block.payload, recipeKey)
                           }
                           isSaved={isSaved}
+                          onSend={onSend}
                         />
                       );
                     }
