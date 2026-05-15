@@ -132,10 +132,10 @@ describe('NEED pill click-to-add', () => {
     expect(screen.getByLabelText('Add bok choy to pantry')).toBeInTheDocument();
   });
 
-  it('renders HAVE (non-interactive) for ingredient already in pantry', () => {
+  it('renders no badge for ingredient already in pantry (HAVE removed)', () => {
     render(<RecipeLetter recipe={RECIPE} />);
     expect(screen.queryByLabelText('Add chicken thigh to pantry')).not.toBeInTheDocument();
-    expect(screen.getByText('HAVE')).toBeInTheDocument();
+    expect(screen.queryByText('HAVE')).not.toBeInTheDocument();
   });
 
   it('posts correct body and shows success toast on NEED click', async () => {

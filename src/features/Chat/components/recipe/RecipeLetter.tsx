@@ -254,7 +254,7 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
   }
 
   return (
-    <div className=" border-y border-border-soft p-[20px_26px_22px] relative">
+    <div className="border-y border-border-soft px-4 sm:px-[26px] pt-5 pb-[22px] relative">
       {/* Title */}
       <div className="font-display text-3xl font-semibold text-foreground leading-[1.05] tracking-tight mb-2">
         {recipe.title}
@@ -371,11 +371,11 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
                       </span>
                     )}
                   </span>
-                  {userId && inventoryItems.length > 0 && (
+                  {userId && inventoryItems.length > 0 && !have && (
                     <HaveTag
-                      have={have}
+                      have={false}
                       ingredientName={ing.name}
-                      onAdd={have ? undefined : () => addToPantry(ing)}
+                      onAdd={() => addToPantry(ing)}
                       pending={inFlight.has(ing.name)}
                     />
                   )}
