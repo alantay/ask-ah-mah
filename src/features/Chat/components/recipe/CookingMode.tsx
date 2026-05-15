@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface Step {
   title: string;
@@ -19,33 +19,39 @@ export function CookingMode({ title, steps, onExit }: CookingModeProps) {
   const [current, setCurrent] = useState(0);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const total = steps.length;
-  const step = steps[current];
+
+  const requestWakeLock = useCallback(async () => {
+    if (!("wakeLock" in navigator)) return;
+    try {
+      const lock = await navigator.wakeLock.request("screen");
+      lock.addEventListener("release", () => {
+        if (wakeLockRef.current === lock) wakeLockRef.current = null;
+      });
+      wakeLockRef.current = lock;
+    } catch {}
+  }, []);
 
   useEffect(() => {
-    if (!("wakeLock" in navigator)) return;
-    navigator.wakeLock.request("screen").then((lock) => {
-      wakeLockRef.current = lock;
-    }).catch(() => {});
-
+    requestWakeLock();
     return () => {
       wakeLockRef.current?.release().catch(() => {});
       wakeLockRef.current = null;
     };
-  }, []);
+  }, [requestWakeLock]);
 
-  // Re-acquire wake lock if page becomes visible again
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible" && !wakeLockRef.current && "wakeLock" in navigator) {
-        navigator.wakeLock.request("screen").then((lock) => {
-          wakeLockRef.current = lock;
-        }).catch(() => {});
+      if (document.visibilityState === "visible" && (!wakeLockRef.current || wakeLockRef.current.released)) {
+        requestWakeLock();
       }
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, []);
+  }, [requestWakeLock]);
 
+  if (total === 0) return null;
+
+  const step = steps[Math.min(current, total - 1)];
   const prev = () => setCurrent((c) => Math.max(0, c - 1));
   const next = () => setCurrent((c) => Math.min(total - 1, c + 1));
 
