@@ -3,6 +3,8 @@
 import type { ConversationEntity } from "@/lib/conversations";
 import { cn } from "@/lib/utils";
 
+const SNIPPET_MAX = 80;
+
 function formatRelativeTime(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
   const now = new Date();
@@ -26,6 +28,11 @@ interface ConversationItemProps {
 
 export function ConversationItem({ conversation, isActive, onClick }: ConversationItemProps) {
   const title = conversation.title ?? "New chat";
+  const messageCount = conversation._count?.messages ?? 0;
+  const rawSnippet = conversation.lastMessage?.content ?? null;
+  const snippet = rawSnippet
+    ? rawSnippet.slice(0, SNIPPET_MAX) + (rawSnippet.length > SNIPPET_MAX ? "…" : "")
+    : null;
 
   return (
     <div
@@ -37,12 +44,31 @@ export function ConversationItem({ conversation, isActive, onClick }: Conversati
           : "bg-card border border-border"
       )}
     >
-      <span className="font-display font-medium text-base text-foreground leading-tight tracking-tight block truncate">
-        {title}
-      </span>
-      <span className="font-sans text-[10.5px] text-ink-faint mt-0.5 block tabular-nums">
-        {formatRelativeTime(conversation.createdAt)}
-      </span>
+      {/* Title row */}
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="font-display font-medium text-base text-foreground leading-tight tracking-tight truncate">
+          {title}
+        </span>
+        <span className="font-sans text-[10.5px] text-ink-faint shrink-0 tabular-nums">
+          {formatRelativeTime(conversation.updatedAt)}
+        </span>
+      </div>
+
+      {/* Snippet */}
+      {snippet && (
+        <p className="font-sans text-[11.5px] text-muted-foreground leading-snug mt-1 line-clamp-2">
+          {snippet}
+        </p>
+      )}
+
+      {/* Footer — message count */}
+      {messageCount > 0 && (
+        <div className="flex items-center gap-2 mt-1.5">
+          <span className="font-sans text-[10px] text-ink-faint tabular-nums">
+            {messageCount} {messageCount === 1 ? "msg" : "msg"}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

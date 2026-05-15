@@ -9,6 +9,7 @@ const baseConv: ConversationEntity = {
   createdAt: new Date("2026-05-04T10:00:00Z"),
   updatedAt: new Date("2026-05-04T11:00:00Z"),
   _count: { messages: 5 },
+  lastMessage: { content: "Try adding a bit more chilli for heat.", role: "assistant" },
 };
 
 describe("ConversationItem", () => {
@@ -54,5 +55,53 @@ describe("ConversationItem", () => {
       />
     );
     expect(screen.getByText("New chat")).toBeInTheDocument();
+  });
+
+  it("shows last message snippet", () => {
+    render(
+      <ConversationItem conversation={baseConv} isActive={false} onClick={() => {}} />
+    );
+    expect(screen.getByText(/Try adding a bit more chilli/)).toBeInTheDocument();
+  });
+
+  it("truncates snippet longer than 80 chars", () => {
+    const longContent = "A".repeat(100);
+    render(
+      <ConversationItem
+        conversation={{ ...baseConv, lastMessage: { content: longContent, role: "assistant" } }}
+        isActive={false}
+        onClick={() => {}}
+      />
+    );
+    expect(screen.getByText(`${"A".repeat(80)}…`)).toBeInTheDocument();
+  });
+
+  it("shows message count", () => {
+    render(
+      <ConversationItem conversation={baseConv} isActive={false} onClick={() => {}} />
+    );
+    expect(screen.getByText(/5 msg/)).toBeInTheDocument();
+  });
+
+  it("hides message count when zero messages", () => {
+    render(
+      <ConversationItem
+        conversation={{ ...baseConv, _count: { messages: 0 } }}
+        isActive={false}
+        onClick={() => {}}
+      />
+    );
+    expect(screen.queryByText(/msg/)).not.toBeInTheDocument();
+  });
+
+  it("renders without snippet when lastMessage is null", () => {
+    const { container } = render(
+      <ConversationItem
+        conversation={{ ...baseConv, lastMessage: null }}
+        isActive={false}
+        onClick={() => {}}
+      />
+    );
+    expect(container.querySelector("p")).toBeNull();
   });
 });

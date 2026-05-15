@@ -10,16 +10,28 @@ export type ConversationEntity = {
   createdAt: Date;
   updatedAt: Date;
   _count?: { messages: number };
+  lastMessage?: { content: string; role: string } | null;
 };
 
 export async function listConversations(
   userId: string
 ): Promise<ConversationEntity[]> {
-  return prisma.conversation.findMany({
+  const rows = await prisma.conversation.findMany({
     where: { userId },
     orderBy: { updatedAt: "desc" },
-    include: { _count: { select: { messages: true } } },
+    include: {
+      _count: { select: { messages: true } },
+      messages: {
+        take: 1,
+        orderBy: { createdAt: "desc" },
+        select: { content: true, role: true },
+      },
+    },
   });
+  return rows.map(({ messages, ...rest }) => ({
+    ...rest,
+    lastMessage: messages[0] ?? null,
+  }));
 }
 
 export async function getOrCreateActiveConversation(
