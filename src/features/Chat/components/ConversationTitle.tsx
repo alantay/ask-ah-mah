@@ -96,7 +96,7 @@ export default function ConversationTitle({
   }
 
   const titleEl = (
-    <div className="flex items-center gap-1.5 min-w-0">
+    <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
       <span className={titleClassName ?? DEFAULT_TITLE_CLASS}>
         {displayTitle}
       </span>
@@ -124,7 +124,7 @@ export default function ConversationTitle({
     return (
       <button
         onClick={onTap}
-        className="flex flex-col items-start min-w-0 text-left bg-transparent border-none p-0 cursor-pointer"
+        className="flex flex-col items-start w-full min-w-0 overflow-hidden text-left bg-transparent border-none p-0 cursor-pointer"
       >
         {titleEl}
       </button>
