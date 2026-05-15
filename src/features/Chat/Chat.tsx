@@ -274,21 +274,10 @@ const Chat = () => {
           </div>
         </div>
 
-        {/* New conversation */}
-        <button
-          onClick={() => startNewConversation()}
-          disabled={messageCount === 0}
-          title={messageCount === 0 ? "Start a conversation first" : "New conversation"}
-          aria-label="New conversation"
-          className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0 shadow-[0_1px_0_oklch(0.35_0.12_35)]"
-        >
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <path d="M8 2v12M2 8h12" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"/>
-          </svg>
-        </button>
-
-        {/* Overflow menu — rename + delete */}
+        {/* Overflow menu — new / rename / delete */}
         <ConversationActionsMenu
+          onNewConversation={() => startNewConversation()}
+          canStartNew={messageCount > 0}
           onStartRename={() => setTitleEditing(true)}
           onDelete={handleDeleteConversation}
           canDelete={messageCount > 0}
