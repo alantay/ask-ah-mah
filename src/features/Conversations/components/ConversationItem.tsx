@@ -3,8 +3,6 @@
 import type { ConversationEntity } from "@/lib/conversations";
 import { cn } from "@/lib/utils";
 
-const SNIPPET_MAX = 80;
-
 function formatRelativeTime(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
   const now = new Date();
@@ -29,10 +27,6 @@ interface ConversationItemProps {
 export function ConversationItem({ conversation, isActive, onClick }: ConversationItemProps) {
   const title = conversation.title ?? "New chat";
   const messageCount = conversation._count?.messages ?? 0;
-  const rawSnippet = conversation.lastMessage?.content ?? null;
-  const snippet = rawSnippet
-    ? rawSnippet.slice(0, SNIPPET_MAX) + (rawSnippet.length > SNIPPET_MAX ? "…" : "")
-    : null;
 
   return (
     <div
@@ -53,13 +47,6 @@ export function ConversationItem({ conversation, isActive, onClick }: Conversati
           {formatRelativeTime(conversation.updatedAt)}
         </span>
       </div>
-
-      {/* Snippet */}
-      {snippet && (
-        <p className="font-sans text-[11.5px] text-muted-foreground leading-snug mt-1 line-clamp-2">
-          {snippet}
-        </p>
-      )}
 
       {/* Footer — message count */}
       {messageCount > 0 && (
