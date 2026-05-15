@@ -15,6 +15,7 @@ import useSWR, { mutate } from "swr";
 import { InventoryItemBadge } from "./components/InventoryItemBadge";
 
 const CATEGORY_ORDER: Category[] = ["Protein", "Carbs", "Vegetable", "Condiments", "Spice", "Misc"];
+const CATEGORY_MIN_ITEMS = 3;
 
 function groupByCategory(items: InventoryItem[]): { label: Category; items: InventoryItem[] }[] {
   const map = new Map<Category, InventoryItem[]>(CATEGORY_ORDER.map((c) => [c, []]));
@@ -22,9 +23,30 @@ function groupByCategory(items: InventoryItem[]): { label: Category; items: Inve
     const key: Category = (item.category as Category) ?? "Misc";
     map.get(key)?.push(item);
   }
-  return CATEGORY_ORDER.map((label) => ({ label, items: map.get(label)! })).filter(
-    (g) => g.items.length > 0,
-  );
+
+  const overflow: InventoryItem[] = [];
+  const result: { label: Category; items: InventoryItem[] }[] = [];
+
+  for (const label of CATEGORY_ORDER) {
+    const group = map.get(label)!;
+    if (group.length === 0) continue;
+    if (label !== "Misc" && group.length < CATEGORY_MIN_ITEMS) {
+      overflow.push(...group);
+    } else {
+      result.push({ label, items: group });
+    }
+  }
+
+  if (overflow.length > 0) {
+    const misc = result.find((g) => g.label === "Misc");
+    if (misc) {
+      misc.items = [...misc.items, ...overflow].sort((a, b) => a.name.localeCompare(b.name));
+    } else {
+      result.push({ label: "Misc", items: overflow.sort((a, b) => a.name.localeCompare(b.name)) });
+    }
+  }
+
+  return result;
 }
 
 const SectionLabel = ({ children, count }: { children: ReactNode; count?: number }) => (
