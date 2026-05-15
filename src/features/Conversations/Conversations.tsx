@@ -48,7 +48,7 @@ export function Conversations({ onItemClick }: ConversationsProps) {
   };
 
   return (
-    <>
+    <div className="flex flex-col h-full gap-3">
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div>
@@ -88,24 +88,26 @@ export function Conversations({ onItemClick }: ConversationsProps) {
       </div>
 
       {/* List */}
-      {isLoading ? (
-        <div className="italic text-ink-faint text-sm">Loading…</div>
-      ) : filtered.length === 0 ? (
-        <div className="italic text-ink-faint text-sm">
-          {search ? "No results" : "No conversations yet"}
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {filtered.map((conv) => (
-            <ConversationItem
-              key={conv.id}
-              conversation={conv}
-              isActive={conv.id === activeConversationId}
-              onClick={() => handleItemClick(conv.id)}
-            />
-          ))}
-        </div>
-      )}
-    </>
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        {isLoading ? (
+          <div className="italic text-ink-faint text-sm">Loading…</div>
+        ) : filtered.length === 0 ? (
+          <div className="italic text-ink-faint text-sm">
+            {search ? "No results" : "No conversations yet"}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {filtered.map((conv) => (
+              <ConversationItem
+                key={conv.id}
+                conversation={conv}
+                isActive={conv.id === activeConversationId}
+                onClick={() => handleItemClick(conv.id)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

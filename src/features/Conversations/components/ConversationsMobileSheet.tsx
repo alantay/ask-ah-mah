@@ -13,7 +13,7 @@ export function ConversationsMobileSheet({ open, onOpenChange }: ConversationsMo
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="w-[280px] p-0 bg-muted paper">
         <SheetTitle className="sr-only">Conversations</SheetTitle>
-        <div className="flex flex-col gap-3 p-4 overflow-y-auto h-full">
+        <div className="flex flex-col p-4 h-full overflow-hidden">
           <Conversations onItemClick={() => onOpenChange(false)} />
         </div>
       </SheetContent>

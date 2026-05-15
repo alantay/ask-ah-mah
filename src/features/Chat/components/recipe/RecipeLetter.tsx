@@ -319,7 +319,7 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
                 <div className="font-display font-semibold text-base text-foreground mb-1 tracking-tight">
                   {step.title}
                 </div>
-                <div className="font-display italic text-base text-foreground leading-relaxed">
+                <div className="font-display text-base text-foreground leading-relaxed">
                   {step.body}
                 </div>
                 {step.tip && (
@@ -356,7 +356,7 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
           ) : (
             <button
               onClick={() => onSave(recipe)}
-              className="px-3 py-1.5 font-sans text-xs font-semibold text-white bg-primary border border-[oklch(0.405_0.130_32)] rounded-lg cursor-pointer shadow-[0_1px_0_oklch(0.405_0.130_32)] inline-flex items-center gap-1"
+              className="px-3 py-1.5 font-sans text-xs font-semibold text-foreground bg-card border border-border rounded-lg cursor-pointer shadow-[0_1px_0_var(--border-soft)] hover:bg-muted/50 transition-colors inline-flex items-center gap-1"
             >
               <svg
                 width="11"
