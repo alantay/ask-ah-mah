@@ -86,7 +86,7 @@ export default function ConversationTitle({
     return (
       <input
         ref={inputRef}
-        className="font-display italic font-medium text-[16.5px] text-foreground leading-tight tracking-tight bg-transparent border-b border-border outline-none w-full min-w-0"
+        className={`${DEFAULT_TITLE_CLASS} bg-transparent border-b border-border outline-none w-full`}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onBlur={commitRename}
@@ -177,7 +177,7 @@ export function ConversationActionsMenu({
           <DropdownMenuItem onClick={onStartRename}>Rename</DropdownMenuItem>
           <DropdownMenuItem
             disabled={!canDelete}
-            className="text-destructive focus:text-destructive"
+            variant="destructive"
             onClick={() => setDeleteDialogOpen(true)}
           >
             Delete
