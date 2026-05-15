@@ -44,6 +44,7 @@ export interface RecipeLetterProps {
   recipe: RecipeData;
   onSave?: (recipe: RecipeData) => void;
   isSaved?: boolean;
+  onSend?: (text: string) => void;
 }
 
 function ServingsStepper({
@@ -137,7 +138,7 @@ function ingredientHave(name: string, inventoryNames: string[]): boolean {
   return ingredientMatches(name, inventoryNames);
 }
 
-export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
+export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterProps) {
   const [servings, setServings] = useState(recipe.baseServings);
   const [inFlight, setInFlight] = useState<Set<string>>(new Set());
   const ratio = servings / recipe.baseServings;
@@ -200,6 +201,36 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
     ingredientHave(ing.name, inventoryNames),
   ).length;
 
+  const total = recipe.ingredients.length;
+  const missingIngredients = recipe.ingredients.filter(
+    (ing) => !ingredientHave(ing.name, inventoryNames),
+  );
+  const showShortfall =
+    userId &&
+    inventoryItems.length > 0 &&
+    total > 0 &&
+    haveCount >= Math.ceil(total / 2) &&
+    missingIngredients.length > 0;
+
+  const copyShoppingList = () => {
+    const lines = missingIngredients
+      .map((ing) => {
+        const parts = [ing.name];
+        if (ing.amount) parts.unshift(ing.amount + (ing.unit ? ` ${ing.unit}` : ""));
+        return parts.join(" ");
+      })
+      .join("\n");
+    navigator.clipboard.writeText(lines).then(() =>
+      toast.success("Shopping list copied to clipboard"),
+    );
+  };
+
+  const askForSubstitutions = () => {
+    if (!onSend) return;
+    const names = missingIngredients.map((i) => i.name).join(", ");
+    onSend(`I'm missing ${names} for the ${recipe.title}. Can you suggest substitutions or alternatives?`);
+  };
+
   const timeLabel = recipe.totalTimeMinutes
     ? `${recipe.totalTimeMinutes} min`
     : null;
@@ -239,6 +270,44 @@ export function RecipeLetter({ recipe, onSave, isSaved }: RecipeLetterProps) {
               {haveCount}/{recipe.ingredients.length} in your pantry
             </span>
           )}
+        </div>
+      )}
+
+      {/* Shortfall card — shown when ≥50% in pantry but some missing */}
+      {showShortfall && (
+        <div className="mb-4 bg-[oklch(0.97_0.03_60)] border border-dashed border-[oklch(0.78_0.07_60)] rounded-xl p-3.5">
+          <div className="flex items-center gap-1.5 mb-2">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[oklch(0.6_0.14_50)]" />
+            <span className="font-sans text-[10px] font-bold tracking-[0.16em] uppercase text-[oklch(0.45_0.10_50)]">
+              You&rsquo;re almost there
+            </span>
+          </div>
+          <p className="font-display text-sm text-foreground mb-0.5 leading-snug">
+            Still need:{" "}
+            <span className="font-semibold">
+              {missingIngredients.map((i) => i.name).join(", ")}
+            </span>
+          </p>
+          <div className="flex items-center gap-2 mt-2.5">
+            <button
+              onClick={copyShoppingList}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 font-sans text-xs font-semibold text-foreground bg-card border border-border rounded-lg shadow-[0_1px_0_var(--border-soft)] hover:bg-muted/50 transition-colors cursor-pointer"
+            >
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                <rect x="5" y="2" width="9" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
+                <path d="M5 4H3.5A1.5 1.5 0 0 0 2 5.5v9A1.5 1.5 0 0 0 3.5 16h7A1.5 1.5 0 0 0 12 14.5V13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+              </svg>
+              Copy shopping list
+            </button>
+            {onSend && (
+              <button
+                onClick={askForSubstitutions}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 font-sans text-xs font-semibold text-[oklch(0.405_0.130_32)] bg-[oklch(0.94_0.06_35)] border border-[oklch(0.405_0.130_32)] rounded-lg shadow-[0_1px_0_oklch(0.405_0.130_32)] hover:bg-[oklch(0.90_0.07_35)] transition-colors cursor-pointer"
+              >
+                Ask Ah Mah for substitutions →
+              </button>
+            )}
+          </div>
         </div>
       )}
 
