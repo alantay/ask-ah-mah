@@ -241,28 +241,57 @@ const Chat = () => {
       key={activeConversationId}
       className="flex flex-col animate-in fade-in duration-300 h-full"
     >
-      {/* Chat header — visible at all widths; lg+ shows hamburger only when the sidebar is absent */}
-      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-dashed border-border shrink-0">
-        {/* Hamburger — drawer toggle; hidden when persistent sidebar is showing */}
-        <button
-          onClick={() => setConvSheetOpen(true)}
-          className="lg:hidden flex items-center justify-center w-9 h-9 rounded-lg text-ink-faint hover:text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
-          aria-label="Open conversations"
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-          </svg>
-        </button>
-
-        {/* Active indicator dot */}
-        <div className="w-2 h-2 rounded-full bg-primary shrink-0 shadow-[0_0_0_4px_oklch(0.56_0.135_35/0.18)]" />
-
-        {/* Title block — tapping opens the conversations sheet on mobile */}
-        <div className="flex flex-col min-w-0 flex-1">
+      {/* Mobile header (<lg) — two rows: action bar + title hero */}
+      <div className="lg:hidden flex flex-col border-b border-dashed border-border shrink-0">
+        {/* Row 1: action bar */}
+        <div className="flex items-center gap-2 px-3 py-2.5">
+          <button
+            onClick={() => setConvSheetOpen(true)}
+            className="flex items-center justify-center w-9 h-9 rounded-lg text-ink-faint hover:text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
+            aria-label="Open conversations"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+          <div className="flex-1" />
+          <button
+            onClick={() => startNewConversation()}
+            disabled={messageCount === 0}
+            title={messageCount === 0 ? "Start a conversation first" : "New conversation"}
+            aria-label="New conversation"
+            className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0 shadow-[0_1px_0_oklch(0.35_0.12_35)]"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M8 2v12M2 8h12" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"/>
+            </svg>
+          </button>
+          <ConversationActionsMenu
+            onStartRename={() => setTitleEditing(true)}
+            onDelete={handleDeleteConversation}
+            canDelete={messageCount > 0}
+          />
+        </div>
+        {/* Row 2: title hero */}
+        <div className="px-4 pb-3">
           <ConversationTitle
             title={activeConversation?.title}
             onTap={() => setConvSheetOpen(true)}
             withChevron
+            editing={titleEditing}
+            onEditingChange={setTitleEditing}
+            onRename={renameActiveConversation}
+            titleClassName="font-display italic font-medium text-[20px] text-foreground leading-tight tracking-tight truncate"
+          />
+        </div>
+      </div>
+
+      {/* Desktop header (lg+) — single row: dot + title/meta + buttons */}
+      <div className="hidden lg:flex items-center gap-2 px-3 py-2.5 border-b border-dashed border-border shrink-0">
+        <div className="w-2 h-2 rounded-full bg-primary shrink-0 shadow-[0_0_0_4px_oklch(0.56_0.135_35/0.18)]" />
+        <div className="flex flex-col min-w-0 flex-1">
+          <ConversationTitle
+            title={activeConversation?.title}
             editing={titleEditing}
             onEditingChange={setTitleEditing}
             onRename={renameActiveConversation}
@@ -273,8 +302,6 @@ const Chat = () => {
               : "Start a conversation"}
           </div>
         </div>
-
-        {/* New conversation icon button */}
         <button
           onClick={() => startNewConversation()}
           disabled={messageCount === 0}
@@ -286,8 +313,6 @@ const Chat = () => {
             <path d="M8 2v12M2 8h12" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"/>
           </svg>
         </button>
-
-        {/* Overflow menu — rename + delete */}
         <ConversationActionsMenu
           onStartRename={() => setTitleEditing(true)}
           onDelete={handleDeleteConversation}

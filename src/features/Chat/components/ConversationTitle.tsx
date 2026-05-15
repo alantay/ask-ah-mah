@@ -33,7 +33,12 @@ interface ConversationTitleProps {
   editing: boolean;
   onEditingChange: (editing: boolean) => void;
   onRename: (title: string) => Promise<void>;
+  /** Override default title typography (e.g. larger on mobile hero row) */
+  titleClassName?: string;
 }
+
+const DEFAULT_TITLE_CLASS =
+  "font-display italic font-medium text-[16.5px] text-foreground leading-tight tracking-tight truncate";
 
 export default function ConversationTitle({
   title,
@@ -42,6 +47,7 @@ export default function ConversationTitle({
   editing,
   onEditingChange,
   onRename,
+  titleClassName,
 }: ConversationTitleProps) {
   const [value, setValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -91,7 +97,7 @@ export default function ConversationTitle({
 
   const titleEl = (
     <div className="flex items-center gap-1.5 min-w-0">
-      <span className="font-display italic font-medium text-[16.5px] text-foreground leading-tight tracking-tight truncate">
+      <span className={titleClassName ?? DEFAULT_TITLE_CLASS}>
         {displayTitle}
       </span>
       {withChevron && (
