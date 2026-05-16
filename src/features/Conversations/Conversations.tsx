@@ -87,7 +87,7 @@ export function Conversations({ onItemClick }: ConversationsProps) {
         </div>
         <button
           onClick={handleNewConversation}
-          className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center text-lg font-medium shrink-0 hover:bg-primary/90 transition-colors cursor-pointer"
+          className="w-11 h-11 rounded-lg bg-primary text-white flex items-center justify-center text-lg font-medium shrink-0 hover:bg-primary/90 transition-colors cursor-pointer"
           aria-label="New conversation"
         >
           +

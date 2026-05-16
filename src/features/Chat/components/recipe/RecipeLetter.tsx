@@ -59,10 +59,10 @@ function ServingsStepper({
   onIncrement: () => void;
 }) {
   const BUTTON_BASE =
-    "w-7 border-none bg-transparent cursor-pointer text-foreground text-base font-semibold disabled:cursor-not-allowed disabled:text-muted-foreground";
+    "w-11 border-none bg-transparent cursor-pointer text-foreground text-base font-semibold disabled:cursor-not-allowed disabled:text-muted-foreground";
 
   return (
-    <div className="inline-flex items-stretch border border-border rounded-lg bg-card overflow-hidden shadow-[0_1px_0_var(--border-soft)] h-8">
+    <div className="inline-flex items-stretch border border-border rounded-lg bg-card overflow-hidden shadow-[0_1px_0_var(--border-soft)] h-11">
       <button
         onClick={onDecrement}
         disabled={servings <= 1}
@@ -108,7 +108,7 @@ function NeedCartButton({
       aria-label={`Add ${ingredientName} to pantry`}
       title={`Add ${ingredientName} to pantry`}
       className={cn(
-        "shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-full text-muted-foreground bg-transparent border border-border transition-colors",
+        "shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-full text-muted-foreground bg-transparent border border-border transition-colors relative before:content-[''] before:absolute before:-inset-[10px]",
         pending
           ? "opacity-50 cursor-not-allowed"
           : "cursor-pointer hover:bg-muted hover:text-foreground",
@@ -289,7 +289,7 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
           <div className="flex items-center gap-2 mt-2.5">
             <button
               onClick={copyShoppingList}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 font-sans text-xs font-semibold text-foreground bg-card border border-border rounded-lg shadow-[0_1px_0_var(--border-soft)] hover:bg-muted/50 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 min-h-11 px-3 py-1.5 font-sans text-xs font-semibold text-foreground bg-card border border-border rounded-lg shadow-[0_1px_0_var(--border-soft)] hover:bg-muted/50 transition-colors cursor-pointer"
             >
               <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
                 <rect x="5" y="2" width="9" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
@@ -300,7 +300,7 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
             {onSend && (
               <button
                 onClick={askForSubstitutions}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 font-sans text-xs font-semibold text-[oklch(0.405_0.130_32)] bg-[oklch(0.94_0.06_35)] border border-[oklch(0.405_0.130_32)] rounded-lg shadow-[0_1px_0_oklch(0.405_0.130_32)] hover:bg-[oklch(0.90_0.07_35)] transition-colors cursor-pointer"
+                className="inline-flex items-center min-h-11 gap-1.5 px-3 py-1.5 font-sans text-xs font-semibold text-[oklch(0.405_0.130_32)] bg-[oklch(0.94_0.06_35)] border border-[oklch(0.405_0.130_32)] rounded-lg shadow-[0_1px_0_oklch(0.405_0.130_32)] hover:bg-[oklch(0.90_0.07_35)] transition-colors cursor-pointer"
               >
                 Ask Ah Mah for substitutions →
               </button>
@@ -402,7 +402,7 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
             isSaved ? (
               <button
                 disabled
-                className="px-3 py-1.5 font-sans text-xs font-semibold text-jade bg-transparent border border-border rounded-lg cursor-not-allowed inline-flex items-center gap-1 opacity-80"
+                className="inline-flex items-center min-h-11 px-3 py-1.5 font-sans text-xs font-semibold text-jade bg-transparent border border-border rounded-lg cursor-not-allowed gap-1 opacity-80"
               >
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2">
                   <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16l-7-3-7 3z" />
@@ -412,7 +412,7 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
             ) : (
               <button
                 onClick={() => onSave(recipe)}
-                className="px-3 py-1.5 font-sans text-xs font-semibold text-foreground bg-card border border-border rounded-lg cursor-pointer shadow-[0_1px_0_var(--border-soft)] hover:bg-muted/50 transition-colors inline-flex items-center gap-1"
+                className="inline-flex items-center min-h-11 px-3 py-1.5 font-sans text-xs font-semibold text-foreground bg-card border border-border rounded-lg cursor-pointer shadow-[0_1px_0_var(--border-soft)] hover:bg-muted/50 transition-colors gap-1"
               >
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16l-7-3-7 3z" />
@@ -424,7 +424,7 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
           {canCook && (
             <button
               onClick={() => setCooking(true)}
-              className="ml-auto px-3 py-1.5 font-sans text-xs font-semibold text-white bg-primary border border-[oklch(0.405_0.130_32)] rounded-lg cursor-pointer shadow-[0_1px_0_oklch(0.405_0.130_32)] hover:bg-[oklch(0.50_0.130_32)] transition-colors inline-flex items-center gap-1.5"
+              className="ml-auto inline-flex items-center min-h-11 px-3 py-1.5 font-sans text-xs font-semibold text-white bg-primary border border-[oklch(0.405_0.130_32)] rounded-lg cursor-pointer shadow-[0_1px_0_oklch(0.405_0.130_32)] hover:bg-[oklch(0.50_0.130_32)] transition-colors gap-1.5"
             >
               <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
                 <path d="M5 3l8 5-8 5V3z" fill="currentColor"/>

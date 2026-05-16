@@ -45,6 +45,18 @@ The persistent-kitchen MVP. Highlights:
 - [x] At `≥lg`: existing `PantryDrawer` rail unchanged — tab is hidden, rail handles desktop access.
 - [x] Removed earlier iterations: floating Pantry button, bottom Drawer, `PantryMobileSheet`, `PantryHeaderTrigger`, and the wrapping flex container in the tabs row. Chat header is `[≡] • Title [⋯]` with no pantry affordance — reflects that pantry is its own surface, not chat-scoped.
 
+### 44×44 touch target sweep across mobile (May 2026)
+- [x] Chat header hamburger + `⋯` menu trigger: `w-9 h-9` → `w-11 h-11` (36→44).
+- [x] Conversations rail "+" new button: `w-8 h-8` → `w-11 h-11`.
+- [x] Cookbook chip rail buttons (All + each tag): added `min-h-11 inline-flex items-center` to wrap chips with proper height.
+- [x] RecipeDisplay servings stepper +/−: `w-8 h-8` → `w-11 h-11`; close-X button: `w-7 h-7` → `w-11 h-11`; "Back to cookbook" link wrapped with `inline-flex min-h-11 px-2 -ml-2` (visual unchanged, hit area meets minimum).
+- [x] RecipeLetter shortfall buttons (Copy shopping list, Ask Ah Mah) and action-bar buttons (Save / Saved / Start cooking): `min-h-11` added.
+- [x] RecipeLetter inline servings stepper: `h-8`/`w-7` → `h-11`/`w-11` (keeps tight visual but inside larger hit areas).
+- [x] RecipeLetter cart icon button: visual `w-6 h-6` preserved; hit area expanded via `::before` pseudo-element (`before:absolute before:-inset-[10px]`) — keeps row density tight while meeting minimum.
+- [x] Inventory item remove (X) button (`w-6 h-6` icon inside a badge): same `::before` hit-area expansion; added missing `aria-label`.
+- [x] Inventory pantry header close (›) button: `w-6 h-6` → `w-11 h-11`.
+- [x] Inventory "Add" button: `min-h-11` added.
+
 ### Chat suggestion chips: 44×44 tap target (May 2026)
 - [x] Empty-state suggestion chips bumped from ~31px to `min-h-11` (44px) so they meet the iOS HIG minimum tap target.
 - [x] `inline-flex items-center` centers text vertically within the new height; horizontal padding adjusted to `px-3.5` to keep proportions clean.

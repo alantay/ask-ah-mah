@@ -157,7 +157,7 @@ const Inventory = ({ onClose }: { onClose?: () => void }) => {
           {onClose && (
             <button
               onClick={onClose}
-              className="w-6 h-6 rounded-md bg-card border border-border flex items-center justify-center text-ink-faint hover:text-foreground transition-colors cursor-pointer"
+              className="w-11 h-11 rounded-md bg-card border border-border flex items-center justify-center text-ink-faint hover:text-foreground transition-colors cursor-pointer"
               aria-label="Close pantry"
             >
               <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
@@ -168,7 +168,7 @@ const Inventory = ({ onClose }: { onClose?: () => void }) => {
           {!isAdding && (
             <button
               onClick={() => setIsAdding(true)}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-foreground bg-card border border-border rounded-lg shadow-[0_1px_0_oklch(0.82_0.04_70)] hover:bg-background transition-colors cursor-pointer"
+              className="inline-flex items-center min-h-11 gap-1.5 px-3 py-1.5 text-xs font-semibold text-foreground bg-card border border-border rounded-lg shadow-[0_1px_0_oklch(0.82_0.04_70)] hover:bg-background transition-colors cursor-pointer"
             >
               <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
                 <path d="M6 1.5V10.5M1.5 6H10.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>

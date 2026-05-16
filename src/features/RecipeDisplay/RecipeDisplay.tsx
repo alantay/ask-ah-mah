@@ -114,7 +114,7 @@ function RecipeBody({ selectedRecipe }: { selectedRecipe: RecipeWithId }) {
                   onClick={() => setServings((s) => Math.max(1, s - 1))}
                   disabled={servings <= 1}
                   aria-label="Decrease servings"
-                  className="w-8 h-8 flex items-center justify-center text-foreground text-base font-semibold border-r border-border hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  className="w-11 h-11 flex items-center justify-center text-foreground text-base font-semibold border-r border-border hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                 >
                   −
                 </button>
@@ -125,7 +125,7 @@ function RecipeBody({ selectedRecipe }: { selectedRecipe: RecipeWithId }) {
                   onClick={() => setServings((s) => Math.min(20, s + 1))}
                   disabled={servings >= 20}
                   aria-label="Increase servings"
-                  className="w-8 h-8 flex items-center justify-center text-foreground text-base font-semibold border-l border-border hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  className="w-11 h-11 flex items-center justify-center text-foreground text-base font-semibold border-l border-border hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                 >
                   +
                 </button>
@@ -215,7 +215,7 @@ export default function RecipeDisplay() {
       <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-dashed border-border shrink-0">
         <button
           onClick={exitRecipe}
-          className="font-sans text-[11.5px] font-semibold tracking-[0.14em] uppercase text-ink-faint hover:text-foreground transition-colors cursor-pointer"
+          className="inline-flex items-center min-h-11 px-2 -ml-2 font-sans text-[11.5px] font-semibold tracking-[0.14em] uppercase text-ink-faint hover:text-foreground transition-colors cursor-pointer"
           aria-label="Back to cookbook"
         >
           ← Back to cookbook
@@ -232,7 +232,7 @@ export default function RecipeDisplay() {
           </Button>
           <button
             onClick={exitRecipe}
-            className="w-7 h-7 rounded-md border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer"
+            className="w-11 h-11 rounded-md border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer"
             aria-label="Close"
           >
             <svg width="12" height="12" viewBox="0 0 16 16" fill="none">

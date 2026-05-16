@@ -159,7 +159,7 @@ export function ConversationActionsMenu({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
-            className="flex items-center justify-center w-9 h-9 rounded-lg text-ink-faint hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+            className="flex items-center justify-center w-11 h-11 rounded-lg text-ink-faint hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
             aria-label="More options"
           >
             <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">

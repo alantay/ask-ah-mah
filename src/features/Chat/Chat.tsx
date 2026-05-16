@@ -238,7 +238,7 @@ const Chat = () => {
         {/* Hamburger — hidden when persistent sidebar is present */}
         <button
           onClick={() => setConvSheetOpen(true)}
-          className="lg:hidden flex items-center justify-center w-9 h-9 rounded-lg text-ink-faint hover:text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
+          className="lg:hidden flex items-center justify-center w-11 h-11 rounded-lg text-ink-faint hover:text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
           aria-label="Open conversations"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">

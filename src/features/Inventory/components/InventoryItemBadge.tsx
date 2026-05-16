@@ -27,7 +27,8 @@ export const InventoryItemBadge = ({
 
       <button
         onClick={() => onRemove(item.name)}
-        className="absolute right-0.5 cursor-pointer p-0.5 hover:bg-secondary rounded group"
+        className="absolute right-0.5 cursor-pointer p-0.5 hover:bg-secondary rounded group before:content-[''] before:absolute before:-inset-[10px]"
+        aria-label={`Remove ${item.name}`}
       >
         <svg
           className="text-gray-400 group-hover:text-gray-500"
