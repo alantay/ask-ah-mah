@@ -38,6 +38,15 @@ The persistent-kitchen MVP. Highlights:
 - [x] Bug fixed (May 2026): `Conversations.tsx` was reading `data?.grouped` but API returns `{ conversations: GroupedConversations }` — fixed to `data?.conversations`.
 - [x] Bug fixed (May 2026): `src/app/api/message/route.ts` used default import for prisma — fixed to named `{ prisma }`.
 
+### Mobile cookbook: search + horizontal-scroll chip rail (May 2026)
+- [x] Search input visible at all widths (was `hidden sm:flex`); title strip stacks on mobile.
+- [x] Search now matches `name || tag` (lowercase) — off-vocab tags like `filipino` become findable.
+- [x] Chip rail unified across mobile and desktop: same `activeTag` single-select, same chips. `<sm` uses `overflow-x-auto flex-nowrap` for horizontal scroll; `≥sm` keeps `flex-wrap`. Last visible chip bleeds off the right edge on mobile to suggest more.
+- [x] "Filter" eyebrow label hidden on mobile (`hidden sm:inline`).
+- [x] Scrollbar hidden via `[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`.
+- [x] Mobile padding `px-4 sm:px-9` applied to title strip, rail, and grid.
+- [x] Earlier facet-sheet design (Cuisine ▾ / Protein ▾ bottom sheets) reverted — felt too heavy and hid options behind taps; horizontal-scroll surfaces all tags at a glance.
+
 ### RecipeLetter (chat-inline): cart-icon add button + mobile padding (May 2026)
 - [x] Outer padding: `px-4 sm:px-[26px]` (was fixed `26px` — gives 16px horizontal on mobile).
 - [x] HAVE badge removed from ingredient rows; missing items now show a small cart-icon button (click-to-add) instead of the ambiguous "NEED" text label.

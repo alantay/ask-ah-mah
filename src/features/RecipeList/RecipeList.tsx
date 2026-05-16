@@ -9,6 +9,9 @@ import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
 import RecipeCard from "./components/RecipeCard";
 
+const HIDE_SCROLLBAR =
+  "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
+
 interface RecipeListProps {
   onChatClick?: () => void;
 }
@@ -49,14 +52,20 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
   }, {} as Record<string, number>);
   const tagEntries = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
 
+  const searchLower = search.trim().toLowerCase();
   const filtered = allRecipes
     .filter((r) => !activeTag || r.tags?.includes(activeTag))
-    .filter((r) => !search || r.name.toLowerCase().includes(search.toLowerCase()));
+    .filter(
+      (r) =>
+        !searchLower ||
+        r.name.toLowerCase().includes(searchLower) ||
+        r.tags?.some((t) => t.toLowerCase().includes(searchLower)),
+    );
 
   return (
     <div className="h-full flex flex-col bg-muted">
       {/* Title strip */}
-      <div className="px-9 pt-6 pb-[18px] border-b border-border flex items-end justify-between gap-6 shrink-0">
+      <div className="px-4 sm:px-9 pt-6 pb-[18px] border-b border-border flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-6 shrink-0">
         <div>
           <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground mb-1.5">
             Yours, kept
@@ -80,7 +89,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
           </p>
         </div>
         {!isEmpty && (
-          <label className="hidden sm:flex items-center gap-2 px-3 py-[7px] bg-card border border-border rounded-full min-w-[200px] text-muted-foreground cursor-text shrink-0">
+          <label className="flex items-center gap-2 px-3 py-[7px] bg-card border border-border rounded-full sm:min-w-[200px] w-full sm:w-auto text-muted-foreground cursor-text shrink-0">
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none" className="shrink-0">
               <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.4" />
               <path d="m10.5 10.5 3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
@@ -95,15 +104,17 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
         )}
       </div>
 
-      {/* Tag filter rail */}
+      {/* Tag chip rail — horizontal scroll on mobile, wraps at sm+ */}
       {!isEmpty && tagEntries.length > 0 && (
-        <div className="px-9 py-3 border-b border-border flex gap-2 flex-wrap items-center shrink-0">
-          <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground mr-1">
+        <div
+          className={`flex px-4 sm:px-9 py-3 border-b border-border gap-2 items-center shrink-0 flex-nowrap sm:flex-wrap overflow-x-auto sm:overflow-visible ${HIDE_SCROLLBAR}`}
+        >
+          <span className="hidden sm:inline text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground mr-1 shrink-0">
             Filter
           </span>
           <button
             onClick={() => setActiveTag(null)}
-            className={`px-3 py-1 text-[11px] font-medium rounded-full border transition-colors cursor-pointer ${
+            className={`shrink-0 px-3 py-1 text-[11px] font-medium rounded-full border transition-colors cursor-pointer ${
               !activeTag
                 ? "bg-primary text-primary-foreground border-primary"
                 : "bg-transparent text-muted-foreground border-border hover:text-foreground"
@@ -115,7 +126,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
             <button
               key={tag}
               onClick={() => setActiveTag(activeTag === tag ? null : tag)}
-              className={`px-3 py-1 text-[11px] font-medium rounded-full border transition-colors cursor-pointer ${
+              className={`shrink-0 px-3 py-1 text-[11px] font-medium rounded-full border transition-colors cursor-pointer ${
                 activeTag === tag
                   ? "bg-primary text-primary-foreground border-primary"
                   : "bg-transparent text-muted-foreground border-border hover:text-foreground"
@@ -128,7 +139,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
       )}
 
       {/* Grid area */}
-      <div className="flex-1 overflow-y-auto px-9 py-5">
+      <div className="flex-1 overflow-y-auto px-4 sm:px-9 py-5">
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[18px]">
             {[0, 1, 2].map((i) => <SkeletonCard key={i} />)}
