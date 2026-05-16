@@ -1,5 +1,6 @@
 import AboutPopOver from "@/components/AboutPopOver";
 import { AuthButton } from "@/features/Auth";
+import { PantryHeaderTrigger } from "@/features/Inventory";
 import { Toaster } from "@/components/ui/sonner";
 import { SessionProvider } from "@/contexts/SessionContext";
 import type { Metadata } from "next";
@@ -129,6 +130,7 @@ export default function RootLayout({
             </h1>
             <div className="flex items-center gap-2">
               <AboutPopOver className="hidden lg:flex" />
+              <PantryHeaderTrigger />
               <AuthButton />
             </div>
           </div>
