@@ -218,14 +218,6 @@ const Chat = () => {
   const allMessages = [INITIAL_MESSAGE, ...savedMessagesFiltered, ...messages];
   const messageCount = allMessages.length - 1; // exclude initial
 
-  const startedAt = activeConversation?.createdAt
-    ? new Date(activeConversation.createdAt).toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      })
-    : null;
-
   const handleSendMessage = async (message: string) => {
     setSubmittedAt(Date.now());
     sendMessage({ text: message });
@@ -257,19 +249,14 @@ const Chat = () => {
         {/* Active indicator dot */}
         <div className="w-2 h-2 rounded-full bg-primary shrink-0 shadow-[0_0_0_4px_oklch(0.56_0.135_35/0.18)]" />
 
-        {/* Title + meta — flex-1 min-w-0 ensures truncation before buttons */}
-        <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
+        {/* Title — flex-1 min-w-0 ensures truncation before buttons */}
+        <div className="flex min-w-0 flex-1 overflow-hidden">
           <ConversationTitle
             title={activeConversation?.title}
             editing={titleEditing}
             onEditingChange={setTitleEditing}
             onRename={renameActiveConversation}
           />
-          <div className="text-[11px] text-ink-faint tracking-wide truncate">
-            {messageCount > 0
-              ? `${messageCount} message${messageCount !== 1 ? "s" : ""}${startedAt ? ` · started ${startedAt}` : ""}`
-              : "Start a conversation"}
-          </div>
         </div>
 
         {/* Overflow menu — new / rename / delete */}
