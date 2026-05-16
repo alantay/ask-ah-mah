@@ -5,26 +5,37 @@ import { ConversationProvider } from "@/contexts/ConversationContext";
 import { RecipeProvider, useRecipeContext } from "@/contexts/RecipeContext";
 import ChatWrapper from "@/features/Chat/components/ChatWrapper";
 import { ConversationsRail } from "@/features/Conversations";
-import { PantryDrawer, PantryHeaderTrigger } from "@/features/Inventory";
+import InventoryWrapper from "@/features/Inventory/components/InventoryWrapper";
+import { PantryDrawer } from "@/features/Inventory";
 import RecipeDisplay from "@/features/RecipeDisplay/RecipeDisplay";
 import RecipeList from "@/features/RecipeList/RecipeList";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function HomeContent() {
   const { selectedRecipe, exitRecipe } = useRecipeContext();
   const [activeTab, setActiveTab] = useState("chat");
 
+  // Pantry tab is mobile-only; snap back to Chat if the viewport crosses to lg+ while on it
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const handleChange = () => {
+      if (mq.matches && activeTab === "pantry") setActiveTab("chat");
+    };
+    handleChange();
+    mq.addEventListener("change", handleChange);
+    return () => mq.removeEventListener("change", handleChange);
+  }, [activeTab]);
+
   return (
     <div className="bg-background">
       <main className="xl:container mx-auto h-[calc(100dvh-6rem)] sm:h-[calc(100dvh-6.5rem)] md:h-[calc(100dvh-8rem)]">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col pt-2">
-          <div className="flex items-center justify-between gap-2">
-            <TabsList>
-              <TabsTrigger value="chat">Chat</TabsTrigger>
-              <TabsTrigger value="cookbook">Cookbook</TabsTrigger>
-            </TabsList>
-            <PantryHeaderTrigger />
-          </div>
+          <TabsList>
+            <TabsTrigger value="chat">Chat</TabsTrigger>
+            <TabsTrigger value="pantry" className="lg:hidden">Pantry</TabsTrigger>
+            <TabsTrigger value="cookbook">Cookbook</TabsTrigger>
+          </TabsList>
 
           {/* ── Chat tab ── */}
           <TabsContent value="chat" className="flex-1 min-h-0 mt-0">
@@ -32,14 +43,22 @@ function HomeContent() {
               {/* Left: Conversations rail — hidden on mobile */}
               <ConversationsRail />
 
-              {/* Middle: Chat — flex-1 (pantry entry point lives in the chat header on <lg) */}
+              {/* Middle: Chat — flex-1 */}
               <section className="flex-1 min-w-0 relative flex flex-col bg-chat paper">
                 <ChatWrapper />
               </section>
 
-              {/* Right: Pantry rail — hidden on mobile; rendered as a sheet from the chat header on <lg */}
+              {/* Right: Pantry rail — hidden on mobile (mobile uses the Pantry tab instead) */}
               <PantryDrawer />
             </div>
+          </TabsContent>
+
+          {/* ── Pantry tab (mobile only) ── */}
+          <TabsContent
+            value="pantry"
+            className="lg:hidden flex-1 min-h-0 mt-0 overflow-y-auto border border-border rounded-lg bg-muted paper"
+          >
+            <InventoryWrapper />
           </TabsContent>
 
           {/* ── Cookbook tab ── */}

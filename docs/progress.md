@@ -38,13 +38,12 @@ The persistent-kitchen MVP. Highlights:
 - [x] Bug fixed (May 2026): `Conversations.tsx` was reading `data?.grouped` but API returns `{ conversations: GroupedConversations }` — fixed to `data?.conversations`.
 - [x] Bug fixed (May 2026): `src/app/api/message/route.ts` used default import for prisma — fixed to named `{ prisma }`.
 
-### Pantry mobile sheet — tab-row entry point (May 2026)
-- [x] New `PantryMobileSheet` component at `src/features/Inventory/components/PantryMobileSheet.tsx`: right-side shadcn `Sheet` (mirrors `ConversationsMobileSheet` pattern).
-- [x] New `PantryHeaderTrigger` client component owns its own open state and renders both the icon button and the sheet. Mounted in `page.tsx` on the same row as the Chat/Cookbook `TabsList`, right-aligned at `lg:hidden` — reachable from any tab without crowding the chat header or the global brand bar.
-- [x] Removed the floating "Pantry" `<Button>` from `page.tsx` (was pinned `absolute bottom-[72px] right-4`) and the bottom-direction `Drawer` it triggered.
-- [x] Removed unused `Drawer`/`DrawerContent`/`DrawerTitle`/`Button` imports and `pantryOpen` state from `page.tsx`.
-- [x] Pantry icon and sheet state lifted out of `Chat.tsx` entirely — chat header is back to `[≡] • Title [⋯]`. Reflects that pantry is global, not chat-scoped.
-- [x] At `≥lg`: existing `PantryDrawer` rail unchanged.
+### Pantry mobile surface — first-class tab (May 2026)
+- [x] At `<lg`: tabs row reads `Chat | Pantry | Cookbook`. The Pantry tab renders `InventoryWrapper` directly as a full pane.
+- [x] `TabsTrigger value="pantry"` and `TabsContent value="pantry"` both carry `lg:hidden` — only visible/active on mobile.
+- [x] Viewport clamp: a `matchMedia('(min-width: 1024px)')` listener in `page.tsx` snaps `activeTab` back to `chat` if the viewport crosses to `lg+` while on the Pantry tab.
+- [x] At `≥lg`: existing `PantryDrawer` rail unchanged — tab is hidden, rail handles desktop access.
+- [x] Removed earlier iterations: floating Pantry button, bottom Drawer, `PantryMobileSheet`, `PantryHeaderTrigger`, and the wrapping flex container in the tabs row. Chat header is `[≡] • Title [⋯]` with no pantry affordance — reflects that pantry is its own surface, not chat-scoped.
 
 ### Chat suggestion chips: 44×44 tap target (May 2026)
 - [x] Empty-state suggestion chips bumped from ~31px to `min-h-11` (44px) so they meet the iOS HIG minimum tap target.
