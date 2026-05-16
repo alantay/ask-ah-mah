@@ -38,6 +38,13 @@ The persistent-kitchen MVP. Highlights:
 - [x] Bug fixed (May 2026): `Conversations.tsx` was reading `data?.grouped` but API returns `{ conversations: GroupedConversations }` — fixed to `data?.conversations`.
 - [x] Bug fixed (May 2026): `src/app/api/message/route.ts` used default import for prisma — fixed to named `{ prisma }`.
 
+### Pantry mobile sheet — header entry point (May 2026)
+- [x] New `PantryMobileSheet` component at `src/features/Inventory/components/PantryMobileSheet.tsx`: right-side shadcn `Sheet` (mirrors `ConversationsMobileSheet` pattern).
+- [x] Pantry icon button added to chat header at `lg:hidden`, positioned between title and `⋯` menu — opens the sheet over chat.
+- [x] Removed the floating "Pantry" `<Button>` from `page.tsx` (was pinned `absolute bottom-[72px] right-4`) and the bottom-direction `Drawer` it triggered.
+- [x] Removed unused `Drawer`/`DrawerContent`/`DrawerTitle`/`Button` imports and `pantryOpen` state from `page.tsx`.
+- [x] At `≥lg`: existing `PantryDrawer` rail unchanged.
+
 ### Chat suggestion chips: 44×44 tap target (May 2026)
 - [x] Empty-state suggestion chips bumped from ~31px to `min-h-11` (44px) so they meet the iOS HIG minimum tap target.
 - [x] `inline-flex items-center` centers text vertically within the new height; horizontal padding adjusted to `px-3.5` to keep proportions clean.
