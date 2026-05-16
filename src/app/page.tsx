@@ -29,7 +29,7 @@ function HomeContent() {
 
   return (
     <div className="bg-background">
-      <main className="xl:container mx-auto h-[calc(100dvh-6rem)] sm:h-[calc(100dvh-6.5rem)] md:h-[calc(100dvh-8rem)]">
+      <main className="xl:container mx-auto h-[calc(100dvh-3.25rem)] md:h-[calc(100dvh-3.5rem)]">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col pt-2">
           <TabsList>
             <TabsTrigger value="chat">Chat</TabsTrigger>
