@@ -246,9 +246,6 @@ const Chat = () => {
           </svg>
         </button>
 
-        {/* Active indicator dot */}
-        <div className="w-2 h-2 rounded-full bg-primary shrink-0 shadow-[0_0_0_4px_oklch(0.56_0.135_35/0.18)]" />
-
         {/* Title — flex-1 min-w-0 ensures truncation before buttons */}
         <div className="flex min-w-0 flex-1 overflow-hidden">
           <ConversationTitle

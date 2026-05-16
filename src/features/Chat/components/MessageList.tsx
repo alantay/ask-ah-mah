@@ -6,7 +6,6 @@ import {
 } from "@/components/ai-elements/conversation";
 import {
   Message,
-  MessageAvatar,
   MessageContent,
 } from "@/components/ai-elements/message";
 import { Response } from "@/components/ai-elements/response";
@@ -392,14 +391,6 @@ export const MessageList = ({
                       </div>
                     )}
                 </MessageContent>
-                <MessageAvatar
-                  src={
-                    message.role === "user"
-                      ? "/user-avatar.png"
-                      : "/granny-avatar.png"
-                  }
-                  name={message.role === "user" ? "🙋‍♀️" : "👵"}
-                />
               </Message>
             );
           })}

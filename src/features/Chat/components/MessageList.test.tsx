@@ -87,9 +87,6 @@ jest.mock("@/components/ai-elements/message", () => ({
       {children}
     </div>
   ),
-  MessageAvatar: ({ src, name }: { src: string; name: string }) => (
-    <div data-testid="message-avatar" data-src={src} data-name={name} />
-  ),
 }));
 
 jest.mock("@/components/ai-elements/response", () => ({
@@ -200,9 +197,6 @@ describe("MessageList", () => {
         "Hello, Ah Mah!"
       );
 
-      const avatar = screen.getByTestId("message-avatar");
-      expect(avatar).toHaveAttribute("data-src", "/user-avatar.png");
-      expect(avatar).toHaveAttribute("data-name", "🙋‍♀️");
     });
 
     it("should render assistant messages correctly", () => {
@@ -223,9 +217,6 @@ describe("MessageList", () => {
         "Hello! How can I help you cook today?"
       );
 
-      const avatar = screen.getByTestId("message-avatar");
-      expect(avatar).toHaveAttribute("data-src", "/granny-avatar.png");
-      expect(avatar).toHaveAttribute("data-name", "👵");
     });
 
     it("should render multiple message parts", () => {
