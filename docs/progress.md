@@ -38,6 +38,11 @@ The persistent-kitchen MVP. Highlights:
 - [x] Bug fixed (May 2026): `Conversations.tsx` was reading `data?.grouped` but API returns `{ conversations: GroupedConversations }` — fixed to `data?.conversations`.
 - [x] Bug fixed (May 2026): `src/app/api/message/route.ts` used default import for prisma — fixed to named `{ prisma }`.
 
+### Chat suggestion chips: 44×44 tap target (May 2026)
+- [x] Empty-state suggestion chips bumped from ~31px to `min-h-11` (44px) so they meet the iOS HIG minimum tap target.
+- [x] `inline-flex items-center` centers text vertically within the new height; horizontal padding adjusted to `px-3.5` to keep proportions clean.
+- [x] `flex-wrap` behavior unchanged — chips wrap cleanly to a second row at 390px.
+
 ### Mobile cookbook: search + horizontal-scroll chip rail (May 2026)
 - [x] Search input visible at all widths (was `hidden sm:flex`); title strip stacks on mobile.
 - [x] Search now matches `name || tag` (lowercase) — off-vocab tags like `filipino` become findable.
