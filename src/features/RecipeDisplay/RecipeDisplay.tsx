@@ -60,9 +60,9 @@ function RecipeBody({ selectedRecipe }: { selectedRecipe: RecipeWithId }) {
         >
           {selectedRecipe.tags && selectedRecipe.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-2.5">
-              {selectedRecipe.tags.map((tag) => (
+              {selectedRecipe.tags.map((tag, i) => (
                 <span
-                  key={tag}
+                  key={`${tag}-${i}`}
                   className="text-[10.5px] font-semibold tracking-wide px-[9px] py-[3px] rounded-full text-white border border-white/35 bg-white/[0.18] backdrop-blur-[4px]"
                 >
                   {tag}
