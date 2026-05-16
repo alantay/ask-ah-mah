@@ -5,7 +5,7 @@ import { ConversationProvider } from "@/contexts/ConversationContext";
 import { RecipeProvider, useRecipeContext } from "@/contexts/RecipeContext";
 import ChatWrapper from "@/features/Chat/components/ChatWrapper";
 import { ConversationsRail } from "@/features/Conversations";
-import { PantryDrawer } from "@/features/Inventory";
+import { PantryDrawer, PantryHeaderTrigger } from "@/features/Inventory";
 import RecipeDisplay from "@/features/RecipeDisplay/RecipeDisplay";
 import RecipeList from "@/features/RecipeList/RecipeList";
 import { useState } from "react";
@@ -18,10 +18,13 @@ function HomeContent() {
     <div className="bg-background">
       <main className="xl:container mx-auto h-[calc(100dvh-6rem)] sm:h-[calc(100dvh-6.5rem)] md:h-[calc(100dvh-8rem)]">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col pt-2">
-          <TabsList>
-            <TabsTrigger value="chat">Chat</TabsTrigger>
-            <TabsTrigger value="cookbook">Cookbook</TabsTrigger>
-          </TabsList>
+          <div className="flex items-center justify-between gap-2">
+            <TabsList>
+              <TabsTrigger value="chat">Chat</TabsTrigger>
+              <TabsTrigger value="cookbook">Cookbook</TabsTrigger>
+            </TabsList>
+            <PantryHeaderTrigger />
+          </div>
 
           {/* ── Chat tab ── */}
           <TabsContent value="chat" className="flex-1 min-h-0 mt-0">

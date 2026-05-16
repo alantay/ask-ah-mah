@@ -38,9 +38,9 @@ The persistent-kitchen MVP. Highlights:
 - [x] Bug fixed (May 2026): `Conversations.tsx` was reading `data?.grouped` but API returns `{ conversations: GroupedConversations }` — fixed to `data?.conversations`.
 - [x] Bug fixed (May 2026): `src/app/api/message/route.ts` used default import for prisma — fixed to named `{ prisma }`.
 
-### Pantry mobile sheet — global top-bar entry point (May 2026)
+### Pantry mobile sheet — tab-row entry point (May 2026)
 - [x] New `PantryMobileSheet` component at `src/features/Inventory/components/PantryMobileSheet.tsx`: right-side shadcn `Sheet` (mirrors `ConversationsMobileSheet` pattern).
-- [x] New `PantryHeaderTrigger` client component owns its own open state and renders both the icon button and the sheet. Mounted in the global top app bar (`src/app/layout.tsx`) between `AboutPopOver` and `AuthButton` at `lg:hidden` — reachable from any tab (Chat and Cookbook).
+- [x] New `PantryHeaderTrigger` client component owns its own open state and renders both the icon button and the sheet. Mounted in `page.tsx` on the same row as the Chat/Cookbook `TabsList`, right-aligned at `lg:hidden` — reachable from any tab without crowding the chat header or the global brand bar.
 - [x] Removed the floating "Pantry" `<Button>` from `page.tsx` (was pinned `absolute bottom-[72px] right-4`) and the bottom-direction `Drawer` it triggered.
 - [x] Removed unused `Drawer`/`DrawerContent`/`DrawerTitle`/`Button` imports and `pantryOpen` state from `page.tsx`.
 - [x] Pantry icon and sheet state lifted out of `Chat.tsx` entirely — chat header is back to `[≡] • Title [⋯]`. Reflects that pantry is global, not chat-scoped.
