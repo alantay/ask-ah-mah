@@ -40,7 +40,7 @@ The persistent-kitchen MVP. Highlights:
 
 ### RecipeLetter (chat-inline): NEED-only badges + mobile padding (May 2026)
 - [x] Outer padding: `px-4 sm:px-[26px]` (was fixed `26px` — gives 16px horizontal on mobile).
-- [x] HAVE badge removed from ingredient rows; only NEED button (click-to-add) remains for missing items.
+- [x] HAVE badge removed from ingredient rows; missing items now show a small cart-icon button (click-to-add) instead of the ambiguous "NEED" text label.
 - [x] Servings stepper already inline with "What to gather" heading — no change needed.
 - [x] Shortfall card unchanged.
 - [x] RecipeLetter test updated: HAVE assertion flipped to confirm badge is absent; all 13 tests pass.
