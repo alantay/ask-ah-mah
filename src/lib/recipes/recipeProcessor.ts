@@ -2,6 +2,7 @@ import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { TAG_SETS } from "./tagColors";
+import { normalizeTags } from "./normalizeTags";
 import { CategorySchema } from "@/lib/inventory/schemas";
 
 // Extract metadata from a recipe. We don't ask the model to re-emit the
@@ -101,5 +102,8 @@ ${recipeInstructions}`;
     temperature: 0.2,
   });
 
-  return result.object;
+  return {
+    ...result.object,
+    tags: normalizeTags(result.object.tags),
+  };
 }
