@@ -25,6 +25,9 @@ export async function POST(req: NextRequest) {
   // New structured path: body.recipe contains the fully-structured object
   if (body.recipe) {
     const r = body.recipe;
+    if (r.tags != null && (!Array.isArray(r.tags) || r.tags.some((t: unknown) => typeof t !== "string"))) {
+      return NextResponse.json({ error: "recipe.tags must be an array of strings" }, { status: 400 });
+    }
     const tags = normalizeTags(r.tags ?? []);
     const photo = await fetchRecipePhoto(r.title, tags);
     const recipe = await saveRecipe(
