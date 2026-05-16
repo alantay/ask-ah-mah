@@ -37,20 +37,30 @@ function RecipeBody({ selectedRecipe }: { selectedRecipe: RecipeWithId }) {
     <>
       {/* Hero strip */}
       <div
-        className="relative h-[180px] sm:h-[220px] border-b border-border flex items-end"
-        style={{ background: "linear-gradient(135deg, oklch(0.55 0.13 35) 0%, oklch(0.42 0.10 30) 100%)" }}
+        className="relative h-[180px] sm:h-[220px] border-b border-border flex items-end overflow-hidden"
+        style={!selectedRecipe.imageUrl ? { background: "linear-gradient(135deg, oklch(0.55 0.13 35) 0%, oklch(0.42 0.10 30) 100%)" } : undefined}
       >
-        <div
-          className="absolute inset-0"
-          style={{ backgroundImage: "repeating-linear-gradient(135deg, oklch(1 0 0 / 0.04) 0 12px, transparent 12px 24px)" }}
-        />
+        {selectedRecipe.imageUrl ? (
+          <Image
+            src={selectedRecipe.imageUrl}
+            alt={selectedRecipe.name}
+            fill
+            className="object-cover"
+            sizes="(max-width: 640px) 100vw, 900px"
+          />
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{ backgroundImage: "repeating-linear-gradient(135deg, oklch(1 0 0 / 0.04) 0 12px, transparent 12px 24px)" }}
+          />
+        )}
         <div
           className="relative w-full px-4 sm:px-9 pt-6 pb-5 text-white"
-          style={{ background: "linear-gradient(to top, oklch(0 0 0 / 0.3), transparent)" }}
+          style={{ background: "linear-gradient(to top, oklch(0 0 0 / 0.5), transparent)" }}
         >
           {selectedRecipe.tags && selectedRecipe.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-2.5">
-              {selectedRecipe.tags.slice(0, 4).map((tag) => (
+              {selectedRecipe.tags.map((tag) => (
                 <span
                   key={tag}
                   className="text-[10.5px] font-semibold tracking-wide px-[9px] py-[3px] rounded-full text-white border border-white/35 bg-white/[0.18] backdrop-blur-[4px]"
@@ -67,6 +77,17 @@ function RecipeBody({ selectedRecipe }: { selectedRecipe: RecipeWithId }) {
             {selectedRecipe.name}
           </h1>
         </div>
+        {selectedRecipe.imageUrl && selectedRecipe.photographerName && selectedRecipe.photographerUrl && (
+          <a
+            href={selectedRecipe.photographerUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="absolute bottom-2 right-3 font-sans text-[10px] text-white/70 hover:text-white transition-colors leading-none"
+            style={{ textShadow: "0 1px 2px rgba(0,0,0,0.6)" }}
+          >
+            Photo by {selectedRecipe.photographerName}
+          </a>
+        )}
       </div>
 
       {/* Body */}
