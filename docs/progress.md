@@ -38,6 +38,15 @@ The persistent-kitchen MVP. Highlights:
 - [x] Bug fixed (May 2026): `Conversations.tsx` was reading `data?.grouped` but API returns `{ conversations: GroupedConversations }` — fixed to `data?.conversations`.
 - [x] Bug fixed (May 2026): `src/app/api/message/route.ts` used default import for prisma — fixed to named `{ prisma }`.
 
+### Mobile cookbook: search + Cuisine/Protein facets (May 2026)
+- [x] Search input visible at all widths (was `hidden sm:flex`); title strip stacks on mobile.
+- [x] Search now matches `name || tag` (lowercase) — off-vocab tags like `filipino` become findable.
+- [x] At `<sm`: flat tag chip rail replaced by `Cuisine ▾` + `Protein ▾` facet buttons opening bottom Sheets.
+- [x] Each facet sheet lists only canonical tags from `TAG_SETS` with recipe counts, sorted desc; single-select per facet, AND across facets.
+- [x] Selected facet button shows the chosen value with primary fill; sheet has Clear option at top.
+- [x] At `≥sm`: existing chip rail unchanged (mobile facet state is independent of desktop).
+- [x] Mobile padding `px-4 sm:px-9` applied to title strip and grid.
+
 ### RecipeLetter (chat-inline): cart-icon add button + mobile padding (May 2026)
 - [x] Outer padding: `px-4 sm:px-[26px]` (was fixed `26px` — gives 16px horizontal on mobile).
 - [x] HAVE badge removed from ingredient rows; missing items now show a small cart-icon button (click-to-add) instead of the ambiguous "NEED" text label.
