@@ -9,7 +9,7 @@ import {
 import { ingredientMatches } from "@/lib/recipes/matchIngredient";
 import { cn } from "@/lib/utils";
 import { fetcher } from "@/lib/utils/index";
-import { TimerIcon } from "lucide-react";
+import { ShoppingCart, TimerIcon } from "lucide-react";
 import { useState } from "react";
 import { CookingMode } from "./CookingMode";
 import { toast } from "sonner";
@@ -91,46 +91,30 @@ function ServingsStepper({
   );
 }
 
-function HaveTag({
-  have,
+function NeedCartButton({
   ingredientName,
   onAdd,
   pending,
 }: {
-  have: boolean;
   ingredientName: string;
-  onAdd?: () => void;
+  onAdd: () => void;
   pending?: boolean;
 }) {
-  const BASE =
-    "font-sans text-[9.5px] font-bold px-1.5 py-0.5 rounded-full tracking-wider shrink-0";
-  if (have) {
-    return (
-      <span
-        className={cn(
-          BASE,
-          "text-jade bg-[oklch(0.94_0.04_168)] border border-[oklch(0.78_0.07_168)]",
-        )}
-      >
-        HAVE
-      </span>
-    );
-  }
   return (
     <button
       type="button"
       onClick={onAdd}
       disabled={pending}
       aria-label={`Add ${ingredientName} to pantry`}
+      title={`Add ${ingredientName} to pantry`}
       className={cn(
-        BASE,
-        "text-muted-foreground bg-transparent border border-border transition-colors",
+        "shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-full text-muted-foreground bg-transparent border border-border transition-colors",
         pending
           ? "opacity-50 cursor-not-allowed"
           : "cursor-pointer hover:bg-muted hover:text-foreground",
       )}
     >
-      NEED
+      <ShoppingCart className="w-3 h-3" strokeWidth={1.8} />
     </button>
   );
 }
@@ -254,7 +238,7 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
   }
 
   return (
-    <div className=" border-y border-border-soft p-[20px_26px_22px] relative">
+    <div className="border-y border-border-soft px-4 sm:px-[26px] pt-5 pb-[22px] relative">
       {/* Title */}
       <div className="font-display text-3xl font-semibold text-foreground leading-[1.05] tracking-tight mb-2">
         {recipe.title}
@@ -371,11 +355,10 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
                       </span>
                     )}
                   </span>
-                  {userId && inventoryItems.length > 0 && (
-                    <HaveTag
-                      have={have}
+                  {userId && inventoryItems.length > 0 && !have && (
+                    <NeedCartButton
                       ingredientName={ing.name}
-                      onAdd={have ? undefined : () => addToPantry(ing)}
+                      onAdd={() => addToPantry(ing)}
                       pending={inFlight.has(ing.name)}
                     />
                   )}

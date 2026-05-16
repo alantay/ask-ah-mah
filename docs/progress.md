@@ -38,6 +38,13 @@ The persistent-kitchen MVP. Highlights:
 - [x] Bug fixed (May 2026): `Conversations.tsx` was reading `data?.grouped` but API returns `{ conversations: GroupedConversations }` — fixed to `data?.conversations`.
 - [x] Bug fixed (May 2026): `src/app/api/message/route.ts` used default import for prisma — fixed to named `{ prisma }`.
 
+### RecipeLetter (chat-inline): cart-icon add button + mobile padding (May 2026)
+- [x] Outer padding: `px-4 sm:px-[26px]` (was fixed `26px` — gives 16px horizontal on mobile).
+- [x] HAVE badge removed from ingredient rows; missing items now show a small cart-icon button (click-to-add) instead of the ambiguous "NEED" text label.
+- [x] Servings stepper already inline with "What to gather" heading — no change needed.
+- [x] Shortfall card unchanged.
+- [x] RecipeLetter test updated: HAVE assertion flipped to confirm badge is absent; all 13 tests pass.
+
 ### RecipeDisplay (cookbook): strip pantry awareness + mobile padding (May 2026)
 - [x] `RecipeDisplay` no longer fetches inventory or shows HAVE/NEED badges — cookbook is recipe storage, not meal planning.
 - [x] `LegacyRecipeBody` and the `RecipeLetter`-based structured path collapsed into a single `RecipeBody`: legacy recipes use `Streamdown` markdown fallback; structured recipes (with `steps`) render numbered step cards.

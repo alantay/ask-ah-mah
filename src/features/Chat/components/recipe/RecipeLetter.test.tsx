@@ -132,10 +132,17 @@ describe('NEED pill click-to-add', () => {
     expect(screen.getByLabelText('Add bok choy to pantry')).toBeInTheDocument();
   });
 
-  it('renders HAVE (non-interactive) for ingredient already in pantry', () => {
+  it('renders a cart icon (not text) inside the add-to-pantry button', () => {
+    render(<RecipeLetter recipe={RECIPE} />);
+    const button = screen.getByLabelText('Add bok choy to pantry');
+    expect(button.textContent).toBe('');
+    expect(button.querySelector('svg.lucide-shopping-cart')).toBeInTheDocument();
+  });
+
+  it('renders no badge for ingredient already in pantry (HAVE removed)', () => {
     render(<RecipeLetter recipe={RECIPE} />);
     expect(screen.queryByLabelText('Add chicken thigh to pantry')).not.toBeInTheDocument();
-    expect(screen.getByText('HAVE')).toBeInTheDocument();
+    expect(screen.queryByText('HAVE')).not.toBeInTheDocument();
   });
 
   it('posts correct body and shows success toast on NEED click', async () => {
