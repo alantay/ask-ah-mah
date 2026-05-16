@@ -38,7 +38,7 @@ The persistent-kitchen MVP. Highlights:
 - [x] Bug fixed (May 2026): `Conversations.tsx` was reading `data?.grouped` but API returns `{ conversations: GroupedConversations }` — fixed to `data?.conversations`.
 - [x] Bug fixed (May 2026): `src/app/api/message/route.ts` used default import for prisma — fixed to named `{ prisma }`.
 
-### RecipeLetter (chat-inline): NEED-only badges + mobile padding (May 2026)
+### RecipeLetter (chat-inline): cart-icon add button + mobile padding (May 2026)
 - [x] Outer padding: `px-4 sm:px-[26px]` (was fixed `26px` — gives 16px horizontal on mobile).
 - [x] HAVE badge removed from ingredient rows; missing items now show a small cart-icon button (click-to-add) instead of the ambiguous "NEED" text label.
 - [x] Servings stepper already inline with "What to gather" heading — no change needed.
