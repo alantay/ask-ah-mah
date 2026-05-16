@@ -295,7 +295,7 @@ const Chat = () => {
             <button
               key={s}
               onClick={() => handleSendMessage(s)}
-              className="px-3 py-1.5 text-[12.5px] text-muted-foreground border border-border rounded-full hover:border-border-soft hover:text-foreground transition-colors cursor-pointer"
+              className="inline-flex items-center min-h-11 px-3.5 text-[12.5px] text-muted-foreground border border-border rounded-full hover:border-border-soft hover:text-foreground transition-colors cursor-pointer"
             >
               {s}
             </button>
