@@ -51,18 +51,6 @@ export default function RecipeCard({ recipe, onSelect, onDelete }: RecipeCardPro
             className="object-cover"
             sizes="(max-width: 640px) 100vw, 320px"
           />
-          {recipe.photographerName && recipe.photographerUrl && (
-            <a
-              href={recipe.photographerUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="absolute bottom-1 right-2 font-sans text-[9px] text-white/70 hover:text-white transition-colors leading-none"
-              style={{ textShadow: "0 1px 2px rgba(0,0,0,0.6)" }}
-            >
-              Photo by {recipe.photographerName}
-            </a>
-          )}
         </div>
       ) : (
         <div

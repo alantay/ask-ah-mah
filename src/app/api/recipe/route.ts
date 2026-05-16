@@ -1,5 +1,6 @@
 import { deleteRecipe, getRecipes, saveRecipe } from "@/lib/recipes";
 import { processRecipe } from "@/lib/recipes/recipeProcessor";
+import { normalizeTags } from "@/lib/recipes/normalizeTags";
 import { RecipeIngredientModel } from "@/lib/recipes/schemas";
 import { fetchRecipePhoto } from "@/lib/unsplash/fetchPhoto";
 import { NextRequest, NextResponse } from "next/server";
@@ -24,7 +25,10 @@ export async function POST(req: NextRequest) {
   // New structured path: body.recipe contains the fully-structured object
   if (body.recipe) {
     const r = body.recipe;
-    const tags = r.tags ?? [];
+    if (r.tags != null && (!Array.isArray(r.tags) || r.tags.some((t: unknown) => typeof t !== "string"))) {
+      return NextResponse.json({ error: "recipe.tags must be an array of strings" }, { status: 400 });
+    }
+    const tags = normalizeTags(r.tags ?? []);
     const photo = await fetchRecipePhoto(r.title, tags);
     const recipe = await saveRecipe(
       {

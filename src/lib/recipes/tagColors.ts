@@ -15,7 +15,8 @@ export const TAG_SETS: Record<Exclude<TagCategory, "other">, readonly string[]> 
   cuisine: [
     "italian", "chinese", "japanese", "mexican", "indian", "thai", "french",
     "mediterranean", "american", "korean", "vietnamese", "middle-eastern",
-    "greek", "spanish", "moroccan", "malaysian", "singaporean",
+    "greek", "spanish", "moroccan", "malaysian", "singaporean", "filipino",
+    "asian", "western", "african", "latin-american",
   ],
   protein: [
     "chicken", "beef", "pork", "fish", "seafood", "vegetarian", "vegan",
@@ -24,7 +25,7 @@ export const TAG_SETS: Record<Exclude<TagCategory, "other">, readonly string[]> 
   method: [
     "baked", "fried", "grilled", "steamed", "boiled", "roasted", "sauteed",
     "stir-fried", "braised", "slow-cooked", "pressure-cooked", "air-fried",
-    "no-cook", "raw", "marinated", "fermented", "pickled",
+    "no-cook", "raw", "marinated", "fermented", "pickled", "stew",
   ],
   meal: [
     "breakfast", "lunch", "dinner", "snack", "appetizer", "dessert",
@@ -36,7 +37,7 @@ export const TAG_SETS: Record<Exclude<TagCategory, "other">, readonly string[]> 
   ],
   style: [
     "crispy", "creamy", "spicy", "sweet", "savory", "tangy", "hearty",
-    "light", "refreshing", "warming",
+    "light", "refreshing", "warming", "comfort", "numbing",
   ],
   equipment: [
     "wok", "instant-pot", "cast-iron", "slow-cooker", "blender", "oven-free",
