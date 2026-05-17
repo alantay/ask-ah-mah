@@ -3,12 +3,11 @@
 
 export type TagCategory =
   | "cuisine"
-  | "protein"
+  | "main"
   | "method"
   | "meal"
-  | "difficulty"
+  | "effort"
   | "style"
-  | "equipment"
   | "other";
 
 export const TAG_SETS: Record<Exclude<TagCategory, "other">, readonly string[]> = {
@@ -18,30 +17,25 @@ export const TAG_SETS: Record<Exclude<TagCategory, "other">, readonly string[]> 
     "greek", "spanish", "moroccan", "malaysian", "singaporean", "filipino",
     "asian", "western", "african", "latin-american",
   ],
-  protein: [
-    "chicken", "beef", "pork", "fish", "seafood", "vegetarian", "vegan",
-    "eggs", "tofu", "beans", "lentils",
+  main: [
+    "chicken", "beef", "pork", "fish", "seafood", "eggs", "tofu", "beans",
+    "lentils", "rice", "noodle", "pasta", "bread", "dumpling", "pancake",
   ],
   method: [
     "baked", "fried", "grilled", "steamed", "boiled", "roasted", "sauteed",
     "stir-fried", "braised", "slow-cooked", "pressure-cooked", "air-fried",
-    "no-cook", "raw", "marinated", "fermented", "pickled", "stew",
+    "no-cook", "raw", "marinated", "fermented", "pickled", "stew", "blended",
   ],
   meal: [
     "breakfast", "lunch", "dinner", "snack", "appetizer", "dessert",
     "side-dish", "main-course", "soup", "salad", "beverage", "condiment",
   ],
-  difficulty: [
-    "beginner", "easy", "intermediate", "advanced", "quick (under 30 min)",
-    "one-pot", "make-ahead",
+  effort: [
+    "easy", "quick (under 30 min)", "one-pot", "make-ahead", "oven-free",
   ],
   style: [
     "crispy", "creamy", "spicy", "sweet", "savory", "tangy", "hearty",
     "light", "refreshing", "warming", "comfort", "numbing",
-  ],
-  equipment: [
-    "wok", "instant-pot", "cast-iron", "slow-cooker", "blender", "oven-free",
-    "grill",
   ],
 };
 

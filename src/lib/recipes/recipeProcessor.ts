@@ -78,7 +78,7 @@ export async function processRecipe(
   const prompt = `Extract metadata from this recipe for storage.
 
 TASKS:
-1. Choose 3-8 tags from the categories below (use exact tag names, lowercase, hyphenated).
+1. Choose 3-8 tags. ONLY use exact tag names from the list below — do not invent new tags, do not use ingredient names (e.g. "onion", "garlic") as tags. If unsure, prefer fewer correct tags over more guesses.
 2. Identify baseServings — how many servings the recipe makes (infer 2 or 4 if unstated).
 3. Extract ingredients as { name, category, amount?, unit? }.
    - category must be one of: Protein, Carbs, Vegetable, Condiments, Spice, Misc.

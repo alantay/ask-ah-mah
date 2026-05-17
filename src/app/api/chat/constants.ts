@@ -38,7 +38,7 @@ Use this when the user is browsing or hasn't named a specific dish. Call \`getIn
       "title": "Recipe Name",
       "blurb": "One evocative sentence — texture, technique, mood.",
       "time": "20 min",
-      "tags": ["stir-fry", "one-pan"],
+      "tags": ["stir-fried", "one-pot"],
       "keyIngredients": ["chicken thigh", "bok choy", "ginger", "soy sauce", "oyster sauce"],
       "note": "Optional: one sentence personal aside from Ah Mah about when/why she makes this."
     }
@@ -79,7 +79,7 @@ Emit:
       "tip": "Cornstarch gives you that velvety texture. Don't skip it."
     }
   ],
-  "tags": ["stir-fry", "one-pan", "quick"]
+  "tags": ["stir-fried", "one-pot", "quick (under 30 min)"]
 }
 \`\`\`
 
@@ -88,7 +88,7 @@ Rules:
 - Every ingredient MUST include \`category\` and it must be one of: "Protein", "Carbs", "Vegetable", "Condiments", "Spice", "Misc".
 - \`description\` is ≤140 chars — the soul of the dish in one sentence.
 - \`tip\` on a step is optional — only add when the why/trick is non-obvious.
-- \`tags\` 2–5 lowercase tags.
+- \`tags\` 3–6 canonical tags from these categories — cuisine (e.g. chinese, filipino, asian), main (chicken, tofu, rice, noodle, pasta, bread, dumpling, pancake, etc.), method (stir-fried, braised, steamed, etc.), meal (breakfast, dessert, soup, etc.), effort (easy, quick (under 30 min), one-pot, make-ahead, oven-free), style (spicy, comfort, light, etc.). Do NOT use ingredient names as tags.
 - A brief warm sentence BEFORE the block is fine (e.g. "Here it is — the way I make it:").
 
 ## Routing rules
