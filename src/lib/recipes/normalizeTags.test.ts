@@ -21,6 +21,26 @@ describe("normalizeTags", () => {
     expect(normalizeTags(["blender"])).toEqual(["blended"]);
   });
 
+  it("maps tortilla and wrap to bread", () => {
+    expect(normalizeTags(["tortilla", "wrap"])).toEqual(["bread"]);
+  });
+
+  it("maps minced/ground protein variants to canonical protein", () => {
+    expect(normalizeTags(["minced-beef"])).toEqual(["beef"]);
+    expect(normalizeTags(["ground-beef"])).toEqual(["beef"]);
+    expect(normalizeTags(["minced-pork", "ground-pork"])).toEqual(["pork"]);
+    expect(normalizeTags(["minced-chicken", "ground-chicken"])).toEqual(["chicken"]);
+  });
+
+  it("maps one-pan to one-pot", () => {
+    expect(normalizeTags(["one-pan"])).toEqual(["one-pot"]);
+  });
+
+  it("real-world regression: Mexican Minced Beef Tortilla Wraps", () => {
+    expect(normalizeTags(["mexican", "tortilla", "wrap", "minced-beef", "one-pan"]))
+      .toEqual(["mexican", "bread", "beef", "one-pot"]);
+  });
+
   it("drops tags in the DROP list", () => {
     expect(normalizeTags(["onion", "protein", "budget"])).toEqual([]);
     expect(normalizeTags(["vegetarian", "vegan"])).toEqual([]);

@@ -11,6 +11,15 @@ const SYNONYMS: Record<string, string> = {
   "blender":         "blended",
   "quick":           "quick (under 30 min)",
   "comfort food":    "comfort",
+  "one-pan":         "one-pot",
+  "tortilla":        "bread",
+  "wrap":            "bread",
+  "minced-beef":     "beef",
+  "ground-beef":     "beef",
+  "minced-pork":     "pork",
+  "ground-pork":     "pork",
+  "minced-chicken":  "chicken",
+  "ground-chicken":  "chicken",
 };
 
 const DROP = new Set([
