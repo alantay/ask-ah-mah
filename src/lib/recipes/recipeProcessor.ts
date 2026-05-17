@@ -102,8 +102,10 @@ ${recipeInstructions}`;
     temperature: 0.2,
   });
 
+  const normalizedTags = normalizeTags(result.object.tags);
+  console.log(`[tags] processRecipe "${recipeName}":`, { raw: result.object.tags, normalized: normalizedTags });
   return {
     ...result.object,
-    tags: normalizeTags(result.object.tags),
+    tags: normalizedTags,
   };
 }
