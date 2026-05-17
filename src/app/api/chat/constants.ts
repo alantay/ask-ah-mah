@@ -72,6 +72,11 @@ Emit:
     { "name": "bok choy", "category": "Vegetable", "amount": "1", "unit": "bunch", "note": "halved lengthwise" },
     { "name": "shaoxing wine", "category": "Condiments", "amount": "1", "unit": "tbsp", "note": "not in pantry — dry sherry works fine" }
   ],
+  "prep": [
+    "Cut chicken thigh into bite-size pieces",
+    "Halve bok choy lengthwise",
+    "Mince 1 tbsp ginger"
+  ],
   "steps": [
     {
       "title": "Marinate the chicken",
@@ -87,6 +92,7 @@ Rules:
 - \`amount\` is always a string (handles "1 1/2", "½", "500", etc.)
 - Every ingredient MUST include \`category\` and it must be one of: "Protein", "Carbs", "Vegetable", "Condiments", "Spice", "Misc".
 - \`description\` is ≤140 chars — the soul of the dish in one sentence.
+- \`prep\` 0–8 short imperative strings covering ALL knife work (dice, mince, chop, slice), marinating, beating, soaking, scoring — anything BEFORE heat. If a step says "the diced X" or "the marinated Y", that prep MUST be in this array. Omit \`prep\` (or use \`[]\`) for assemble-only recipes with no real prep.
 - \`tip\` on a step is optional — only add when the why/trick is non-obvious.
 - \`tags\` 3–6 tags. EVERY tag MUST come from one of these exact lists. If you cannot find a match in these lists, DO NOT emit the tag:
   - cuisine: italian, chinese, japanese, mexican, indian, thai, french, mediterranean, american, korean, vietnamese, middle-eastern, greek, spanish, moroccan, malaysian, singaporean, filipino, asian, western, african, latin-american

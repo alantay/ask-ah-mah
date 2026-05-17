@@ -30,6 +30,7 @@ function RecipeBody({ selectedRecipe }: { selectedRecipe: RecipeWithId }) {
   const [servings, setServings] = useState<number>(selectedRecipe.baseServings ?? 2);
   const baseServings = selectedRecipe.baseServings || 2;
   const ingredients = (selectedRecipe.ingredients || []) as RecipeIngredient[];
+  const prep = (selectedRecipe.prep ?? []) as string[];
   const steps = (selectedRecipe.steps || []) as RecipeStep[];
   const scale = servings / baseServings;
 
@@ -177,6 +178,30 @@ function RecipeBody({ selectedRecipe }: { selectedRecipe: RecipeWithId }) {
                   </li>
                 );
               })}
+            </ul>
+          </section>
+        )}
+
+        {/* Before you start — mise en place */}
+        {prep.length > 0 && (
+          <section className="mb-9">
+            <h2 className="font-display font-semibold text-[24px] sm:text-[26px] text-foreground tracking-tight mb-4">
+              Before you start
+            </h2>
+            <ul className="list-none p-0 flex flex-col">
+              {prep.map((item, i) => (
+                <li
+                  key={i}
+                  className="flex gap-3 items-baseline py-2 border-b border-dashed border-border"
+                >
+                  <span className="font-mono text-[13px] font-bold text-ink-faint tabular-nums shrink-0 w-5 text-right">
+                    ·
+                  </span>
+                  <span className="flex-1 font-display text-[15px] text-foreground leading-[1.45]">
+                    {item}
+                  </span>
+                </li>
+              ))}
             </ul>
           </section>
         )}

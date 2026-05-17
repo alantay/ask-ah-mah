@@ -63,6 +63,12 @@ const RecipeMetadataSchema = z.object({
     .describe(
       "Total time start to finish in minutes. Extract from a '**Total time:**' line if present. Omit if unstated.",
     ),
+  prep: z
+    .array(z.string())
+    .default([])
+    .describe(
+      "Short imperative prep tasks done BEFORE heat: knife work (dice, mince, chop, slice), marinating, beating, soaking, scoring. Example: ['Dice 1 bell pepper', 'Mince 2 cloves garlic']. Empty array for assemble-only recipes with no real prep.",
+    ),
 });
 
 export type RecipeMetadata = z.infer<typeof RecipeMetadataSchema>;
@@ -86,6 +92,7 @@ TASKS:
    - Omit amount/unit for non-quantified items like "salt to taste".
 4. Write a description: one evocative sentence ≤140 chars. Capture the soul of the dish — not a step list. e.g. "Sunday lunch staple — rice poached in chicken stock, finished with ginger-scallion oil."
 5. Extract totalTimeMinutes from a "**Total time:**" line if present. Omit if not stated.
+6. Extract prep — all knife work, marinating, beating, soaking that happens BEFORE heat. Each item is a short imperative ("Dice 1 bell pepper"). If a step references "the diced X" or "the marinated Y", that prep MUST appear here. Empty array if there's no real prep.
 
 TAG CATEGORIES:
 ${TAG_CATEGORIES}
