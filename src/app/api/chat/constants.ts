@@ -38,7 +38,7 @@ Use this when the user is browsing or hasn't named a specific dish. Call \`getIn
       "title": "Recipe Name",
       "blurb": "One evocative sentence — texture, technique, mood.",
       "time": "20 min",
-      "tags": ["stir-fry", "one-pan"],
+      "tags": ["stir-fried", "one-pot"],
       "keyIngredients": ["chicken thigh", "bok choy", "ginger", "soy sauce", "oyster sauce"],
       "note": "Optional: one sentence personal aside from Ah Mah about when/why she makes this."
     }
@@ -79,7 +79,7 @@ Emit:
       "tip": "Cornstarch gives you that velvety texture. Don't skip it."
     }
   ],
-  "tags": ["stir-fry", "one-pan", "quick"]
+  "tags": ["stir-fried", "one-pot", "quick (under 30 min)"]
 }
 \`\`\`
 
@@ -88,7 +88,14 @@ Rules:
 - Every ingredient MUST include \`category\` and it must be one of: "Protein", "Carbs", "Vegetable", "Condiments", "Spice", "Misc".
 - \`description\` is ≤140 chars — the soul of the dish in one sentence.
 - \`tip\` on a step is optional — only add when the why/trick is non-obvious.
-- \`tags\` 2–5 lowercase tags.
+- \`tags\` 3–6 tags. EVERY tag MUST come from one of these exact lists. If you cannot find a match in these lists, DO NOT emit the tag:
+  - cuisine: italian, chinese, japanese, mexican, indian, thai, french, mediterranean, american, korean, vietnamese, middle-eastern, greek, spanish, moroccan, malaysian, singaporean, filipino, asian, western, african, latin-american
+  - main: chicken, beef, pork, fish, seafood, eggs, tofu, beans, lentils, rice, noodle, pasta, bread, dumpling, pancake
+  - method: baked, fried, grilled, steamed, boiled, roasted, sauteed, stir-fried, braised, slow-cooked, pressure-cooked, air-fried, no-cook, raw, marinated, fermented, pickled, stew, blended
+  - meal: breakfast, lunch, dinner, snack, appetizer, dessert, side-dish, main-course, soup, salad, beverage, condiment
+  - effort: easy, quick (under 30 min), one-pot, make-ahead, oven-free
+  - style: crispy, creamy, spicy, sweet, savory, tangy, hearty, light, refreshing, warming, comfort, numbing
+  Do NOT invent variants (e.g. "minced-beef" → use "beef"; "tortilla" or "wrap" → use "bread"; "one-pan" → use "one-pot"). Do NOT use ingredient names as tags (no "onion", "garlic", etc.).
 - A brief warm sentence BEFORE the block is fine (e.g. "Here it is — the way I make it:").
 
 ## Routing rules
