@@ -28,6 +28,9 @@ export async function POST(req: NextRequest) {
     if (r.tags != null && (!Array.isArray(r.tags) || r.tags.some((t: unknown) => typeof t !== "string"))) {
       return NextResponse.json({ error: "recipe.tags must be an array of strings" }, { status: 400 });
     }
+    if (r.prep != null && (!Array.isArray(r.prep) || r.prep.some((p: unknown) => typeof p !== "string"))) {
+      return NextResponse.json({ error: "recipe.prep must be an array of strings" }, { status: 400 });
+    }
     const tags = normalizeTags(r.tags ?? []);
     const photo = await fetchRecipePhoto(r.title, tags);
     const recipe = await saveRecipe(
@@ -48,6 +51,7 @@ export async function POST(req: NextRequest) {
             note: ing.note,
           })
         ),
+        prep: r.prep ?? [],
         steps: r.steps,
         description: r.description,
         totalTimeMinutes: r.totalTimeMinutes,

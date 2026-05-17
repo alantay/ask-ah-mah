@@ -36,6 +36,7 @@ export const RecipeBlockSchema = z.object({
   totalTimeMinutes: z.number().optional(),
   baseServings: z.number(),
   ingredients: z.array(RecipeIngredientModelSchema),
+  prep: z.array(z.string()).optional(),
   steps: z.array(RecipeStepSchema),
   tags: z.array(z.string()).optional(),
 });
@@ -76,6 +77,7 @@ export type Recipe = {
   recipeId?: string;
   baseServings: number;
   ingredients: RecipeIngredient[];
+  prep?: string[];
   steps?: RecipeStep[];          // new: structured steps (null for legacy recipes)
   description?: string;
   totalTimeMinutes?: number;
