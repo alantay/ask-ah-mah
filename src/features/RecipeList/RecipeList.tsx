@@ -64,9 +64,10 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
 
   return (
     <div className="h-full flex flex-col bg-muted">
-      {/* Title strip */}
-      <div className="px-4 sm:px-9 pt-6 pb-[18px] border-b border-border flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-6 shrink-0">
-        <div>
+      {/* Title strip — hidden on mobile; Cookbook tab below the app header
+          already labels this surface and the chip rail carries `All · N`. */}
+      <div className="px-4 sm:px-9 pt-3 sm:pt-6 pb-[18px] sm:border-b sm:border-border flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-6 shrink-0">
+        <div className="hidden sm:block">
           <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground mb-1.5">
             Yours, kept
           </div>
