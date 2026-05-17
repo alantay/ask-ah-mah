@@ -160,10 +160,16 @@ function RecipeBody({ selectedRecipe }: { selectedRecipe: RecipeWithId }) {
                     key={i}
                     className="flex items-baseline gap-3 py-2.5 border-b border-dashed border-border"
                   >
-                    <span className="basis-20 sm:basis-24 shrink-0 font-mono text-[13px] font-semibold text-foreground tabular-nums text-right">
+                    <span
+                      className={`basis-20 sm:basis-24 shrink-0 text-[13px] text-foreground text-right ${
+                        scaled != null
+                          ? "font-mono font-semibold tabular-nums"
+                          : "font-display italic text-muted-foreground"
+                      }`}
+                    >
                       {scaled != null
                         ? `${formatAmount(scaled)}${ing.unit ? ` ${ing.unit}` : ""}`
-                        : "—"}
+                        : "to taste"}
                     </span>
                     <span className="flex-1 font-display text-[15px] text-foreground leading-[1.4]">
                       {ing.name}
