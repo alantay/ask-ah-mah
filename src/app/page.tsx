@@ -1,17 +1,13 @@
 "use client";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConversationProvider } from "@/contexts/ConversationContext";
-import { RecipeProvider, useRecipeContext } from "@/contexts/RecipeContext";
 import ChatWrapper from "@/features/Chat/components/ChatWrapper";
 import { ConversationsRail } from "@/features/Conversations";
 import InventoryWrapper from "@/features/Inventory/components/InventoryWrapper";
-import RecipeDisplay from "@/features/RecipeDisplay/RecipeDisplay";
 import RecipeList from "@/features/RecipeList/RecipeList";
 import { useState } from "react";
 
 function HomeContent() {
-  const { selectedRecipe, exitRecipe } = useRecipeContext();
   const [activeTab, setActiveTab] = useState("chat");
 
   return (
@@ -51,27 +47,14 @@ function HomeContent() {
           </TabsContent>
         </Tabs>
       </main>
-
-      {/* Recipe detail sheet — wide right-side sheet over faded cookbook */}
-      <Sheet open={!!selectedRecipe} onOpenChange={(open) => !open && exitRecipe()}>
-        <SheetContent
-          side="right"
-          showCloseButton={false}
-          className="w-full sm:max-w-[min(900px,75vw)] overflow-hidden p-0 bg-chat paper"
-        >
-          <RecipeDisplay key={selectedRecipe?.id} />
-        </SheetContent>
-      </Sheet>
     </div>
   );
 }
 
 export default function Home() {
   return (
-    <RecipeProvider>
-      <ConversationProvider>
-        <HomeContent />
-      </ConversationProvider>
-    </RecipeProvider>
+    <ConversationProvider>
+      <HomeContent />
+    </ConversationProvider>
   );
 }
