@@ -1,9 +1,9 @@
 "use client";
 
-import { useRecipeContext } from "@/contexts/RecipeContext";
 import { useSessionContext } from "@/contexts/SessionContext";
 import { RecipeWithId } from "@/lib/recipes/schemas";
 import { fetcher } from "@/lib/utils/index";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
@@ -18,7 +18,7 @@ interface RecipeListProps {
 
 export default function RecipeList({ onChatClick }: RecipeListProps) {
   const { userId } = useSessionContext();
-  const { setSelectedRecipe } = useRecipeContext();
+  const router = useRouter();
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
@@ -159,7 +159,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
               <RecipeCard
                 key={recipe.id}
                 recipe={recipe}
-                onSelect={setSelectedRecipe}
+                onSelect={(r) => router.push(`/recipe/${r.id}`)}
                 onDelete={deleteRecipe}
               />
             ))}

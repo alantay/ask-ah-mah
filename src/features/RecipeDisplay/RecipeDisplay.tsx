@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { useRecipeContext } from "@/contexts/RecipeContext";
+import { CookingMode } from "@/features/Chat/components/recipe/CookingMode";
 import { RecipeIngredient, RecipeStep, RecipeWithId } from "@/lib/recipes/schemas";
 import Image from "next/image";
 import { useState } from "react";
@@ -247,26 +247,42 @@ function RecipeBody({ selectedRecipe }: { selectedRecipe: RecipeWithId }) {
   );
 }
 
-export default function RecipeDisplay() {
-  const { selectedRecipe, exitRecipe } = useRecipeContext();
+interface RecipeDisplayProps {
+  recipe: RecipeWithId;
+  onBack: () => void;
+}
+
+export default function RecipeDisplay({ recipe, onBack }: RecipeDisplayProps) {
+  const [cooking, setCooking] = useState(false);
 
   const copyRecipe = async () => {
     try {
-      await navigator.clipboard.writeText(selectedRecipe?.instructions || "");
+      await navigator.clipboard.writeText(recipe.instructions || "");
       toast.success("Recipe copied to clipboard!");
     } catch {
       toast.error("Failed to copy recipe");
     }
   };
 
-  if (!selectedRecipe) return null;
+  const steps = (recipe.steps ?? []) as RecipeStep[];
+  const canCook = steps.length > 0;
+
+  if (cooking) {
+    return (
+      <CookingMode
+        title={recipe.name}
+        steps={steps}
+        onExit={() => setCooking(false)}
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col h-full">
-      {/* Top strip — Back / Copy */}
+      {/* Top strip — Back / Copy + Start cooking */}
       <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-dashed border-border shrink-0">
         <button
-          onClick={exitRecipe}
+          onClick={onBack}
           className="font-sans text-[11.5px] font-semibold tracking-[0.14em] uppercase text-ink-faint hover:text-foreground transition-colors cursor-pointer"
           aria-label="Back to cookbook"
         >
@@ -282,25 +298,23 @@ export default function RecipeDisplay() {
           >
             Copy
           </Button>
-          <button
-            onClick={exitRecipe}
-            className="w-7 h-7 rounded-md border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer"
-            aria-label="Close"
-          >
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-              <path
-                d="M3 3l10 10M13 3L3 13"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
-          </button>
+          {canCook && (
+            <button
+              onClick={() => setCooking(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12.5px] font-semibold text-primary-foreground bg-primary border border-primary rounded-md cursor-pointer shadow-[0_1px_0_oklch(0.46_0.135_35)] hover:opacity-90 transition-opacity"
+              aria-label="Start cooking — step-by-step view with screen stay-on"
+            >
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                <path d="M5 3l8 5-8 5V3z" fill="currentColor" />
+              </svg>
+              Start cooking
+            </button>
+          )}
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        <RecipeBody selectedRecipe={selectedRecipe} />
+        <RecipeBody selectedRecipe={recipe} />
       </div>
     </div>
   );
