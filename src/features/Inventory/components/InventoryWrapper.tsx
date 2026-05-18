@@ -3,13 +3,13 @@ import { useSessionContext } from "@/contexts/SessionContext";
 import Inventory from "../Inventory";
 import { INVENTORY_LOADING_MESSAGES } from "../constants";
 
-export default function InventoryWrapper({ onClose }: { onClose?: () => void }) {
+export default function InventoryWrapper() {
   const { userId, isLoading } = useSessionContext();
 
   return (
-    <div className="max-h-full overflow-y-auto pb-4 overscroll-contain ">
+    <div className="h-full overflow-hidden">
       {isLoading || !userId ? (
-        <div className="animate-pulse" suppressHydrationWarning>
+        <div className="animate-pulse p-4" suppressHydrationWarning>
           {
             INVENTORY_LOADING_MESSAGES[
               Math.floor(Math.random() * INVENTORY_LOADING_MESSAGES.length)
@@ -17,7 +17,7 @@ export default function InventoryWrapper({ onClose }: { onClose?: () => void }) 
           }
         </div>
       ) : (
-        <Inventory onClose={onClose} />
+        <Inventory />
       )}
     </div>
   );
