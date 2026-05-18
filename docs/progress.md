@@ -28,13 +28,6 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 
 ## V2 — In Progress
 
-### Decrement-on-cook
-- [ ] Add `Cooked This` button in `RecipeDisplay` for saved recipes.
-- [ ] Add explicit confirmation flow for inferred "I cooked X" messages (`yes / no / edit`).
-- [ ] Implement quantity decrement math when inventory quantity is set.
-- [ ] Implement unlimited-quantity confirm/remove flow (`did this finish it?`).
-- [ ] Keep freeform off-recipe meal messages as no-op.
-
 ### Shopping list from shortfalls
 - [ ] Add one-click `Add missing to shopping list` from `RecipeDisplay`.
 - [ ] Add `ShoppingList` Prisma model (`id`, `userId`, `name`, `quantity?`, `unit?`, `addedAt`, `recipeId?`).
@@ -70,3 +63,4 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **PantryDrawer absolute overlay over reflow**: pantry opens as a right-edge overlay so chat width stays stable. Tab stays mounted so the right edge doesn't jump on open/close.
 - **Horizontal-scroll chip rail over facet sheets (cookbook)**: surfaces all tags at a glance; facet sheets added taps and hid options.
 - **Cookbook strips pantry awareness**: `RecipeDisplay` is storage, not meal planning. HAVE/NEED badges belong in the chat-inline `RecipeLetter` only.
+- **Decrement-on-cook dropped**: tracking what was cooked, confirming with the user, and decrementing inventory adds a confirmation surface and an "active cooking" state model that's hard to get right. The pantry is whatever the user says it is; nudges live in chat ("I used the last of the eggs"). Removed from the V2 backlog entirely.
