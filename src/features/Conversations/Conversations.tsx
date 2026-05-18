@@ -69,9 +69,13 @@ export function Conversations({ onItemClick }: ConversationsProps) {
     onItemClick?.();
   };
 
-  const handleNewConversation = () => {
+  const activeConvIsEmpty = (() => {
     const active = allConversations.find((c) => c.id === activeConversationId);
-    if ((active?._count?.messages ?? 1) === 0) return;
+    return (active?._count?.messages ?? 1) === 0;
+  })();
+
+  const handleNewConversation = () => {
+    if (activeConvIsEmpty) return;
     startNewConversation();
   };
 
@@ -87,8 +91,10 @@ export function Conversations({ onItemClick }: ConversationsProps) {
         </div>
         <button
           onClick={handleNewConversation}
-          className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center text-lg font-medium shrink-0 hover:bg-primary/90 transition-colors cursor-pointer"
+          disabled={activeConvIsEmpty}
+          className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center text-lg font-medium shrink-0 hover:bg-primary/90 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-primary"
           aria-label="New conversation"
+          title={activeConvIsEmpty ? "Already in a new conversation" : "Start a new conversation"}
         >
           +
         </button>

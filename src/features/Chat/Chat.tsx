@@ -35,7 +35,6 @@ const Chat = () => {
   const {
     activeConversationId,
     activeConversation,
-    startNewConversation,
     renameActiveConversation,
     autoTitleActiveConversation,
     deleteActiveConversation,
@@ -256,10 +255,8 @@ const Chat = () => {
           />
         </div>
 
-        {/* Overflow menu — new / rename / delete */}
+        {/* Overflow menu — rename / delete (the "+" in the conversations rail/sheet starts a new conversation) */}
         <ConversationActionsMenu
-          onNewConversation={() => startNewConversation()}
-          canStartNew={messageCount > 0}
           onStartRename={() => setTitleEditing(true)}
           onDelete={handleDeleteConversation}
           canDelete={messageCount > 0}
