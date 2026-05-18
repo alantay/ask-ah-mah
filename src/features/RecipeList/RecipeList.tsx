@@ -69,23 +69,23 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
       <div className="px-4 sm:px-9 pt-3 sm:pt-6 pb-[18px] sm:border-b sm:border-border flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-6 shrink-0">
         <div className="hidden sm:block">
           <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground mb-1.5">
-            Yours, kept
+            Worth cooking again
           </div>
           <h1 className="font-display font-semibold text-[40px] text-foreground leading-none tracking-tight">
-            My Cookbook
+            Your kept recipes
           </h1>
           <p className="font-display italic text-[15px] text-muted-foreground mt-2">
             {isEmpty
-              ? "0 saved recipes — your shelf is waiting."
+              ? "Empty for now. Cook something with Ah Mah, then save the ones you'd cook again."
               : (() => {
-                  const base = `${allRecipes.length} saved recipe${allRecipes.length !== 1 ? "s" : ""}`;
+                  const base = `${allRecipes.length} saved`;
                   const latest = allRecipes.reduce((max, r) => {
                     const t = r.createdAt ? new Date(r.createdAt).getTime() : 0;
                     return t > max ? t : max;
                   }, 0);
-                  if (!latest) return base;
+                  if (!latest) return `${base}.`;
                   const day = new Date(latest).toLocaleDateString("en-US", { weekday: "long" });
-                  return `${base} · last added ${day}`;
+                  return `${base}. Last one in: ${day}.`;
                 })()}
           </p>
         </div>
@@ -149,7 +149,9 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
           <CookbookEmpty onChatClick={onChatClick} />
         ) : filtered.length === 0 ? (
           <p className="font-display italic text-[14px] text-muted-foreground">
-            No recipes {activeTag ? `tagged "${activeTag}"` : "matching your search"}.
+            {activeTag
+              ? `Nothing tagged "${activeTag}". Try another?`
+              : "Nothing matches. Try a different word?"}
           </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[18px]">
@@ -183,7 +185,7 @@ function CookbookEmpty({ onChatClick }: { onChatClick?: () => void }) {
             Your cookbook is empty.
           </div>
           <div className="font-display italic text-sm text-muted-foreground leading-relaxed">
-            When Ah Mah suggests a recipe you like, tap <em>Save to cookbook</em> and it lives here. Saved by you, ready when you need it.
+            When something&rsquo;s worth a second go, tap <em>Save</em>. Ah Mah keeps it tidy.
           </div>
         </div>
         <button

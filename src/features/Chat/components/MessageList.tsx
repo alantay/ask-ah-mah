@@ -384,7 +384,7 @@ export const MessageList = ({
                                     />
                                   </svg>
                                 )}
-                                {saved ? "Saved" : "Save"}: {recipeName}
+                                {saved ? "Kept" : "Keep this"} — {recipeName}
                               </Button>
                             );
                           })}

@@ -29,7 +29,7 @@ export const MessageInput = ({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           disabled={disabled}
-          placeholder={disabled ? "Sending your question…" : "Ask Ah Mah a question…"}
+          placeholder={disabled ? "Sending…" : "Ask Ah Mah…"}
           className="flex-1 border-none shadow-none bg-transparent focus-visible:ring-0 px-0"
         />
         <Button

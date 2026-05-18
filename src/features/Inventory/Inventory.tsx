@@ -149,14 +149,14 @@ const Inventory = () => {
         <div className="hidden sm:flex sm:items-end sm:justify-between sm:gap-6 mb-5">
           <div>
             <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground mb-1.5">
-              Pantry
+              What Ah Mah sees
             </div>
             <h1 className="font-display font-semibold text-[40px] text-foreground leading-none tracking-tight">
-              Your kitchen, kept
+              Your kitchen, today
             </h1>
             <p className="font-display italic text-[15px] text-muted-foreground mt-2">
-              {totalCount} item{totalCount !== 1 ? "s" : ""} · Ah Mah updates
-              this as you chat
+              {totalCount} thing{totalCount !== 1 ? "s" : ""}. She jots them
+              down as you chat.
             </p>
           </div>
           {!isAdding && (
@@ -243,7 +243,7 @@ const Inventory = () => {
 
         {!isLoading && totalCount === 0 && !isAdding && (
           <p className="font-display italic text-[14px] text-muted-foreground">
-            Pantry&rsquo;s empty. Tell Ah Mah what you have, or add it here.
+            Nothing in yet. Tell Ah Mah what you&rsquo;ve got &mdash; &ldquo;a bit of ginger, some eggs&rdquo; is enough.
           </p>
         )}
 
