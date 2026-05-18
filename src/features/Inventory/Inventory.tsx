@@ -170,7 +170,7 @@ const Inventory = () => {
                   strokeLinecap="round"
                 />
               </svg>
-              Add ingredient
+              Add to pantry
             </button>
           )}
         </div>
@@ -190,7 +190,7 @@ const Inventory = () => {
                   strokeLinecap="round"
                 />
               </svg>
-              Add ingredient
+              Add to pantry
             </button>
           </div>
         )}
