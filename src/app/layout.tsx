@@ -25,11 +25,11 @@ const fontLogo = Nunito({
 
 export const metadata: Metadata = {
   title: {
-    default: "Ask Ah Mah - Your Friendly Cooking Assistant",
+    default: "Ask Ah Mah — Cook with Ah Mah",
     template: "%s | Ask Ah Mah",
   },
   description:
-    "Discover delicious recipes with Ask Ah Mah! Get personalized cooking suggestions based on your available ingredients. Perfect for cooking beginners and food enthusiasts.",
+    "Ah Mah remembers what's in your kitchen and cooks alongside you. No forms, no spreadsheets — just chat.",
   keywords: [
     "cooking assistant",
     "recipe suggestions",
@@ -56,9 +56,9 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   openGraph: {
-    title: "Ask Ah Mah - Your Friendly Cooking Assistant",
+    title: "Ask Ah Mah — Cook with Ah Mah",
     description:
-      "Discover delicious recipes with Ask Ah Mah! Get personalized cooking suggestions based on your available ingredients.",
+      "Ah Mah remembers what's in your kitchen and cooks alongside you. No forms, no spreadsheets — just chat.",
     url: "https://ask-ah-mah.vercel.app",
     siteName: "Ask Ah Mah",
     images: [
@@ -74,9 +74,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Ask Ah Mah - Your Friendly Cooking Assistant",
+    title: "Ask Ah Mah — Cook with Ah Mah",
     description:
-      "Discover delicious recipes with Ask Ah Mah! Get personalized cooking suggestions based on your available ingredients.",
+      "Ah Mah remembers what's in your kitchen and cooks alongside you. No forms, no spreadsheets — just chat.",
     images: ["/og-image.png"],
   },
   robots: {

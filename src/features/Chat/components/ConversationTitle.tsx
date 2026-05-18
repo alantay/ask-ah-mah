@@ -171,7 +171,7 @@ export function ConversationActionsMenu({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem disabled={!canStartNew} onClick={onNewConversation}>
-            New conversation
+            Start fresh
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={onStartRename}>Rename</DropdownMenuItem>
@@ -190,7 +190,7 @@ export function ConversationActionsMenu({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this conversation?</AlertDialogTitle>
             <AlertDialogDescription>
-              This cannot be undone. Saved recipes are kept.
+              Gone for good. Your saved recipes stay safe.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
