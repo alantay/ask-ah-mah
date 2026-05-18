@@ -199,6 +199,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
         <CookingMode
           title={cookingRecipe.name}
           steps={(cookingRecipe.steps ?? []) as RecipeStep[]}
+          prep={(cookingRecipe.prep ?? []) as string[]}
           onExit={() => setCookingRecipe(null)}
         />
       )}
