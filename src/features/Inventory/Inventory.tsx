@@ -59,9 +59,7 @@ function groupIngredients(items: InventoryItem[]) {
   }
   return CATEGORY_ORDER.map((label) => ({
     label,
-    items: (map.get(label) ?? []).sort((a, b) =>
-      a.name.localeCompare(b.name),
-    ),
+    items: (map.get(label) ?? []).sort((a, b) => a.name.localeCompare(b.name)),
   })).filter((g) => g.items.length > 0);
 }
 
@@ -222,7 +220,10 @@ const Inventory = () => {
                 >
                   Cancel
                 </Button>
-                <Button onClick={onSubmit} disabled={submitting || !draft.trim()}>
+                <Button
+                  onClick={onSubmit}
+                  disabled={submitting || !draft.trim()}
+                >
                   {submitting ? "Adding…" : "Add"}
                 </Button>
               </div>
