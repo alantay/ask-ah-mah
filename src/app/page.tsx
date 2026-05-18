@@ -5,10 +5,17 @@ import ChatWrapper from "@/features/Chat/components/ChatWrapper";
 import { ConversationsRail } from "@/features/Conversations";
 import InventoryWrapper from "@/features/Inventory/components/InventoryWrapper";
 import RecipeList from "@/features/RecipeList/RecipeList";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
+
+const VALID_TABS = ["chat", "pantry", "cookbook"] as const;
 
 function HomeContent() {
-  const [activeTab, setActiveTab] = useState("chat");
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState(
+    initialTab && (VALID_TABS as readonly string[]).includes(initialTab) ? initialTab : "chat",
+  );
 
   return (
     <div className="bg-background">
@@ -54,7 +61,9 @@ function HomeContent() {
 export default function Home() {
   return (
     <ConversationProvider>
-      <HomeContent />
+      <Suspense fallback={null}>
+        <HomeContent />
+      </Suspense>
     </ConversationProvider>
   );
 }

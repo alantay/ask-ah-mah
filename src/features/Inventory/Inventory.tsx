@@ -144,7 +144,7 @@ const Inventory = () => {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="px-4 sm:px-9 pt-4 sm:pt-7 pb-5 max-w-[1200px] mx-auto">
+      <div className="px-4 sm:px-9 pt-4 sm:pt-7 pb-5">
         {/* Header — hidden on mobile (tab strip already labels this surface) */}
         <div className="hidden sm:flex sm:items-end sm:justify-between sm:gap-6 mb-5">
           <div>
@@ -247,9 +247,9 @@ const Inventory = () => {
           </p>
         )}
 
-        {/* Category grid — 2-column on lg+, 1-column on mobile/tablet */}
+        {/* Category masonry — CSS columns let cards flow and pack vertical gaps */}
         {totalCount > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
+          <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-3 [&>*]:break-inside-avoid [&>*]:mb-3">
             {ingredientGroups.map((group) => (
               <CategoryCard
                 key={group.label}
