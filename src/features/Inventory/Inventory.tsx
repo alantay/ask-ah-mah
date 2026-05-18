@@ -122,6 +122,10 @@ const Inventory = () => {
       if (response.ok) {
         mutate(`/api/inventory?userId=${userId}`);
         toast.success(`${itemName} removed from inventory`);
+      } else {
+        const detail = await response.text().catch(() => "");
+        console.error(`DELETE /api/inventory ${response.status}:`, detail);
+        toast.error(`${itemName} failed to remove from inventory`);
       }
     } catch (e) {
       console.error("Failed to remove item:", e);
