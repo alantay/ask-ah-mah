@@ -14,7 +14,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useRef, useState } from "react";
@@ -138,16 +137,12 @@ export default function ConversationTitle({
 // ── ConversationActionsMenu ───────────────────────────────────────────────────
 
 interface ConversationActionsMenuProps {
-  onNewConversation: () => void;
-  canStartNew: boolean;
   onStartRename: () => void;
   onDelete: () => Promise<void>;
   canDelete: boolean;
 }
 
 export function ConversationActionsMenu({
-  onNewConversation,
-  canStartNew,
   onStartRename,
   onDelete,
   canDelete,
@@ -170,10 +165,6 @@ export function ConversationActionsMenu({
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem disabled={!canStartNew} onClick={onNewConversation}>
-            Start fresh
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={onStartRename}>Rename</DropdownMenuItem>
           <DropdownMenuItem
             disabled={!canDelete}
