@@ -301,13 +301,15 @@ export const MessageList = ({
                     const blockKey = `${message.id}-block-${bi}`;
                     if (block.kind === "suggestions") {
                       return (
-                        <SuggestionsBlock
-                          key={blockKey}
-                          data={block.payload}
-                          allMessages={messages}
-                          messageIndex={messageIndex}
-                          onSend={onSend}
-                        />
+                        <div key={blockKey}>
+                          <hr className="border-t border-border my-3" />
+                          <SuggestionsBlock
+                            data={block.payload}
+                            allMessages={messages}
+                            messageIndex={messageIndex}
+                            onSend={onSend}
+                          />
+                        </div>
                       );
                     }
                     if (block.kind === "recipe") {

@@ -1,6 +1,5 @@
 'use client';
 
-import { MessageAvatar } from '@/components/ai-elements/message';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 import { STATUS_LINES } from '../../constants';
@@ -16,13 +15,8 @@ export function StatusStream() {
   }, []);
 
   return (
-    <div className="flex gap-3 items-start max-w-xl">
-      <MessageAvatar src="/granny-avatar.png" name="👵" className="size-9 mt-0.5 shrink-0" />
-      <div className="flex-1">
-        <div className="font-sans text-xs font-semibold text-muted-foreground tracking-widest uppercase mb-1.5">
-          Ah Mah
-        </div>
-
+    <div className="max-w-xl">
+      <div>
         <div className="flex items-center gap-3 py-3 px-4 bg-card border border-border rounded-2xl rounded-bl-sm shadow-[0_1px_0_var(--border-soft)] min-w-[260px]">
           {/* Spinner ring */}
           <div className="relative size-[22px] shrink-0">

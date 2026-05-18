@@ -6,7 +6,6 @@ import { SuggestionsBlockData, SuggestionOption } from '@/lib/recipes/schemas';
 import { cn } from '@/lib/utils';
 import { fetcher } from '@/lib/utils/index';
 import { TextUIPart, UIMessage } from 'ai';
-import Image from 'next/image';
 import useSWR from 'swr';
 import { computePantry } from './pantryUtils';
 
@@ -37,20 +36,6 @@ function derivePickedId(
     }
   }
   return null;
-}
-
-function GrannyAvatar() {
-  return (
-    <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 border border-border">
-      <Image
-        src="/granny-avatar.png"
-        alt="Ah Mah"
-        width={36}
-        height={36}
-        className="object-cover size-full"
-      />
-    </div>
-  );
 }
 
 interface SuggestionCardProps {
@@ -175,45 +160,30 @@ export function SuggestionsBlock({
 
   const pickedId = derivePickedId(data.options, allMessages, messageIndex);
 
-  // Format timestamp
-  const time = new Date().toLocaleTimeString([], {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-
   return (
-    <div className="flex gap-3 items-start">
-      <GrannyAvatar />
-      <div className="flex-1 min-w-0">
-        {/* Header */}
-        <div className="flex items-center gap-2 font-sans text-xs font-semibold text-muted-foreground tracking-widest uppercase mb-1">
-          <span>Ah Mah</span>
-          <span className="font-normal text-ink-faint tracking-wider normal-case">· {time}</span>
-        </div>
+    <div className="min-w-0">
+      {/* Intro */}
+      <div className="font-display italic text-lg leading-relaxed text-foreground mb-3">
+        {data.intro}
+      </div>
 
-        {/* Intro */}
-        <div className="font-display italic text-lg leading-relaxed text-foreground mb-3">
-          {data.intro}
-        </div>
+      {/* Cards */}
+      <div className="flex flex-col gap-2.5">
+        {data.options.map(option => (
+          <SuggestionCard
+            key={option.id}
+            option={option}
+            isPicked={pickedId === option.id}
+            isDimmed={pickedId !== null && pickedId !== option.id}
+            inventoryItems={inventoryItems}
+            onSend={onSend}
+          />
+        ))}
+      </div>
 
-        {/* Cards */}
-        <div className="flex flex-col gap-2.5">
-          {data.options.map(option => (
-            <SuggestionCard
-              key={option.id}
-              option={option}
-              isPicked={pickedId === option.id}
-              isDimmed={pickedId !== null && pickedId !== option.id}
-              inventoryItems={inventoryItems}
-              onSend={onSend}
-            />
-          ))}
-        </div>
-
-        {/* Footer hint */}
-        <div className="mt-2.5 font-display italic text-sm text-ink-faint leading-relaxed">
-          Or tell me what you&apos;re in the mood for and I&apos;ll think of others.
-        </div>
+      {/* Footer hint */}
+      <div className="mt-2.5 font-display italic text-sm text-ink-faint leading-relaxed">
+        Or tell me what you&apos;re in the mood for and I&apos;ll think of others.
       </div>
     </div>
   );
