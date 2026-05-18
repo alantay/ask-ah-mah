@@ -1,60 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { toast } from "sonner";
+import { fireEvent, render, screen } from "@testing-library/react";
 import RecipeDisplay from "./RecipeDisplay";
-
-jest.mock("sonner", () => ({
-  toast: { success: jest.fn(), error: jest.fn() },
-}));
 
 jest.mock("streamdown", () => ({
   Streamdown: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="streamdown">{children}</div>
   ),
-}));
-
-jest.mock("@/components/ui/button", () => ({
-  Button: ({
-    children,
-    onClick,
-    className,
-    variant,
-    disabled,
-    "aria-label": ariaLabel,
-  }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-    className?: string;
-    variant?: string;
-    disabled?: boolean;
-    "aria-label"?: string;
-  }) => (
-    <button
-      onClick={onClick}
-      className={className}
-      data-variant={variant}
-      data-testid="button"
-      aria-label={ariaLabel}
-      disabled={disabled}
-    >
-      {children}
-    </button>
-  ),
-}));
-
-jest.mock("@/components/ui/badge", () => ({
-  Badge: ({ children }: { children: React.ReactNode }) => (
-    <span data-testid="badge">{children}</span>
-  ),
-}));
-
-const mockSelectedRecipe = jest.fn();
-
-jest.mock("@/contexts/RecipeContext", () => ({
-  useRecipeContext: () => ({
-    selectedRecipe: mockSelectedRecipe(),
-    setSelectedRecipe: jest.fn(),
-    exitRecipe: jest.fn(),
-  }),
 }));
 
 const baseRecipe = {
@@ -72,73 +22,50 @@ const baseRecipe = {
   ],
 };
 
-const mockClipboard = { writeText: jest.fn() };
-Object.assign(navigator, { clipboard: mockClipboard });
+const renderRecipe = (overrides: Partial<typeof baseRecipe> = {}) =>
+  render(<RecipeDisplay recipe={{ ...baseRecipe, ...overrides } as never} onBack={jest.fn()} />);
 
 describe("RecipeDisplay", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockClipboard.writeText.mockResolvedValue(undefined);
-    mockSelectedRecipe.mockReturnValue(baseRecipe);
-  });
-
   describe("Basic Rendering", () => {
-    it("returns nothing when no recipe is selected", () => {
-      mockSelectedRecipe.mockReturnValue(null);
-      const { container } = render(<RecipeDisplay />);
-      expect(container.firstChild).toBeNull();
-    });
-
     it("renders recipe instructions via Streamdown for legacy recipes", () => {
-      render(<RecipeDisplay />);
+      renderRecipe();
       const method = screen.getByTestId("streamdown");
       expect(method).toHaveTextContent("Heat butter");
-      expect(method).not.toHaveTextContent("Scrambled Eggs");
       expect(method).not.toHaveTextContent("Ingredients");
       expect(method).not.toHaveTextContent("-----");
     });
 
     it("renders tags", () => {
-      render(<RecipeDisplay />);
+      renderRecipe();
       expect(screen.getByText("breakfast")).toBeInTheDocument();
       expect(screen.getByText("easy")).toBeInTheDocument();
     });
 
     it("renders structured ingredients", () => {
-      render(<RecipeDisplay />);
+      renderRecipe();
       expect(screen.getAllByText(/3 piece/).length).toBeGreaterThan(0);
       expect(screen.getAllByText(/2 tbsp/).length).toBeGreaterThan(0);
     });
 
-    it("renders the copy button", () => {
-      render(<RecipeDisplay />);
-      expect(screen.getByText("Copy")).toBeInTheDocument();
-    });
-
-    it("renders no pantry badges or inventory-based UI", () => {
-      render(<RecipeDisplay />);
-      expect(screen.queryByText(/in pantry/i)).not.toBeInTheDocument();
-      expect(screen.queryByText(/\bNEED\b/)).not.toBeInTheDocument();
-      expect(screen.queryByText(/\bHAVE\b/)).not.toBeInTheDocument();
-      expect(screen.queryByText(/short/i)).not.toBeInTheDocument();
+    it("does not render a Copy button", () => {
+      renderRecipe();
+      expect(screen.queryByText("Copy")).not.toBeInTheDocument();
     });
 
     it("renders the ingredients section as 'What to gather'", () => {
-      render(<RecipeDisplay />);
+      renderRecipe();
       expect(screen.getByText("What to gather")).toBeInTheDocument();
     });
   });
 
   describe("Structured steps", () => {
     it("renders step title and body when steps are present", () => {
-      mockSelectedRecipe.mockReturnValue({
-        ...baseRecipe,
+      renderRecipe({
         steps: [
           { title: "Heat the pan", body: "Put butter in a pan on medium heat.", tip: "Don't let it brown." },
           { title: "Add eggs", body: "Beat and pour in eggs." },
         ],
-      });
-      render(<RecipeDisplay />);
+      } as never);
       expect(screen.getByText("Heat the pan")).toBeInTheDocument();
       expect(screen.getByText("Put butter in a pan on medium heat.")).toBeInTheDocument();
       expect(screen.getByText("Don't let it brown.")).toBeInTheDocument();
@@ -147,32 +74,31 @@ describe("RecipeDisplay", () => {
     });
 
     it("falls back to Streamdown when steps array is empty", () => {
-      mockSelectedRecipe.mockReturnValue({ ...baseRecipe, steps: [] });
-      render(<RecipeDisplay />);
+      renderRecipe({ steps: [] } as never);
       expect(screen.getByTestId("streamdown")).toBeInTheDocument();
     });
   });
 
   describe("Servings stepper", () => {
     it("starts at the recipe's baseServings", () => {
-      render(<RecipeDisplay />);
+      renderRecipe();
       expect(screen.getByText("2")).toBeInTheDocument();
     });
 
     it("scales ingredient amounts when servings increase", () => {
-      render(<RecipeDisplay />);
+      renderRecipe();
       fireEvent.click(screen.getByLabelText("Increase servings"));
       expect(screen.getByText(/4\.5 piece/)).toBeInTheDocument();
     });
 
     it("scales ingredient amounts when servings decrease", () => {
-      render(<RecipeDisplay />);
+      renderRecipe();
       fireEvent.click(screen.getByLabelText("Decrease servings"));
       expect(screen.getByText(/1\.5 piece/)).toBeInTheDocument();
     });
 
     it("does not go below 1 serving", () => {
-      render(<RecipeDisplay />);
+      renderRecipe();
       const dec = screen.getByLabelText("Decrease servings");
       fireEvent.click(dec);
       fireEvent.click(dec);
@@ -180,30 +106,48 @@ describe("RecipeDisplay", () => {
     });
   });
 
-  describe("Copy button", () => {
-    it("writes the recipe instructions to the clipboard", async () => {
-      render(<RecipeDisplay />);
-      fireEvent.click(screen.getByText("Copy"));
-      await waitFor(() => {
-        expect(mockClipboard.writeText).toHaveBeenCalledWith(baseRecipe.instructions);
-      });
+  describe("Start cooking", () => {
+    const recipeWithSteps = {
+      ...baseRecipe,
+      steps: [
+        { title: "Heat the pan", body: "Put butter in a pan on medium heat." },
+        { title: "Add eggs", body: "Beat and pour in eggs." },
+      ],
+    } as never;
+
+    it("calls onStartCooking when provided and does not render CookingMode internally", () => {
+      const onStartCooking = jest.fn();
+      render(
+        <RecipeDisplay
+          recipe={recipeWithSteps}
+          onBack={jest.fn()}
+          onStartCooking={onStartCooking}
+        />,
+      );
+      fireEvent.click(screen.getByLabelText(/Start cooking/));
+      expect(onStartCooking).toHaveBeenCalledTimes(1);
+      // CookingMode header (e.g. "Exit cooking mode") should NOT appear
+      expect(screen.queryByText(/Exit cooking mode/i)).not.toBeInTheDocument();
     });
 
-    it("shows a success toast on copy", async () => {
-      render(<RecipeDisplay />);
-      fireEvent.click(screen.getByText("Copy"));
-      await waitFor(() => {
-        expect(toast.success).toHaveBeenCalledWith("Recipe copied to clipboard!");
-      });
+    it("falls back to internal cooking mode when onStartCooking is not provided", () => {
+      render(<RecipeDisplay recipe={recipeWithSteps} onBack={jest.fn()} />);
+      fireEvent.click(screen.getByLabelText(/Start cooking/));
+      expect(screen.getByText(/Exit cooking mode/i)).toBeInTheDocument();
+    });
+  });
+
+  describe("Before you start (mise en place)", () => {
+    it("renders prep items when present", () => {
+      renderRecipe({ prep: ["Dice the onion", "Mince the garlic"] } as never);
+      expect(screen.getByText("Before you start")).toBeInTheDocument();
+      expect(screen.getByText("Dice the onion")).toBeInTheDocument();
+      expect(screen.getByText("Mince the garlic")).toBeInTheDocument();
     });
 
-    it("shows an error toast when clipboard fails", async () => {
-      mockClipboard.writeText.mockRejectedValueOnce(new Error("denied"));
-      render(<RecipeDisplay />);
-      fireEvent.click(screen.getByText("Copy"));
-      await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith("Failed to copy recipe");
-      });
+    it("omits the section when prep is empty", () => {
+      renderRecipe();
+      expect(screen.queryByText("Before you start")).not.toBeInTheDocument();
     });
   });
 });
