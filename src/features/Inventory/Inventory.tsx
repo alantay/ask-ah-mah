@@ -147,10 +147,10 @@ const Inventory = () => {
         <div className="hidden sm:flex sm:items-end sm:justify-between sm:gap-6 mb-5">
           <div>
             <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground mb-1.5">
-              What&rsquo;s in the kitchen
+              Pantry
             </div>
             <h1 className="font-display font-semibold text-[40px] text-foreground leading-none tracking-tight">
-              Your Pantry
+              Your kitchen, kept
             </h1>
             <p className="font-display italic text-[15px] text-muted-foreground mt-2">
               {totalCount} item{totalCount !== 1 ? "s" : ""} · Ah Mah updates
@@ -244,7 +244,7 @@ const Inventory = () => {
 
         {/* Category grid — 2-column on lg+, 1-column on mobile/tablet */}
         {totalCount > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
             {ingredientGroups.map((group) => (
               <CategoryCard
                 key={group.label}
