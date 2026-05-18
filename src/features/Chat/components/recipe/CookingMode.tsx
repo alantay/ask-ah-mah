@@ -17,12 +17,13 @@ interface CookingModeProps {
 }
 
 function prepToStep(item: string): Step {
-  const commaIdx = item.indexOf(",");
+  const normalized = item.trim();
+  const commaIdx = normalized.indexOf(",");
   const title =
-    commaIdx > 0 && commaIdx <= 40
-      ? item.slice(0, commaIdx)
-      : item.split(" ").slice(0, 4).join(" ");
-  const body = title === item ? "" : item;
+    commaIdx > 0
+      ? normalized.slice(0, commaIdx).trim()
+      : normalized.split(/\s+/).slice(0, 4).join(" ");
+  const body = normalized;
   return { title, body };
 }
 
