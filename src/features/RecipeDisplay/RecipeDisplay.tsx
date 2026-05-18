@@ -270,6 +270,7 @@ export default function RecipeDisplay({ recipe, onBack, onStartCooking }: Recipe
       <CookingMode
         title={recipe.name}
         steps={steps}
+        prep={(recipe.prep ?? []) as string[]}
         onExit={() => setCooking(false)}
       />
     );

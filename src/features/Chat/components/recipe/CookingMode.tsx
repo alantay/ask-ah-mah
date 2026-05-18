@@ -12,13 +12,28 @@ interface Step {
 interface CookingModeProps {
   title: string;
   steps: Step[];
+  prep?: string[];
   onExit: () => void;
 }
 
-export function CookingMode({ title, steps, onExit }: CookingModeProps) {
+function prepToStep(item: string): Step {
+  const commaIdx = item.indexOf(",");
+  const title =
+    commaIdx > 0 && commaIdx <= 40
+      ? item.slice(0, commaIdx)
+      : item.split(" ").slice(0, 4).join(" ");
+  const body = title === item ? "" : item;
+  return { title, body };
+}
+
+export function CookingMode({ title, steps, prep, onExit }: CookingModeProps) {
+  const allSteps: Step[] = [
+    ...(prep ?? []).map(prepToStep),
+    ...steps,
+  ];
   const [current, setCurrent] = useState(0);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
-  const total = steps.length;
+  const total = allSteps.length;
 
   const requestWakeLock = useCallback(async () => {
     if (!("wakeLock" in navigator)) return;
@@ -51,7 +66,7 @@ export function CookingMode({ title, steps, onExit }: CookingModeProps) {
 
   if (total === 0) return null;
 
-  const step = steps[Math.min(current, total - 1)];
+  const step = allSteps[Math.min(current, total - 1)];
   const prev = () => setCurrent((c) => Math.max(0, c - 1));
   const next = () => setCurrent((c) => Math.min(total - 1, c + 1));
 

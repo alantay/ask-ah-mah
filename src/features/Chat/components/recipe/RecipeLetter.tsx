@@ -37,6 +37,7 @@ interface RecipeData {
   totalTimeMinutes?: number;
   baseServings: number;
   ingredients: Ingredient[];
+  prep?: string[];
   steps: Step[];
   tags?: string[];
 }
@@ -232,6 +233,7 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
       <CookingMode
         title={recipe.title}
         steps={recipe.steps}
+        prep={recipe.prep}
         onExit={() => setCooking(false)}
       />
     );
@@ -366,6 +368,21 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
               );
             })}
           </div>
+        </div>
+      )}
+
+      {/* Before you start — mise en place */}
+      {recipe.prep && recipe.prep.length > 0 && (
+        <div className="mb-5">
+          <span className={cn(EYEBROW_BASE, "text-muted-foreground block mb-2")}>Before you start</span>
+          <ul className="list-none p-0 m-0 flex flex-col">
+            {recipe.prep.map((item, i) => (
+              <li key={i} className="flex gap-2.5 items-baseline py-2 border-b border-dashed border-border last:border-none">
+                <span className="font-mono text-[11px] font-bold text-ink-faint shrink-0">·</span>
+                <span className="font-display text-sm text-foreground leading-[1.45]">{item}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
