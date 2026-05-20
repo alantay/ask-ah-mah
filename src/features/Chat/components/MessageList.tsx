@@ -38,6 +38,27 @@ interface MessageListProps {
 
 // ── Parsed block types ────────────────────────────────────────────────────────
 
+// Loader stays visible while submitted, and while streaming until the last
+// assistant message has emitted visible content (text, parsed block, or open
+// recipe fence). Closes the empty-bubble gap during tool-call-first turns.
+function shouldShowLoader(status: string, messages: UIMessage[]): boolean {
+  if (status === "submitted") return true;
+  if (status !== "streaming") return false;
+  const last = messages[messages.length - 1];
+  if (!last || last.role !== "assistant") return true;
+  const text = last.parts
+    .filter(
+      (p): p is { type: "text"; text: string } =>
+        p.type === "text" && typeof (p as { text?: string }).text === "string",
+    )
+    .map((p) => p.text)
+    .join("");
+  if (stripFences(text).trim().length > 0) return false;
+  if (extractRecipeBlocks(text).length > 0) return false;
+  if (getOpenRecipeFenceIdx(text) !== -1) return false;
+  return true;
+}
+
 // ── SWR fetcher for save ──────────────────────────────────────────────────────
 
 const saveRecipeCall = async (
@@ -397,12 +418,11 @@ export const MessageList = ({
             );
           })}
 
-          {/* Ghost loader bubble — visible only during submitted state */}
-          {status === "submitted" && (
+          {/* Ghost loader bubble — visible while submitted, and while
+              streaming until the assistant has emitted visible content. */}
+          {shouldShowLoader(status, messages) && (
             <div className="py-4">
-              <ChatLoader
-                submittedAt={submittedAt}
-              />
+              <ChatLoader submittedAt={submittedAt} />
             </div>
           )}
 

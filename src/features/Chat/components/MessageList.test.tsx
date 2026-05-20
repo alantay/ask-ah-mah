@@ -449,7 +449,7 @@ describe("MessageList", () => {
       expect(screen.queryByTestId("loader-ghost")).not.toBeInTheDocument();
     });
 
-    it("should not show loader ghost bubble during streaming", () => {
+    it("should not show loader ghost bubble during streaming with content", () => {
       const streamingMessage = createMockMessage({
         role: "assistant",
         parts: [{ type: "text", text: "Let me think about that..." }],
@@ -464,6 +464,24 @@ describe("MessageList", () => {
       );
 
       expect(screen.queryByTestId("loader-ghost")).not.toBeInTheDocument();
+    });
+
+    it("should show loader ghost bubble during streaming when last assistant message is empty (tool-call gap)", () => {
+      const emptyAssistant = createMockMessage({
+        role: "assistant",
+        parts: [{ type: "text", text: "" }],
+      });
+
+      render(
+        <MessageList
+          {...defaultProps}
+          messages={[emptyAssistant]}
+          status="streaming"
+          submittedAt={Date.now()}
+        />
+      );
+
+      expect(screen.getByTestId("loader-ghost")).toBeInTheDocument();
     });
 
   });
