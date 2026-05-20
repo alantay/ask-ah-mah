@@ -58,25 +58,7 @@ describe("ConversationItem", () => {
     expect(screen.getByText("New chat")).toBeInTheDocument();
   });
 
-  it("shows message count", () => {
-    render(
-      <ConversationItem conversation={baseConv} isActive={false} onClick={() => {}} />
-    );
-    expect(screen.getByText(/5 msg/)).toBeInTheDocument();
-  });
-
-  it("hides message count when zero messages", () => {
-    render(
-      <ConversationItem
-        conversation={{ ...baseConv, _count: { messages: 0 } }}
-        isActive={false}
-        onClick={() => {}}
-      />
-    );
-    expect(screen.queryByText(/msg/)).not.toBeInTheDocument();
-  });
-
-  it("shows snippet when lastMessageSnippet is present", () => {
+  it("renders title only — no snippet, count, or relative time", () => {
     render(
       <ConversationItem
         conversation={{ ...baseConv, lastMessageSnippet: "Here is a great recipe for you" }}
@@ -84,13 +66,8 @@ describe("ConversationItem", () => {
         onClick={() => {}}
       />
     );
-    expect(screen.getByText("Here is a great recipe for you")).toBeInTheDocument();
-  });
-
-  it("hides snippet when lastMessageSnippet is absent", () => {
-    render(
-      <ConversationItem conversation={baseConv} isActive={false} onClick={() => {}} />
-    );
     expect(screen.queryByText(/Here is a great/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/msg/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/ago/)).not.toBeInTheDocument();
   });
 });
