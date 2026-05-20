@@ -28,7 +28,11 @@ function HomeContent() {
           </TabsList>
 
           {/* ── Chat tab ── */}
-          <TabsContent value="chat" className="flex-1 min-h-0 mt-0">
+          <TabsContent
+            value="chat"
+            forceMount
+            className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden"
+          >
             <div className="flex h-full border border-border rounded-lg overflow-hidden relative">
               {/* Left: Conversations rail — hidden on mobile */}
               <ConversationsRail />
@@ -43,13 +47,18 @@ function HomeContent() {
           {/* ── Pantry tab ── */}
           <TabsContent
             value="pantry"
-            className="flex-1 min-h-0 mt-0 overflow-hidden border border-border rounded-lg bg-muted paper"
+            forceMount
+            className="flex-1 min-h-0 mt-0 overflow-hidden border border-border rounded-lg bg-muted paper data-[state=inactive]:hidden"
           >
             <InventoryWrapper />
           </TabsContent>
 
           {/* ── Cookbook tab ── */}
-          <TabsContent value="cookbook" className="flex-1 min-h-0 mt-0 overflow-hidden border border-border rounded-lg">
+          <TabsContent
+            value="cookbook"
+            forceMount
+            className="flex-1 min-h-0 mt-0 overflow-hidden border border-border rounded-lg data-[state=inactive]:hidden"
+          >
             <RecipeList onChatClick={() => setActiveTab("chat")} />
           </TabsContent>
         </Tabs>
