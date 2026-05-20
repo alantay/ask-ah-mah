@@ -8,6 +8,7 @@ import { useState } from "react";
 import useSWR from "swr";
 import { CONVERSATIONS_SEARCH_PLACEHOLDER } from "./constants";
 import { ConversationItem } from "./components/ConversationItem";
+import { ConversationListSkeleton } from "./components/ConversationListSkeleton";
 
 interface ConversationsProps {
   onItemClick?: () => void;
@@ -123,8 +124,8 @@ export function Conversations({ onItemClick }: ConversationsProps) {
 
       {/* List */}
       <div className="flex-1 min-h-0 overflow-y-auto">
-        {isLoading ? (
-          <div className="italic text-ink-faint text-sm">Loading…</div>
+        {isLoading && !data ? (
+          <ConversationListSkeleton />
         ) : filtered.length === 0 ? (
           <div className="italic text-ink-faint text-sm">
             {search ? "No results" : "No conversations yet"}
