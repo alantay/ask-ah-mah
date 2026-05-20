@@ -1,10 +1,7 @@
-import AboutPopOver from "@/components/AboutPopOver";
-import { AuthButton } from "@/features/Auth";
 import { Toaster } from "@/components/ui/sonner";
 import { SessionProvider } from "@/contexts/SessionContext";
 import type { Metadata } from "next";
 import { Fraunces, Inter, Nunito } from "next/font/google";
-import Image from "next/image";
 import "./globals.css";
 
 const fontSans = Inter({
@@ -115,23 +112,6 @@ export default function RootLayout({
               },
             }}
           />
-          <div className="pb-2 pt-2 border-b xl:container mx-auto px-4 flex justify-between items-center">
-            <h1 className="text-xl md:text-2xl font-bold font-logo flex items-center gap-2 text-primary">
-              <div className="relative w-8 h-8 md:w-9 md:h-9">
-                <Image
-                  src="/granny-icon.png"
-                  alt="Ask Ah Mah"
-                  fill
-                  className="object-contain"
-                />
-              </div>
-              Ask Ah Mah
-            </h1>
-            <div className="flex items-center gap-2">
-              <AboutPopOver className="hidden lg:flex" />
-              <AuthButton />
-            </div>
-          </div>
           {children}
         </SessionProvider>
       </body>

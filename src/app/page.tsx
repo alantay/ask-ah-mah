@@ -1,4 +1,5 @@
 "use client";
+import { AppHeader } from "@/components/AppHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConversationProvider } from "@/contexts/ConversationContext";
 import ChatWrapper from "@/features/Chat/components/ChatWrapper";
@@ -19,13 +20,17 @@ function HomeContent() {
 
   return (
     <div className="bg-background">
-      <main className="xl:container mx-auto h-[calc(100dvh-3.25rem)] sm:h-[calc(100dvh-3.75rem)] md:h-[calc(100dvh-4.5rem)]">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col pt-2">
-          <TabsList>
-            <TabsTrigger value="chat">Chat</TabsTrigger>
-            <TabsTrigger value="pantry">Pantry</TabsTrigger>
-            <TabsTrigger value="cookbook">Cookbook</TabsTrigger>
-          </TabsList>
+      <main className="xl:container mx-auto h-dvh sm:h-[calc(100dvh-0.5rem)] md:h-[calc(100dvh-1rem)]">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+          <AppHeader
+            tabs={
+              <TabsList>
+                <TabsTrigger value="chat">Chat</TabsTrigger>
+                <TabsTrigger value="pantry">Pantry</TabsTrigger>
+                <TabsTrigger value="cookbook">Cookbook</TabsTrigger>
+              </TabsList>
+            }
+          />
 
           {/* ── Chat tab ── */}
           <TabsContent
