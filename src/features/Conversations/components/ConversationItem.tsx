@@ -14,7 +14,15 @@ export function ConversationItem({ conversation, isActive, onClick }: Conversati
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
       className={cn(
         "rounded-[10px] p-3 cursor-pointer border transition-colors",
         isActive
