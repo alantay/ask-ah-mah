@@ -12,21 +12,23 @@ const baseConv: ConversationEntity = {
 };
 
 describe("ConversationItem", () => {
-  it("renders active state with primary border", () => {
+  it("renders active state with butter bubble treatment", () => {
     const { container } = render(
       <ConversationItem conversation={baseConv} isActive={true} onClick={() => {}} />
     );
     const card = container.firstChild as HTMLElement;
-    expect(card.className).toContain("border-primary");
+    expect(card.className).toContain("bg-secondary");
+    expect(card.className).toContain("border-[oklch(0.78_0.10_88)]");
   });
 
-  it("renders inactive state without primary border", () => {
+  it("renders inactive state with stripped chrome", () => {
     const { container } = render(
       <ConversationItem conversation={baseConv} isActive={false} onClick={() => {}} />
     );
     const card = container.firstChild as HTMLElement;
-    expect(card.className).not.toContain("border-primary");
-    expect(card.className).toContain("border-border");
+    expect(card.className).not.toContain("bg-secondary");
+    expect(card.className).toContain("bg-transparent");
+    expect(card.className).toContain("border-transparent");
   });
 
   it("calls onClick when clicked", () => {

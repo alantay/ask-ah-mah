@@ -34,10 +34,10 @@ export function ConversationItem({ conversation, isActive, onClick }: Conversati
     <div
       onClick={onClick}
       className={cn(
-        "rounded-[10px] p-3 cursor-pointer shadow-[0_1px_0_oklch(0.87_0.03_72)]",
+        "rounded-[10px] p-3 cursor-pointer border transition-colors",
         isActive
-          ? "bg-chat border border-primary border-l-[3px]"
-          : "bg-card border border-border"
+          ? "bg-secondary border-[oklch(0.78_0.10_88)] shadow-[0_1px_0_oklch(0.78_0.10_88)]"
+          : "bg-transparent border-transparent hover:border-[oklch(0.78_0.10_88)]/40"
       )}
     >
       {/* Title row */}
