@@ -103,8 +103,6 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     globalMutate(
       (key: unknown) =>
         typeof key === "string" && key.includes("/api/conversation"),
-      undefined,
-      { revalidate: true }
     );
 
   const startNewConversation = async (options?: { revalidate?: boolean }) => {
