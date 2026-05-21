@@ -16,6 +16,7 @@ const fontDisplay = Fraunces({
   variable: "--font-var-display",
   subsets: ["latin"],
   weight: ["400", "600", "700"],
+  style: ["normal", "italic"],
 });
 
 const fontLogo = Nunito({
