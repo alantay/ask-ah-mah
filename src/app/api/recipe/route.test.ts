@@ -288,7 +288,7 @@ describe("Recipe API Routes", () => {
         userId: "user-123",
         name: "Chicken Rub",
         instructions: "Dry spice mix for chicken.",
-        tags: ["quick"],
+        tags: ["quick (under 30 min)"],
         recipeId: "chicken-rub",
         baseServings: 2,
         ingredients: [
@@ -305,7 +305,7 @@ describe("Recipe API Routes", () => {
         description: "Dry spice mix for chicken.",
         totalTimeMinutes: 5,
       }, null);
-      expect(mockedFetchRecipePhoto).toHaveBeenCalledWith(["quick"]);
+      expect(mockedFetchRecipePhoto).toHaveBeenCalledWith("Chicken Rub", ["quick (under 30 min)"]);
       expect(mockedProcessRecipe).not.toHaveBeenCalled();
     });
 
@@ -363,7 +363,7 @@ describe("Recipe API Routes", () => {
         description: "",
         totalTimeMinutes: undefined,
       }, null);
-      expect(mockedFetchRecipePhoto).toHaveBeenCalledWith(["breakfast"]);
+      expect(mockedFetchRecipePhoto).toHaveBeenCalledWith("Scrambled Eggs", ["breakfast"]);
       expect(mockedSaveRecipe).toHaveBeenCalledTimes(1);
     });
 

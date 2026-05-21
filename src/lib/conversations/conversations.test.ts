@@ -44,6 +44,7 @@ function makeConversation(overrides: Partial<{
   createdAt: Date;
   updatedAt: Date;
   _count: { messages: number };
+  messages: { content: string }[];
 }> = {}) {
   return {
     id: "conv-1",
@@ -52,6 +53,7 @@ function makeConversation(overrides: Partial<{
     createdAt: new Date("2024-01-01T10:00:00.000Z"),
     updatedAt: new Date("2024-01-01T10:00:00.000Z"),
     _count: { messages: 0 },
+    messages: [],
     ...overrides,
   };
 }

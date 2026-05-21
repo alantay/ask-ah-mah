@@ -4,7 +4,7 @@ import {
   removeInventoryItem,
 } from "@/lib/inventory/Inventory";
 import { getMessages } from "@/lib/messages/messages";
-import { google } from "@ai-sdk/google";
+import { openai } from "@ai-sdk/openai";
 import {
   convertToModelMessages,
   stepCountIs,
@@ -25,8 +25,8 @@ jest.mock("@/lib/messages/messages", () => ({
   getMessages: jest.fn(),
 }));
 
-jest.mock("@ai-sdk/google", () => ({
-  google: jest.fn(),
+jest.mock("@ai-sdk/openai", () => ({
+  openai: jest.fn(),
 }));
 
 jest.mock("ai", () => ({
@@ -49,7 +49,7 @@ const mockedAddInventoryItem = jest.mocked(addInventoryItem);
 const mockedGetInventory = jest.mocked(getInventory);
 const mockedRemoveInventoryItem = jest.mocked(removeInventoryItem);
 const mockedGetMessages = jest.mocked(getMessages);
-const mockedGoogle = jest.mocked(google);
+const mockedOpenai = jest.mocked(openai);
 const mockedConvertToModelMessages = jest.mocked(convertToModelMessages);
 const mockedStepCountIs = jest.mocked(stepCountIs);
 const mockedStreamText = jest.mocked(streamText);
@@ -69,8 +69,8 @@ describe("Chat API Route", () => {
     jest.spyOn(console, "error").mockImplementation(() => {});
 
     // Setup default mocks
-    mockedGoogle.mockReturnValue(
-      "mock-model" as unknown as ReturnType<typeof google>
+    mockedOpenai.mockReturnValue(
+      "mock-model" as unknown as ReturnType<typeof openai>
     );
     mockedStepCountIs.mockReturnValue(
       "mock-step-count" as unknown as ReturnType<typeof stepCountIs>
@@ -119,6 +119,7 @@ describe("Chat API Route", () => {
 
       const requestBody = {
         userId: "user-123",
+        conversationId: "conv-123",
         messages: [
           {
             id: "msg-3",
@@ -132,8 +133,8 @@ describe("Chat API Route", () => {
       const response = await POST(request);
 
       expect(response).toBe("mock-stream-response");
-      expect(mockedGoogle).toHaveBeenCalledWith("gemini-2.5-flash");
-      expect(mockedGetMessages).toHaveBeenCalledWith("user-123");
+      expect(mockedOpenai).toHaveBeenCalledWith("gpt-4.1-mini");
+      expect(mockedGetMessages).toHaveBeenCalledWith("conv-123");
       expect(mockedValidateUIMessages).toHaveBeenCalled();
       expect(mockedStreamText).toHaveBeenCalled();
     });
@@ -143,6 +144,7 @@ describe("Chat API Route", () => {
 
       const requestBody = {
         userId: "user-456",
+        conversationId: "conv-456",
         messages: [
           {
             id: "msg-1",
@@ -156,7 +158,7 @@ describe("Chat API Route", () => {
       const response = await POST(request);
 
       expect(response).toBe("mock-stream-response");
-      expect(mockedGetMessages).toHaveBeenCalledWith("user-456");
+      expect(mockedGetMessages).toHaveBeenCalledWith("conv-456");
       expect(mockedValidateUIMessages).toHaveBeenCalledWith({
         messages: requestBody.messages,
       });
@@ -176,6 +178,7 @@ describe("Chat API Route", () => {
 
       const requestBody = {
         userId: "user-123",
+        conversationId: "conv-123",
         messages: [
           {
             id: "msg-new",
@@ -216,6 +219,7 @@ describe("Chat API Route", () => {
 
       const requestBody = {
         userId: "user-123",
+        conversationId: "conv-123",
         messages: [
           {
             id: "msg-3",
@@ -250,6 +254,7 @@ describe("Chat API Route", () => {
 
       const requestBody = {
         userId: "user-123",
+        conversationId: "conv-123",
         messages: [
           {
             id: "msg-1",
@@ -266,7 +271,7 @@ describe("Chat API Route", () => {
       expect(streamTextCall.model).toBe("mock-model");
       expect(streamTextCall.messages).toBe("mock-converted-messages");
       expect(streamTextCall.system).toBe("Test system prompt");
-      expect(streamTextCall.stopWhen).toBe("mock-step-count");
+      expect(streamTextCall.stopWhen).toEqual(["mock-step-count"]);
       expect(streamTextCall.tools).toBeDefined();
     });
 
@@ -275,6 +280,7 @@ describe("Chat API Route", () => {
 
       const requestBody = {
         userId: "user-123",
+        conversationId: "conv-123",
         messages: [
           {
             id: "msg-1",
@@ -298,6 +304,7 @@ describe("Chat API Route", () => {
 
       const requestBody = {
         userId: "user-123",
+        conversationId: "conv-123",
         messages: [
           {
             id: "msg-1",
@@ -309,8 +316,9 @@ describe("Chat API Route", () => {
 
       const request = createMockRequest(requestBody);
 
-      await expect(POST(request)).rejects.toThrow("Database error");
-      expect(mockedGetMessages).toHaveBeenCalledWith("user-123");
+      const response = await POST(request);
+      expect(response.status).toBe(500);
+      expect(mockedGetMessages).toHaveBeenCalledWith("conv-123");
     });
 
     it("should handle validation errors", async () => {
@@ -319,6 +327,7 @@ describe("Chat API Route", () => {
 
       const requestBody = {
         userId: "user-123",
+        conversationId: "conv-123",
         messages: [
           {
             id: "msg-1",
@@ -330,13 +339,15 @@ describe("Chat API Route", () => {
 
       const request = createMockRequest(requestBody);
 
-      await expect(POST(request)).rejects.toThrow("Validation error");
+      const response = await POST(request);
+      expect(response.status).toBe(500);
     });
 
     it("should handle malformed request body", async () => {
       const request = createMockRequest("invalid json");
 
-      await expect(POST(request)).rejects.toThrow();
+      const response = await POST(request);
+      expect(response.status).toBe(500);
     });
   });
 
@@ -355,6 +366,7 @@ describe("Chat API Route", () => {
 
       const requestBody = {
         userId: "user-123",
+        conversationId: "conv-123",
         messages: [
           {
             id: "msg-1",
