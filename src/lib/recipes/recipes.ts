@@ -1,4 +1,4 @@
-import { UnsplashPhoto } from "../unsplash/fetchPhoto";
+import { PexelsPhoto } from "../pexels/fetchPhoto";
 import { prisma } from "../db";
 import { Recipe } from "./schemas";
 
@@ -12,7 +12,7 @@ export async function getRecipes(userId: string) {
 
 export async function saveRecipe(
   recipe: Recipe,
-  photo?: UnsplashPhoto | null,
+  photo?: PexelsPhoto | null,
 ) {
   return await prisma.recipe.create({
     data: {
