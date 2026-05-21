@@ -45,12 +45,12 @@ export const InventoryItemSchema = z.object({
       "slices",
     ])
     .optional(),
-  shelfLife: z.enum(["short", "medium", "long"]).default("medium"),
+  shelfLife: z.enum(["short", "medium", "long", "frozen"]).default("medium"),
   dateAdded: z.string().datetime(),
   lastUpdated: z.string().datetime(),
 });
 
-export const ShelfLifeSchema = z.enum(["short", "medium", "long"]);
+export const ShelfLifeSchema = z.enum(["short", "medium", "long", "frozen"]);
 export type ShelfLife = z.infer<typeof ShelfLifeSchema>;
 
 // for adding inventory items
