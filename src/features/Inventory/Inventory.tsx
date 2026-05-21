@@ -159,15 +159,13 @@ const Inventory = () => {
               down as you chat.
             </p>
             {ingredientInventory.some((i) => i.shelfLife === "short") && (
-              <div className="mt-2 flex items-center gap-1.5">
+              <p className="mt-1 font-display italic text-[13px] text-muted-foreground flex items-center gap-1.5">
                 <span
                   aria-hidden="true"
                   className="inline-block h-1.5 w-1.5 rounded-full bg-tertiary shrink-0"
                 />
-                <span className="font-sans text-[10.5px] font-bold tracking-[0.18em] uppercase text-muted-foreground">
-                  Use soon
-                </span>
-              </div>
+                use soon
+              </p>
             )}
           </div>
           {!isAdding && (
