@@ -1,15 +1,15 @@
-const UNSPLASH_API = "https://api.unsplash.com";
+const PEXELS_API = "https://api.pexels.com/v1";
 const FALLBACK_QUERY = "food cooking";
 
-export interface UnsplashPhoto {
+export interface PexelsPhoto {
   url: string;
   photographerName: string;
   photographerUrl: string;
 }
 
-async function search(query: string): Promise<UnsplashPhoto | null> {
-  const accessKey = process.env.UNSPLASH_ACCESS_KEY;
-  if (!accessKey) return null;
+async function search(query: string): Promise<PexelsPhoto | null> {
+  const apiKey = process.env.PEXELS_API_KEY;
+  if (!apiKey) return null;
 
   const params = new URLSearchParams({
     query,
@@ -20,8 +20,8 @@ async function search(query: string): Promise<UnsplashPhoto | null> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 5000);
 
-  const res = await fetch(`${UNSPLASH_API}/search/photos?${params}`, {
-    headers: { Authorization: `Client-ID ${accessKey}` },
+  const res = await fetch(`${PEXELS_API}/search?${params}`, {
+    headers: { Authorization: apiKey },
     next: { revalidate: 0 },
     signal: controller.signal,
   });
@@ -30,20 +30,20 @@ async function search(query: string): Promise<UnsplashPhoto | null> {
   if (!res.ok) return null;
 
   const data = await res.json();
-  const photo = data?.results?.[0];
+  const photo = data?.photos?.[0];
   if (!photo) return null;
 
   return {
-    url: photo.urls.regular,
-    photographerName: photo.user.name,
-    photographerUrl: `${photo.user.links.html}?utm_source=ask_ah_mah&utm_medium=referral`,
+    url: photo.src.landscape,
+    photographerName: photo.photographer,
+    photographerUrl: photo.photographer_url,
   };
 }
 
 export async function fetchRecipePhoto(
   title: string,
   tags: string[] = [],
-): Promise<UnsplashPhoto | null> {
+): Promise<PexelsPhoto | null> {
   try {
     const trimmedTitle = title.trim();
     const query =
@@ -52,7 +52,6 @@ export async function fetchRecipePhoto(
     const result = await search(query);
     if (result) return result;
 
-    // Retry with fallback if primary query returned no results
     if (query !== FALLBACK_QUERY) {
       return await search(FALLBACK_QUERY);
     }

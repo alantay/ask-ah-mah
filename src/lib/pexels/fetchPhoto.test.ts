@@ -1,22 +1,20 @@
 import { fetchRecipePhoto } from "./fetchPhoto";
 
 const MOCK_PHOTO = {
-  urls: { regular: "https://images.unsplash.com/photo-123" },
-  user: {
-    name: "Jane Cook",
-    links: { html: "https://unsplash.com/@janecook" },
-  },
+  src: { landscape: "https://images.pexels.com/photos/123/photo.jpeg" },
+  photographer: "Jane Cook",
+  photographer_url: "https://www.pexels.com/@janecook",
 };
 
-function mockUnsplashResponse(results: unknown[]) {
+function mockPexelsResponse(photos: unknown[]) {
   global.fetch = jest.fn().mockResolvedValue({
     ok: true,
-    json: async () => ({ results }),
+    json: async () => ({ photos }),
   } as unknown as Response);
 }
 
 beforeEach(() => {
-  process.env.UNSPLASH_ACCESS_KEY = "test-key";
+  process.env.PEXELS_API_KEY = "test-key";
 });
 
 afterEach(() => {
@@ -25,14 +23,14 @@ afterEach(() => {
 
 describe("fetchRecipePhoto", () => {
   it("uses the recipe title as the primary query", async () => {
-    mockUnsplashResponse([MOCK_PHOTO]);
+    mockPexelsResponse([MOCK_PHOTO]);
 
     const result = await fetchRecipePhoto("Economy Fried Bee Hoon", ["stir-fry", "quick", "budget"]);
 
     expect(result).toEqual({
-      url: "https://images.unsplash.com/photo-123",
+      url: "https://images.pexels.com/photos/123/photo.jpeg",
       photographerName: "Jane Cook",
-      photographerUrl: expect.stringContaining("https://unsplash.com/@janecook"),
+      photographerUrl: "https://www.pexels.com/@janecook",
     });
 
     const calledUrl = (global.fetch as jest.Mock).mock.calls[0][0] as string;
@@ -42,7 +40,7 @@ describe("fetchRecipePhoto", () => {
   });
 
   it("falls back to tags when title is empty", async () => {
-    mockUnsplashResponse([MOCK_PHOTO]);
+    mockPexelsResponse([MOCK_PHOTO]);
 
     await fetchRecipePhoto("", ["stir-fry", "pork", "rice", "spicy"]);
 
@@ -52,7 +50,7 @@ describe("fetchRecipePhoto", () => {
   });
 
   it("falls back to 'food cooking' when both title and tags are empty", async () => {
-    mockUnsplashResponse([MOCK_PHOTO]);
+    mockPexelsResponse([MOCK_PHOTO]);
 
     await fetchRecipePhoto("", []);
 
@@ -62,15 +60,15 @@ describe("fetchRecipePhoto", () => {
 
   it("retries with 'food cooking' when primary query returns zero results", async () => {
     global.fetch = jest.fn()
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ results: [] }) } as unknown as Response)
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ results: [MOCK_PHOTO] }) } as unknown as Response);
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ photos: [] }) } as unknown as Response)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ photos: [MOCK_PHOTO] }) } as unknown as Response);
 
     const result = await fetchRecipePhoto("obscuredish123", []);
 
     expect(global.fetch).toHaveBeenCalledTimes(2);
     const secondUrl = (global.fetch as jest.Mock).mock.calls[1][0] as string;
     expect(secondUrl).toContain("query=food+cooking");
-    expect(result?.url).toBe("https://images.unsplash.com/photo-123");
+    expect(result?.url).toBe("https://images.pexels.com/photos/123/photo.jpeg");
   });
 
   it("returns null on network error without throwing", async () => {
@@ -92,8 +90,8 @@ describe("fetchRecipePhoto", () => {
     expect(result).toBeNull();
   });
 
-  it("returns null when UNSPLASH_ACCESS_KEY is not set", async () => {
-    delete process.env.UNSPLASH_ACCESS_KEY;
+  it("returns null when PEXELS_API_KEY is not set", async () => {
+    delete process.env.PEXELS_API_KEY;
     global.fetch = jest.fn();
 
     const result = await fetchRecipePhoto("pork", []);

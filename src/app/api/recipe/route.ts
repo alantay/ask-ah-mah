@@ -2,7 +2,7 @@ import { deleteRecipe, getRecipes, saveRecipe } from "@/lib/recipes";
 import { processRecipe } from "@/lib/recipes/recipeProcessor";
 import { normalizeTags } from "@/lib/recipes/normalizeTags";
 import { RecipeIngredientModel } from "@/lib/recipes/schemas";
-import { fetchRecipePhoto } from "@/lib/unsplash/fetchPhoto";
+import { fetchRecipePhoto } from "@/lib/pexels/fetchPhoto";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {

@@ -25,12 +25,12 @@ jest.mock("@/lib/recipes/recipeProcessor", () => ({
   processRecipe: jest.fn(),
 }));
 
-jest.mock("@/lib/unsplash/fetchPhoto", () => ({
+jest.mock("@/lib/pexels/fetchPhoto", () => ({
   fetchRecipePhoto: jest.fn().mockResolvedValue(null),
 }));
 
 import { processRecipe } from "@/lib/recipes/recipeProcessor";
-import { fetchRecipePhoto } from "@/lib/unsplash/fetchPhoto";
+import { fetchRecipePhoto } from "@/lib/pexels/fetchPhoto";
 
 const mockedDeleteRecipe = jest.mocked(deleteRecipe);
 const mockedGetRecipes = jest.mocked(getRecipes);
