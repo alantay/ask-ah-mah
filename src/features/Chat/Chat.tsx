@@ -35,9 +35,9 @@ const Chat = () => {
   const {
     activeConversationId,
     activeConversation,
-    renameActiveConversation,
+    renameConversation,
     autoTitleActiveConversation,
-    deleteActiveConversation,
+    deleteConversation,
   } = useConversationContext();
   const [convSheetOpen, setConvSheetOpen] = useState(false);
   const [titleEditing, setTitleEditing] = useState(false);
@@ -224,7 +224,7 @@ const Chat = () => {
   };
 
   const handleDeleteConversation = async () => {
-    await deleteActiveConversation();
+    await deleteConversation(activeConversationId!);
   };
 
   return (
@@ -251,7 +251,7 @@ const Chat = () => {
             title={activeConversation?.title}
             editing={titleEditing}
             onEditingChange={setTitleEditing}
-            onRename={renameActiveConversation}
+            onRename={(title) => renameConversation(activeConversationId!, title)}
           />
         </div>
 

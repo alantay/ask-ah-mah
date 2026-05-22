@@ -24,9 +24,9 @@ interface ConversationContextType {
   isLoading: boolean;
   setActiveConversation: (id: string) => void;
   startNewConversation: () => Promise<void>;
-  renameActiveConversation: (title: string) => Promise<void>;
+  renameConversation: (id: string, title: string) => Promise<void>;
   autoTitleActiveConversation: (title: string) => Promise<boolean>;
-  deleteActiveConversation: () => Promise<void>;
+  deleteConversation: (id: string) => Promise<void>;
 }
 
 const ConversationContext = createContext<ConversationContextType | undefined>(
@@ -136,9 +136,8 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const renameActiveConversation = async (title: string) => {
-    if (!activeConversationId) return;
-    const res = await fetch(`/api/conversation/${activeConversationId}`, {
+  const renameConversation = async (id: string, title: string) => {
+    const res = await fetch(`/api/conversation/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title }),
@@ -164,68 +163,97 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const deleteActiveConversation = async (): Promise<void> => {
-    if (
-      !userId ||
-      !activeConversationId ||
-      !activeConversation ||
-      (activeConversation._count?.messages ?? 0) === 0
-    ) {
-      return;
-    }
+  const deleteConversation = async (id: string): Promise<void> => {
+    if (!userId) return;
 
     const previousConversations = listData?.conversations ?? [];
-    const previousActiveConversationId = activeConversationId;
+    const target = previousConversations.find((c) => c.id === id);
+    if (!target || (target._count?.messages ?? 0) === 0) return;
+
     const optimisticConversations = previousConversations.filter(
-      (conversation) => conversation.id !== activeConversationId
+      (c) => c.id !== id
     );
-    const nextConversation =
-      optimisticConversations.find(
-        (conversation) => (conversation._count?.messages ?? 0) > 0
-      ) ??
-      optimisticConversations.find(
-        (conversation) =>
-          conversation.title === null &&
-          (conversation._count?.messages ?? 0) === 0
-      ) ??
-      null;
 
-    if (listKey) {
-      await globalMutate(
-        listKey,
-        { conversations: optimisticConversations },
-        false
-      );
-    }
+    if (id === activeConversationId) {
+      // Active conversation delete — same flow as before
+      const previousActiveConversationId = activeConversationId;
+      const nextConversation =
+        optimisticConversations.find(
+          (c) => (c._count?.messages ?? 0) > 0
+        ) ??
+        optimisticConversations.find(
+          (c) => c.title === null && (c._count?.messages ?? 0) === 0
+        ) ??
+        null;
 
-    if (nextConversation) {
-      persistActiveConversation(nextConversation.id);
-    } else {
-      persistActiveConversation(null);
-      await startNewConversation({ revalidate: false });
-    }
-
-    try {
-      const res = await fetch(
-        `/api/conversation/${previousActiveConversationId}?userId=${encodeURIComponent(userId)}`,
-        { method: "DELETE" }
-      );
-
-      if (!res.ok) {
-        throw new Error("Failed to delete conversation");
-      }
-
-      await revalidateConversationKeys();
-    } catch {
       if (listKey) {
         await globalMutate(
           listKey,
-          { conversations: previousConversations },
+          { conversations: optimisticConversations },
           false
         );
       }
-      persistActiveConversation(previousActiveConversationId);
-      toast.error("Could not delete conversation. Try again.");
+
+      if (nextConversation) {
+        persistActiveConversation(nextConversation.id);
+      } else {
+        persistActiveConversation(null);
+        await startNewConversation({ revalidate: false });
+      }
+
+      try {
+        const res = await fetch(
+          `/api/conversation/${previousActiveConversationId}?userId=${encodeURIComponent(userId)}`,
+          { method: "DELETE" }
+        );
+
+        if (!res.ok) {
+          throw new Error("Failed to delete conversation");
+        }
+
+        await revalidateConversationKeys();
+      } catch {
+        if (listKey) {
+          await globalMutate(
+            listKey,
+            { conversations: previousConversations },
+            false
+          );
+        }
+        persistActiveConversation(previousActiveConversationId);
+        toast.error("Could not delete conversation. Try again.");
+      }
+    } else {
+      // Non-active conversation delete — optimistic remove, do NOT touch active id
+      if (listKey) {
+        await globalMutate(
+          listKey,
+          { conversations: optimisticConversations },
+          false
+        );
+      }
+
+      try {
+        const res = await fetch(
+          `/api/conversation/${id}?userId=${encodeURIComponent(userId)}`,
+          { method: "DELETE" }
+        );
+
+        if (!res.ok) {
+          throw new Error("Failed to delete conversation");
+        }
+
+        await revalidateConversationKeys();
+      } catch {
+        if (listKey) {
+          await globalMutate(
+            listKey,
+            { conversations: previousConversations },
+            false
+          );
+        }
+        toast.error("Could not delete conversation. Try again.");
+      }
     }
   };
 
@@ -240,9 +268,9 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
         isLoading: contextIsLoading,
         setActiveConversation,
         startNewConversation,
-        renameActiveConversation,
+        renameConversation,
         autoTitleActiveConversation,
-        deleteActiveConversation,
+        deleteConversation,
       }}
     >
       {children}
