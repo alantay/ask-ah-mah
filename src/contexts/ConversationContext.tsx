@@ -137,13 +137,17 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
   };
 
   const renameConversation = async (id: string, title: string) => {
-    const res = await fetch(`/api/conversation/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title }),
-    });
-    if (!res.ok) return;
-    await revalidateConversationKeys();
+    try {
+      const res = await fetch(`/api/conversation/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
+      if (!res.ok) throw new Error("Failed to rename conversation");
+      await revalidateConversationKeys();
+    } catch {
+      toast.error("Could not rename conversation. Try again.");
+    }
   };
 
   const autoTitleActiveConversation = async (title: string) => {
