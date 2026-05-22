@@ -16,7 +16,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
 import { z } from "zod";
-import ConversationTitle, { ConversationActionsMenu } from "./components/ConversationTitle";
+import ConversationItemMenu from "@/features/Conversations/components/ConversationItemMenu";
 import { MessageInput } from "./components/MessageInput";
 import { MessageList } from "./components/MessageList";
 import { INITIAL_MESSAGE, LOADING_MESSAGES } from "./constants";
@@ -40,7 +40,8 @@ const Chat = () => {
     deleteConversation,
   } = useConversationContext();
   const [convSheetOpen, setConvSheetOpen] = useState(false);
-  const [titleEditing, setTitleEditing] = useState(false);
+  const [mobileRenaming, setMobileRenaming] = useState(false);
+  const [mobileRenameValue, setMobileRenameValue] = useState("");
   const [submittedAt, setSubmittedAt] = useState<number | null>(null);
   const autoTitledConversations = useRef<Set<string>>(new Set());
   const autoTitlingConversations = useRef<Set<string>>(new Set());
@@ -223,8 +224,12 @@ const Chat = () => {
     await saveMessage("user", message);
   };
 
-  const handleDeleteConversation = async () => {
-    await deleteConversation(activeConversationId!);
+  const commitMobileRename = async () => {
+    const trimmed = mobileRenameValue.trim();
+    if (trimmed && trimmed !== (activeConversation?.title ?? "New chat") && activeConversationId) {
+      await renameConversation(activeConversationId, trimmed);
+    }
+    setMobileRenaming(false);
   };
 
   return (
@@ -232,12 +237,12 @@ const Chat = () => {
       key={activeConversationId}
       className="flex flex-col animate-in fade-in duration-300 h-full"
     >
-      {/* Chat header — single row at all widths */}
-      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-dashed border-border shrink-0">
-        {/* Hamburger — hidden when persistent sidebar is present */}
+      {/* Mobile bar — hidden when persistent rail is present */}
+      <div className="lg:hidden flex items-center justify-between px-3 py-2 border-b border-dashed border-border shrink-0">
+        {/* Hamburger */}
         <button
           onClick={() => setConvSheetOpen(true)}
-          className="lg:hidden flex items-center justify-center w-9 h-9 rounded-lg text-ink-faint hover:text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
+          className="flex items-center justify-center w-9 h-9 rounded-lg text-ink-faint hover:text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
           aria-label="Open conversations"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -245,22 +250,30 @@ const Chat = () => {
           </svg>
         </button>
 
-        {/* Title — flex-1 min-w-0 ensures truncation before buttons */}
-        <div className="flex min-w-0 flex-1 overflow-hidden">
-          <ConversationTitle
-            title={activeConversation?.title}
-            editing={titleEditing}
-            onEditingChange={setTitleEditing}
-            onRename={(title) => renameConversation(activeConversationId!, title)}
+        {/* Active conversation actions — inline rename or 3-dot menu */}
+        {mobileRenaming ? (
+          <input
+            autoFocus
+            className="flex-1 mx-2 font-display italic font-medium text-[16.5px] text-foreground bg-transparent border-b border-primary outline-none"
+            value={mobileRenameValue}
+            onChange={(e) => setMobileRenameValue(e.target.value)}
+            onBlur={commitMobileRename}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") { e.preventDefault(); commitMobileRename(); }
+              if (e.key === "Escape") setMobileRenaming(false);
+            }}
           />
-        </div>
-
-        {/* Overflow menu — rename / delete (the "+" in the conversations rail/sheet starts a new conversation) */}
-        <ConversationActionsMenu
-          onStartRename={() => setTitleEditing(true)}
-          onDelete={handleDeleteConversation}
-          canDelete={messageCount > 0}
-        />
+        ) : (
+          <ConversationItemMenu
+            conversationTitle={activeConversation?.title ?? "New chat"}
+            onStartRename={() => {
+              setMobileRenameValue(activeConversation?.title ?? "New chat");
+              setMobileRenaming(true);
+            }}
+            onDelete={() => activeConversationId ? deleteConversation(activeConversationId) : Promise.resolve()}
+            canDelete={messageCount > 0}
+          />
+        )}
       </div>
       <MessageList
         messages={allMessages}
