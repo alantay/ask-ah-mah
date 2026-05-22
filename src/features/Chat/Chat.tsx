@@ -254,7 +254,7 @@ const Chat = () => {
           </svg>
         </button>
 
-        {/* Active conversation actions — inline rename or 3-dot menu */}
+        {/* Title + actions — inline rename or title + 3-dot */}
         {mobileRenaming ? (
           <input
             autoFocus
@@ -268,15 +268,20 @@ const Chat = () => {
             }}
           />
         ) : (
-          <ConversationItemMenu
-            conversationTitle={activeConversation?.title ?? "New chat"}
-            onStartRename={() => {
-              setMobileRenameValue(activeConversation?.title ?? "New chat");
-              setMobileRenaming(true);
-            }}
-            onDelete={() => activeConversationId ? deleteConversation(activeConversationId) : Promise.resolve()}
-            canDelete={messageCount > 0}
-          />
+          <>
+            <span className="flex-1 mx-2 font-display italic font-medium text-[16.5px] text-foreground leading-tight tracking-tight truncate">
+              {activeConversation?.title ?? "New chat"}
+            </span>
+            <ConversationItemMenu
+              conversationTitle={activeConversation?.title ?? "New chat"}
+              onStartRename={() => {
+                setMobileRenameValue(activeConversation?.title ?? "New chat");
+                setMobileRenaming(true);
+              }}
+              onDelete={() => activeConversationId ? deleteConversation(activeConversationId) : Promise.resolve()}
+              canDelete={messageCount > 0}
+            />
+          </>
         )}
       </div>
       <MessageList
