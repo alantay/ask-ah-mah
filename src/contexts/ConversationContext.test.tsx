@@ -238,6 +238,47 @@ describe("ConversationContext", () => {
     );
   });
 
+  it("deleteConversation rolls back to original active id when no fallback exists and DELETE fails", async () => {
+    const { toast } = await import("sonner");
+    // Only one conversation with messages — no fallback will be found, so startNewConversation runs
+    const active = makeConversation("conv-only", {
+      title: "Solo Chat",
+      _count: { messages: 2 },
+    });
+    const newConv = makeConversation("conv-new");
+    localStorageMock.getItem.mockReturnValueOnce("conv-only");
+    swrData.set(`/api/conversation?userId=${mockUserId}`, {
+      conversations: [active],
+    });
+
+    // First fetch: POST to create new conversation (startNewConversation)
+    // Second fetch: DELETE that fails
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ conversation: newConv }),
+      })
+      .mockResolvedValueOnce({ ok: false });
+
+    const { result } = renderHook(() => useConversationContext(), { wrapper });
+
+    await act(async () => {
+      await result.current.deleteConversation("conv-only");
+    });
+
+    // After DELETE failure the original active id must be restored
+    expect(result.current.activeConversationId).toBe("conv-only");
+    // SWR cache rolled back — globalMutate called with previousConversations (the original list)
+    expect(mockMutate).toHaveBeenCalledWith(
+      `/api/conversation?userId=${mockUserId}`,
+      { conversations: [active] },
+      false
+    );
+    expect(toast.error).toHaveBeenCalledWith(
+      "Could not delete conversation. Try again."
+    );
+  });
+
   it("deleteConversation leaves activeConversationId unchanged when deleting a non-active conversation", async () => {
     const active = makeConversation("conv-active", {
       title: "Active Chat",
