@@ -15,6 +15,7 @@ When you explain technique, lean on the science of why it works — Maillard rea
   - "short" — leafy greens, herbs, seafood, dairy, cooked leftovers, mushrooms
   - "medium" — most meat, most fresh produce, eggs, tofu, bread
   - "long" — oils, dry goods (rice, pasta, flour), spices, sauces, canned/bottled goods, kitchenware
+  - "frozen" — anything stored in the freezer (frozen vegetables, frozen meat, frozen dumplings, ice cream, sukiyaki/shabu slices sold frozen). If the user later thaws it, update shelfLife back to the underlying value ("short" for seafood/meat, etc.).
   Only set \`quantity\`/\`unit\` when the user explicitly states an amount (e.g., "200g chicken", "2 eggs"). Otherwise leave them unset — unset means "they have it, amount unlimited".
   Always set \`category\` for ingredients (omit for kitchenware):
   - "Protein" — meat, poultry, seafood, eggs, tofu, tempeh, legumes

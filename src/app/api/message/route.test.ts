@@ -27,8 +27,7 @@ jest.mock("@/lib/conversations", () => ({
 
 // Mock prisma
 jest.mock("@/lib/db", () => ({
-  __esModule: true,
-  default: {
+  prisma: {
     message: {
       count: jest.fn().mockResolvedValue(0),
     },

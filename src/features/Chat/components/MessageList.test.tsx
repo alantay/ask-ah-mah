@@ -281,7 +281,7 @@ describe("MessageList", () => {
 
       // Recipe should be detected and save button should appear
       expect(screen.getByTestId("button")).toBeInTheDocument();
-      expect(screen.getByText(/^Save:/)).toBeInTheDocument();
+      expect(screen.getByText(/^Keep this/)).toBeInTheDocument();
     });
 
     it("should not show save button when streaming", () => {
@@ -305,7 +305,7 @@ describe("MessageList", () => {
 
       render(<MessageList {...defaultProps} messages={[recipeMessage]} />);
 
-      const saveButton = screen.getByText(/^Save:/);
+      const saveButton = screen.getByText(/^Keep this/);
       await user.click(saveButton);
 
       // Wait for the async operation to complete
@@ -335,7 +335,7 @@ describe("MessageList", () => {
 
       render(<MessageList {...defaultProps} messages={[twoRecipes]} />);
 
-      const buttons = screen.getAllByText(/^Save:/);
+      const buttons = screen.getAllByText(/^Keep this/);
       expect(buttons).toHaveLength(2);
       expect(buttons[0]).toHaveTextContent("Sambal Belacan");
       expect(buttons[1]).toHaveTextContent("Simple Guacamole");
@@ -363,8 +363,8 @@ describe("MessageList", () => {
 
       render(<MessageList {...defaultProps} messages={[recipeMessage]} />);
 
-      expect(screen.getByText(/^Saved:/)).toBeInTheDocument();
-      expect(screen.queryByText(/^Save:/)).not.toBeInTheDocument();
+      expect(screen.getByText(/^Kept/)).toBeInTheDocument();
+      expect(screen.queryByText(/^Keep this/)).not.toBeInTheDocument();
     });
 
     it("should handle save recipe success", async () => {
@@ -375,7 +375,7 @@ describe("MessageList", () => {
 
       render(<MessageList {...defaultProps} messages={[recipeMessage]} />);
 
-      const saveButton = screen.getByText(/^Save:/);
+      const saveButton = screen.getByText(/^Keep this/);
       await user.click(saveButton);
 
       await waitFor(() => {
@@ -410,7 +410,7 @@ describe("MessageList", () => {
 
       render(<MessageList {...defaultProps} messages={[recipeMessage]} />);
 
-      const savedButton = screen.getByText(/^Saved:/);
+      const savedButton = screen.getByText(/^Kept/);
       await user.click(savedButton);
 
       // Should not make any API calls
@@ -743,7 +743,7 @@ describe("MessageList", () => {
 
       render(<MessageList {...defaultProps} messages={[recipeMessage]} />);
 
-      const saveButton = screen.getByText(/^Save:/);
+      const saveButton = screen.getByText(/^Keep this/);
 
       // Button should be focusable
       saveButton.focus();

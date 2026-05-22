@@ -158,6 +158,15 @@ const Inventory = () => {
               {totalCount} thing{totalCount !== 1 ? "s" : ""}. She jots them
               down as you chat.
             </p>
+            {ingredientInventory.some((i) => i.shelfLife === "short") && (
+              <p className="mt-1 font-display italic text-[13px] text-muted-foreground flex items-center gap-1.5">
+                <span
+                  aria-hidden="true"
+                  className="inline-block h-1.5 w-1.5 rounded-full bg-tertiary shrink-0"
+                />
+                use soon
+              </p>
+            )}
           </div>
           {!isAdding && (
             <button
@@ -195,6 +204,17 @@ const Inventory = () => {
               Add to pantry
             </button>
           </div>
+        )}
+
+        {/* Use-soon legend — mobile only (desktop shows it in the header) */}
+        {ingredientInventory.some((i) => i.shelfLife === "short") && (
+          <p className="sm:hidden mb-3 font-display italic text-[13px] text-muted-foreground flex items-center gap-1.5">
+            <span
+              aria-hidden="true"
+              className="inline-block h-1.5 w-1.5 rounded-full bg-tertiary shrink-0"
+            />
+            use soon
+          </p>
         )}
 
         {isAdding && (

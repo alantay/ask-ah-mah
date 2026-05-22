@@ -76,7 +76,7 @@ describe("MessageInput", () => {
 
       const input = screen.getByTestId("input");
       expect(input).toBeInTheDocument();
-      expect(input).toHaveAttribute("placeholder", "Ask Ah Mah a question…");
+      expect(input).toHaveAttribute("placeholder", "Ask Ah Mah…");
     });
 
     it("should render submit button with send icon", () => {
