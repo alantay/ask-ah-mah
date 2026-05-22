@@ -45,6 +45,7 @@ const Chat = () => {
   const [submittedAt, setSubmittedAt] = useState<number | null>(null);
   const autoTitledConversations = useRef<Set<string>>(new Set());
   const autoTitlingConversations = useRef<Set<string>>(new Set());
+  const mobileCommittingRef = useRef(false);
 
   const { messages, sendMessage, status } = useChat({
     id: activeConversationId ?? undefined,
@@ -225,11 +226,14 @@ const Chat = () => {
   };
 
   const commitMobileRename = async () => {
+    if (mobileCommittingRef.current) return;
+    mobileCommittingRef.current = true;
     const trimmed = mobileRenameValue.trim();
     if (trimmed && trimmed !== (activeConversation?.title ?? "New chat") && activeConversationId) {
       await renameConversation(activeConversationId, trimmed);
     }
     setMobileRenaming(false);
+    mobileCommittingRef.current = false;
   };
 
   return (
