@@ -158,7 +158,7 @@ describe("ConversationContext", () => {
     expect(result.current.activeConversationId).toBe("conv-empty");
   });
 
-  it("renameActiveConversation PATCHes the active id", async () => {
+  it("renameConversation PATCHes the given id", async () => {
     const conversation = makeConversation("conv-abc");
     localStorageMock.getItem.mockReturnValueOnce("conv-abc");
     swrData.set(`/api/conversation?userId=${mockUserId}`, {
@@ -172,7 +172,7 @@ describe("ConversationContext", () => {
     const { result } = renderHook(() => useConversationContext(), { wrapper });
 
     await act(async () => {
-      await result.current.renameActiveConversation("My Kitchen");
+      await result.current.renameConversation("conv-abc", "My Kitchen");
     });
 
     expect(mockFetch).toHaveBeenCalledWith("/api/conversation/conv-abc", {
@@ -182,7 +182,7 @@ describe("ConversationContext", () => {
     });
   });
 
-  it("deleteActiveConversation fires DELETE immediately and switches active conversation", async () => {
+  it("deleteConversation fires DELETE immediately and switches active conversation when deleting active id", async () => {
     const active = makeConversation("conv-delete", {
       title: "Laksa",
       _count: { messages: 3 },
@@ -200,7 +200,7 @@ describe("ConversationContext", () => {
     const { result } = renderHook(() => useConversationContext(), { wrapper });
 
     await act(async () => {
-      await result.current.deleteActiveConversation();
+      await result.current.deleteConversation("conv-delete");
     });
 
     expect(result.current.activeConversationId).toBe("conv-fallback");
@@ -210,7 +210,7 @@ describe("ConversationContext", () => {
     );
   });
 
-  it("deleteActiveConversation rolls back optimistic update and shows error toast on DELETE failure", async () => {
+  it("deleteConversation rolls back optimistic update and shows error toast on DELETE failure", async () => {
     const { toast } = await import("sonner");
     const active = makeConversation("conv-delete", {
       title: "Laksa",
@@ -229,12 +229,81 @@ describe("ConversationContext", () => {
     const { result } = renderHook(() => useConversationContext(), { wrapper });
 
     await act(async () => {
-      await result.current.deleteActiveConversation();
+      await result.current.deleteConversation("conv-delete");
     });
 
     expect(result.current.activeConversationId).toBe("conv-delete");
     expect(toast.error).toHaveBeenCalledWith(
       "Could not delete conversation. Try again."
+    );
+  });
+
+  it("deleteConversation rolls back to original active id when no fallback exists and DELETE fails", async () => {
+    const { toast } = await import("sonner");
+    // Only one conversation with messages — no fallback will be found, so startNewConversation runs
+    const active = makeConversation("conv-only", {
+      title: "Solo Chat",
+      _count: { messages: 2 },
+    });
+    const newConv = makeConversation("conv-new");
+    localStorageMock.getItem.mockReturnValueOnce("conv-only");
+    swrData.set(`/api/conversation?userId=${mockUserId}`, {
+      conversations: [active],
+    });
+
+    // First fetch: POST to create new conversation (startNewConversation)
+    // Second fetch: DELETE that fails
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ conversation: newConv }),
+      })
+      .mockResolvedValueOnce({ ok: false });
+
+    const { result } = renderHook(() => useConversationContext(), { wrapper });
+
+    await act(async () => {
+      await result.current.deleteConversation("conv-only");
+    });
+
+    // After DELETE failure the original active id must be restored
+    expect(result.current.activeConversationId).toBe("conv-only");
+    // SWR cache rolled back — globalMutate called with previousConversations (the original list)
+    expect(mockMutate).toHaveBeenCalledWith(
+      `/api/conversation?userId=${mockUserId}`,
+      { conversations: [active] },
+      false
+    );
+    expect(toast.error).toHaveBeenCalledWith(
+      "Could not delete conversation. Try again."
+    );
+  });
+
+  it("deleteConversation leaves activeConversationId unchanged when deleting a non-active conversation", async () => {
+    const active = makeConversation("conv-active", {
+      title: "Active Chat",
+      _count: { messages: 2 },
+    });
+    const other = makeConversation("conv-other", {
+      title: "Other Chat",
+      _count: { messages: 1 },
+    });
+    localStorageMock.getItem.mockReturnValueOnce("conv-active");
+    swrData.set(`/api/conversation?userId=${mockUserId}`, {
+      conversations: [active, other],
+    });
+    mockFetch.mockResolvedValueOnce({ ok: true });
+
+    const { result } = renderHook(() => useConversationContext(), { wrapper });
+
+    await act(async () => {
+      await result.current.deleteConversation("conv-other");
+    });
+
+    expect(result.current.activeConversationId).toBe("conv-active");
+    expect(mockFetch).toHaveBeenCalledWith(
+      `/api/conversation/conv-other?userId=${encodeURIComponent(mockUserId)}`,
+      { method: "DELETE" }
     );
   });
 });

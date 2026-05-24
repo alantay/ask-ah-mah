@@ -46,7 +46,7 @@ function groupConversations(conversations: ConversationEntity[]) {
 
 export function Conversations({ onItemClick }: ConversationsProps) {
   const { userId } = useSessionContext();
-  const { activeConversationId, setActiveConversation, startNewConversation } =
+  const { activeConversationId, setActiveConversation, startNewConversation, renameConversation, deleteConversation } =
     useConversationContext();
   const [search, setSearch] = useState("");
 
@@ -144,6 +144,9 @@ export function Conversations({ onItemClick }: ConversationsProps) {
                       conversation={conv}
                       isActive={conv.id === activeConversationId}
                       onClick={() => handleItemClick(conv.id)}
+                      onRename={(newTitle) => renameConversation(conv.id, newTitle)}
+                      onDelete={() => deleteConversation(conv.id)}
+                      canDelete={(conv._count?.messages ?? 0) > 0}
                     />
                   ))}
                 </div>
