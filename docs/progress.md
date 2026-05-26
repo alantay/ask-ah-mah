@@ -34,6 +34,8 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Pantry fills horizontally**: `max-w-[1200px]` dropped; CSS columns (masonry) replace the rigid grid so short categories don't leave dark gaps.
 - **CookingMode lifted to consumer**: cooking state lives in `RecipeList` (and chat) rather than inside `RecipeDisplay`. Cookbook closes the dialog before mounting `CookingMode` at the top level — Radix Dialog's `pointer-events: none` on siblings was killing the Next-step button when CookingMode rendered inside / portalled from the dialog.
 
+- **Paste-to-cookbook**: `+ Add recipe` button in cookbook header opens a two-step modal — paste raw recipe text, LLM extracts it into full `RecipeBlock` (structured steps, scalable amounts, prep, tags), preview via `RecipeDisplay`, then save. Failure guard rejects non-recipe text. Empty-state gets a secondary "or paste one you've found" CTA. Extraction via new `POST /api/recipe/extract` (no-persist preview endpoint); save uses existing structured `POST /api/recipe` path.
+
 ## V2 — In Progress
 
 ### Shopping list from shortfalls
