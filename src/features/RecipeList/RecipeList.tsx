@@ -11,6 +11,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
 import RecipeCard from "./components/RecipeCard";
+import { AddRecipeModal } from "./components/AddRecipeModal";
 
 const HIDE_SCROLLBAR =
   "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
@@ -25,6 +26,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
   const [search, setSearch] = useState("");
   const [openRecipe, setOpenRecipe] = useState<RecipeWithId | null>(null);
   const [cookingRecipe, setCookingRecipe] = useState<RecipeWithId | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
 
   const { data: recipes, isLoading } = useSWR<RecipeWithId[]>(
     userId ? `/api/recipe?userId=${userId}` : null,
@@ -93,20 +95,31 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
                 })()}
           </p>
         </div>
-        {!isEmpty && (
-          <label className="flex items-center gap-2 px-3 py-[7px] bg-card border border-border rounded-full sm:min-w-[200px] w-full sm:w-auto text-muted-foreground cursor-text shrink-0">
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" className="shrink-0">
-              <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.4" />
-              <path d="m10.5 10.5 3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+        <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+          {!isEmpty && (
+            <label className="flex items-center gap-2 px-3 py-[7px] bg-card border border-border rounded-full sm:min-w-[200px] flex-1 sm:flex-none text-muted-foreground cursor-text">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" className="shrink-0">
+                <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.4" />
+                <path d="m10.5 10.5 3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+              </svg>
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search your cookbook…"
+                className="flex-1 bg-transparent border-none outline-none text-[13px] placeholder:text-muted-foreground text-foreground min-w-0"
+              />
+            </label>
+          )}
+          <button
+            onClick={() => setShowAdd(true)}
+            className="shrink-0 flex items-center gap-1.5 px-3 py-[7px] font-sans text-[13px] font-semibold text-primary-foreground bg-primary border border-primary rounded-full shadow-[0_1px_0_oklch(0.46_0.135_35)] hover:opacity-90 transition-opacity cursor-pointer"
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
             </svg>
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search your cookbook…"
-              className="flex-1 bg-transparent border-none outline-none text-[13px] placeholder:text-muted-foreground text-foreground min-w-0"
-            />
-          </label>
-        )}
+            Add recipe
+          </button>
+        </div>
       </div>
 
       {/* Tag chip rail — horizontal scroll on mobile, wraps at sm+ */}
@@ -170,6 +183,8 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
           </div>
         )}
       </div>
+
+      <AddRecipeModal open={showAdd} onOpenChange={setShowAdd} />
 
       <Dialog
         open={!!openRecipe && !cookingRecipe}

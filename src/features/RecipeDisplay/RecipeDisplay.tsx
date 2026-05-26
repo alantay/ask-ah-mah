@@ -249,9 +249,10 @@ interface RecipeDisplayProps {
   recipe: RecipeWithId;
   onBack: () => void;
   onStartCooking?: () => void;
+  hideBackButton?: boolean;
 }
 
-export default function RecipeDisplay({ recipe, onBack, onStartCooking }: RecipeDisplayProps) {
+export default function RecipeDisplay({ recipe, onBack, onStartCooking, hideBackButton }: RecipeDisplayProps) {
   const [cooking, setCooking] = useState(false);
 
   const steps = (recipe.steps ?? []) as RecipeStep[];
@@ -281,13 +282,15 @@ export default function RecipeDisplay({ recipe, onBack, onStartCooking }: Recipe
       <div className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 pt-4 sm:pt-5 pb-8">
           <div className="flex items-center justify-between mb-3 sm:mb-4">
-            <button
-              onClick={onBack}
-              className="font-sans text-[11.5px] font-semibold tracking-[0.14em] uppercase text-ink-faint hover:text-foreground transition-colors cursor-pointer"
-              aria-label="Back to cookbook"
-            >
-              ← Back to cookbook
-            </button>
+            {!hideBackButton && (
+              <button
+                onClick={onBack}
+                className="font-sans text-[11.5px] font-semibold tracking-[0.14em] uppercase text-ink-faint hover:text-foreground transition-colors cursor-pointer"
+                aria-label="Back to cookbook"
+              >
+                ← Back to cookbook
+              </button>
+            )}
             {canCook && (
               <button
                 onClick={handleStartCooking}
