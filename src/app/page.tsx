@@ -1,27 +1,29 @@
 "use client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ConversationProvider } from "@/contexts/ConversationContext";
 import ChatWrapper from "@/features/Chat/components/ChatWrapper";
-import { ConversationsRail } from "@/features/Conversations";
 import InventoryWrapper from "@/features/Inventory/components/InventoryWrapper";
 import RecipeList from "@/features/RecipeList/RecipeList";
-import { useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 const VALID_TABS = ["chat", "pantry", "cookbook"] as const;
 
 function HomeContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const initialTab = searchParams.get("tab");
-  const [activeTab, setActiveTab] = useState(
-    initialTab && (VALID_TABS as readonly string[]).includes(initialTab) ? initialTab : "chat",
-  );
+  const raw = searchParams.get("tab");
+  const activeTab = raw && (VALID_TABS as readonly string[]).includes(raw) ? raw : "chat";
+
+  const setActiveTab = (tab: string) => {
+    router.replace(`/?tab=${tab}`, { scroll: false });
+  };
 
   return (
-    <div className="bg-background">
-      <main className="xl:container mx-auto h-[calc(100dvh-3.25rem)] sm:h-[calc(100dvh-3.75rem)] md:h-[calc(100dvh-4.5rem)]">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col pt-2">
-          <TabsList>
+    <div className="bg-background h-full lg:h-full flex flex-col">
+      <main className="xl:container mx-auto h-[calc(100dvh-3.25rem)] sm:h-[calc(100dvh-3.75rem)] md:h-[calc(100dvh-4.5rem)] lg:flex-1 lg:min-h-0">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col pt-2 lg:pt-0">
+          {/* Tab strip — hidden on desktop (sidebar handles nav) */}
+          <TabsList className="lg:hidden">
             <TabsTrigger value="chat">Chat</TabsTrigger>
             <TabsTrigger value="pantry">Pantry</TabsTrigger>
             <TabsTrigger value="cookbook">Cookbook</TabsTrigger>
@@ -34,10 +36,7 @@ function HomeContent() {
             className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden"
           >
             <div className="flex h-full border border-border rounded-lg overflow-hidden relative">
-              {/* Left: Conversations rail — hidden on mobile */}
-              <ConversationsRail />
-
-              {/* Middle: Chat — flex-1 */}
+              {/* Chat panel */}
               <section className="flex-1 min-w-0 relative flex flex-col bg-chat paper">
                 <ChatWrapper />
               </section>
@@ -69,10 +68,8 @@ function HomeContent() {
 
 export default function Home() {
   return (
-    <ConversationProvider>
-      <Suspense fallback={null}>
-        <HomeContent />
-      </Suspense>
-    </ConversationProvider>
+    <Suspense fallback={null}>
+      <HomeContent />
+    </Suspense>
   );
 }
