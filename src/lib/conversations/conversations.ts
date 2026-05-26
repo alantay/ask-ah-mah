@@ -117,6 +117,12 @@ export async function deleteConversation(
   }
 }
 
+export async function maybeAutoTitleConversation(conversationId: string): Promise<void> {
+  const count = await prisma.message.count({ where: { conversationId } });
+  if (count !== 2) return;
+  autoTitleConversation(conversationId).catch(() => {});
+}
+
 export async function autoTitleConversation(id: string): Promise<void> {
   const messages = await prisma.message.findMany({
     where: { conversationId: id },

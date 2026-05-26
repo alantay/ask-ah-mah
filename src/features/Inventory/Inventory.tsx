@@ -5,10 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSessionContext } from "@/contexts/SessionContext";
 import {
   Category,
-  GetInventoryResponse,
   InventoryItem,
 } from "@/lib/inventory/schemas";
-import { fetcher } from "@/lib/utils/index";
+
+type GetInventoryResponse = {
+  kitchenwareInventory: InventoryItem[];
+  ingredientInventory: InventoryItem[];
+};
+import { fetcher } from "@/lib/utils";
 import { useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";

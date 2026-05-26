@@ -1,5 +1,6 @@
 import { addInventoryItem } from "@/lib/inventory/Inventory";
 import { AddInventoryItemSchema } from "@/lib/inventory/schemas";
+import { missingUserId } from "@/lib/http";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { NextRequest, NextResponse } from "next/server";
@@ -13,12 +14,7 @@ export async function POST(req: NextRequest) {
   try {
     const { text, userId } = await req.json();
 
-    if (!userId) {
-      return NextResponse.json(
-        { error: "userId is required" },
-        { status: 400 },
-      );
-    }
+    if (!userId) return missingUserId();
     if (!text || typeof text !== "string" || text.trim().length === 0) {
       return NextResponse.json({ error: "text is required" }, { status: 400 });
     }

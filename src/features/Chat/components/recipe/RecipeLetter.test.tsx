@@ -14,8 +14,10 @@ jest.mock('swr', () => ({
   useSWRConfig: () => ({ mutate: mockMutate }),
 }));
 
-jest.mock('./ScaledNum', () => ({
+jest.mock('@/features/Recipe', () => ({
   ScaledNum: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
+  scaleAmount: (amount: string, ratio: number) => amount,
+  CookingMode: () => null,
 }));
 
 const mockToastSuccess = jest.fn();

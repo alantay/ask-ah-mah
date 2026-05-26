@@ -21,6 +21,8 @@ type ConversationListResponse = {
 interface ConversationContextType {
   activeConversationId: string | null;
   activeConversation: ConversationEntity | null;
+  conversations: ConversationEntity[];
+  conversationsLoading: boolean;
   isLoading: boolean;
   setActiveConversation: (id: string) => void;
   startNewConversation: () => Promise<void>;
@@ -62,7 +64,7 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
   // Always fetch the conversations list so activeConversation reflects title updates
   const listKey = userId ? `/api/conversation?userId=${userId}` : null;
 
-  const { data: listData } = useSWR<ConversationListResponse>(
+  const { data: listData, isLoading: listLoading } = useSWR<ConversationListResponse>(
     listKey,
     async (url: string) => {
       const res = await fetch(url);
@@ -269,6 +271,8 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
       value={{
         activeConversationId,
         activeConversation,
+        conversations: listData?.conversations ?? [],
+        conversationsLoading: listLoading,
         isLoading: contextIsLoading,
         setActiveConversation,
         startNewConversation,

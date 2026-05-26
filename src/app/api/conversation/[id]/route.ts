@@ -3,6 +3,7 @@ import {
   deleteConversation,
   renameConversation,
 } from "@/lib/conversations";
+import { missingUserId } from "@/lib/http";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
@@ -37,9 +38,7 @@ export async function DELETE(
   const { id } = await params;
   const userId = req.nextUrl.searchParams.get("userId");
 
-  if (!userId) {
-    return NextResponse.json({ error: "userId is required" }, { status: 400 });
-  }
+  if (!userId) return missingUserId();
 
   try {
     await deleteConversation(id, userId);

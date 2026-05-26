@@ -1,11 +1,8 @@
 "use client";
 
 import { useConversationContext } from "@/contexts/ConversationContext";
-import { useSessionContext } from "@/contexts/SessionContext";
 import type { ConversationEntity } from "@/lib/conversations";
-import { fetcher } from "@/lib/utils/index";
 import { useState } from "react";
-import useSWR from "swr";
 import { CONVERSATIONS_SEARCH_PLACEHOLDER } from "./constants";
 import { ConversationItem } from "./components/ConversationItem";
 import { ConversationListSkeleton } from "./components/ConversationListSkeleton";
@@ -13,10 +10,6 @@ import { ConversationListSkeleton } from "./components/ConversationListSkeleton"
 interface ConversationsProps {
   onItemClick?: () => void;
 }
-
-type ConversationsResponse = {
-  conversations: ConversationEntity[];
-};
 
 type DateGroup = "Today" | "Yesterday" | "Earlier";
 const DATE_GROUPS: DateGroup[] = ["Today", "Yesterday", "Earlier"];
@@ -45,17 +38,16 @@ function groupConversations(conversations: ConversationEntity[]) {
 }
 
 export function Conversations({ onItemClick }: ConversationsProps) {
-  const { userId } = useSessionContext();
-  const { activeConversationId, setActiveConversation, startNewConversation, renameConversation, deleteConversation } =
-    useConversationContext();
+  const {
+    activeConversationId,
+    conversations: allConversations,
+    conversationsLoading: isLoading,
+    setActiveConversation,
+    startNewConversation,
+    renameConversation,
+    deleteConversation,
+  } = useConversationContext();
   const [search, setSearch] = useState("");
-
-  const { data, isLoading } = useSWR<ConversationsResponse>(
-    userId ? `/api/conversation?userId=${userId}` : null,
-    fetcher
-  );
-
-  const allConversations = data?.conversations ?? [];
 
   const filtered = search.trim()
     ? allConversations.filter((c) =>
@@ -124,7 +116,7 @@ export function Conversations({ onItemClick }: ConversationsProps) {
 
       {/* List */}
       <div className="flex-1 min-h-0 overflow-y-auto">
-        {isLoading && !data ? (
+        {isLoading && allConversations.length === 0 ? (
           <ConversationListSkeleton />
         ) : filtered.length === 0 ? (
           <div className="italic text-ink-faint text-sm">

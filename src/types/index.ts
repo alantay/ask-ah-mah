@@ -2,7 +2,5 @@
 // This provides a clean import path for components
 
 export type {
-  ChatMessage,
-  InventoryAction,
   InventoryItem,
 } from "../lib/inventory/schemas";

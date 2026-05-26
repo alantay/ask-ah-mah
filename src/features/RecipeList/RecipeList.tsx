@@ -2,10 +2,10 @@
 
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useSessionContext } from "@/contexts/SessionContext";
-import { CookingMode } from "@/features/Chat/components/recipe/CookingMode";
+import { CookingMode } from "@/features/Recipe";
 import RecipeDisplay from "@/features/RecipeDisplay/RecipeDisplay";
 import { RecipeStep, RecipeWithId } from "@/lib/recipes/schemas";
-import { fetcher } from "@/lib/utils/index";
+import { fetcher } from "@/lib/utils";
 import { VisuallyHidden } from "radix-ui";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -39,7 +39,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
       const res = await fetch(`/api/recipe`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipeId }),
+        body: JSON.stringify({ recipeId, userId }),
       });
       if (!res.ok) throw new Error("Delete failed");
       mutate(`/api/recipe?userId=${userId}`);

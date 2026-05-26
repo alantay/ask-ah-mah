@@ -41,6 +41,12 @@ export const INITIAL_MESSAGE = {
   ],
 };
 
+export const SUGGESTIONS = [
+  "What can I cook tonight?",
+  "I just got groceries",
+  "Something quick for one",
+];
+
 export const LOADING_MESSAGES = [
   "Ah Mah is getting ready...",
   "Preparing your cooking assistant...",

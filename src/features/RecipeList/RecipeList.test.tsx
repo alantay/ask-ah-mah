@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import { mutate } from "swr";
 import RecipeList from "./RecipeList";
 
 jest.mock("streamdown", () => ({
@@ -36,6 +37,39 @@ jest.mock("swr", () => {
     default: () => ({ data: mockRecipes, isLoading: false }),
     mutate: jest.fn(),
   };
+});
+
+describe("RecipeList — delete recipe", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
+  });
+
+  it("sends recipeId AND userId in the DELETE body", async () => {
+    render(<RecipeList />);
+
+    const deleteButton = screen.getByRole("button", { name: /Delete Test Recipe/i });
+    fireEvent.click(deleteButton);
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/api/recipe",
+      expect.objectContaining({
+        method: "DELETE",
+        body: JSON.stringify({ recipeId: "r1", userId: "user-1" }),
+      }),
+    );
+  });
+
+  it("shows success toast and revalidates on successful delete", async () => {
+    render(<RecipeList />);
+    fireEvent.click(screen.getByRole("button", { name: /Delete Test Recipe/i }));
+
+    // Give the async deleteRecipe a tick to resolve
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(jest.mocked(mutate)).toHaveBeenCalledWith("/api/recipe?userId=user-1");
+  });
 });
 
 describe("RecipeList — start cooking flow", () => {
