@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   if (!userId) return missingUserId();
 
   if (body.recipe) {
-    const recipe = await saveRecipeFromBlock(body.recipe, userId);
+    const recipe = await saveRecipeFromBlock(body.recipe, userId, recipeId ?? undefined);
     return NextResponse.json(recipe);
   }
 

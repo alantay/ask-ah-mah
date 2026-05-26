@@ -43,7 +43,7 @@ export async function deleteRecipeForUser(recipeId: string, userId: string) {
   }
 }
 
-export async function saveRecipeFromBlock(block: RecipeBlock, userId: string) {
+export async function saveRecipeFromBlock(block: RecipeBlock, userId: string, recipeId?: string) {
   const tags = normalizeTags(block.tags ?? []);
   const photo = await fetchRecipePhoto(block.title, tags);
   return saveRecipe(
@@ -52,6 +52,7 @@ export async function saveRecipeFromBlock(block: RecipeBlock, userId: string) {
       name: block.title,
       instructions: block.description ?? "",
       tags,
+      recipeId,
       baseServings: block.baseServings,
       ingredients: block.ingredients.map((ing: RecipeIngredientModel) => ({
         name: ing.name,

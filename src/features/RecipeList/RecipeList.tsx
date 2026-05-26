@@ -39,7 +39,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
       const res = await fetch(`/api/recipe`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipeId }),
+        body: JSON.stringify({ recipeId, userId }),
       });
       if (!res.ok) throw new Error("Delete failed");
       mutate(`/api/recipe?userId=${userId}`);

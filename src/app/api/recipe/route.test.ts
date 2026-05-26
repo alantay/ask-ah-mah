@@ -268,8 +268,47 @@ describe("Recipe API Routes", () => {
       expect(response.status).toBe(200);
       expect(data.ingredients[0].category).toBe("Spice");
       expect(data.ingredients[0].note).toBe("smoked");
-      expect(mockedSaveRecipeFromBlock).toHaveBeenCalledWith(recipeBlock, "user-123");
+      expect(mockedSaveRecipeFromBlock).toHaveBeenCalledWith(recipeBlock, "user-123", "chicken-rub");
       expect(mockedProcessRecipe).not.toHaveBeenCalled();
+    });
+
+    it("passes recipeId to saveRecipeFromBlock so isSaved detection works", async () => {
+      mockedSaveRecipeFromBlock.mockResolvedValue({
+        id: "recipe-new",
+        userId: "user-123",
+        name: "Test",
+        instructions: "",
+        tags: [],
+        recipeId: "msg-1-block-0",
+        baseServings: 2,
+        ingredients: [],
+        prep: [],
+        steps: null,
+        description: null,
+        totalTimeMinutes: null,
+        createdAt: null,
+        imageUrl: null,
+        photographerName: null,
+        photographerUrl: null,
+      });
+
+      const request = createMockRequest("http://localhost:3000/api/recipe", {
+        method: "POST",
+        body: JSON.stringify({
+          userId: "user-123",
+          recipeId: "msg-1-block-0",
+          recipe: { title: "Test", ingredients: [], steps: [], tags: [], baseServings: 2 },
+        }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      await POST(request);
+
+      expect(mockedSaveRecipeFromBlock).toHaveBeenCalledWith(
+        expect.any(Object),
+        "user-123",
+        "msg-1-block-0",
+      );
     });
 
     it("should save a recipe successfully", async () => {
