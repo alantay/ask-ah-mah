@@ -86,7 +86,10 @@ export default function RecipeCard({ recipe, onSelect, onDelete }: RecipeCardPro
         )}
 
         {/* Footer */}
-        <div className="mt-auto pt-2.5 border-t border-dashed border-border flex items-center gap-2.5 flex-nowrap overflow-hidden">
+        <div
+          className="mt-auto pt-2.5 border-t border-dashed border-border flex items-center gap-2.5 flex-nowrap overflow-hidden"
+          style={{ maskImage: "linear-gradient(to right, black calc(100% - 28px), transparent 100%)" }}
+        >
           {recipe.totalTimeMinutes && (
             <span className="flex items-center gap-1 font-mono text-[11px] text-ink-faint shrink-0">
               <svg width="11" height="11" viewBox="0 0 16 16" fill="none" className="shrink-0">
