@@ -2,13 +2,17 @@
 
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import RecipeDisplay from "@/features/RecipeDisplay/RecipeDisplay";
-import { type RecipeBlock } from "@/lib/recipes/schemas";
-import { type RecipeWithId } from "@/lib/recipes/schemas";
+import { type RecipeBlock, type RecipeWithId } from "@/lib/recipes/schemas";
 import { useSessionContext } from "@/contexts/SessionContext";
 import { VisuallyHidden } from "radix-ui";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { mutate } from "swr";
+
+const CHAR_LIMIT = 8000;
+const MIN_EXTRACTING_MS = 1200;
+const STAGE_INTERVAL_MS = 600;
+const WORKS_WITH = ["Blog post", "Reddit comment", "Screenshot text", "Handwritten notes"];
 
 interface AddRecipeModalProps {
   open: boolean;
@@ -38,20 +42,122 @@ function blockToPreviewRecipe(block: RecipeBlock): RecipeWithId {
   };
 }
 
+function ExtractingSkeleton({ revealStage }: { revealStage: number }) {
+  const shimmer = "bg-border rounded animate-pulse";
+
+  const bandVisible = (minStage: number) => ({
+    opacity: revealStage >= minStage ? 1 : 0,
+    transform: revealStage >= minStage ? "translateY(0)" : "translateY(6px)",
+    transition: "opacity 0.25s, transform 0.25s",
+  });
+
+  const ingredientVisible = (i: number) => {
+    const visible = revealStage >= 3 || (revealStage >= 2 && i < 4);
+    return {
+      opacity: visible ? 1 : 0,
+      transform: visible ? "translateY(0)" : "translateY(4px)",
+      transition: `opacity 0.22s ${i * 0.07}s, transform 0.22s ${i * 0.07}s`,
+    };
+  };
+
+  return (
+    <div className="px-6 py-6 flex flex-col gap-6">
+      {/* Title */}
+      <div style={bandVisible(1)}>
+        <div className={`h-7 w-3/5 ${shimmer}`} />
+      </div>
+
+      {/* Meta chips */}
+      <div className="flex gap-2" style={bandVisible(2)}>
+        <div className={`h-5 w-16 ${shimmer} rounded-full`} />
+        <div className={`h-5 w-14 ${shimmer} rounded-full`} />
+      </div>
+
+      {/* Ingredients */}
+      <div style={bandVisible(2)}>
+        <div className={`h-2.5 w-28 ${shimmer} mb-3`} />
+        <div className="flex flex-col">
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <div
+              key={i}
+              className="flex items-center gap-3 py-2 border-b border-dashed border-border"
+              style={ingredientVisible(i)}
+            >
+              <div className={`h-2.5 w-10 ${shimmer} shrink-0`} />
+              <div className={`h-2.5 ${shimmer}`} style={{ width: `${50 + (i % 4) * 10}%` }} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Method */}
+      <div style={bandVisible(3)}>
+        <div className={`h-2.5 w-16 ${shimmer} mb-3`} />
+        <div className="flex flex-col gap-4">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="flex gap-3 items-start">
+              <div className={`h-5 w-5 ${shimmer} rounded-full shrink-0`} />
+              <div className="flex-1 flex flex-col gap-1.5">
+                <div className={`h-2.5 w-full ${shimmer}`} />
+                <div className={`h-2.5 ${shimmer}`} style={{ width: `${60 + (i % 2) * 20}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
   const { userId } = useSessionContext();
   const [text, setText] = useState("");
-  const [step, setStep] = useState<"paste" | "preview">("paste");
+  const [step, setStep] = useState<"paste" | "extracting" | "preview">("paste");
+  const [revealStage, setRevealStage] = useState(0);
   const [preview, setPreview] = useState<RecipeBlock | null>(null);
-  const [extracting, setExtracting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const abortRef = useRef<AbortController | null>(null);
+  const resolvedRef = useRef<RecipeBlock | null>(null);
+  const minTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const minTimerDoneRef = useRef(false);
+  const apiFetchDoneRef = useRef(false);
+
+  const tryTransitionToPreview = () => {
+    if (minTimerDoneRef.current && apiFetchDoneRef.current && resolvedRef.current) {
+      setPreview(resolvedRef.current);
+      setStep("preview");
+    }
+  };
+
+  // Advance reveal stage every STAGE_INTERVAL_MS while extracting
+  useEffect(() => {
+    if (step !== "extracting") {
+      setRevealStage(0);
+      return;
+    }
+    const iv = setInterval(() => {
+      setRevealStage((s) => {
+        if (s >= 3) { clearInterval(iv); return s; }
+        return s + 1;
+      });
+    }, STAGE_INTERVAL_MS);
+    return () => clearInterval(iv);
+  }, [step]);
+
   const reset = () => {
+    abortRef.current?.abort();
+    if (minTimerRef.current) clearTimeout(minTimerRef.current);
+    minTimerRef.current = null;
     setText("");
     setStep("paste");
+    setRevealStage(0);
     setPreview(null);
     setError(null);
+    resolvedRef.current = null;
+    minTimerDoneRef.current = false;
+    apiFetchDoneRef.current = false;
   };
 
   const handleOpenChange = (o: boolean) => {
@@ -61,24 +167,39 @@ export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
 
   const handleExtract = async () => {
     setError(null);
-    setExtracting(true);
+    resolvedRef.current = null;
+    minTimerDoneRef.current = false;
+    apiFetchDoneRef.current = false;
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setStep("extracting");
+
+    minTimerRef.current = setTimeout(() => {
+      minTimerDoneRef.current = true;
+      tryTransitionToPreview();
+    }, MIN_EXTRACTING_MS);
+
     try {
       const res = await fetch("/api/recipe/extract", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
+        signal: controller.signal,
       });
       const data = await res.json();
       if (!res.ok) {
         setError(data.error ?? "Something went wrong. Try again?");
+        setStep("paste");
         return;
       }
-      setPreview(data);
-      setStep("preview");
-    } catch {
+      resolvedRef.current = data;
+      apiFetchDoneRef.current = true;
+      tryTransitionToPreview();
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === "AbortError") return;
       setError("Couldn't connect. Check your network and try again.");
-    } finally {
-      setExtracting(false);
+      setStep("paste");
     }
   };
 
@@ -105,85 +226,180 @@ export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        showCloseButton={step === "paste"}
+        showCloseButton
         className="max-w-3xl w-[95vw] sm:w-[92vw] h-[92vh] p-0 overflow-hidden bg-background flex flex-col"
       >
         <VisuallyHidden.Root>
-          <DialogTitle>{step === "paste" ? "Add a recipe" : "Preview recipe"}</DialogTitle>
+          <DialogTitle>
+            {step === "paste" ? "Add a recipe" : step === "extracting" ? "Reading recipe…" : "Preview recipe"}
+          </DialogTitle>
         </VisuallyHidden.Root>
 
-        {step === "paste" ? (
-          <>
-            <div className="px-6 pt-6 pb-4 border-b border-border shrink-0">
-              <h2 className="font-display font-semibold text-[22px] text-foreground tracking-tight leading-tight">
-                Add a recipe
-              </h2>
-              <p className="font-display italic text-[13px] text-muted-foreground mt-1">
-                Paste recipe text you found — blog post, Reddit comment, anything.
-              </p>
-            </div>
-
-            <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-3">
-              <textarea
-                value={text}
-                onChange={(e) => { setText(e.target.value); setError(null); }}
-                placeholder="Paste a recipe you found…"
-                className="w-full flex-1 min-h-[280px] resize-none rounded-lg border border-border bg-card px-4 py-3 font-sans text-[13.5px] text-foreground placeholder:text-muted-foreground leading-relaxed outline-none focus:ring-1 focus:ring-primary transition-shadow"
-              />
-              {error && (
-                <p className="font-sans text-[12.5px] text-destructive">{error}</p>
-              )}
-            </div>
-
-            <div className="px-6 py-4 border-t border-border shrink-0">
-              <button
-                onClick={handleExtract}
-                disabled={!text.trim() || extracting}
-                className="w-full py-3 font-sans text-sm font-semibold text-white bg-primary border border-[oklch(0.405_0.130_32)] rounded-xl shadow-[0_2px_0_oklch(0.405_0.130_32)] hover:bg-[oklch(0.50_0.130_32)] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
-              >
-                {extracting ? "Extracting…" : "Extract →"}
-              </button>
-            </div>
-          </>
-        ) : (
-          <div className="flex flex-col h-full overflow-hidden">
-            {/* Custom header overriding RecipeDisplay's internal back button */}
-            <div className="px-5 py-3 border-b border-border flex items-center justify-between shrink-0">
-              <button
-                onClick={() => setStep("paste")}
-                className="font-sans text-[11.5px] font-semibold tracking-[0.14em] uppercase text-ink-faint hover:text-foreground transition-colors cursor-pointer"
-              >
-                ← Back to edit
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto">
-              {preview && (
-                <RecipeDisplay
-                  recipe={blockToPreviewRecipe(preview)}
-                  onBack={() => setStep("paste")}
-                  hideBackButton
-                />
-              )}
-            </div>
-
-            <div className="px-6 py-4 border-t border-border flex items-center gap-3 shrink-0">
-              <button
-                onClick={() => handleOpenChange(false)}
-                className="flex-1 py-3 font-sans text-sm font-semibold text-foreground bg-card border border-border rounded-xl shadow-[0_1px_0_var(--border-soft)] hover:bg-muted/50 transition-colors cursor-pointer"
-              >
-                Discard
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="flex-[2] py-3 font-sans text-sm font-semibold text-white bg-primary border border-[oklch(0.405_0.130_32)] rounded-xl shadow-[0_2px_0_oklch(0.405_0.130_32)] hover:bg-[oklch(0.50_0.130_32)] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
-              >
-                {saving ? "Saving…" : "Save to cookbook"}
-              </button>
+        {/* ── Header — changes per step ── */}
+        {step === "extracting" ? (
+          <div className="px-5 sm:px-6 pt-5 pb-4 border-b border-border shrink-0 flex items-center gap-3">
+            <div className="w-4 h-4 rounded-full border-2 border-border border-t-primary shrink-0 [animation:modalSpin_0.9s_linear_infinite]" />
+            <span className="font-display italic text-[15px] text-foreground">
+              Ah Mah is reading your recipe…
+            </span>
+          </div>
+        ) : step === "paste" ? (
+          <div className="px-5 sm:px-6 pt-5 pb-4 border-b border-border shrink-0">
+            <div className="flex items-start gap-3 sm:gap-4">
+              <div className="hidden sm:flex w-9 h-9 shrink-0 rounded-lg bg-primary/10 border border-border items-center justify-center text-primary">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <rect x="6" y="3" width="12" height="18" rx="2" stroke="currentColor" strokeWidth="1.7" />
+                  <path d="M9 8h6M9 12h6M9 16h4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="font-display font-semibold text-[20px] sm:text-[22px] text-foreground tracking-tight leading-tight">
+                  Add a recipe
+                </h2>
+                <p className="hidden sm:block font-display italic text-[13px] text-muted-foreground mt-1 leading-snug">
+                  Paste any recipe text — Ah Mah will read it and tidy it up for you.
+                </p>
+              </div>
             </div>
           </div>
-        )}
+        ) : null /* preview: no custom header, RecipeDisplay handles its own layout */}
+
+        {/* ── Body — keyed so the enter animation fires on every step change ── */}
+        <style>{`
+          @keyframes modalBodyIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes modalSpin {
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+
+        <div
+          key={step}
+          className="flex-1 overflow-hidden flex flex-col"
+          style={{ animation: "modalBodyIn 180ms cubic-bezier(0.32,0.72,0,1) both" }}
+        >
+          {/* ── Paste step ── */}
+          {step === "paste" && (
+            <>
+              {/* "Works with" chip row */}
+              <div className="px-5 sm:px-6 pt-3 pb-0 flex items-center gap-2 flex-wrap shrink-0">
+                <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground shrink-0">
+                  Works with
+                </span>
+                {WORKS_WITH.map((label) => (
+                  <span
+                    key={label}
+                    className="px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground bg-card border border-border rounded-full"
+                  >
+                    {label}
+                  </span>
+                ))}
+              </div>
+
+              {/* Textarea + error banner + tip */}
+              <div className="flex-1 px-5 sm:px-6 py-3 flex flex-col gap-2 min-h-0">
+                <textarea
+                  value={text}
+                  onChange={(e) => {
+                    setText(e.target.value.slice(0, CHAR_LIMIT));
+                    setError(null);
+                  }}
+                  placeholder="Paste here. Messy is fine — blog post, Reddit comment, photo of a magazine page."
+                  className={[
+                    "w-full flex-1 min-h-[140px] sm:min-h-0 resize-none rounded-lg border bg-card px-4 py-3",
+                    "font-sans text-[13.5px] text-foreground placeholder:text-muted-foreground leading-relaxed",
+                    "outline-none transition-all",
+                    error
+                      ? "border-[oklch(0.78_0.10_27)] ring-[3px] ring-[oklch(0.78_0.10_27)/0.12]"
+                      : text
+                      ? "border-primary ring-[3px] ring-primary/10"
+                      : "border-border focus:border-primary focus:ring-[3px] focus:ring-primary/10",
+                  ].join(" ")}
+                />
+
+                {error && (
+                  <div className="flex gap-2.5 items-start px-3 py-2.5 rounded-lg bg-[oklch(0.97_0.04_27)] border border-[oklch(0.85_0.08_27)] shrink-0">
+                    <div className="w-[18px] h-[18px] rounded-full bg-[oklch(0.52_0.16_27)] text-white text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                      !
+                    </div>
+                    <div className="font-sans text-[12px] text-foreground leading-[1.5]">
+                      <span className="font-semibold">Ah Mah couldn&rsquo;t find a recipe in this.</span>{" "}
+                      <span className="text-muted-foreground">
+                        Try pasting just the recipe portion — usually the ingredients and steps.
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between shrink-0">
+                  <span className="font-sans text-[10.5px] text-muted-foreground">
+                    Tip: paste just the recipe portion for the cleanest result.
+                  </span>
+                  <span className="hidden sm:inline font-mono text-[10.5px] text-muted-foreground tabular-nums">
+                    {text.length.toLocaleString()} / {CHAR_LIMIT.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+              <div className="px-5 sm:px-6 py-4 border-t border-dashed border-border shrink-0">
+                <button
+                  onClick={handleExtract}
+                  disabled={!text.trim()}
+                  className="w-full py-3 font-sans text-sm font-semibold text-primary-foreground bg-primary border border-[oklch(0.405_0.130_32)] rounded-xl shadow-[0_2px_0_oklch(0.405_0.130_32)] hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
+                >
+                  Extract recipe →
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* ── Extracting step ── */}
+          {step === "extracting" && (
+            <>
+              <div className="flex-1 overflow-y-auto">
+                <ExtractingSkeleton revealStage={revealStage} />
+              </div>
+              <div className="px-6 py-3 border-t border-dashed border-border text-center font-sans text-[11.5px] text-muted-foreground shrink-0">
+                Pulling out ingredients, steps, and timing… usually 4–6 seconds.
+              </div>
+            </>
+          )}
+
+          {/* ── Preview step ── */}
+          {step === "preview" && (
+            <>
+              <div className="flex-1 overflow-y-auto min-h-0">
+                {preview && (
+                  <RecipeDisplay
+                    recipe={blockToPreviewRecipe(preview)}
+                    onBack={() => setStep("paste")}
+                    hideBackButton
+                  />
+                )}
+              </div>
+              <div className="px-5 sm:px-6 py-4 border-t border-border flex items-center justify-between gap-3 shrink-0">
+                <button
+                  onClick={() => setStep("paste")}
+                  className="inline-flex items-center gap-1.5 font-sans text-[12.5px] text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                >
+                  <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
+                    <path d="M10 4l-4 4 4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  Back to edit
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="px-5 py-2.5 font-sans text-sm font-semibold text-primary-foreground bg-primary border border-[oklch(0.405_0.130_32)] rounded-xl shadow-[0_2px_0_oklch(0.405_0.130_32)] hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
+                >
+                  {saving ? "Saving…" : "Save to cookbook →"}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
