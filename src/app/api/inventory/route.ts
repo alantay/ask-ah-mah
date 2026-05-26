@@ -3,18 +3,14 @@ import {
   getInventory,
   removeInventoryItem,
 } from "@/lib/inventory/Inventory";
+import { missingUserId } from "@/lib/http";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   try {
     const userId = req.nextUrl.searchParams.get("userId");
 
-    if (!userId) {
-      return NextResponse.json(
-        { error: "userId is required" },
-        { status: 400 }
-      );
-    }
+    if (!userId) return missingUserId();
 
     const inventory = await getInventory(userId);
     return NextResponse.json(inventory, {
@@ -37,12 +33,7 @@ export async function POST(req: NextRequest) {
   try {
     const { items, userId } = await req.json();
 
-    if (!userId) {
-      return NextResponse.json(
-        { error: "userId is required" },
-        { status: 400 }
-      );
-    }
+    if (!userId) return missingUserId();
 
     await addInventoryItem(items, userId);
     return NextResponse.json({ success: true, message: "Inventory updated" });
@@ -58,12 +49,7 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const { itemNames, userId } = await req.json();
-    if (!userId) {
-      return NextResponse.json(
-        { error: "userId is required" },
-        { status: 400 }
-      );
-    }
+    if (!userId) return missingUserId();
     await removeInventoryItem(itemNames, userId);
     return NextResponse.json({ success: true, message: "Inventory updated" });
   } catch (error) {

@@ -3,7 +3,7 @@
 import { useSessionContext } from "@/contexts/SessionContext";
 import RecipeDisplay from "@/features/RecipeDisplay/RecipeDisplay";
 import { RecipeWithId } from "@/lib/recipes/schemas";
-import { fetcher } from "@/lib/utils/index";
+import { fetcher } from "@/lib/utils";
 import { useParams, useRouter } from "next/navigation";
 import useSWR from "swr";
 

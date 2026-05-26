@@ -1,4 +1,4 @@
-import { CookingMode } from "@/features/Chat/components/recipe/CookingMode";
+import { CookingMode } from "@/features/Recipe";
 import { RecipeIngredient, RecipeStep, RecipeWithId } from "@/lib/recipes/schemas";
 import Image from "next/image";
 import { useState } from "react";

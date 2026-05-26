@@ -1,10 +1,15 @@
 'use client';
 
 import { useSessionContext } from '@/contexts/SessionContext';
-import { GetInventoryResponse, InventoryItem } from '@/lib/inventory/schemas';
+import { InventoryItem } from '@/lib/inventory/schemas';
+
+type GetInventoryResponse = {
+  kitchenwareInventory: InventoryItem[];
+  ingredientInventory: InventoryItem[];
+};
 import { SuggestionsBlockData, SuggestionOption } from '@/lib/recipes/schemas';
 import { cn } from '@/lib/utils';
-import { fetcher } from '@/lib/utils/index';
+import { fetcher } from '@/lib/utils';
 import { TextUIPart, UIMessage } from 'ai';
 import useSWR from 'swr';
 import { computePantry } from './pantryUtils';

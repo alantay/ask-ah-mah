@@ -3,19 +3,22 @@
 import { useSessionContext } from "@/contexts/SessionContext";
 import {
   Category,
-  GetInventoryResponse,
   InventoryItem,
 } from "@/lib/inventory/schemas";
+
+type GetInventoryResponse = {
+  kitchenwareInventory: InventoryItem[];
+  ingredientInventory: InventoryItem[];
+};
 import { ingredientMatches } from "@/lib/recipes/matchIngredient";
 import { cn } from "@/lib/utils";
-import { fetcher } from "@/lib/utils/index";
+import { fetcher } from "@/lib/utils";
 import { ShoppingCart, TimerIcon } from "lucide-react";
 import { useState } from "react";
-import { CookingMode } from "./CookingMode";
+import { CookingMode } from "@/features/Recipe";
 import { toast } from "sonner";
 import useSWR, { useSWRConfig } from "swr";
-import { ScaledNum } from "./ScaledNum";
-import { scaleAmount } from "./scaleAmount";
+import { ScaledNum, scaleAmount } from "@/features/Recipe";
 
 interface Ingredient {
   name: string;

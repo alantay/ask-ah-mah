@@ -1,6 +1,6 @@
 "use client";
 import { authClient } from "@/lib/auth-client";
-import { generateShortId } from "@/lib/utils/index";
+import { generateShortId } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
 export default function useSession() {

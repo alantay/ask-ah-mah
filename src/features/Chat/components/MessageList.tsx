@@ -16,7 +16,7 @@ import {
   stripFences,
 } from "@/lib/recipes/parseBlocks";
 import type { RecipeBlock, RecipeWithId } from "@/lib/recipes/schemas";
-import { fetcher } from "@/lib/utils/index";
+import { fetcher } from "@/lib/utils";
 import type { UIMessage } from "ai";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";

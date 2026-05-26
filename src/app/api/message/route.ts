@@ -1,6 +1,5 @@
-import { autoTitleConversation } from "@/lib/conversations";
+import { maybeAutoTitleConversation } from "@/lib/conversations";
 import { createMessage, getMessages } from "@/lib/messages";
-import { prisma } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -25,12 +24,8 @@ export async function POST(req: NextRequest) {
   }
   const message = await createMessage(conversationId, userId, content, role);
 
-  // After saving: fire auto-title on the first assistant message in the conversation
   if (role === "assistant") {
-    const count = await prisma.message.count({ where: { conversationId } });
-    if (count === 2) {
-      autoTitleConversation(conversationId).catch(() => {});
-    }
+    void maybeAutoTitleConversation(conversationId);
   }
 
   return NextResponse.json({ message });

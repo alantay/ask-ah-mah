@@ -1,229 +1,38 @@
 "use client";
 
 import { useConversationContext } from "@/contexts/ConversationContext";
-import { useSessionContext } from "@/contexts/SessionContext";
 import { ConversationsMobileSheet } from "@/features/Conversations";
-import {
-  AddInventoryItemSchemaObj,
-  RemoveInventoryItemSchemaObj,
-} from "@/lib/inventory/schemas";
-import { SavedMessage } from "@/lib/messages/schemas";
-import { upperCaseFirstLetter } from "@/lib/utils";
-import { fetcher } from "@/lib/utils/index";
-import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
-import useSWR, { mutate } from "swr";
-import { z } from "zod";
+import { useChatSession } from "./hooks/useChatSession";
+import { useRef, useState } from "react";
 import ConversationItemMenu from "@/features/Conversations/components/ConversationItemMenu";
 import { MessageInput } from "./components/MessageInput";
 import { MessageList } from "./components/MessageList";
-import { INITIAL_MESSAGE, LOADING_MESSAGES } from "./constants";
-import { convertToUIMessage } from "./utils";
-
-const SUGGESTIONS = [
-  "What can I cook tonight?",
-  "I just got groceries",
-  "Something quick for one",
-];
-
-// ── Chat ──────────────────────────────────────────────────────────────────────
+import { LOADING_MESSAGES, SUGGESTIONS } from "./constants";
 
 const Chat = () => {
-  const { userId } = useSessionContext();
   const {
+    userId,
     activeConversationId,
+    allMessages,
+    status,
+    submittedAt,
+    messagesLoading,
+    handleSendMessage,
+    handleRecipeDetected,
+  } = useChatSession();
+
+  const {
     activeConversation,
     renameConversation,
-    autoTitleActiveConversation,
     deleteConversation,
   } = useConversationContext();
+
   const [convSheetOpen, setConvSheetOpen] = useState(false);
   const [mobileRenaming, setMobileRenaming] = useState(false);
   const [mobileRenameValue, setMobileRenameValue] = useState("");
-  const [submittedAt, setSubmittedAt] = useState<number | null>(null);
-  const autoTitledConversations = useRef<Set<string>>(new Set());
-  const autoTitlingConversations = useRef<Set<string>>(new Set());
   const mobileCommittingRef = useRef(false);
 
-  const { messages, sendMessage, status } = useChat({
-    id: activeConversationId ?? undefined,
-    transport: new DefaultChatTransport({
-      api: "/api/chat",
-      body: {
-        userId,
-        conversationId: activeConversationId,
-      },
-    }),
-    onError: (error) => {
-      console.error("Chat error:", error);
-
-      if (error.message.includes("503")) {
-        toast.error(
-          "Sorry lah, Ah Mah's cooking brain is taking a break! Try again in a few minutes."
-        );
-      } else {
-        toast.error("Aiyah, something went wrong! Please try again later.");
-      }
-    },
-    onFinish: async (options) => {
-      const { message } = options;
-      let toolCalled = false;
-
-      if (message.role === "assistant") {
-        const content = message.parts
-          .filter((part) => part.type === "text")
-          .map((part) => part.text)
-          .join("");
-        if (content) {
-          await saveMessage("assistant", content);
-        }
-      }
-
-      message.parts.forEach((part) => {
-        if (part.type.startsWith("tool-")) {
-          console.log(part.type, " called");
-          const { input } = part as {
-            input:
-              | z.infer<typeof AddInventoryItemSchemaObj>
-              | z.infer<typeof RemoveInventoryItemSchemaObj>;
-          };
-
-          switch (part.type) {
-            case "tool-addInventoryItem":
-              {
-                const addInput = input as z.infer<
-                  typeof AddInventoryItemSchemaObj
-                >;
-
-                toast.success(
-                  `${addInput.items
-                    .map((i) => upperCaseFirstLetter(i.name))
-                    .join(", ")} added to inventory!`
-                );
-                mutate(`/api/inventory?userId=${userId}`);
-              }
-              break;
-            case "tool-removeInventoryItem":
-              {
-                const removeInput = input as z.infer<
-                  typeof RemoveInventoryItemSchemaObj
-                >;
-
-                toast.success(
-                  `${removeInput.itemNames
-                    .map((i) => upperCaseFirstLetter(i))
-                    .join(", ")} removed from inventory!`
-                );
-                mutate(`/api/inventory?userId=${userId}`);
-              }
-              break;
-            case "tool-getInventory":
-              break;
-          }
-          toolCalled = true;
-        }
-      });
-      if (!toolCalled) console.log("No tool called");
-    },
-  });
-
-  const { data, isLoading: messagesLoading } = useSWR<SavedMessage[]>(
-    userId && activeConversationId
-      ? `/api/message?conversationId=${activeConversationId}`
-      : null,
-    fetcher,
-    {
-      shouldRetryOnError: true,
-      revalidateOnMount: true,
-    }
-  );
-
-  const saveMessage = async (role: "user" | "assistant", content: string) => {
-    try {
-      await fetch("/api/message", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          conversationId: activeConversationId,
-          role,
-          content,
-        }),
-      });
-      mutate(`/api/message?conversationId=${activeConversationId}`);
-    } catch (error) {
-      console.error("Failed to save message:", error);
-    }
-  };
-
-  // Clear loader state once the response starts streaming
-  useEffect(() => {
-    if (status !== "submitted") {
-      setSubmittedAt(null);
-    }
-  }, [status]);
-
-  const handleRecipeDetected = useCallback((recipeTitle: string) => {
-    if (!activeConversationId) return;
-    if (autoTitledConversations.current.has(activeConversationId)) return;
-    if (autoTitlingConversations.current.has(activeConversationId)) return;
-    autoTitlingConversations.current.add(activeConversationId);
-    void autoTitleActiveConversation(recipeTitle).then((success) => {
-      autoTitlingConversations.current.delete(activeConversationId);
-      if (success) {
-        autoTitledConversations.current.add(activeConversationId);
-      }
-    });
-  }, [activeConversationId, autoTitleActiveConversation]);
-
-  // Show loading state while session or conversation is loading
-  if (messagesLoading || !userId || !activeConversationId) {
-    return (
-      <div className="flex h-[600px] items-center justify-center">
-        <div className="animate-pulse">
-          {
-            LOADING_MESSAGES[
-              Math.floor(Math.random() * LOADING_MESSAGES.length)
-            ]
-          }
-        </div>
-      </div>
-    );
-  }
-
-  const savedMessages = (data || []).map(convertToUIMessage);
-
-  // Prefer the rich useChat version (which may have tool parts) over the text-only saved version.
-  // Filter savedMessages to exclude any message whose text is already represented in the
-  // live useChat messages — avoids duplicates while keeping tool-call parts visible.
-  const savedMessagesFiltered = savedMessages.filter((savedMsg) => {
-    const savedContent = savedMsg.parts
-      .filter((part) => part.type === "text")
-      .map((part) => part.text)
-      .join("");
-
-    return !messages.some((currentMsg) => {
-      const currentContent = currentMsg.parts
-        .filter((part) => part.type === "text")
-        .map((part) => part.text)
-        .join("");
-
-      return (
-        savedContent === currentContent && savedMsg.role === currentMsg.role
-      );
-    });
-  });
-
-  const allMessages = [INITIAL_MESSAGE, ...savedMessagesFiltered, ...messages];
   const messageCount = allMessages.length - 1; // exclude initial
-
-  const handleSendMessage = async (message: string) => {
-    setSubmittedAt(Date.now());
-    sendMessage({ text: message });
-    await saveMessage("user", message);
-  };
 
   const commitMobileRename = async () => {
     if (mobileCommittingRef.current) return;
@@ -236,6 +45,16 @@ const Chat = () => {
     mobileCommittingRef.current = false;
   };
 
+  if (messagesLoading || !userId || !activeConversationId) {
+    return (
+      <div className="flex h-[600px] items-center justify-center">
+        <div className="animate-pulse">
+          {LOADING_MESSAGES[Math.floor(Math.random() * LOADING_MESSAGES.length)]}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       key={activeConversationId}
@@ -243,7 +62,6 @@ const Chat = () => {
     >
       {/* Mobile bar — hidden when persistent rail is present */}
       <div className="lg:hidden flex items-center justify-between px-3 py-2 border-b border-dashed border-border shrink-0">
-        {/* Hamburger */}
         <button
           onClick={() => setConvSheetOpen(true)}
           className="flex items-center justify-center w-9 h-9 rounded-lg text-ink-faint hover:text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
@@ -254,7 +72,6 @@ const Chat = () => {
           </svg>
         </button>
 
-        {/* Title + actions — inline rename or title + 3-dot */}
         {mobileRenaming ? (
           <input
             autoFocus

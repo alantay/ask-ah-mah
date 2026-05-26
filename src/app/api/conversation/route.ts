@@ -3,13 +3,12 @@ import {
   getOrCreateEmptyConversation,
   listConversations,
 } from "@/lib/conversations";
+import { missingUserId } from "@/lib/http";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   const userId = req.nextUrl.searchParams.get("userId");
-  if (!userId) {
-    return NextResponse.json({ error: "userId is required" }, { status: 400 });
-  }
+  if (!userId) return missingUserId();
 
   const active = req.nextUrl.searchParams.get("active");
   if (active === "true") {
@@ -23,9 +22,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const { userId } = await req.json();
-  if (!userId) {
-    return NextResponse.json({ error: "userId is required" }, { status: 400 });
-  }
+  if (!userId) return missingUserId();
   const conversation = await getOrCreateEmptyConversation(userId);
   return NextResponse.json({ conversation });
 }

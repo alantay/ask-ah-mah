@@ -1,4 +1,4 @@
-import { deleteRecipe, getRecipes, saveRecipe } from "@/lib/recipes";
+import { deleteRecipeForUser, getRecipes, saveRecipe, saveRecipeFromBlock } from "@/lib/recipes";
 import { NextRequest } from "next/server";
 import { DELETE, GET, POST } from "./route";
 
@@ -16,9 +16,10 @@ jest.mock("next/server", () => ({
 
 // Mock the recipe functions
 jest.mock("@/lib/recipes", () => ({
-  deleteRecipe: jest.fn(),
+  deleteRecipeForUser: jest.fn(),
   getRecipes: jest.fn(),
   saveRecipe: jest.fn(),
+  saveRecipeFromBlock: jest.fn(),
 }));
 
 jest.mock("@/lib/recipes/recipeProcessor", () => ({
@@ -32,9 +33,10 @@ jest.mock("@/lib/pexels/fetchPhoto", () => ({
 import { processRecipe } from "@/lib/recipes/recipeProcessor";
 import { fetchRecipePhoto } from "@/lib/pexels/fetchPhoto";
 
-const mockedDeleteRecipe = jest.mocked(deleteRecipe);
+const mockedDeleteRecipeForUser = jest.mocked(deleteRecipeForUser);
 const mockedGetRecipes = jest.mocked(getRecipes);
 const mockedSaveRecipe = jest.mocked(saveRecipe);
+const mockedSaveRecipeFromBlock = jest.mocked(saveRecipeFromBlock);
 const mockedProcessRecipe = jest.mocked(processRecipe);
 const mockedFetchRecipePhoto = jest.mocked(fetchRecipePhoto);
 
@@ -230,13 +232,7 @@ describe("Recipe API Routes", () => {
         recipeId: "chicken-rub",
         baseServings: 2,
         ingredients: [
-          {
-            name: "paprika",
-            category: "Spice" as const,
-            amount: 1,
-            unit: "tbsp",
-            note: "smoked",
-          },
+          { name: "paprika", category: "Spice" as const, amount: 1, unit: "tbsp", note: "smoked" },
         ],
         prep: [],
         steps: [{ title: "Mix", body: "Combine all ingredients." }],
@@ -247,34 +243,22 @@ describe("Recipe API Routes", () => {
         photographerName: null,
         photographerUrl: null,
       };
-      mockedSaveRecipe.mockResolvedValue(savedRecipe);
+      mockedSaveRecipeFromBlock.mockResolvedValue(savedRecipe);
 
-      const requestBody = {
-        userId: "user-123",
-        recipeId: "chicken-rub",
-        recipe: {
-          title: "Chicken Rub",
-          description: "Dry spice mix for chicken.",
-          totalTimeMinutes: 5,
-          baseServings: 2,
-          ingredients: [
-            {
-              name: "paprika",
-              category: "Spice",
-              amount: "1",
-              unit: "tbsp",
-              note: "smoked",
-            },
-          ],
-          prep: [],
-          steps: [{ title: "Mix", body: "Combine all ingredients." }],
-          tags: ["quick"],
-        },
+      const recipeBlock = {
+        title: "Chicken Rub",
+        description: "Dry spice mix for chicken.",
+        totalTimeMinutes: 5,
+        baseServings: 2,
+        ingredients: [{ name: "paprika", category: "Spice", amount: "1", unit: "tbsp", note: "smoked" }],
+        prep: [],
+        steps: [{ title: "Mix", body: "Combine all ingredients." }],
+        tags: ["quick"],
       };
 
       const request = createMockRequest("http://localhost:3000/api/recipe", {
         method: "POST",
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({ userId: "user-123", recipeId: "chicken-rub", recipe: recipeBlock }),
         headers: { "Content-Type": "application/json" },
       });
 
@@ -284,28 +268,7 @@ describe("Recipe API Routes", () => {
       expect(response.status).toBe(200);
       expect(data.ingredients[0].category).toBe("Spice");
       expect(data.ingredients[0].note).toBe("smoked");
-      expect(mockedSaveRecipe).toHaveBeenCalledWith({
-        userId: "user-123",
-        name: "Chicken Rub",
-        instructions: "Dry spice mix for chicken.",
-        tags: ["quick (under 30 min)"],
-        recipeId: "chicken-rub",
-        baseServings: 2,
-        ingredients: [
-          {
-            name: "paprika",
-            category: "Spice",
-            amount: 1,
-            unit: "tbsp",
-            note: "smoked",
-          },
-        ],
-        prep: [],
-        steps: [{ title: "Mix", body: "Combine all ingredients." }],
-        description: "Dry spice mix for chicken.",
-        totalTimeMinutes: 5,
-      }, null);
-      expect(mockedFetchRecipePhoto).toHaveBeenCalledWith("Chicken Rub", ["quick (under 30 min)"]);
+      expect(mockedSaveRecipeFromBlock).toHaveBeenCalledWith(recipeBlock, "user-123");
       expect(mockedProcessRecipe).not.toHaveBeenCalled();
     });
 
@@ -434,7 +397,7 @@ describe("Recipe API Routes", () => {
       const data = await response.json();
 
       expect(response.status).toBe(400);
-      expect(data).toEqual({ error: "userId is needed" });
+      expect(data).toEqual({ error: "userId is required" });
       expect(mockedSaveRecipe).not.toHaveBeenCalled();
     });
 
@@ -455,7 +418,7 @@ describe("Recipe API Routes", () => {
       const data = await response.json();
 
       expect(response.status).toBe(400);
-      expect(data).toEqual({ error: "userId is needed" });
+      expect(data).toEqual({ error: "userId is required" });
       expect(mockedSaveRecipe).not.toHaveBeenCalled();
     });
 
@@ -607,15 +570,11 @@ describe("Recipe API Routes", () => {
 
   describe("DELETE /api/recipe", () => {
     it("should delete a recipe successfully", async () => {
-      mockedDeleteRecipe.mockResolvedValue(undefined);
-
-      const requestBody = {
-        recipeId: "recipe-123",
-      };
+      mockedDeleteRecipeForUser.mockResolvedValue(undefined);
 
       const request = createMockRequest("http://localhost:3000/api/recipe", {
         method: "DELETE",
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({ recipeId: "recipe-123", userId: "user-123" }),
         headers: { "Content-Type": "application/json" },
       });
 
@@ -624,66 +583,31 @@ describe("Recipe API Routes", () => {
 
       expect(response.status).toBe(200);
       expect(data).toEqual({ success: true });
-      expect(mockedDeleteRecipe).toHaveBeenCalledWith("recipe-123");
-      expect(mockedDeleteRecipe).toHaveBeenCalledTimes(1);
+      expect(mockedDeleteRecipeForUser).toHaveBeenCalledWith("recipe-123", "user-123");
     });
 
-    it("should handle missing recipeId", async () => {
-      mockedDeleteRecipe.mockResolvedValue(undefined);
-
-      const requestBody = {};
-
+    it("should return 400 when userId is missing", async () => {
       const request = createMockRequest("http://localhost:3000/api/recipe", {
         method: "DELETE",
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({ recipeId: "recipe-123" }),
         headers: { "Content-Type": "application/json" },
       });
 
       const response = await DELETE(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data).toEqual({ success: true });
-      expect(mockedDeleteRecipe).toHaveBeenCalledWith(undefined);
+      expect(response.status).toBe(400);
     });
 
-    it("should handle empty string recipeId", async () => {
-      mockedDeleteRecipe.mockResolvedValue(undefined);
-
-      const requestBody = {
-        recipeId: "",
-      };
+    it("should return 404 when recipe not found or not owned", async () => {
+      mockedDeleteRecipeForUser.mockRejectedValue(new Error("Recipe not found or not owned by user"));
 
       const request = createMockRequest("http://localhost:3000/api/recipe", {
         method: "DELETE",
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({ recipeId: "non-existent-recipe", userId: "user-123" }),
         headers: { "Content-Type": "application/json" },
       });
 
       const response = await DELETE(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data).toEqual({ success: true });
-      expect(mockedDeleteRecipe).toHaveBeenCalledWith("");
-    });
-
-    it("should handle database errors during deletion", async () => {
-      mockedDeleteRecipe.mockRejectedValue(new Error("Recipe not found"));
-
-      const requestBody = {
-        recipeId: "non-existent-recipe",
-      };
-
-      const request = createMockRequest("http://localhost:3000/api/recipe", {
-        method: "DELETE",
-        body: JSON.stringify(requestBody),
-        headers: { "Content-Type": "application/json" },
-      });
-
-      // The route doesn't have try-catch, so this will throw
-      await expect(DELETE(request)).rejects.toThrow("Recipe not found");
-      expect(mockedDeleteRecipe).toHaveBeenCalledWith("non-existent-recipe");
+      expect(response.status).toBe(404);
     });
 
     it("should handle malformed JSON", async () => {
@@ -693,7 +617,6 @@ describe("Recipe API Routes", () => {
         headers: { "Content-Type": "application/json" },
       });
 
-      // The route doesn't have try-catch, so this will throw
       await expect(DELETE(request)).rejects.toThrow();
     });
   });

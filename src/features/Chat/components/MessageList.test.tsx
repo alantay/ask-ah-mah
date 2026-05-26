@@ -43,8 +43,9 @@ jest.mock("swr/mutation", () => ({
   })),
 }));
 
-jest.mock("@/lib/utils/index", () => ({
+jest.mock("@/lib/utils", () => ({
   fetcher: jest.fn(),
+  cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
 
 jest.mock("./recipe/SuggestionsBlock", () => ({
