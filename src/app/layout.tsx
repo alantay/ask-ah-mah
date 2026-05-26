@@ -1,10 +1,12 @@
-import AboutPopOver from "@/components/AboutPopOver";
 import { AuthButton } from "@/features/Auth";
+import { AppSidebar } from "@/features/shared/components/AppSidebar";
 import { Toaster } from "@/components/ui/sonner";
+import { ConversationProvider } from "@/contexts/ConversationContext";
 import { SessionProvider } from "@/contexts/SessionContext";
 import type { Metadata } from "next";
 import { Fraunces, Inter, Nunito } from "next/font/google";
 import Image from "next/image";
+import { Suspense } from "react";
 import "./globals.css";
 
 const fontSans = Inter({
@@ -104,36 +106,42 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`mx-0 mt-0 sm:mx-2 sm:mt-2 md:mx-4 md:mt-4 ${fontSans.variable} ${fontDisplay.variable} ${fontLogo.variable} antialiased font-sans
-`}
+        className={`mx-0 mt-0 sm:mx-2 sm:mt-2 md:mx-4 md:mt-4 lg:mx-0 lg:mt-0 ${fontSans.variable} ${fontDisplay.variable} ${fontLogo.variable} antialiased font-sans flex h-dvh overflow-hidden`}
       >
         <SessionProvider>
-          <Toaster
-            position="top-center"
-            toastOptions={{
-              style: {
-                color: "#6F502D",
-              },
-            }}
-          />
-          <div className="pb-2 pt-2 border-b xl:container mx-auto px-4 flex justify-between items-center">
-            <h1 className="text-xl md:text-2xl font-bold font-logo flex items-center gap-2 text-primary">
-              <div className="relative w-8 h-8 md:w-9 md:h-9">
-                <Image
-                  src="/granny-icon.png"
-                  alt="Ask Ah Mah"
-                  fill
-                  className="object-contain"
-                />
+          <ConversationProvider>
+            <Toaster
+              position="top-center"
+              toastOptions={{
+                style: {
+                  color: "#6F502D",
+                },
+              }}
+            />
+            <Suspense fallback={null}>
+              <AppSidebar />
+            </Suspense>
+            <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+              {/* Mobile-only top bar */}
+              <div className="lg:hidden pb-2 pt-2 border-b px-4 flex justify-between items-center shrink-0">
+                <h1 className="text-xl font-bold font-logo flex items-center gap-2 text-primary">
+                  <div className="relative w-8 h-8">
+                    <Image
+                      src="/granny-icon.png"
+                      alt="Ask Ah Mah"
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
+                  Ask Ah Mah
+                </h1>
+                <div className="flex items-center gap-2">
+                  <AuthButton />
+                </div>
               </div>
-              Ask Ah Mah
-            </h1>
-            <div className="flex items-center gap-2">
-              <AboutPopOver className="hidden lg:flex" />
-              <AuthButton />
+              {children}
             </div>
-          </div>
-          {children}
+          </ConversationProvider>
         </SessionProvider>
       </body>
     </html>
