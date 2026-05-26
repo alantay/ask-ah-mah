@@ -99,9 +99,9 @@ export default function RecipeCard({ recipe, onSelect, onDelete }: RecipeCardPro
               {formatDuration(recipe.totalTimeMinutes)}
             </span>
           )}
-          {recipe.tags?.map((tag) => (
+          {recipe.tags?.map((tag, i) => (
             <span
-              key={tag}
+              key={`${tag}-${i}`}
               className="shrink-0 text-[11px] font-medium px-2 py-0.5 border border-border rounded-full text-muted-foreground"
             >
               {tag}
