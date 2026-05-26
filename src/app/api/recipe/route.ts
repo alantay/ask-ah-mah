@@ -56,6 +56,7 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const { recipeId, userId } = await req.json();
   if (!userId) return missingUserId();
+  if (!recipeId) return NextResponse.json({ error: "recipeId is required" }, { status: 400 });
   try {
     await deleteRecipeForUser(recipeId, userId);
     return NextResponse.json({ success: true });

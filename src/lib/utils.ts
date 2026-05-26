@@ -15,6 +15,13 @@ export function generateShortId() {
 
 export const fetcher = async (...args: Parameters<typeof fetch>) => {
   const response = await fetch(...args);
-  const data = await response.json();
-  return data;
+  if (!response.ok) {
+    let message = `Request failed (${response.status})`;
+    try {
+      const payload = await response.json();
+      if (payload && typeof payload.error === "string") message = payload.error;
+    } catch { /* non-JSON error body */ }
+    throw new Error(message);
+  }
+  return response.json();
 };

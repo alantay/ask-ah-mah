@@ -149,8 +149,8 @@ export function useChatSession() {
 
   const handleSendMessage = async (message: string) => {
     setSubmittedAt(Date.now());
-    sendMessage({ text: message });
     await saveMessage("user", message);
+    sendMessage({ text: message });
   };
 
   return {

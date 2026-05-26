@@ -1,9 +1,10 @@
 import { loadConversationContext } from "@/lib/chat/context";
 import { chatErrorResponse } from "@/lib/chat/errors";
 import { buildChatTools } from "@/lib/chat/tools";
+import { missingUserId } from "@/lib/http";
 import { openai } from "@ai-sdk/openai";
 import { convertToModelMessages, stepCountIs, streamText, UIMessage } from "ai";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { CHAT_SYSTEM_PROMPT } from "./constants";
 
 export async function POST(req: NextRequest) {
@@ -13,6 +14,9 @@ export async function POST(req: NextRequest) {
       userId: string;
       conversationId: string;
     } = await req.json();
+
+    if (!userId) return missingUserId();
+    if (!conversationId) return NextResponse.json({ error: "conversationId is required" }, { status: 400 });
 
     const validatedMessages = await loadConversationContext(conversationId, messages);
 

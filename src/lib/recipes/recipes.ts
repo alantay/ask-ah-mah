@@ -56,7 +56,7 @@ export async function saveRecipeFromBlock(block: RecipeBlock, userId: string) {
       ingredients: block.ingredients.map((ing: RecipeIngredientModel) => ({
         name: ing.name,
         category: ing.category ?? "Misc",
-        amount: ing.amount ? parseFloat(ing.amount) || undefined : undefined,
+        amount: ing.amount !== undefined ? (Number.isNaN(parseFloat(ing.amount)) ? undefined : parseFloat(ing.amount)) : undefined,
         unit: ing.unit,
         note: ing.note,
       })),
