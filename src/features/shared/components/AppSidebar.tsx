@@ -38,9 +38,13 @@ export function AppSidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  const VALID_TABS = ["chat", "pantry", "cookbook"] as const;
+  const raw = searchParams.get("tab");
   const activeTab = pathname.startsWith("/recipe")
     ? "cookbook"
-    : (searchParams.get("tab") ?? "chat");
+    : (VALID_TABS as readonly string[]).includes(raw ?? "")
+    ? raw!
+    : "chat";
 
   const navigate = (tab: string) => {
     router.replace(`/?tab=${tab}`, { scroll: false });
