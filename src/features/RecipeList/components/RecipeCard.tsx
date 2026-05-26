@@ -86,7 +86,7 @@ export default function RecipeCard({ recipe, onSelect, onDelete }: RecipeCardPro
         )}
 
         {/* Footer */}
-        <div className="mt-auto pt-2.5 border-t border-dashed border-border flex items-center gap-2.5 flex-wrap">
+        <div className="mt-auto pt-2.5 border-t border-dashed border-border flex items-center gap-2.5 flex-nowrap overflow-hidden">
           {recipe.totalTimeMinutes && (
             <span className="flex items-center gap-1 font-mono text-[11px] text-ink-faint shrink-0">
               <svg width="11" height="11" viewBox="0 0 16 16" fill="none" className="shrink-0">
@@ -96,10 +96,10 @@ export default function RecipeCard({ recipe, onSelect, onDelete }: RecipeCardPro
               {formatDuration(recipe.totalTimeMinutes)}
             </span>
           )}
-          {recipe.tags?.slice(0, 3).map((tag) => (
+          {recipe.tags?.map((tag) => (
             <span
               key={tag}
-              className="text-[11px] font-medium px-2 py-0.5 border border-border rounded-full text-muted-foreground"
+              className="shrink-0 text-[11px] font-medium px-2 py-0.5 border border-border rounded-full text-muted-foreground"
             >
               {tag}
             </span>
