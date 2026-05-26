@@ -12,7 +12,6 @@ import { mutate } from "swr";
 const CHAR_LIMIT = 8000;
 const MIN_EXTRACTING_MS = 1200;
 const STAGE_INTERVAL_MS = 600;
-const WORKS_WITH = ["Blog post", "Reddit comment", "Screenshot text", "Handwritten notes"];
 
 interface AddRecipeModalProps {
   open: boolean;
@@ -283,21 +282,6 @@ export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
           {/* ── Paste step ── */}
           {step === "paste" && (
             <>
-              {/* "Works with" chip row */}
-              <div className="px-5 sm:px-6 pt-3 pb-0 flex items-center gap-2 flex-wrap shrink-0">
-                <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground shrink-0">
-                  Works with
-                </span>
-                {WORKS_WITH.map((label) => (
-                  <span
-                    key={label}
-                    className="px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground bg-card border border-border rounded-full"
-                  >
-                    {label}
-                  </span>
-                ))}
-              </div>
-
               {/* Textarea + error banner + tip */}
               <div className="flex-1 px-5 sm:px-6 py-3 flex flex-col gap-2 min-h-0">
                 <textarea
@@ -306,7 +290,7 @@ export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
                     setText(e.target.value.slice(0, CHAR_LIMIT));
                     setError(null);
                   }}
-                  placeholder="Paste here. Messy is fine — blog post, Reddit comment, photo of a magazine page."
+                  placeholder="Paste recipe text here. Messy is fine."
                   className={[
                     "w-full flex-1 min-h-[140px] sm:min-h-0 resize-none rounded-lg border bg-card px-4 py-3",
                     "font-sans text-[13.5px] text-foreground placeholder:text-muted-foreground leading-relaxed",
