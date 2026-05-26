@@ -163,7 +163,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
             {[0, 1, 2].map((i) => <SkeletonCard key={i} />)}
           </div>
         ) : isEmpty ? (
-          <CookbookEmpty onChatClick={onChatClick} />
+          <CookbookEmpty onChatClick={onChatClick} onPasteClick={() => setShowAdd(true)} />
         ) : filtered.length === 0 ? (
           <p className="font-display italic text-[14px] text-muted-foreground">
             {activeTag
@@ -222,7 +222,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
   );
 }
 
-function CookbookEmpty({ onChatClick }: { onChatClick?: () => void }) {
+function CookbookEmpty({ onChatClick, onPasteClick }: { onChatClick?: () => void; onPasteClick?: () => void }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[18px]">
       {/* Instructional card — spans 2 rows on desktop */}
@@ -240,12 +240,20 @@ function CookbookEmpty({ onChatClick }: { onChatClick?: () => void }) {
             When something&rsquo;s worth a second go, tap <em>Save</em>. Ah Mah keeps it tidy.
           </div>
         </div>
-        <button
-          onClick={onChatClick}
-          className="self-start px-3.5 py-2 text-[13px] font-semibold text-primary-foreground bg-primary border border-primary rounded-lg cursor-pointer shadow-[0_1px_0_oklch(0.46_0.135_35)] hover:opacity-90 transition-opacity"
-        >
-          Ask Ah Mah for a recipe →
-        </button>
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={onChatClick}
+            className="self-start px-3.5 py-2 text-[13px] font-semibold text-primary-foreground bg-primary border border-primary rounded-lg cursor-pointer shadow-[0_1px_0_oklch(0.46_0.135_35)] hover:opacity-90 transition-opacity"
+          >
+            Ask Ah Mah for a recipe →
+          </button>
+          <button
+            onClick={onPasteClick}
+            className="self-start font-sans text-[12px] text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          >
+            or paste one you&rsquo;ve found
+          </button>
+        </div>
       </div>
 
       {/* Ghost cards */}
