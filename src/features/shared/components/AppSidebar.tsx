@@ -75,11 +75,15 @@ export function AppSidebar() {
     return (active?._count?.messages ?? 1) === 0;
   })();
 
-  const handleNavClick = (id: string) => {
-    if (id === "chat" && !activeConvIsEmpty) {
-      startNewConversation();
+  const handleNavClick = async (id: string) => {
+    try {
+      if (id === "chat" && !activeConvIsEmpty) {
+        await startNewConversation();
+      }
+      navigate(id);
+    } catch (error) {
+      console.error("Failed to start a new conversation", error);
     }
-    navigate(id);
   };
 
   return (
