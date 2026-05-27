@@ -19,19 +19,48 @@ import { convertToUIMessage } from "../utils";
 
 export function useChatSession() {
   const { userId } = useSessionContext();
-  const { activeConversationId, autoTitleActiveConversation } =
-    useConversationContext();
+  const {
+    activeConversationId,
+    setPendingConversation,
+    commitConversation,
+    autoTitleActiveConversation,
+  } = useConversationContext();
 
   const [submittedAt, setSubmittedAt] = useState<number | null>(null);
   const autoTitledConversations = useRef<Set<string>>(new Set());
   const autoTitlingConversations = useRef<Set<string>>(new Set());
 
-  const { messages, sendMessage, status } = useChat({
-    id: activeConversationId ?? undefined,
-    transport: new DefaultChatTransport({
+  // Tracks the conversation id to inject at request time (may be null in staging).
+  // Synced via effect (not during render) so an explicit set in handleSendMessage
+  // isn't overwritten by a re-render triggered by setPendingConversation.
+  const convIdRef = useRef<string | null>(activeConversationId);
+  useEffect(() => {
+    convIdRef.current = activeConversationId;
+  }, [activeConversationId]);
+
+  // Holds the pending conversation id during the first-message stream
+  const pendingConvIdRef = useRef<string | null>(null);
+
+  // Stable transport that reads convIdRef at send time via prepareSendMessagesRequest.
+  // prepareSendMessagesRequest returns the COMPLETE body (not merged), so messages
+  // must be explicitly included alongside our dynamic fields.
+  const transport = useRef(
+    new DefaultChatTransport({
       api: "/api/chat",
-      body: { userId, conversationId: activeConversationId },
-    }),
+      prepareSendMessagesRequest: ({ messages, body }) => ({
+        body: {
+          messages,
+          ...body,
+          userId,
+          conversationId: convIdRef.current,
+        },
+      }),
+    })
+  ).current;
+
+  const { messages, sendMessage, status } = useChat({
+    id: activeConversationId ?? "staging",
+    transport,
     onError: (error) => {
       console.error("Chat error:", error);
       if (error.message.includes("503")) {
@@ -44,13 +73,14 @@ export function useChatSession() {
     },
     onFinish: async (options) => {
       const { message } = options;
+      const convId = convIdRef.current;
 
       if (message.role === "assistant") {
         const content = message.parts
           .filter((part) => part.type === "text")
           .map((part) => part.text)
           .join("");
-        if (content) await saveMessage("assistant", content);
+        if (content && convId) await saveMessage("assistant", content, convId);
       }
 
       message.parts.forEach((part) => {
@@ -81,6 +111,13 @@ export function useChatSession() {
           }
         }
       });
+
+      // Commit pending conversation after stream completes
+      const pendingId = pendingConvIdRef.current;
+      if (pendingId) {
+        pendingConvIdRef.current = null;
+        commitConversation(pendingId);
+      }
     },
   });
 
@@ -92,19 +129,25 @@ export function useChatSession() {
     { shouldRetryOnError: true, revalidateOnMount: true }
   );
 
-  const saveMessage = async (role: "user" | "assistant", content: string) => {
+  const saveMessage = async (
+    role: "user" | "assistant",
+    content: string,
+    convId?: string | null
+  ) => {
+    const targetConvId = convId ?? convIdRef.current;
+    if (!targetConvId) return;
     try {
       await fetch("/api/message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId,
-          conversationId: activeConversationId,
+          conversationId: targetConvId,
           role,
           content,
         }),
       });
-      mutate(`/api/message?conversationId=${activeConversationId}`);
+      mutate(`/api/message?conversationId=${targetConvId}`);
     } catch (error) {
       console.error("Failed to save message:", error);
     }
@@ -149,7 +192,33 @@ export function useChatSession() {
 
   const handleSendMessage = async (message: string) => {
     setSubmittedAt(Date.now());
-    await saveMessage("user", message);
+
+    if (!activeConversationId) {
+      // Staging path: create conversation before sending
+      const res = await fetch("/api/conversation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+      if (!res.ok) {
+        toast.error("Aiyah, could not start a new conversation. Try again!");
+        return;
+      }
+      const { conversation } = await res.json();
+
+      // Update ref so transport injects the right id
+      convIdRef.current = conversation.id;
+      pendingConvIdRef.current = conversation.id;
+
+      // Optimistically show in sidebar with pending state
+      setPendingConversation(conversation);
+
+      // Save user message under the new conversation id
+      await saveMessage("user", message, conversation.id);
+    } else {
+      await saveMessage("user", message);
+    }
+
     sendMessage({ text: message });
   };
 

@@ -40,6 +40,7 @@ function groupConversations(conversations: ConversationEntity[]) {
 export function Conversations({ onItemClick }: ConversationsProps) {
   const {
     activeConversationId,
+    pendingConversationId,
     conversations: allConversations,
     conversationsLoading: isLoading,
     setActiveConversation,
@@ -48,11 +49,16 @@ export function Conversations({ onItemClick }: ConversationsProps) {
   } = useConversationContext();
   const [search, setSearch] = useState("");
 
+  // Only show conversations that have at least one message
+  const committedConversations = allConversations.filter(
+    (c) => (c._count?.messages ?? 0) > 0 || c.id === pendingConversationId
+  );
+
   const filtered = search.trim()
-    ? allConversations.filter((c) =>
+    ? committedConversations.filter((c) =>
         (c.title ?? "New chat").toLowerCase().includes(search.toLowerCase())
       )
-    : allConversations;
+    : committedConversations;
 
   const groups = groupConversations(filtered);
 
@@ -112,7 +118,7 @@ export function Conversations({ onItemClick }: ConversationsProps) {
                     <ConversationItem
                       key={conv.id}
                       conversation={conv}
-                      isActive={conv.id === activeConversationId}
+                      isActive={conv.id === activeConversationId || conv.id === pendingConversationId}
                       onClick={() => handleItemClick(conv.id)}
                       onRename={(newTitle) => renameConversation(conv.id, newTitle)}
                       onDelete={() => deleteConversation(conv.id)}

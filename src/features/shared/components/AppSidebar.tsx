@@ -56,7 +56,7 @@ export function AppSidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { activeConversationId, conversations, startNewConversation } = useConversationContext();
+  const { activeConversationId, pendingConversationId, conversations, startNewConversation } = useConversationContext();
 
   const VALID_TABS = ["chat", "pantry", "cookbook"] as const;
   const raw = searchParams.get("tab");
@@ -70,21 +70,20 @@ export function AppSidebar() {
     router.replace(`/?tab=${tab}`, { scroll: false });
   };
 
-  const activeConvIsEmpty = (() => {
-    const active = conversations.find((c) => c.id === activeConversationId);
-    return (active?._count?.messages ?? 1) === 0;
-  })();
-
-  const handleNavClick = async (id: string) => {
-    try {
-      if (id === "chat" && !activeConvIsEmpty) {
-        await startNewConversation();
-      }
-      navigate(id);
-    } catch (error) {
-      console.error("Failed to start a new conversation", error);
+  const handleNavClick = (id: string) => {
+    if (id === "chat") {
+      startNewConversation();
     }
+    navigate(id);
   };
+
+  // "New Chat" nav is highlighted whenever the panel shows an empty/new chat experience:
+  // staging (no active id), OR active id points to a conversation with no messages yet.
+  const activeConvHasMessages = activeConversationId
+    ? (conversations.find(c => c.id === activeConversationId)?._count?.messages ?? 0) > 0
+    : false;
+  const isNewChatActive =
+    activeTab === "chat" && !activeConvHasMessages && pendingConversationId === null;
 
   return (
     <aside className="hidden lg:flex flex-col w-[240px] shrink-0 bg-muted paper border-r border-border h-dvh sticky top-0 overflow-hidden">
@@ -101,7 +100,7 @@ export function AppSidebar() {
       {/* Primary nav */}
       <nav className="px-2 pb-2 flex flex-col gap-0.5 shrink-0">
         {NAV_ITEMS.map(({ id, label, Icon, IconFilled }) => {
-          const isActive = activeTab === id;
+          const isActive = id === "chat" ? isNewChatActive : activeTab === id;
           return (
             <button
               key={id}
@@ -109,11 +108,13 @@ export function AppSidebar() {
               className={[
                 "flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-[13.5px] font-medium transition-colors text-left cursor-pointer",
                 isActive
-                  ? "bg-card text-primary font-semibold"
+                  ? "bg-card text-foreground font-semibold"
                   : "text-ink-faint hover:text-foreground hover:bg-card/70",
               ].join(" ")}
             >
-              {isActive ? <IconFilled /> : <Icon />}
+              <span className={isActive ? "text-primary" : ""}>
+                {isActive ? <IconFilled /> : <Icon />}
+              </span>
               {label}
             </button>
           );

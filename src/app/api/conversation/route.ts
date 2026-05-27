@@ -1,5 +1,4 @@
 import {
-  getOrCreateActiveConversation,
   getOrCreateEmptyConversation,
   listConversations,
 } from "@/lib/conversations";
@@ -9,12 +8,6 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(req: NextRequest) {
   const userId = req.nextUrl.searchParams.get("userId");
   if (!userId) return missingUserId();
-
-  const active = req.nextUrl.searchParams.get("active");
-  if (active === "true") {
-    const conversation = await getOrCreateActiveConversation(userId);
-    return NextResponse.json({ conversation });
-  }
 
   const conversations = await listConversations(userId);
   return NextResponse.json({ conversations }); // flat array, ordered by updatedAt desc
