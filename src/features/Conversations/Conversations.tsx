@@ -43,7 +43,6 @@ export function Conversations({ onItemClick }: ConversationsProps) {
     conversations: allConversations,
     conversationsLoading: isLoading,
     setActiveConversation,
-    startNewConversation,
     renameConversation,
     deleteConversation,
   } = useConversationContext();
@@ -62,35 +61,14 @@ export function Conversations({ onItemClick }: ConversationsProps) {
     onItemClick?.();
   };
 
-  const activeConvIsEmpty = (() => {
-    const active = allConversations.find((c) => c.id === activeConversationId);
-    return (active?._count?.messages ?? 1) === 0;
-  })();
-
-  const handleNewConversation = () => {
-    if (activeConvIsEmpty) return;
-    startNewConversation();
-  };
-
   return (
     <div className="flex flex-col h-full gap-3">
       {/* Header */}
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <div className="font-display italic font-medium text-[22px] text-foreground leading-tight">
-            Conversations
-          </div>
-          <div className="text-xs text-ink-faint mt-0.5">Each kitchen session, kept</div>
+      <div>
+        <div className="font-display italic font-medium text-[22px] text-foreground leading-tight">
+          Conversations
         </div>
-        <button
-          onClick={handleNewConversation}
-          disabled={activeConvIsEmpty}
-          className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center text-lg font-medium shrink-0 hover:bg-primary/90 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-primary"
-          aria-label="New conversation"
-          title={activeConvIsEmpty ? "Already in a new conversation" : "Start a new conversation"}
-        >
-          +
-        </button>
+        <div className="text-xs text-ink-faint mt-0.5">Each kitchen session, kept</div>
       </div>
 
       {/* Search */}
