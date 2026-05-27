@@ -56,7 +56,6 @@ const Chat = () => {
 
   return (
     <div
-      key={activeConversationId}
       className="flex flex-col animate-in fade-in duration-300 h-full"
     >
       {/* Mobile bar — hidden when persistent rail is present */}

@@ -34,7 +34,7 @@ When the stream finishes (`onFinish`), `commitConversation(id)` flips `pendingCo
 
 "You are in this tab." Shown on the primary navigation items in `AppSidebar` (Chat / Pantry / Cookbook). Visual treatment: `bg-card` background, `text-foreground` label, terracotta (`text-primary`) filled icon.
 
-The Chat nav item is highlighted whenever the panel shows a new/empty chat experience: staging state (`activeConversationId === null`), or when the active conversation has no messages. Once a pending or committed conversation has messages, the Chat nav unhighlights and **Thread Selection** takes over.
+The Chat nav item is highlighted only in **Staging State** (`activeConversationId === null && pendingConversationId === null`). Once a conversation becomes pending or committed, the Chat nav unhighlights and **Thread Selection** takes over.
 
 Related: [ADR-0003](docs/adr/0003-nav-and-thread-selection-are-distinct.md)
 
