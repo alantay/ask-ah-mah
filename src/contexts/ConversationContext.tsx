@@ -6,7 +6,6 @@ import {
   createContext,
   ReactNode,
   useContext,
-  useEffect,
   useState,
 } from "react";
 import { toast } from "sonner";
@@ -20,12 +19,15 @@ type ConversationListResponse = {
 
 interface ConversationContextType {
   activeConversationId: string | null;
+  pendingConversationId: string | null;
   activeConversation: ConversationEntity | null;
   conversations: ConversationEntity[];
   conversationsLoading: boolean;
   isLoading: boolean;
   setActiveConversation: (id: string) => void;
-  startNewConversation: () => Promise<void>;
+  startNewConversation: () => void;
+  setPendingConversation: (conversation: ConversationEntity) => void;
+  commitConversation: (id: string) => void;
   renameConversation: (id: string, title: string) => Promise<void>;
   autoTitleActiveConversation: (title: string) => Promise<boolean>;
   deleteConversation: (id: string) => Promise<void>;
@@ -45,23 +47,9 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     return localStorage.getItem(LOCAL_STORAGE_KEY);
   });
 
-  // Only fetch from API if we don't already have a stored conversation id
-  const shouldFetch = userId && !activeConversationId;
-  const swrKey = shouldFetch
-    ? `/api/conversation?active=true&userId=${userId}`
-    : null;
+  const [pendingConversationId, setPendingConversationId] = useState<string | null>(null);
 
-  const { data, isLoading } = useSWR<{ conversation: ConversationEntity }>(
-    swrKey,
-    async (url: string) => {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Failed to fetch active conversation");
-      return res.json();
-    },
-    { revalidateOnFocus: false }
-  );
-
-  // Always fetch the conversations list so activeConversation reflects title updates
+  // Fetch the conversations list
   const listKey = userId ? `/api/conversation?userId=${userId}` : null;
 
   const { data: listData, isLoading: listLoading } = useSWR<ConversationListResponse>(
@@ -73,14 +61,6 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     },
     { revalidateOnFocus: false }
   );
-
-  // When the API returns a conversation, store it
-  useEffect(() => {
-    if (data?.conversation?.id && !activeConversationId) {
-      setActiveConversationId(data.conversation.id);
-      localStorage.setItem(LOCAL_STORAGE_KEY, data.conversation.id);
-    }
-  }, [data, activeConversationId]);
 
   // Derive activeConversation from the list so title updates reflect immediately
   const activeConversation = activeConversationId
@@ -107,35 +87,33 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
         typeof key === "string" && key.includes("/api/conversation"),
     );
 
-  const startNewConversation = async (options?: { revalidate?: boolean }) => {
-    if (!userId) return;
-    const res = await fetch("/api/conversation", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId }),
-    });
-    if (!res.ok) throw new Error("Failed to create conversation");
-    const { conversation } = await res.json();
-    setActiveConversation(conversation.id);
+  // Clear active conversation and enter staging state — no API call
+  const startNewConversation = () => {
+    persistActiveConversation(null);
+    setPendingConversationId(null);
+  };
+
+  // Called when the first message is sent: optimistically add to list, track pending id
+  const setPendingConversation = (conversation: ConversationEntity) => {
+    setPendingConversationId(conversation.id);
     if (listKey) {
-      await globalMutate(
+      globalMutate(
         listKey,
         (current?: ConversationListResponse) => {
           const existing = current?.conversations ?? [];
-          const withoutConversation = existing.filter(
-            (item) => item.id !== conversation.id
-          );
-
-          return {
-            conversations: [conversation, ...withoutConversation],
-          };
+          const without = existing.filter(c => c.id !== conversation.id);
+          return { conversations: [conversation, ...without] };
         },
         false
       );
     }
-    if (options?.revalidate !== false) {
-      await revalidateConversationKeys();
-    }
+  };
+
+  // Called in onFinish after stream completes: commit the pending conversation as active
+  const commitConversation = (id: string) => {
+    persistActiveConversation(id);
+    setPendingConversationId(null);
+    revalidateConversationKeys();
   };
 
   const renameConversation = async (id: string, title: string) => {
@@ -181,16 +159,11 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     );
 
     if (id === activeConversationId) {
-      // Active conversation delete — same flow as before
       const previousActiveConversationId = activeConversationId;
       const nextConversation =
         optimisticConversations.find(
           (c) => (c._count?.messages ?? 0) > 0
-        ) ??
-        optimisticConversations.find(
-          (c) => c.title === null && (c._count?.messages ?? 0) === 0
-        ) ??
-        null;
+        ) ?? null;
 
       if (listKey) {
         await globalMutate(
@@ -203,8 +176,8 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
       if (nextConversation) {
         persistActiveConversation(nextConversation.id);
       } else {
+        // No next conversation — go to staging state
         persistActiveConversation(null);
-        await startNewConversation({ revalidate: false });
       }
 
       try {
@@ -263,19 +236,19 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const contextIsLoading =
-    isLoading || (!!userId && !activeConversationId && !data);
-
   return (
     <ConversationContext.Provider
       value={{
         activeConversationId,
+        pendingConversationId,
         activeConversation,
         conversations: listData?.conversations ?? [],
         conversationsLoading: listLoading,
-        isLoading: contextIsLoading,
+        isLoading: false,
         setActiveConversation,
         startNewConversation,
+        setPendingConversation,
+        commitConversation,
         renameConversation,
         autoTitleActiveConversation,
         deleteConversation,

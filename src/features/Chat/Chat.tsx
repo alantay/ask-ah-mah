@@ -16,7 +16,6 @@ const Chat = () => {
     allMessages,
     status,
     submittedAt,
-    messagesLoading,
     handleSendMessage,
     handleRecipeDetected,
   } = useChatSession();
@@ -45,7 +44,7 @@ const Chat = () => {
     mobileCommittingRef.current = false;
   };
 
-  if (messagesLoading || !userId || !activeConversationId) {
+  if (!userId) {
     return (
       <div className="flex h-[600px] items-center justify-center">
         <div className="animate-pulse">
@@ -57,7 +56,6 @@ const Chat = () => {
 
   return (
     <div
-      key={activeConversationId}
       className="flex flex-col animate-in fade-in duration-300 h-full"
     >
       {/* Mobile bar — hidden when persistent rail is present */}

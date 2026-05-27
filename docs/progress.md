@@ -36,6 +36,15 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 
 - **Paste-to-cookbook**: `+ Add recipe` button in cookbook header opens a two-step modal — paste raw recipe text, LLM extracts it into full `RecipeBlock` (structured steps, scalable amounts, prep, tags), preview via `RecipeDisplay`, then save. Failure guard rejects non-recipe text. Empty-state gets a secondary "or paste one you've found" CTA. Extraction via new `POST /api/recipe/extract` (no-persist preview endpoint); save uses existing structured `POST /api/recipe` path.
 
+- **Gemini-style sidebar**: replaced mobile tab bar with a persistent left sidebar on desktop (`AppSidebar`). Primary nav (Chat / Pantry / Cookbook) at top; `Conversations` list always visible below.
+
+- **Sidebar UX polish + deferred conversation creation** (May 2026):
+  - Nav selection (mode) and Thread selection (conversation row) are now distinct — see ADR-0003.
+  - Active nav text is `text-foreground`; only the icon gets the terracotta `text-primary` tint.
+  - "New Chat" nav item is only highlighted in Staging State (`activeConversationId === null`). Once a conversation is active, the nav item unhighlights and the conversation row highlights instead.
+  - `Conversation` rows are only created on first message, not on "New Chat" click — see ADR-0002. Clicking "New Chat" enters Staging State (client-only); the DB row is created in `useChatSession` when the first message is sent.
+  - Chat panel is full-width (removed `xl:container` cap); message content is capped at `max-w-3xl mx-auto`.
+
 ## V2 — In Progress
 
 ### Shopping list from shortfalls

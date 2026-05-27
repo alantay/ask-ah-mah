@@ -6,11 +6,10 @@ import { LOADING_MESSAGES } from "../constants";
 
 export default function ChatWrapper() {
   const { userId, isLoading: sessionLoading } = useSessionContext();
-  const { activeConversationId, isLoading: convLoading } =
+  const { activeConversationId } =
     useConversationContext();
 
-  const isLoading =
-    sessionLoading || convLoading || !userId || !activeConversationId;
+  const isLoading = sessionLoading || !userId;
 
   return (
     <>
@@ -25,7 +24,7 @@ export default function ChatWrapper() {
           </div>
         </div>
       ) : (
-        <Chat />
+        <Chat key={activeConversationId ?? "staging"} />
       )}
     </>
   );
