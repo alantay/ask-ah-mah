@@ -41,7 +41,11 @@ export function useChatSession() {
   // Holds the pending conversation id during the first-message stream
   const pendingConvIdRef = useRef<string | null>(null);
 
-  // Stable transport that reads convIdRef at send time via prepareSendMessagesRequest.
+  // Snapshot of the conversation id at send time — used in onFinish and transport
+  // so mid-stream navigation cannot redirect messages to a different conversation.
+  const inFlightConvIdRef = useRef<string | null>(null);
+
+  // Stable transport that reads inFlightConvIdRef at send time via prepareSendMessagesRequest.
   // prepareSendMessagesRequest returns the COMPLETE body (not merged), so messages
   // must be explicitly included alongside our dynamic fields.
   const transport = useRef(
@@ -52,7 +56,7 @@ export function useChatSession() {
           messages,
           ...body,
           userId,
-          conversationId: convIdRef.current,
+          conversationId: inFlightConvIdRef.current,
         },
       }),
     })
@@ -73,7 +77,7 @@ export function useChatSession() {
     },
     onFinish: async (options) => {
       const { message } = options;
-      const convId = convIdRef.current;
+      const convId = inFlightConvIdRef.current;
 
       if (message.role === "assistant") {
         const content = message.parts
@@ -137,7 +141,7 @@ export function useChatSession() {
     const targetConvId = convId ?? convIdRef.current;
     if (!targetConvId) return;
     try {
-      await fetch("/api/message", {
+      const response = await fetch("/api/message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -147,9 +151,14 @@ export function useChatSession() {
           content,
         }),
       });
+      if (!response.ok)
+        throw new Error(
+          `Save failed: ${response.status} (conversationId: ${targetConvId})`
+        );
       mutate(`/api/message?conversationId=${targetConvId}`);
     } catch (error) {
       console.error("Failed to save message:", error);
+      throw error;
     }
   };
 
@@ -206,9 +215,10 @@ export function useChatSession() {
       }
       const { conversation } = await res.json();
 
-      // Update ref so transport injects the right id
+      // Update refs so transport injects the right id
       convIdRef.current = conversation.id;
       pendingConvIdRef.current = conversation.id;
+      inFlightConvIdRef.current = conversation.id;
 
       // Optimistically show in sidebar with pending state
       setPendingConversation(conversation);
@@ -216,6 +226,7 @@ export function useChatSession() {
       // Save user message under the new conversation id
       await saveMessage("user", message, conversation.id);
     } else {
+      inFlightConvIdRef.current = activeConversationId;
       await saveMessage("user", message);
     }
 
