@@ -240,7 +240,7 @@ export const MessageList = ({
       <ConversationContent>
         <div
           ref={containerRef}
-          className="space-y-4 overscroll-contain max-w-3xl mx-auto w-full"
+          className="space-y-4 overscroll-contain"
           onScroll={handleScroll}
           data-conversation-content
         >
