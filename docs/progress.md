@@ -43,7 +43,7 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
   - Active nav text is `text-foreground`; only the icon gets the terracotta `text-primary` tint.
   - "New Chat" nav item is only highlighted in Staging State (`activeConversationId === null`). Once a conversation is active, the nav item unhighlights and the conversation row highlights instead.
   - `Conversation` rows are only created on first message, not on "New Chat" click — see ADR-0002. Clicking "New Chat" enters Staging State (client-only); the DB row is created in `useChatSession` when the first message is sent.
-  - Chat panel is bounded by `xl:container` (~1280px, centered); messages fill that width.
+  - Chat panel is full-width (removed `xl:container` cap); message content is capped at `max-w-3xl mx-auto`.
 
 ## V2 — In Progress
 
