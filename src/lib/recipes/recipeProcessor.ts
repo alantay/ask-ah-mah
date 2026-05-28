@@ -1,9 +1,9 @@
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
-import { TAG_SETS } from "./tagColors";
 import { normalizeTags } from "./normalizeTags";
 import { CategorySchema } from "@/lib/inventory/schemas";
+import { PROMPT_FRAGMENTS } from "@/lib/prompts/fragments";
 
 // Extract metadata from a recipe. We don't ask the model to re-emit the
 // recipe text — passing raw instructions through is more reliable and the
@@ -73,10 +73,6 @@ const RecipeMetadataSchema = z.object({
 
 export type RecipeMetadata = z.infer<typeof RecipeMetadataSchema>;
 
-const TAG_CATEGORIES = Object.entries(TAG_SETS)
-  .map(([cat, tags]) => `${cat.toUpperCase()}: ${tags.join(", ")}`)
-  .join("\n");
-
 export async function processRecipe(
   recipeName: string,
   recipeInstructions: string,
@@ -87,7 +83,7 @@ TASKS:
 1. Choose 3-8 tags. ONLY use exact tag names from the list below — do not invent new tags, do not use ingredient names (e.g. "onion", "garlic") as tags. If unsure, prefer fewer correct tags over more guesses.
 2. Identify baseServings — how many servings the recipe makes (infer 2 or 4 if unstated).
 3. Extract ingredients as { name, category, amount?, unit? }.
-   - category must be one of: Protein, Carbs, Vegetable, Condiments, Spice, Misc.
+   - category must be one of: ${PROMPT_FRAGMENTS.categoryList}.
    - Use the exact unit strings the recipe uses.
    - Omit amount/unit for non-quantified items like "salt to taste".
 4. Write a description: one evocative sentence ≤140 chars. Capture the soul of the dish — not a step list. e.g. "Sunday lunch staple — rice poached in chicken stock, finished with ginger-scallion oil."
@@ -95,7 +91,7 @@ TASKS:
 6. Extract prep — all knife work, marinating, beating, soaking that happens BEFORE heat. Each item is a short imperative ("Dice 1 bell pepper"). If a step references "the diced X" or "the marinated Y", that prep MUST appear here. Empty array if there's no real prep.
 
 TAG CATEGORIES:
-${TAG_CATEGORIES}
+${PROMPT_FRAGMENTS.tagCatalog}
 
 RECIPE NAME: ${recipeName}
 
