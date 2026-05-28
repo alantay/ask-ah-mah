@@ -4,7 +4,7 @@ import { CookingMode } from "@/features/Recipe";
 import { useSessionContext } from "@/contexts/SessionContext";
 import { RecipeIngredient, RecipeStep, RecipeWithId } from "@/lib/recipes/schemas";
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Streamdown } from "streamdown";
 import { toast } from "sonner";
 
@@ -46,16 +46,23 @@ const QUICK_TWEAKS = [
 function diffRecipes(
   original: RecipeWithId,
   tweaked: RecipeWithId,
-): { ingredients: Set<number>; steps: Set<number> } {
+): { ingredients: Set<number>; steps: Set<number>; deletedIngredients: Set<number>; deletedSteps: Set<number> } {
   const changedIngredients = new Set<number>();
   const changedSteps = new Set<number>();
+  const deletedIngredients = new Set<number>();
+  const deletedSteps = new Set<number>();
 
   const origIngs = (original.ingredients || []) as RecipeIngredient[];
   const tweakIngs = (tweaked.ingredients || []) as RecipeIngredient[];
 
-  tweakIngs.forEach((ing, i) => {
+  const ingLen = Math.max(origIngs.length, tweakIngs.length);
+  for (let i = 0; i < ingLen; i++) {
     const orig = origIngs[i];
-    if (
+    const ing = tweakIngs[i];
+    if (!ing) {
+      // Row deleted by AI — mark the original index as deleted
+      deletedIngredients.add(i);
+    } else if (
       !orig ||
       orig.name !== ing.name ||
       orig.amount !== ing.amount ||
@@ -63,25 +70,23 @@ function diffRecipes(
     ) {
       changedIngredients.add(i);
     }
-  });
-  // Also mark newly inserted rows
-  if (tweakIngs.length > origIngs.length) {
-    for (let i = origIngs.length; i < tweakIngs.length; i++) {
-      changedIngredients.add(i);
-    }
   }
 
   const origSteps = (original.steps || []) as RecipeStep[];
   const tweakSteps = (tweaked.steps || []) as RecipeStep[];
 
-  tweakSteps.forEach((step, i) => {
+  const stepsLen = Math.max(origSteps.length, tweakSteps.length);
+  for (let i = 0; i < stepsLen; i++) {
     const orig = origSteps[i];
-    if (!orig || orig.body !== step.body || orig.title !== step.title) {
+    const step = tweakSteps[i];
+    if (!step) {
+      deletedSteps.add(i);
+    } else if (!orig || orig.body !== step.body || orig.title !== step.title) {
       changedSteps.add(i);
     }
-  });
+  }
 
-  return { ingredients: changedIngredients, steps: changedSteps };
+  return { ingredients: changedIngredients, steps: changedSteps, deletedIngredients, deletedSteps };
 }
 
 // ─── RecipeBody ──────────────────────────────────────────────────────────────
@@ -91,6 +96,11 @@ interface RecipeBodyProps {
   /** Fields that changed compared to original (highlight them) */
   changedIngredients?: Set<number>;
   changedSteps?: Set<number>;
+  /** Rows present in original but removed by AI tweak */
+  deletedIngredients?: Set<number>;
+  deletedSteps?: Set<number>;
+  /** Original recipe — needed to render deleted rows */
+  originalRecipe?: RecipeWithId;
   tweakState: TweakState;
   onTweakClick: () => void;
   onTweakAgain: () => void;
@@ -100,6 +110,9 @@ function RecipeBody({
   selectedRecipe,
   changedIngredients = new Set(),
   changedSteps = new Set(),
+  deletedIngredients = new Set(),
+  deletedSteps = new Set(),
+  originalRecipe,
   tweakState,
   onTweakClick,
   onTweakAgain,
@@ -107,6 +120,8 @@ function RecipeBody({
   const [servings, setServings] = useState<number>(selectedRecipe.baseServings ?? 2);
   const baseServings = selectedRecipe.baseServings || 2;
   const ingredients = (selectedRecipe.ingredients || []) as RecipeIngredient[];
+  const origIngredients = (originalRecipe?.ingredients || []) as RecipeIngredient[];
+  const origSteps = (originalRecipe?.steps || []) as RecipeStep[];
   const prep = (selectedRecipe.prep ?? []) as string[];
   const steps = (selectedRecipe.steps || []) as RecipeStep[];
   const scale = servings / baseServings;
@@ -311,6 +326,34 @@ function RecipeBody({
                   </li>
                 );
               })}
+              {/* Deleted ingredients — shown with strikethrough when tweaking */}
+              {showHighlights &&
+                Array.from(deletedIngredients).map((i) => {
+                  const ing = origIngredients[i];
+                  if (!ing) return null;
+                  const scaled = ing.amount != null ? ing.amount * scale : undefined;
+                  return (
+                    <li
+                      key={`deleted-ing-${i}`}
+                      className="flex items-baseline gap-3 py-2.5 border-b border-dashed border-border transition-colors line-through opacity-50"
+                    >
+                      <span
+                        className={`basis-20 sm:basis-24 shrink-0 text-[13px] text-foreground text-right ${
+                          scaled != null
+                            ? "font-mono font-semibold tabular-nums"
+                            : "font-display italic text-muted-foreground"
+                        }`}
+                      >
+                        {scaled != null
+                          ? `${formatAmount(scaled)}${ing.unit ? ` ${ing.unit}` : ""}`
+                          : "to taste"}
+                      </span>
+                      <span className="flex-1 font-display text-[15px] text-foreground leading-[1.4]">
+                        {ing.name}
+                      </span>
+                    </li>
+                  );
+                })}
             </ul>
           </section>
         )}
@@ -374,6 +417,32 @@ function RecipeBody({
                   </li>
                 );
               })}
+              {/* Deleted steps — shown with strikethrough when tweaking */}
+              {showHighlights &&
+                Array.from(deletedSteps).map((i) => {
+                  const step = origSteps[i];
+                  if (!step) return null;
+                  return (
+                    <li
+                      key={`deleted-step-${i}`}
+                      className="flex gap-4 transition-colors line-through opacity-50"
+                    >
+                      <span className="font-mono text-[13px] font-bold text-ink-faint tabular-nums pt-0.5 shrink-0 w-5 text-right">
+                        {i + 1}.
+                      </span>
+                      <div className="flex-1">
+                        {step.title && (
+                          <div className="font-display font-semibold text-[15px] text-foreground mb-0.5">
+                            {step.title}
+                          </div>
+                        )}
+                        <div className="font-sans text-[14px] text-foreground leading-[1.6]">
+                          {step.body}
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
             </ol>
           ) : (
             <div className="recipe-prose">
@@ -613,17 +682,22 @@ export default function RecipeDisplay({
   const steps = (recipe.steps ?? []) as RecipeStep[];
   const canCook = steps.length > 0;
 
-  // Compute changed fields
-  const { ingredients: changedIngredients, steps: changedSteps } = diffRecipes(
-    originalRecipeRef.current,
-    tweakedRecipe,
+  // Compute changed fields (memoised — only recalculates when the recipes change)
+  const { ingredients: changedIngredients, steps: changedSteps, deletedIngredients, deletedSteps } = useMemo(
+    () => diffRecipes(originalRecipeRef.current, tweakedRecipe),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [tweakedRecipe],
   );
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
+  // Focus the input whenever the tweak bar opens
+  useEffect(() => {
+    if (tweakState === "open") inputRef.current?.focus();
+  }, [tweakState]);
+
   const openTweak = useCallback(() => {
     setTweakState("open");
-    setTimeout(() => inputRef.current?.focus(), 80);
   }, []);
 
   const dismissTweak = useCallback(() => {
@@ -645,7 +719,7 @@ export default function RecipeDisplay({
         const res = await fetch(`/api/recipe/${recipe.id}/tweak`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, instruction: p, recipe: tweakedRecipe }),
+          body: JSON.stringify({ userId, instruction: p, recipe: originalRecipeRef.current }),
         });
 
         if (!res.ok || !res.body) {
@@ -657,31 +731,35 @@ export default function RecipeDisplay({
         const decoder = new TextDecoder();
         let accumulated = "";
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          accumulated += decoder.decode(value, { stream: true });
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            accumulated += decoder.decode(value, { stream: true });
 
-          // Try to parse accumulated text as JSON progressively
-          try {
-            const parsed = JSON.parse(accumulated);
-            // Map RecipeBlock → RecipeWithId (carry over the id and image fields)
-            const updatedRecipe: RecipeWithId = {
-              ...originalRecipeRef.current,
-              name: parsed.title ?? originalRecipeRef.current.name,
-              description: parsed.description ?? originalRecipeRef.current.description,
-              totalTimeMinutes: parsed.totalTimeMinutes ?? originalRecipeRef.current.totalTimeMinutes,
-              baseServings: parsed.baseServings ?? originalRecipeRef.current.baseServings,
-              ingredients: parsed.ingredients ?? originalRecipeRef.current.ingredients,
-              prep: parsed.prep ?? originalRecipeRef.current.prep,
-              steps: parsed.steps ?? originalRecipeRef.current.steps,
-              tags: parsed.tags ?? originalRecipeRef.current.tags,
-              instructions: originalRecipeRef.current.instructions,
-            };
-            setTweakedRecipe(updatedRecipe);
-          } catch {
-            // JSON not yet complete — keep accumulating
+            // Try to parse accumulated text as JSON progressively
+            try {
+              const parsed = JSON.parse(accumulated);
+              // Map RecipeBlock → RecipeWithId (carry over the id and image fields)
+              const updatedRecipe: RecipeWithId = {
+                ...originalRecipeRef.current,
+                name: parsed.title ?? originalRecipeRef.current.name,
+                description: parsed.description ?? originalRecipeRef.current.description,
+                totalTimeMinutes: parsed.totalTimeMinutes ?? originalRecipeRef.current.totalTimeMinutes,
+                baseServings: parsed.baseServings ?? originalRecipeRef.current.baseServings,
+                ingredients: parsed.ingredients ?? originalRecipeRef.current.ingredients,
+                prep: parsed.prep ?? originalRecipeRef.current.prep,
+                steps: parsed.steps ?? originalRecipeRef.current.steps,
+                tags: parsed.tags ?? originalRecipeRef.current.tags,
+                instructions: originalRecipeRef.current.instructions,
+              };
+              setTweakedRecipe(updatedRecipe);
+            } catch {
+              // JSON not yet complete — keep accumulating
+            }
           }
+        } finally {
+          reader.cancel().catch(() => {});
         }
 
         setTweakState("preview");
@@ -691,14 +769,13 @@ export default function RecipeDisplay({
         setTweakState("open");
       }
     },
-    [instruction, recipe.id, userId, tweakedRecipe],
+    [instruction, recipe.id, userId],
   );
 
   const tryAgain = useCallback(() => {
     setTweakedRecipe(originalRecipeRef.current);
     setInstruction("");
     setTweakState("open");
-    setTimeout(() => inputRef.current?.focus(), 80);
   }, []);
 
   const saveChanges = useCallback(async () => {
@@ -747,7 +824,6 @@ export default function RecipeDisplay({
   const tweakAgain = useCallback(() => {
     setInstruction("");
     setTweakState("open");
-    setTimeout(() => inputRef.current?.focus(), 80);
   }, []);
 
   const handleStartCooking = () => {
@@ -814,6 +890,9 @@ export default function RecipeDisplay({
                 selectedRecipe={tweakedRecipe}
                 changedIngredients={changedIngredients}
                 changedSteps={changedSteps}
+                deletedIngredients={deletedIngredients}
+                deletedSteps={deletedSteps}
+                originalRecipe={originalRecipeRef.current}
                 tweakState={tweakState}
                 onTweakClick={openTweak}
                 onTweakAgain={tweakAgain}
