@@ -55,3 +55,13 @@ Related: [ADR-0001](docs/adr/0001-butter-is-where-you-are.md), [ADR-0003](docs/a
 The visual token reserved for "you, here, now" — the thing the user is currently reading or acting on. Applied to the active conversation row and the user's own message bubbles. Never applied to navigation items (those use `bg-card`).
 
 See [ADR-0001](docs/adr/0001-butter-is-where-you-are.md) for the full rationale.
+
+---
+
+## Recipe Tweak
+
+A single-turn AI modification of an existing saved recipe, initiated from the recipe page. The user types a refinement instruction (e.g. "add green chilli") and the AI streams an updated version of the same recipe in-place. A Recipe Tweak is not a full recipe prompt — it cannot generate a new, unrelated dish.
+
+The tweaked version is shown as a preview before the user confirms. On confirmation, the existing recipe is replaced (not duplicated). The AI call goes through a dedicated route (`POST /api/recipe/[id]/tweak`), separate from the chat pipeline.
+
+Related: [ADR-0004](docs/adr/0004-recipe-tweak-uses-dedicated-route.md)
