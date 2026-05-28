@@ -11,8 +11,7 @@ export const Response = memo(
     <Streamdown
       className={cn(
         "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
-        "max-w-[65ch]",
-        "[&_p+p]:mt-[0.65em]",
+"[&_p+p]:mt-[0.65em]",
         "[&_ul]:pl-5 [&_ul]:mt-2 [&_ul]:mb-1 [&_li]:mb-1",
         "[&_ol]:pl-5 [&_ol]:mt-2 [&_ol]:mb-1",
         "[&_em]:italic [&_em]:font-display",
