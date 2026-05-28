@@ -4,10 +4,7 @@ import {
   ConversationContent,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
-import {
-  Message,
-  MessageContent,
-} from "@/components/ai-elements/message";
+import { Message, MessageContent } from "@/components/ai-elements/message";
 import { Response } from "@/components/ai-elements/response";
 import { Button } from "@/components/ui/button";
 import {
@@ -240,7 +237,7 @@ export const MessageList = ({
       <ConversationContent>
         <div
           ref={containerRef}
-          className="space-y-4 overscroll-contain max-w-3xl mx-auto w-full"
+          className="space-y-4 overscroll-contain max-w-5xl mx-auto w-full"
           onScroll={handleScroll}
           data-conversation-content
         >

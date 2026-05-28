@@ -24,7 +24,7 @@ export const MessageInput = ({
       }}
       className="p-4"
     >
-      <div className="flex gap-1 items-center bg-muted/50 rounded-xl border border-border/60 px-3 py-1">
+      <div className="flex gap-1 items-center bg-muted/50 rounded-xl border border-border/60 px-3 py-1 max-w-5xl mx-auto">
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}

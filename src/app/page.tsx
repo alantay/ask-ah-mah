@@ -20,7 +20,7 @@ function HomeContent() {
 
   return (
     <div className="bg-background h-full lg:h-full flex flex-col">
-      <main className="h-[calc(100dvh-3.25rem)] sm:h-[calc(100dvh-3.75rem)] md:h-[calc(100dvh-4.5rem)] lg:flex-1 lg:min-h-0">
+      <main className="xl:container mx-auto h-[calc(100dvh-3.25rem)] sm:h-[calc(100dvh-3.75rem)] md:h-[calc(100dvh-4.5rem)] lg:flex-1 lg:min-h-0">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col pt-2 lg:pt-0">
           {/* Tab strip — hidden on desktop (sidebar handles nav) */}
           <TabsList className="lg:hidden">
