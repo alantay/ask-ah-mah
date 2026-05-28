@@ -1,13 +1,12 @@
 import { missingUserId } from "@/lib/http";
-import { RecipeWithId } from "@/lib/recipes/schemas";
+import { RecipeBlockSchema, RecipeWithId } from "@/lib/recipes/schemas";
 import { openai } from "@ai-sdk/openai";
 import { streamText } from "ai";
 import { NextRequest, NextResponse } from "next/server";
 
 const MAX_INSTRUCTION_LENGTH = 500;
 
-const RECIPE_FIELDS =
-  "title, description, totalTimeMinutes, baseServings, ingredients, prep, steps, tags";
+const RECIPE_FIELDS = Object.keys(RecipeBlockSchema.shape).join(", ");
 
 function buildSystemPrompt(recipe: RecipeWithId): string {
   return `You are a recipe editor. Your task is to apply a targeted modification to the following recipe.
@@ -28,7 +27,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  await params; // resolve dynamic segment (unused but required by Next.js App Router)
+  const { id } = await params;
 
   try {
     const body: { userId?: string; instruction?: string; recipe?: RecipeWithId } =
@@ -43,11 +42,23 @@ export async function POST(
     }
 
     instruction = instruction.trim().slice(0, MAX_INSTRUCTION_LENGTH);
+    if (!instruction) {
+      return NextResponse.json({ error: "instruction is required" }, { status: 400 });
+    }
+
+    if (!recipe) {
+      return NextResponse.json({ error: "recipe is required" }, { status: 400 });
+    }
+
+    if (recipe.id !== id) {
+      return NextResponse.json({ error: "recipe id mismatch" }, { status: 400 });
+    }
 
     const result = streamText({
       model: openai("gpt-4.1-mini"),
-      system: buildSystemPrompt(recipe as RecipeWithId),
+      system: buildSystemPrompt(recipe),
       messages: [{ role: "user", content: instruction }],
+      maxOutputTokens: 1500,
     });
 
     return result.toTextStreamResponse();
