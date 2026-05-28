@@ -16,6 +16,7 @@ export function ServingsStepper({
   return (
     <div className="inline-flex items-center bg-card border border-border rounded-lg overflow-hidden shadow-[0_1px_0_var(--color-border-soft)]">
       <button
+        type="button"
         onClick={onDecrement}
         disabled={servings <= 1}
         aria-label="Decrease servings"
@@ -27,6 +28,7 @@ export function ServingsStepper({
         {servings}
       </span>
       <button
+        type="button"
         onClick={onIncrement}
         disabled={servings >= max}
         aria-label="Increase servings"
