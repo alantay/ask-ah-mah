@@ -1,10 +1,18 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { SessionProvider } from "@/contexts/SessionContext";
 import RecipeDisplay from "./RecipeDisplay";
 
 jest.mock("streamdown", () => ({
   Streamdown: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="streamdown">{children}</div>
   ),
+}));
+
+jest.mock("@/hooks/useSession", () => () => ({
+  userId: "user-123",
+  isLoading: false,
+  isAuthenticated: true,
+  user: { id: "user-123", name: "Test User", email: "test@example.com", image: null },
 }));
 
 const baseRecipe = {
@@ -23,7 +31,11 @@ const baseRecipe = {
 };
 
 const renderRecipe = (overrides: Partial<typeof baseRecipe> = {}) =>
-  render(<RecipeDisplay recipe={{ ...baseRecipe, ...overrides } as never} onBack={jest.fn()} />);
+  render(
+    <SessionProvider>
+      <RecipeDisplay recipe={{ ...baseRecipe, ...overrides } as never} onBack={jest.fn()} />
+    </SessionProvider>,
+  );
 
 describe("RecipeDisplay", () => {
   describe("Basic Rendering", () => {
@@ -118,11 +130,13 @@ describe("RecipeDisplay", () => {
     it("calls onStartCooking when provided and does not render CookingMode internally", () => {
       const onStartCooking = jest.fn();
       render(
-        <RecipeDisplay
-          recipe={recipeWithSteps}
-          onBack={jest.fn()}
-          onStartCooking={onStartCooking}
-        />,
+        <SessionProvider>
+          <RecipeDisplay
+            recipe={recipeWithSteps}
+            onBack={jest.fn()}
+            onStartCooking={onStartCooking}
+          />
+        </SessionProvider>,
       );
       fireEvent.click(screen.getByLabelText(/Start cooking/));
       expect(onStartCooking).toHaveBeenCalledTimes(1);
@@ -131,7 +145,11 @@ describe("RecipeDisplay", () => {
     });
 
     it("falls back to internal cooking mode when onStartCooking is not provided", () => {
-      render(<RecipeDisplay recipe={recipeWithSteps} onBack={jest.fn()} />);
+      render(
+        <SessionProvider>
+          <RecipeDisplay recipe={recipeWithSteps} onBack={jest.fn()} />
+        </SessionProvider>,
+      );
       fireEvent.click(screen.getByLabelText(/Start cooking/));
       expect(screen.getByText(/Exit cooking mode/i)).toBeInTheDocument();
     });
