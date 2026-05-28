@@ -43,6 +43,34 @@ export async function deleteRecipeForUser(recipeId: string, userId: string) {
   }
 }
 
+export async function updateRecipe(id: string, block: RecipeBlock) {
+  return await prisma.recipe.update({
+    where: { id },
+    data: {
+      name: block.title,
+      tags: normalizeTags(block.tags ?? []),
+      baseServings: block.baseServings,
+      ingredients: block.ingredients.map((ing: RecipeIngredientModel) => ({
+        name: ing.name,
+        category: ing.category ?? "Misc",
+        amount:
+          ing.amount !== undefined
+            ? Number.isNaN(parseFloat(ing.amount))
+              ? undefined
+              : parseFloat(ing.amount)
+            : undefined,
+        unit: ing.unit,
+        note: ing.note,
+      })),
+      prep: block.prep ?? [],
+      steps: block.steps ?? [],
+      description: block.description,
+      totalTimeMinutes: block.totalTimeMinutes,
+      instructions: JSON.stringify(block),
+    },
+  });
+}
+
 export async function saveRecipeFromBlock(block: RecipeBlock, userId: string, recipeId?: string) {
   const tags = normalizeTags(block.tags ?? []);
   const photo = await fetchRecipePhoto(block.title, tags);
