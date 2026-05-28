@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 import { fetcher } from "@/lib/utils";
 import { ShoppingCart, TimerIcon } from "lucide-react";
 import { useState } from "react";
-import { CookingMode } from "@/features/Recipe";
+import { CookingMode, ServingsStepper } from "@/features/Recipe";
 import { toast } from "sonner";
 import useSWR, { useSWRConfig } from "swr";
 import { ScaledNum, scaleAmount } from "@/features/Recipe";
@@ -52,48 +52,6 @@ export interface RecipeLetterProps {
   onSend?: (text: string) => void;
 }
 
-function ServingsStepper({
-  servings,
-  onDecrement,
-  onIncrement,
-}: {
-  servings: number;
-  baseServings: number;
-  onDecrement: () => void;
-  onIncrement: () => void;
-}) {
-  const BUTTON_BASE =
-    "w-7 border-none bg-transparent cursor-pointer text-foreground text-base font-semibold disabled:cursor-not-allowed disabled:text-muted-foreground";
-
-  return (
-    <div className="inline-flex items-stretch border border-border rounded-lg bg-card overflow-hidden shadow-[0_1px_0_var(--border-soft)] h-8">
-      <button
-        onClick={onDecrement}
-        disabled={servings <= 1}
-        className={cn(
-          BUTTON_BASE,
-          "border-r border-border disabled:opacity-50",
-        )}
-        aria-label="Decrease servings"
-      >
-        −
-      </button>
-      <div className="flex justify-center items-center min-w-4 px-2">
-        <span className="font-display font-semibold text-[14px] text-foreground tabular-nums">
-          {servings}
-        </span>
-      </div>
-      <button
-        onClick={onIncrement}
-        disabled={servings >= 12}
-        className={cn(BUTTON_BASE, "border-l border-border")}
-        aria-label="Increase servings"
-      >
-        +
-      </button>
-    </div>
-  );
-}
 
 function NeedCartButton({
   ingredientName,
@@ -325,9 +283,8 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
               </span>
               <ServingsStepper
                 servings={servings}
-                baseServings={recipe.baseServings}
                 onDecrement={() => setServings((s) => Math.max(1, s - 1))}
-                onIncrement={() => setServings((s) => Math.min(12, s + 1))}
+                onIncrement={() => setServings((s) => s + 1)}
               />
             </div>
           </div>
