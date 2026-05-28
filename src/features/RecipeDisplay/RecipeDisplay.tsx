@@ -1,6 +1,6 @@
 "use client";
 
-import { CookingMode } from "@/features/Recipe";
+import { CookingMode, ServingsStepper } from "@/features/Recipe";
 import { useSessionContext } from "@/contexts/SessionContext";
 import { RecipeIngredient, RecipeStep, RecipeWithId } from "@/lib/recipes/schemas";
 import Image from "next/image";
@@ -276,27 +276,11 @@ function RecipeBody({
               <h2 className="font-display font-semibold text-[24px] sm:text-[26px] text-foreground tracking-tight m-0">
                 What to gather
               </h2>
-              <div className="inline-flex items-center bg-card border border-border rounded-lg overflow-hidden shadow-[0_1px_0_var(--color-border-soft)]">
-                <button
-                  onClick={() => setServings((s) => Math.max(1, s - 1))}
-                  disabled={servings <= 1}
-                  aria-label="Decrease servings"
-                  className="w-8 h-8 flex items-center justify-center text-foreground text-base font-semibold border-r border-border hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  −
-                </button>
-                <span className="min-w-11 text-center font-display font-semibold text-[15px] text-foreground tabular-nums">
-                  {servings}
-                </span>
-                <button
-                  onClick={() => setServings((s) => Math.min(20, s + 1))}
-                  disabled={servings >= 20}
-                  aria-label="Increase servings"
-                  className="w-8 h-8 flex items-center justify-center text-foreground text-base font-semibold border-l border-border hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  +
-                </button>
-              </div>
+              <ServingsStepper
+                servings={servings}
+                onDecrement={() => setServings((s) => Math.max(1, s - 1))}
+                onIncrement={() => setServings((s) => s + 1)}
+              />
             </div>
             <ul className="list-none p-0 mt-2 border-t border-border">
               {ingredients.map((ing, i) => {

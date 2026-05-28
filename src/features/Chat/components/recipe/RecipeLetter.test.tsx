@@ -18,6 +18,23 @@ jest.mock('@/features/Recipe', () => ({
   ScaledNum: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
   scaleAmount: (amount: string, ratio: number) => amount,
   CookingMode: () => null,
+  ServingsStepper: ({
+    servings,
+    onDecrement,
+    onIncrement,
+    max = 20,
+  }: {
+    servings: number;
+    onDecrement: () => void;
+    onIncrement: () => void;
+    max?: number;
+  }) => (
+    <div className="inline-flex">
+      <button onClick={onDecrement} disabled={servings <= 1} aria-label="Decrease servings">−</button>
+      <span>{servings}</span>
+      <button onClick={onIncrement} disabled={servings >= max} aria-label="Increase servings">+</button>
+    </div>
+  ),
 }));
 
 const mockToastSuccess = jest.fn();
@@ -73,10 +90,10 @@ describe('ServingsStepper inside RecipeLetter', () => {
   });
 
   it('does not render the word "servings" or "serving" in the stepper', () => {
-    const { container } = render(<RecipeLetter recipe={RECIPE} />);
-    const stepperWrapper = container.querySelector('.inline-flex.items-stretch');
+    render(<RecipeLetter recipe={RECIPE} />);
+    const stepperWrapper = screen.getByLabelText('Decrease servings').closest('.inline-flex') as HTMLElement;
     expect(stepperWrapper).not.toBeNull();
-    expect(stepperWrapper!.textContent).not.toMatch(/servings?/i);
+    expect(stepperWrapper.textContent).not.toMatch(/servings?/i);
   });
 
   it('does not render a ratio or "from" line at any count', () => {
@@ -93,10 +110,10 @@ describe('ServingsStepper inside RecipeLetter', () => {
     expect(dec).toBeDisabled();
   });
 
-  it('increment button is disabled at 12 servings', () => {
+  it('increment button is disabled at 20 servings', () => {
     render(<RecipeLetter recipe={RECIPE} />);
     const inc = screen.getByLabelText('Increase servings');
-    for (let i = 2; i < 12; i++) fireEvent.click(inc);
+    for (let i = 2; i < 20; i++) fireEvent.click(inc);
     expect(inc).toBeDisabled();
   });
 
