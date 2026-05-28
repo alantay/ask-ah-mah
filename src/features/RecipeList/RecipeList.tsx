@@ -1,12 +1,9 @@
 "use client";
 
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useSessionContext } from "@/contexts/SessionContext";
-import { CookingMode } from "@/features/Recipe";
-import RecipeDisplay from "@/features/RecipeDisplay/RecipeDisplay";
-import { RecipeStep, RecipeWithId } from "@/lib/recipes/schemas";
+import { RecipeWithId } from "@/lib/recipes/schemas";
 import { fetcher } from "@/lib/utils";
-import { VisuallyHidden } from "radix-ui";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
@@ -22,10 +19,9 @@ interface RecipeListProps {
 
 export default function RecipeList({ onChatClick }: RecipeListProps) {
   const { userId } = useSessionContext();
+  const router = useRouter();
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [openRecipe, setOpenRecipe] = useState<RecipeWithId | null>(null);
-  const [cookingRecipe, setCookingRecipe] = useState<RecipeWithId | null>(null);
   const [showAdd, setShowAdd] = useState(false);
 
   const { data: recipes, isLoading } = useSWR<RecipeWithId[]>(
@@ -176,7 +172,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
               <RecipeCard
                 key={recipe.id}
                 recipe={recipe}
-                onSelect={(r) => setOpenRecipe(r)}
+                onSelect={(r) => router.push(`/recipe/${r.id}`)}
                 onDelete={deleteRecipe}
               />
             ))}
@@ -185,39 +181,6 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
       </div>
 
       <AddRecipeModal open={showAdd} onOpenChange={setShowAdd} />
-
-      <Dialog
-        open={!!openRecipe && !cookingRecipe}
-        onOpenChange={(o) => !o && setOpenRecipe(null)}
-      >
-        <DialogContent
-          showCloseButton={false}
-          className="max-w-3xl w-[95vw] sm:w-[92vw] h-[92vh] p-0 overflow-hidden bg-background"
-        >
-          <VisuallyHidden.Root>
-            <DialogTitle>{openRecipe?.name ?? "Recipe"}</DialogTitle>
-          </VisuallyHidden.Root>
-          {openRecipe && (
-            <RecipeDisplay
-              recipe={openRecipe}
-              onBack={() => setOpenRecipe(null)}
-              onStartCooking={() => {
-                setCookingRecipe(openRecipe);
-                setOpenRecipe(null);
-              }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {cookingRecipe && (
-        <CookingMode
-          title={cookingRecipe.name}
-          steps={(cookingRecipe.steps ?? []) as RecipeStep[]}
-          prep={(cookingRecipe.prep ?? []) as string[]}
-          onExit={() => setCookingRecipe(null)}
-        />
-      )}
     </div>
   );
 }
