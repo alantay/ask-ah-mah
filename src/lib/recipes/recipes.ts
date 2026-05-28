@@ -43,7 +43,11 @@ export async function deleteRecipeForUser(recipeId: string, userId: string) {
   }
 }
 
-export async function updateRecipe(id: string, block: RecipeBlock) {
+export async function updateRecipeForUser(id: string, userId: string, block: RecipeBlock) {
+  const existing = await prisma.recipe.findUnique({ where: { id } });
+  if (!existing || existing.userId !== userId) {
+    throw new Error("not found");
+  }
   return await prisma.recipe.update({
     where: { id },
     data: {
@@ -66,7 +70,7 @@ export async function updateRecipe(id: string, block: RecipeBlock) {
       steps: block.steps ?? [],
       description: block.description,
       totalTimeMinutes: block.totalTimeMinutes,
-      instructions: JSON.stringify(block),
+      instructions: block.description ?? "",
     },
   });
 }

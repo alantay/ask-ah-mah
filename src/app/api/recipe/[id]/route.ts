@@ -1,6 +1,6 @@
-import { updateRecipe } from "@/lib/recipes";
+import { updateRecipeForUser } from "@/lib/recipes";
 import { missingUserId } from "@/lib/http";
-import { prisma } from "@/lib/db";
+import { RecipeBlockSchema } from "@/lib/recipes/schemas";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
@@ -13,11 +13,18 @@ export async function PATCH(
 
   if (!userId) return missingUserId();
 
-  const existing = await prisma.recipe.findUnique({ where: { id } });
-  if (!existing || existing.userId !== userId) {
-    return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
+  const parsed = RecipeBlockSchema.safeParse(recipe);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid recipe payload" }, { status: 400 });
   }
 
-  const updated = await updateRecipe(id, recipe);
-  return NextResponse.json(updated);
+  try {
+    const updated = await updateRecipeForUser(id, userId, parsed.data);
+    return NextResponse.json(updated);
+  } catch (err) {
+    if (err instanceof Error && err.message === "not found") {
+      return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
+    }
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }
