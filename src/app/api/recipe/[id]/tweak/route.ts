@@ -1,8 +1,12 @@
 import { missingUserId } from "@/lib/http";
-import { RecipeBlockSchema, RecipeWithId } from "@/lib/recipes/schemas";
+import { RecipeBlockSchema } from "@/lib/recipes/schemas";
+import type { RecipeWithId } from "@/lib/recipes/schemas";
 import { openai } from "@ai-sdk/openai";
 import { streamText } from "ai";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+const RecipeWithIdSchema = RecipeBlockSchema.extend({ id: z.string() });
 
 const MAX_INSTRUCTION_LENGTH = 500;
 
@@ -50,7 +54,12 @@ export async function POST(
       return NextResponse.json({ error: "recipe is required" }, { status: 400 });
     }
 
-    if (recipe.id !== id) {
+    const parsedRecipe = RecipeWithIdSchema.safeParse(recipe);
+    if (!parsedRecipe.success) {
+      return NextResponse.json({ error: "Invalid recipe payload", details: parsedRecipe.error.flatten() }, { status: 400 });
+    }
+
+    if (parsedRecipe.data.id !== id) {
       return NextResponse.json({ error: "recipe id mismatch" }, { status: 400 });
     }
 

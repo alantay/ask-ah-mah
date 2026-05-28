@@ -51,7 +51,7 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **5-state interactive flow** inside `RecipeDisplay`: resting → open → streaming → preview → saved.
 - **State 1 (Resting)**: inline dashed-border "Want Ah Mah to tweak this?" button below the Ah Mah note section.
 - **State 2 (Open)**: fixed bottom bar with granny avatar, Ah Mah voice prompt, 4 quick-tweak chips, text input + send button, ✕ dismiss.
-- **State 3 (Streaming)**: calls `POST /api/recipe/[id]/tweak` (already existed), accumulates streaming JSON, progressively updates recipe; bottom bar shows "You said + dot animation".
+- **State 3 (Streaming)**: calls `POST /api/recipe/[id]/tweak`, accumulates streaming JSON, progressively updates recipe; bottom bar shows "You said + dot animation".
 - **State 4 (Preview)**: stream done; bottom bar shows Ah Mah message + Save / Try a different tweak / Discard actions. Changed ingredients and steps get `bg-amber-50` highlight.
 - **State 5 (Saved)**: calls `PATCH /api/recipe/[id]` to persist; sonner success toast; "Tweak again" button replaces resting-state button; "tweaked just now" badge in Ah Mah note.
 - Tweak state fully contained in `RecipeDisplay` (no page-level changes needed). `userId` sourced from `useSessionContext` internally.

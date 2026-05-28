@@ -679,7 +679,7 @@ export default function RecipeDisplay({
   const originalRecipeRef = useRef<RecipeWithId>(recipe);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const steps = (recipe.steps ?? []) as RecipeStep[];
+  const steps = (tweakedRecipe.steps ?? []) as RecipeStep[];
   const canCook = steps.length > 0;
 
   // Compute changed fields (memoised — only recalculates when the recipes change)
@@ -690,6 +690,15 @@ export default function RecipeDisplay({
   );
 
   // ── Handlers ───────────────────────────────────────────────────────────────
+
+  // Reset tweak state when the recipe changes (e.g. navigating to a different recipe)
+  useEffect(() => {
+    setTweakedRecipe(recipe);
+    originalRecipeRef.current = recipe;
+    setTweakState("resting");
+    setIsSaving(false);
+    setInstruction("");
+  }, [recipe.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Focus the input whenever the tweak bar opens
   useEffect(() => {
@@ -730,6 +739,7 @@ export default function RecipeDisplay({
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let accumulated = "";
+        let parsedAtLeastOnce = false;
 
         try {
           while (true) {
@@ -754,6 +764,7 @@ export default function RecipeDisplay({
                 instructions: originalRecipeRef.current.instructions,
               };
               setTweakedRecipe(updatedRecipe);
+              parsedAtLeastOnce = true;
             } catch {
               // JSON not yet complete — keep accumulating
             }
@@ -762,7 +773,13 @@ export default function RecipeDisplay({
           reader.cancel().catch(() => {});
         }
 
-        setTweakState("preview");
+        if (parsedAtLeastOnce) {
+          setTweakState("preview");
+        } else {
+          // AI responded with non-JSON (e.g. refused the request) — surface an error
+          toast.error("Ah Mah couldn't tweak this one. Try a different instruction?");
+          setTweakState("open");
+        }
       } catch (err) {
         console.error("[RecipeDisplay] tweak stream error:", err);
         toast.error("Aiyah, something went wrong. Try again?");
