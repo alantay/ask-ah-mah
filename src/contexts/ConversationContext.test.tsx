@@ -101,21 +101,14 @@ describe("ConversationContext", () => {
     consoleSpy.mockRestore();
   });
 
-  it("sets activeConversationId from the active-conversation endpoint when localStorage is empty", async () => {
-    const conversation = makeConversation("conv-from-api");
-    swrData.set(
-      `/api/conversation?active=true&userId=${mockUserId}`,
-      { conversation }
-    );
+  it("starts in staging state (null) when localStorage is empty", () => {
     swrData.set(`/api/conversation?userId=${mockUserId}`, {
-      conversations: [conversation],
+      conversations: [makeConversation("conv-from-api")],
     });
 
     const { result } = renderHook(() => useConversationContext(), { wrapper });
 
-    await waitFor(() => {
-      expect(result.current.activeConversationId).toBe("conv-from-api");
-    });
+    expect(result.current.activeConversationId).toBe(null);
   });
 
   it("uses the localStorage value instead of fetching an active conversation", () => {
@@ -129,33 +122,24 @@ describe("ConversationContext", () => {
     expect(result.current.activeConversationId).toBe("conv-from-storage");
   });
 
-  it("startNewConversation reuses the server-returned empty conversation", async () => {
+  it("startNewConversation clears active id and enters staging state without a fetch", () => {
     const current = makeConversation("conv-current", {
       title: "Dinner",
       _count: { messages: 2 },
     });
-    const empty = makeConversation("conv-empty");
     localStorageMock.getItem.mockReturnValueOnce("conv-current");
     swrData.set(`/api/conversation?userId=${mockUserId}`, {
-      conversations: [current, empty],
-    });
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ conversation: empty }),
+      conversations: [current],
     });
 
     const { result } = renderHook(() => useConversationContext(), { wrapper });
 
-    await act(async () => {
-      await result.current.startNewConversation();
+    act(() => {
+      result.current.startNewConversation();
     });
 
-    expect(mockFetch).toHaveBeenCalledWith("/api/conversation", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: mockUserId }),
-    });
-    expect(result.current.activeConversationId).toBe("conv-empty");
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(result.current.activeConversationId).toBe(null);
   });
 
   it("renameConversation PATCHes the given id", async () => {
@@ -232,7 +216,9 @@ describe("ConversationContext", () => {
       await result.current.deleteConversation("conv-delete");
     });
 
-    expect(result.current.activeConversationId).toBe("conv-delete");
+    await waitFor(() => {
+      expect(result.current.activeConversationId).toBe("conv-delete");
+    });
     expect(toast.error).toHaveBeenCalledWith(
       "Could not delete conversation. Try again."
     );
@@ -240,25 +226,18 @@ describe("ConversationContext", () => {
 
   it("deleteConversation rolls back to original active id when no fallback exists and DELETE fails", async () => {
     const { toast } = await import("sonner");
-    // Only one conversation with messages — no fallback will be found, so startNewConversation runs
+    // Only one conversation with messages — enters staging state, then rolls back on failure
     const active = makeConversation("conv-only", {
       title: "Solo Chat",
       _count: { messages: 2 },
     });
-    const newConv = makeConversation("conv-new");
     localStorageMock.getItem.mockReturnValueOnce("conv-only");
     swrData.set(`/api/conversation?userId=${mockUserId}`, {
       conversations: [active],
     });
 
-    // First fetch: POST to create new conversation (startNewConversation)
-    // Second fetch: DELETE that fails
-    mockFetch
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ conversation: newConv }),
-      })
-      .mockResolvedValueOnce({ ok: false });
+    // DELETE fails
+    mockFetch.mockResolvedValueOnce({ ok: false });
 
     const { result } = renderHook(() => useConversationContext(), { wrapper });
 
@@ -267,7 +246,9 @@ describe("ConversationContext", () => {
     });
 
     // After DELETE failure the original active id must be restored
-    expect(result.current.activeConversationId).toBe("conv-only");
+    await waitFor(() => {
+      expect(result.current.activeConversationId).toBe("conv-only");
+    });
     // SWR cache rolled back — globalMutate called with previousConversations (the original list)
     expect(mockMutate).toHaveBeenCalledWith(
       `/api/conversation?userId=${mockUserId}`,

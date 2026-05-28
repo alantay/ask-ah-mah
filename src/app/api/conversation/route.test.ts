@@ -1,6 +1,5 @@
 import { GET, POST } from "./route";
 import {
-  getOrCreateActiveConversation,
   getOrCreateEmptyConversation,
   listConversations,
 } from "@/lib/conversations";
@@ -20,12 +19,10 @@ jest.mock("next/server", () => ({
 
 jest.mock("@/lib/conversations", () => ({
   listConversations: jest.fn(),
-  getOrCreateActiveConversation: jest.fn(),
   getOrCreateEmptyConversation: jest.fn(),
 }));
 
 const mockedListConversations = jest.mocked(listConversations);
-const mockedGetOrCreateActiveConversation = jest.mocked(getOrCreateActiveConversation);
 const mockedGetOrCreateEmptyConversation = jest.mocked(getOrCreateEmptyConversation);
 
 const createMockRequest = (url: string, options: RequestInit = {}) => {
@@ -67,24 +64,6 @@ function makeConversation(overrides: Partial<{
 describe("Conversation API Routes", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-  });
-
-  describe("GET ?active=true", () => {
-    it("should return the active conversation for a user", async () => {
-      const conv = makeConversation({ id: "conv-active", userId: "test-user-123" });
-      mockedGetOrCreateActiveConversation.mockResolvedValue(conv);
-
-      const request = createMockRequest(
-        "http://localhost:3000/api/conversation?active=true&userId=test-user-123"
-      );
-      const response = await GET(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data).toEqual({ conversation: conv });
-      expect(mockedGetOrCreateActiveConversation).toHaveBeenCalledWith("test-user-123");
-      expect(mockedListConversations).not.toHaveBeenCalled();
-    });
   });
 
   describe("GET /api/conversation", () => {
