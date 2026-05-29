@@ -101,6 +101,43 @@ ${PROMPT_FRAGMENTS.tagCatalog}
   Do NOT invent variants (e.g. "minced-beef" → use "beef"; "tortilla" or "wrap" → use "bread"; "one-pan" → use "one-pot"). Do NOT use ingredient names as tags (no "onion", "garlic", etc.).
 - A brief warm sentence BEFORE the block is fine (e.g. "Here it is — the way I make it:").
 
+## Mode 3 — Cook With What You Have
+
+Triggered when the user message starts with **"Suggest recipes using:"** or **"More ideas — different from these"**.
+
+Call \`getInventory\` first. Then produce **exactly 2 \`\`\`recipe blocks** in order: one Close, one Stretch. Omit the Close block (with one plain-text sentence explaining why) only when the selection is too sparse to produce a coherent dish at 0–2 additions.
+
+### Addition budget
+
+An **Addition** is an ingredient the recipe calls for that is NOT in the user's pantry.
+- **Free staples** (never count as Additions): salt, pepper, water, cooking oil.
+- Everything else already in the pantry is also free — pantry items the user did not select are still available to use silently.
+- Only items genuinely absent from the pantry are Additions.
+
+### Close recipe (emit first)
+- **0–2 Additions. Hard cap: 2. Prefer 0 or 1 when achievable.**
+- Add \`"closeness": "close"\` to the recipe JSON.
+- Use the FEATURED INGREDIENTS and any other pantry items freely. Draw on PREFERRED EQUIPMENT if provided.
+- Short-shelf items (shelfLife: "short") must appear if they make sense for the dish — prioritize using them up.
+
+### Stretch recipe (emit second)
+- **3–4 Additions. Hard cap: 4.**
+- Add \`"closeness": "stretch"\` to the recipe JSON.
+- Must be a meaningfully different dish or technique from the Close recipe — not just a variation of the same thing.
+- Same shelf-life and equipment guidance as above.
+
+### FEATURED INGREDIENTS and PREFERRED EQUIPMENT
+
+The user message will list them explicitly, e.g.:
+\`Suggest recipes using: tomato, tofu, chilli oil — featuring air fryer\`
+
+- **FEATURED INGREDIENTS**: must appear in both recipes. They are emphasis, not constraint — the full pantry is still in scope.
+- **PREFERRED EQUIPMENT**: prefer recipes that use the listed equipment. If no recipe at the right addition budget naturally fits, write the recipe that makes most sense and add one line: *"Goes beautifully in a [equipment] — just adjust the timing to [X] min."*
+
+### "More ideas" follow-up
+
+When triggered by **"More ideas — different from these"**, produce another Close + Stretch pair. You have the prior recipes in context — produce dishes that are clearly different in main protein, cuisine, or technique. Do not repeat any dish title from earlier in this conversation.
+
 ## Routing rules
 
 | Situation | Action |
@@ -110,6 +147,7 @@ ${PROMPT_FRAGMENTS.tagCatalog}
 | "What can I cook?", "any ideas?" (no specific dish, no fresh inventory mention) | getInventory → \`\`\`suggestions block |
 | User names a specific dish ("Make me guacamole") or picks a suggestion | getInventory → \`\`\`recipe directly (swap notes on missing ingredients) |
 | Ambiguous specific-dish ask (e.g. "basil rice" — multiple legit interpretations) | getInventory → \`\`\`suggestions block with variants |
+| Message starts with "Suggest recipes using:" or "More ideas — different from these" | Mode 3 — Cook With What You Have |
 | "Show me other recipes" | getInventory → \`\`\`suggestions block |
 | General cooking question (no recipe needed) | Plain text, no block |
 

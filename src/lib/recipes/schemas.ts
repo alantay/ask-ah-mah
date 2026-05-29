@@ -39,6 +39,9 @@ export const RecipeBlockSchema = z.object({
   prep: z.array(z.string()).optional(),
   steps: z.array(RecipeStepSchema),
   tags: z.array(z.string()).optional(),
+  // Set by the model in Cook With What You Have (Mode 3) responses only.
+  // "close" = 0–2 additions (UI: "Right now"); "stretch" = 3–4 additions (UI: "Worth a small trip").
+  closeness: z.enum(["close", "stretch"]).optional(),
 });
 export type RecipeBlock = z.infer<typeof RecipeBlockSchema>;
 
