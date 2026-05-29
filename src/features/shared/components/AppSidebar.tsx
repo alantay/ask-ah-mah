@@ -4,8 +4,9 @@ import AboutPopOver from "@/components/AboutPopOver";
 import { AuthButton } from "@/features/Auth";
 import { Conversations } from "@/features/Conversations/Conversations";
 import { useConversationContext } from "@/contexts/ConversationContext";
+import { useActiveTab } from "@/hooks/useActiveTab";
 import Image from "next/image";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 const ChatIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -36,17 +37,9 @@ const NAV_ITEMS = [
 
 export function AppSidebar() {
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   const { activeConversationId, pendingConversationId, conversations, startNewConversation } = useConversationContext();
 
-  const VALID_TABS = ["chat", "pantry", "cookbook"] as const;
-  const raw = searchParams.get("tab");
-  const activeTab = pathname.startsWith("/recipe")
-    ? "cookbook"
-    : (VALID_TABS as readonly string[]).includes(raw ?? "")
-    ? raw!
-    : "chat";
+  const activeTab = useActiveTab();
 
   const navigate = (tab: string) => {
     router.replace(`/?tab=${tab}`, { scroll: false });

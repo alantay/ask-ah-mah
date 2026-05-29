@@ -1,6 +1,7 @@
 "use client";
 
 import { useConversationContext } from "@/contexts/ConversationContext";
+import { useActiveTab } from "@/hooks/useActiveTab";
 import type { ConversationEntity } from "@/lib/conversations";
 import { ConversationItem } from "./components/ConversationItem";
 import { ConversationListSkeleton } from "./components/ConversationListSkeleton";
@@ -46,6 +47,8 @@ export function Conversations({ onItemClick }: ConversationsProps) {
     deleteConversation,
   } = useConversationContext();
 
+  const isChatActive = useActiveTab() === "chat";
+
   const committedConversations = allConversations.filter(
     (c) => (c._count?.messages ?? 0) > 0 || c.id === pendingConversationId
   );
@@ -82,7 +85,7 @@ export function Conversations({ onItemClick }: ConversationsProps) {
                     <ConversationItem
                       key={conv.id}
                       conversation={conv}
-                      isActive={conv.id === activeConversationId || conv.id === pendingConversationId}
+                      isActive={isChatActive && (conv.id === activeConversationId || conv.id === pendingConversationId)}
                       onClick={() => handleItemClick(conv.id)}
                       onRename={(newTitle) => renameConversation(conv.id, newTitle)}
                       onDelete={() => deleteConversation(conv.id)}

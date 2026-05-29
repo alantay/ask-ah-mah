@@ -108,7 +108,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
         <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
           {!isEmpty && (
             <>
-              <button
+              {tagEntries.length > 0 && <button
                 onClick={() => setMobileFilterOpen(true)}
                 className="sm:hidden shrink-0 flex items-center gap-1.5 px-3 py-[7px] font-sans text-[13px] font-medium text-muted-foreground bg-card border border-border rounded-full cursor-pointer hover:text-foreground transition-colors"
               >
@@ -121,7 +121,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
                     {activeTags.size}
                   </span>
                 )}
-              </button>
+              </button>}
               <label className="flex items-center gap-2 px-3 py-[7px] bg-card border border-border rounded-full sm:min-w-[200px] flex-1 sm:flex-none text-muted-foreground cursor-text">
                 <svg width="13" height="13" viewBox="0 0 16 16" fill="none" className="shrink-0">
                   <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.4" />
