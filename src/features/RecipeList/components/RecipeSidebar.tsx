@@ -212,6 +212,7 @@ function CheckboxRow({
   return (
     <button
       onClick={onToggle}
+      aria-pressed={checked}
       className="flex items-center gap-2.5 px-1 py-[5px] rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-left w-full cursor-pointer group"
     >
       <span
