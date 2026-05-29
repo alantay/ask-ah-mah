@@ -50,8 +50,8 @@ const RECIPE: RecipeLetterProps['recipe'] = {
   title: 'Ginger Chicken',
   baseServings: 2,
   ingredients: [
-    { name: 'chicken thigh', category: 'Protein', amount: '500', unit: 'g' },
-    { name: 'bok choy', category: 'Vegetable', amount: '1', unit: 'bunch' },
+    { name: 'chicken thigh', category: 'Protein', amount: '500', unit: 'g', note: undefined },
+    { name: 'bok choy', category: 'Vegetable', amount: '1', unit: 'bunch', note: undefined },
   ],
   steps: [
     { title: 'Marinate', body: 'Toss chicken with soy.' },

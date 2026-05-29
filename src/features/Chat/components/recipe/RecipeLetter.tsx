@@ -1,16 +1,14 @@
 "use client";
 
 import { useSessionContext } from "@/contexts/SessionContext";
-import {
-  Category,
-  InventoryItem,
-} from "@/lib/inventory/schemas";
+import { InventoryItem } from "@/lib/inventory/schemas";
 
 type GetInventoryResponse = {
   kitchenwareInventory: InventoryItem[];
   ingredientInventory: InventoryItem[];
 };
 import { ingredientMatches } from "@/lib/recipes/matchIngredient";
+import { RecipeBlock, RecipeIngredientModel } from "@/lib/recipes/schemas";
 import { cn } from "@/lib/utils";
 import { fetcher } from "@/lib/utils";
 import { ShoppingCart, TimerIcon } from "lucide-react";
@@ -20,35 +18,9 @@ import { toast } from "sonner";
 import useSWR, { useSWRConfig } from "swr";
 import { ScaledNum, scaleAmount } from "@/features/Recipe";
 
-interface Ingredient {
-  name: string;
-  category?: Category;
-  amount?: string;
-  unit?: string;
-  note?: string;
-}
-
-interface Step {
-  title: string;
-  body: string;
-  tip?: string;
-}
-
-interface RecipeData {
-  title: string;
-  description?: string;
-  totalTimeMinutes?: number;
-  baseServings: number;
-  ingredients: Ingredient[];
-  prep?: string[];
-  steps: Step[];
-  tags?: string[];
-  closeness?: "close" | "stretch";
-}
-
 export interface RecipeLetterProps {
-  recipe: RecipeData;
-  onSave?: (recipe: RecipeData) => void;
+  recipe: RecipeBlock;
+  onSave?: (recipe: RecipeBlock) => void;
   isSaved?: boolean;
   onSend?: (text: string) => void;
 }
@@ -99,7 +71,7 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
     fetcher,
   );
 
-  const addToPantry = async (ing: Ingredient) => {
+  const addToPantry = async (ing: RecipeIngredientModel) => {
     if (!userId || inFlight.has(ing.name)) return;
     setInFlight((prev) => new Set(prev).add(ing.name));
     try {

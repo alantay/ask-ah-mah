@@ -32,7 +32,14 @@ export function InventoryItemRow({
       <li
         role="checkbox"
         aria-checked={selected}
+        tabIndex={0}
         onClick={() => onToggle?.(item.id)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onToggle?.(item.id);
+          }
+        }}
         className={cn(
           "flex items-center gap-2.5 py-1.5 border-b border-dotted border-border last:border-0 cursor-pointer select-none transition-colors",
           selected && "text-foreground",

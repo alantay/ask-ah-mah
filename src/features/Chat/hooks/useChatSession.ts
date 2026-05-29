@@ -175,8 +175,9 @@ export function useChatSession() {
     if (status !== "ready") return;
     if (activeConversationId !== null) return; // only in staging
     const msg = pendingCookWithMessage;
-    clearCookWithMessage();
-    void handleSendMessage(msg);
+    handleSendMessage(msg)
+      .then(() => clearCookWithMessage())
+      .catch((err) => console.error("Cook-with auto-send failed:", err));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingCookWithMessage, status, activeConversationId]);
 

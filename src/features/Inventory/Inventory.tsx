@@ -90,10 +90,11 @@ export function buildCookWithMessage(
 ): string {
   const names = selectedIngredients.map((i) => i.name).join(", ");
   const equipment = selectedEquipment.map((i) => i.name).join(", ");
+  const ingredientClause = names || "no featured ingredients";
   if (equipment) {
-    return `Suggest recipes using: ${names} — featuring ${equipment}`;
+    return `Suggest recipes using: ${ingredientClause}. Kitchenware: ${equipment}`;
   }
-  return `Suggest recipes using: ${names}`;
+  return `Suggest recipes using: ${ingredientClause}`;
 }
 
 const Inventory = () => {

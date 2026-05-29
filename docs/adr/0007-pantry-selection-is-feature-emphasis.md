@@ -27,7 +27,7 @@ The selection is a *preference signal*, not a fence. The user is saying "feature
 
 ## Why not alternatives
 
-**Pure hard constraint (option 1).** Most literal reading of the feature name, and the most attractive choice for honesty. Rejected because, in practice, zero-addition recipes from a typical user selection are usually pathological — "plain rice with tofu," "boiled noodles with tomato." The model is forced to write slop to honor the constraint, and the user blames the model. The Stretch slot — even with the floor of zero — would be the recipe the user actually wants anyway.
+**Pure hard constraint (option 1).** Most literal reading of the feature name, and the most attractive choice for honesty. Rejected because, in practice, zero-addition recipes from a typical user selection are usually pathological — "plain rice with tofu," "boiled noodles with tomato." The model is forced to write slop to honor the constraint, and the user blames the model. The Stretch slot — even with the floor of 3 additions — would be the recipe the user actually wants anyway.
 
 **Hint with no budget (option 3).** Without a numeric contract, the model drifts toward "any recipe that incidentally uses one of these ingredients," and the feature collapses into "chat, but with a preselected prompt." The Close/Stretch split with explicit Addition counts is what makes the response distinguishable from a free-form chat suggestion.
 
