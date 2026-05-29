@@ -90,3 +90,53 @@ export type RecipeWithId = Recipe & {
   photographerName?: string | null;
   photographerUrl?: string | null;
 };
+
+// Structured change list returned by the tweak model alongside the updated recipe
+export const ChangeKindSchema = z.enum([
+  "title_updated",
+  "description_updated",
+  "tags_updated",
+  "servings_updated",
+  "time_updated",
+  "ingredient_added",
+  "ingredient_removed",
+  "ingredient_changed",
+  "step_added",
+  "step_removed",
+  "step_replaced",
+  "prep_updated",
+]);
+export type ChangeKind = z.infer<typeof ChangeKindSchema>;
+
+export const ChangeEntrySchema = z.object({
+  kind: ChangeKindSchema,
+  ref: z.union([z.string(), z.number()]).optional(),
+  label: z.string(),
+});
+export type ChangeEntry = z.infer<typeof ChangeEntrySchema>;
+
+export const TweakResponseSchema = z.object({
+  recipe: RecipeBlockSchema,
+  changes: z.array(ChangeEntrySchema),
+});
+export type TweakResponse = z.infer<typeof TweakResponseSchema>;
+
+export function recipeWithIdToBlock(r: RecipeWithId) {
+  return {
+    id: r.id,
+    title: r.name,
+    description: r.description,
+    totalTimeMinutes: r.totalTimeMinutes,
+    baseServings: r.baseServings,
+    ingredients: r.ingredients.map((i) => ({
+      name: i.name,
+      category: i.category,
+      amount: i.amount != null ? String(i.amount) : undefined,
+      unit: i.unit,
+      note: i.note,
+    })),
+    prep: r.prep,
+    steps: r.steps ?? [],
+    tags: r.tags,
+  };
+}

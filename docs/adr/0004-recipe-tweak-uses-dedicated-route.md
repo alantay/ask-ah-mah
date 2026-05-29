@@ -1,6 +1,6 @@
 # ADR-0004 — Recipe Tweak uses a dedicated API route
 
-**Status:** Accepted
+**Status:** Superseded by [ADR-0005](0005-tweak-bench-multi-turn.md)
 
 ## Context
 
