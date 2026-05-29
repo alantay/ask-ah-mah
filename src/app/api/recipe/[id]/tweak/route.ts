@@ -1,30 +1,60 @@
 import { missingUserId } from "@/lib/http";
-import { RecipeBlockSchema } from "@/lib/recipes/schemas";
-import type { RecipeWithId } from "@/lib/recipes/schemas";
+import { RecipeBlockSchema, TweakResponseSchema } from "@/lib/recipes/schemas";
 import { openai } from "@ai-sdk/openai";
 import { streamText } from "ai";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-const RecipeWithIdSchema = RecipeBlockSchema.extend({ id: z.string() });
+// The client sends blocks (recipeWithIdToBlock already applied) — validate directly
+const RecipeBlockWithIdSchema = RecipeBlockSchema.extend({ id: z.string() });
+type RecipeBlockWithId = z.infer<typeof RecipeBlockWithIdSchema>;
 
 const MAX_INSTRUCTION_LENGTH = 500;
 
+const CHANGE_KINDS = TweakResponseSchema.shape.changes.element.shape.kind.options.join(", ");
 const RECIPE_FIELDS = Object.keys(RecipeBlockSchema.shape).join(", ");
 
-function buildSystemPrompt(recipe: RecipeWithId): string {
-  return `You are a recipe editor. Your task is to apply a targeted modification to the following recipe.
+function buildSystemPrompt(originalRecipe: RecipeBlockWithId, workingDraft: RecipeBlockWithId): string {
+  return `You are a recipe editor. Apply the user's instruction to the working draft, then return a JSON object describing the result.
 
-## Current recipe
+## Original recipe (the saved cookbook version — change list anchors against this)
 \`\`\`json
-${JSON.stringify(recipe, null, 2)}
+${JSON.stringify(originalRecipe, null, 2)}
+\`\`\`
+
+## Working draft (apply the instruction to this)
+\`\`\`json
+${JSON.stringify(workingDraft, null, 2)}
 \`\`\`
 
 ## Instructions
-- Apply the user's instruction as a precise, minimal change — keep all unaffected fields exactly as they are.
-- Return ONLY a valid JSON object matching the RecipeBlock schema. Do not wrap it in markdown fences or add any surrounding text.
-- RecipeBlock fields: ${RECIPE_FIELDS}
-- If the user's request would produce a wholly different dish unrelated to the current recipe, politely refuse in plain text (not JSON) and explain why.`;
+- Apply the user's instruction as a precise, minimal change to the working draft.
+- Keep all unaffected fields exactly as they are in the working draft.
+- Update the \`description\` ("Ah Mah's note") if the dish character meaningfully changes (e.g. protein swap, cuisine shift). Include a \`description_updated\` change entry when you do.
+- If the request would produce a wholly different dish unrelated to the current recipe, politely refuse in plain text (not JSON) and explain why.
+
+## Response format
+Return ONLY a valid JSON object matching this schema — no markdown fences, no surrounding text:
+\`\`\`
+{
+  "recipe": { ${RECIPE_FIELDS} },
+  "changes": [
+    {
+      "kind": "<one of: ${CHANGE_KINDS}>",
+      "ref": { "type": "ingredient|step", "index": 0, "basis": "original|workingDraft" },
+      "label": "<narrative label>"
+    }
+  ]
+}
+\`\`\`
+
+The \`changes\` array must list **every structural delta against the original recipe** (not against the working draft). Each entry needs:
+- \`kind\`: the type of change
+- \`ref\`: omit for recipe-level changes (title, description, tags, servings, time). For row changes, use a structural locator with:
+  - \`type\`: "ingredient" or "step"
+  - \`index\`: a 0-based row index
+  - \`basis\`: "workingDraft" for rows visible in the returned recipe (\`ingredient_added\`, \`ingredient_changed\`, \`step_added\`, \`step_replaced\`); "original" for removed rows (\`ingredient_removed\`, \`step_removed\`)
+- \`label\`: a short narrative label in Ah Mah's voice (e.g. "Added cornstarch to velvet the chicken")`;
 }
 
 export async function POST(
@@ -34,10 +64,14 @@ export async function POST(
   const { id } = await params;
 
   try {
-    const body: { userId?: string; instruction?: string; recipe?: RecipeWithId } =
-      await req.json();
+    const body: {
+      userId?: string;
+      instruction?: string;
+      originalRecipe?: unknown;
+      workingDraft?: unknown;
+    } = await req.json();
 
-    const { userId, recipe } = body;
+    const { userId, originalRecipe: originalRecipeRaw, workingDraft: workingDraftRaw } = body;
     let { instruction } = body;
 
     if (!userId) return missingUserId();
@@ -50,24 +84,43 @@ export async function POST(
       return NextResponse.json({ error: "instruction is required" }, { status: 400 });
     }
 
-    if (!recipe) {
-      return NextResponse.json({ error: "recipe is required" }, { status: 400 });
+    if (!originalRecipeRaw) {
+      return NextResponse.json({ error: "originalRecipe is required" }, { status: 400 });
     }
 
-    const parsedRecipe = RecipeWithIdSchema.safeParse(recipe);
-    if (!parsedRecipe.success) {
-      return NextResponse.json({ error: "Invalid recipe payload", details: parsedRecipe.error.flatten() }, { status: 400 });
+    // Client sends block format (recipeWithIdToBlock already applied) — validate directly
+    const parsedOriginal = RecipeBlockWithIdSchema.safeParse(originalRecipeRaw);
+    if (!parsedOriginal.success) {
+      return NextResponse.json(
+        { error: "Invalid originalRecipe payload", details: parsedOriginal.error.flatten() },
+        { status: 400 }
+      );
     }
 
-    if (parsedRecipe.data.id !== id) {
+    if (parsedOriginal.data.id !== id) {
       return NextResponse.json({ error: "recipe id mismatch" }, { status: 400 });
+    }
+
+    let workingDraft = parsedOriginal.data;
+    if (workingDraftRaw !== undefined) {
+      const parsedDraft = RecipeBlockWithIdSchema.safeParse(workingDraftRaw);
+      if (!parsedDraft.success) {
+        return NextResponse.json(
+          { error: "Invalid workingDraft payload", details: parsedDraft.error.flatten() },
+          { status: 400 }
+        );
+      }
+      if (parsedDraft.data.id !== id) {
+        return NextResponse.json({ error: "workingDraft id mismatch" }, { status: 400 });
+      }
+      workingDraft = parsedDraft.data;
     }
 
     const result = streamText({
       model: openai("gpt-4.1-mini"),
-      system: buildSystemPrompt(recipe),
+      system: buildSystemPrompt(parsedOriginal.data, workingDraft),
       messages: [{ role: "user", content: instruction }],
-      maxOutputTokens: 1500,
+      maxOutputTokens: 2000,
     });
 
     return result.toTextStreamResponse();

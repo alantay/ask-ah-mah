@@ -58,10 +58,20 @@ See [ADR-0001](docs/adr/0001-butter-is-where-you-are.md) for the full rationale.
 
 ---
 
+## Tweak Bench
+
+The interactive right-side panel that hosts a multi-turn recipe refinement session. A user opens the Tweak Bench from a recipe page and sends one or more instructions; each instruction is a **Recipe Tweak**. State is ephemeral — the turn log and working draft live only in memory while the bench is open. Saving commits the working draft to the cookbook; Discarding or closing collapses the bench and the draft evaporates.
+
+The bench displays a "What changed" checklist (decorative, read-only) alongside an inline diff overlay on the recipe (NEW chips, "was X" strikethrough, highlighted rows). Both views are driven by the structured change list returned by the model — they cannot disagree.
+
+Related: [ADR-0005](docs/adr/0005-tweak-bench-multi-turn.md)
+
+---
+
 ## Recipe Tweak
 
-A single-turn AI modification of an existing saved recipe, initiated from the recipe page. The user types a refinement instruction (e.g. "add green chilli") and the AI streams an updated version of the same recipe in-place. A Recipe Tweak is not a full recipe prompt — it cannot generate a new, unrelated dish.
+A single turn within a **Tweak Bench** session. The user types one refinement instruction (e.g. "use chicken instead of tofu") and the AI streams an updated recipe block plus a structured change list. A Recipe Tweak cannot generate a wholly unrelated dish — the model refuses in plain text and leaves the working draft unchanged.
 
-The tweaked version is shown as a preview before the user confirms. On confirmation, the existing recipe is replaced (not duplicated). The AI call goes through a dedicated route (`POST /api/recipe/[id]/tweak`), separate from the chat pipeline.
+The AI call goes through a dedicated route (`POST /api/recipe/[id]/tweak`), separate from the chat pipeline.
 
-Related: [ADR-0004](docs/adr/0004-recipe-tweak-uses-dedicated-route.md)
+Related: [ADR-0005](docs/adr/0005-tweak-bench-multi-turn.md)
