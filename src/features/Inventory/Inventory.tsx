@@ -195,7 +195,7 @@ const Inventory = () => {
           <div className="sm:hidden mb-3 flex justify-end">
             <button
               onClick={() => setIsAdding(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12.5px] font-semibold text-primary-foreground bg-primary border border-primary rounded-lg cursor-pointer shadow-[0_1px_0_oklch(0.46_0.135_35)]"
+              className="inline-flex items-center gap-1.5 min-h-11 px-3 py-1.5 text-[12.5px] font-semibold text-primary-foreground bg-primary border border-primary rounded-lg cursor-pointer shadow-[0_1px_0_oklch(0.46_0.135_35)]"
             >
               <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
                 <path

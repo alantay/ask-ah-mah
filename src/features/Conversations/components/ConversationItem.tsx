@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
 import type { ConversationEntity } from "@/lib/conversations";
 import { cn } from "@/lib/utils";
+import { useRef, useState } from "react";
 import ConversationItemMenu from "./ConversationItemMenu";
 
 interface ConversationItemProps {
@@ -52,10 +52,10 @@ export function ConversationItem({
         }
       }}
       className={cn(
-        "group rounded-[10px] p-3 cursor-pointer border transition-colors flex items-center gap-2",
+        "group rounded-lg py-1 px-3 cursor-pointer border transition-colors flex items-center gap-2",
         isActive
           ? "bg-secondary border-[oklch(0.78_0.10_88)] shadow-[0_1px_0_oklch(0.78_0.10_88)]"
-          : "bg-transparent border-transparent hover:border-[oklch(0.78_0.10_88)]/40"
+          : "bg-transparent border-transparent hover:border-[oklch(0.78_0.10_88)]/40",
       )}
     >
       {/* Title area */}
@@ -63,7 +63,7 @@ export function ConversationItem({
         {editing ? (
           <input
             autoFocus
-            className="font-display italic font-medium text-[13px] leading-tight bg-transparent border-b border-primary outline-none w-full min-w-0"
+            className="font-display font-medium text-sm leading-tight bg-transparent border-b border-primary outline-none w-full min-w-0"
             value={renameValue}
             onChange={(e) => setRenameValue(e.target.value)}
             onBlur={commitRename}
@@ -77,7 +77,7 @@ export function ConversationItem({
             onClick={(e) => e.stopPropagation()}
           />
         ) : (
-          <span className="block font-display font-medium text-base text-foreground leading-tight tracking-tight truncate">
+          <span className="block font-display font-medium text-sm text-foreground leading-tight tracking-tight truncate">
             {title}
           </span>
         )}

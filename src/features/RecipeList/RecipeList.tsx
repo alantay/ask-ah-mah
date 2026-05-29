@@ -128,7 +128,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
           </span>
           <button
             onClick={() => setActiveTag(null)}
-            className={`shrink-0 px-3 py-1 text-[11px] font-medium rounded-full border transition-colors cursor-pointer ${
+            className={`shrink-0 min-h-11 px-3 py-1 text-[11px] font-medium rounded-full border transition-colors cursor-pointer ${
               !activeTag
                 ? "bg-primary text-primary-foreground border-primary"
                 : "bg-transparent text-muted-foreground border-border hover:text-foreground"
@@ -140,7 +140,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
             <button
               key={tag}
               onClick={() => setActiveTag(activeTag === tag ? null : tag)}
-              className={`shrink-0 px-3 py-1 text-[11px] font-medium rounded-full border transition-colors cursor-pointer ${
+              className={`shrink-0 min-h-11 px-3 py-1 text-[11px] font-medium rounded-full border transition-colors cursor-pointer ${
                 activeTag === tag
                   ? "bg-primary text-primary-foreground border-primary"
                   : "bg-transparent text-muted-foreground border-border hover:text-foreground"

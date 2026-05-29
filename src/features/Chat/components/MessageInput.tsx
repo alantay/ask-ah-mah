@@ -36,8 +36,9 @@ export const MessageInput = ({
           type="submit"
           size="icon"
           aria-label="Send message"
-          className="shrink-0 disabled:cursor-not-allowed rounded-lg"
-          disabled={disabled}
+          variant={input.trim() ? "default" : "ghost"}
+          className="shrink-0 disabled:cursor-not-allowed rounded-lg h-11 w-11"
+          disabled={disabled || !input.trim()}
         >
           <svg
             aria-hidden="true"
