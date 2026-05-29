@@ -385,15 +385,57 @@ const Inventory = () => {
 
         {/* Selection mode banner — desktop */}
         {selectionMode && (
-          <div className="hidden sm:flex items-center gap-2 mb-4 px-3 py-2.5 bg-primary/5 border border-dashed border-primary/30 rounded-lg">
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" className="text-primary shrink-0">
-              <path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <span className="font-display italic text-[13px] text-muted-foreground">
-              {totalSelected === 0
-                ? "Tap items to feature them — Ah Mah will build recipes around your picks."
-                : `${totalSelected} item${totalSelected !== 1 ? "s" : ""} selected`}
-            </span>
+          <div className="hidden sm:flex items-center justify-between gap-2 mb-4 px-3 py-2.5 bg-primary/5 border border-dashed border-primary/30 rounded-lg">
+            <div className="flex items-center gap-2">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" className="text-primary shrink-0">
+                <path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <span className="font-display italic text-[13px] text-muted-foreground">
+                {totalSelected === 0
+                  ? "Tap items to feature them — Ah Mah will build recipes around your picks."
+                  : `${totalSelected} item${totalSelected !== 1 ? "s" : ""} selected`}
+              </span>
+            </div>
+            {ingredientInventory.some((i) => i.shelfLife === "short") && (
+              <button
+                onClick={() => {
+                  const shortIds = ingredientInventory
+                    .filter((i) => i.shelfLife === "short")
+                    .map((i) => i.id);
+                  setSelectedIds((prev) => {
+                    const next = new Set(prev);
+                    shortIds.forEach((id) => next.add(id));
+                    return next;
+                  });
+                }}
+                className="shrink-0 inline-flex items-center gap-1 font-sans text-[10.5px] font-semibold text-[oklch(0.5_0.12_50)] border border-dashed border-[oklch(0.7_0.08_50)] rounded-full px-2 py-0.5 hover:bg-[oklch(0.97_0.03_60)] transition-colors cursor-pointer"
+              >
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-tertiary" />
+                Select use-soon
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Selection mode short-shelf shortcut — mobile */}
+        {selectionMode && ingredientInventory.some((i) => i.shelfLife === "short") && (
+          <div className="sm:hidden mb-3">
+            <button
+              onClick={() => {
+                const shortIds = ingredientInventory
+                  .filter((i) => i.shelfLife === "short")
+                  .map((i) => i.id);
+                setSelectedIds((prev) => {
+                  const next = new Set(prev);
+                  shortIds.forEach((id) => next.add(id));
+                  return next;
+                });
+              }}
+              className="inline-flex items-center gap-1 font-sans text-[11px] font-semibold text-[oklch(0.5_0.12_50)] border border-dashed border-[oklch(0.7_0.08_50)] rounded-full px-2.5 py-1 hover:bg-[oklch(0.97_0.03_60)] transition-colors cursor-pointer"
+            >
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-tertiary" />
+              Select use-soon items
+            </button>
           </div>
         )}
 
