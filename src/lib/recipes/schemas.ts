@@ -108,9 +108,16 @@ export const ChangeKindSchema = z.enum([
 ]);
 export type ChangeKind = z.infer<typeof ChangeKindSchema>;
 
+export const ChangeRefSchema = z.object({
+  type: z.enum(["ingredient", "step"]),
+  index: z.number().int().nonnegative(),
+  basis: z.enum(["original", "workingDraft"]),
+});
+export type ChangeRef = z.infer<typeof ChangeRefSchema>;
+
 export const ChangeEntrySchema = z.object({
   kind: ChangeKindSchema,
-  ref: z.union([z.string(), z.number()]).optional(),
+  ref: ChangeRefSchema.optional(),
   label: z.string(),
 });
 export type ChangeEntry = z.infer<typeof ChangeEntrySchema>;
@@ -120,6 +127,32 @@ export const TweakResponseSchema = z.object({
   changes: z.array(ChangeEntrySchema),
 });
 export type TweakResponse = z.infer<typeof TweakResponseSchema>;
+
+const parseIngredientAmount = (amount: string | undefined) => {
+  if (amount === undefined) return undefined;
+  const parsed = parseFloat(amount);
+  return Number.isNaN(parsed) ? undefined : parsed;
+};
+
+export function recipeBlockToRecipeWithId(block: RecipeBlock, base: RecipeWithId): RecipeWithId {
+  return {
+    ...base,
+    name: block.title,
+    description: block.description,
+    totalTimeMinutes: block.totalTimeMinutes,
+    baseServings: block.baseServings,
+    ingredients: block.ingredients.map((i) => ({
+      name: i.name,
+      category: i.category ?? "Misc",
+      amount: parseIngredientAmount(i.amount),
+      unit: i.unit,
+      note: i.note,
+    })),
+    prep: block.prep,
+    steps: block.steps,
+    tags: block.tags,
+  };
+}
 
 export function recipeWithIdToBlock(r: RecipeWithId) {
   return {

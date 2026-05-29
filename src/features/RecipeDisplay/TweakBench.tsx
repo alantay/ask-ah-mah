@@ -1,7 +1,11 @@
 "use client";
 
 import type { ChangeEntry, RecipeWithId } from "@/lib/recipes/schemas";
-import { recipeWithIdToBlock } from "@/lib/recipes/schemas";
+import {
+  recipeBlockToRecipeWithId,
+  recipeWithIdToBlock,
+  TweakResponseSchema,
+} from "@/lib/recipes/schemas";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -43,6 +47,9 @@ export function TweakBench({
 
   // Working draft accumulates across turns — used as the model input for each new turn
   const workingDraftRef = useRef<RecipeWithId>(recipe);
+  const abortRef = useRef<AbortController | null>(null);
+  const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null);
+  const mountedRef = useRef(true);
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   const logEndRef = useRef<HTMLDivElement | null>(null);
@@ -55,6 +62,14 @@ export function TweakBench({
     setIsStreaming(false);
     onWorkingDraftChange(recipe, []);
   }, [recipe.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+      abortRef.current?.abort();
+      readerRef.current?.cancel().catch(() => {});
+    };
+  }, []);
 
   // Auto-scroll turn log to bottom
   useEffect(() => {
@@ -78,11 +93,16 @@ export function TweakBench({
       setTurns((prev) => [...prev, { kind: "user", text }]);
 
       const currentDraft = workingDraftRef.current;
+      const abortController = new AbortController();
+      abortRef.current?.abort();
+      abortRef.current = abortController;
+      let accumulated = "";
 
       try {
         const res = await fetch(`/api/recipe/${recipe.id}/tweak`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          signal: abortController.signal,
           body: JSON.stringify({
             userId,
             instruction: text,
@@ -94,66 +114,60 @@ export function TweakBench({
         if (!res.ok || !res.body) throw new Error("Tweak request failed");
 
         const reader = res.body.getReader();
+        readerRef.current = reader;
         const decoder = new TextDecoder();
-        let accumulated = "";
-        let lastParsedDraft: RecipeWithId | null = null;
-        let lastParsedChanges: ChangeEntry[] = [];
 
         try {
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
             accumulated += decoder.decode(value, { stream: true });
-
-            // Progressive parse — update recipe view during streaming
-            try {
-              const partial = JSON.parse(accumulated);
-              if (partial?.recipe) {
-                const r = partial.recipe as Record<string, unknown>;
-                const newDraft: RecipeWithId = {
-                  ...currentDraft,
-                  name: (r.title as string) ?? currentDraft.name,
-                  description: (r.description as string | undefined) ?? currentDraft.description,
-                  totalTimeMinutes: (r.totalTimeMinutes as number | undefined) ?? currentDraft.totalTimeMinutes,
-                  baseServings: (r.baseServings as number) ?? currentDraft.baseServings,
-                  ingredients: (r.ingredients as RecipeWithId["ingredients"]) ?? currentDraft.ingredients,
-                  prep: (r.prep as string[] | undefined) ?? currentDraft.prep,
-                  steps: (r.steps as RecipeWithId["steps"]) ?? currentDraft.steps,
-                  tags: (r.tags as string[] | undefined) ?? currentDraft.tags,
-                };
-                const newChanges: ChangeEntry[] = (partial.changes as ChangeEntry[]) ?? [];
-                lastParsedDraft = newDraft;
-                lastParsedChanges = newChanges;
-                onWorkingDraftChange(newDraft, newChanges);
-              }
-            } catch {
-              // Incomplete JSON — keep accumulating
-            }
           }
+          accumulated += decoder.decode();
         } finally {
+          readerRef.current = null;
           reader.cancel().catch(() => {});
         }
 
-        if (lastParsedDraft) {
-          workingDraftRef.current = lastParsedDraft;
+        if (abortController.signal.aborted) return;
+
+        const parsedJson = JSON.parse(accumulated);
+        const parsedResponse = TweakResponseSchema.safeParse(parsedJson);
+
+        if (parsedResponse.success) {
+          const newDraft = recipeBlockToRecipeWithId(parsedResponse.data.recipe, currentDraft);
+          const newChanges = parsedResponse.data.changes;
+          workingDraftRef.current = newDraft;
+          onWorkingDraftChange(newDraft, newChanges);
           setTurns((prev) => [
             ...prev,
-            { kind: "assistant", changes: lastParsedChanges },
+            { kind: "assistant", changes: newChanges },
           ]);
         } else {
-          // Non-JSON response = model refusal
-          const refusalText = accumulated.trim() || "Ah Mah couldn't do that one. Try a different instruction?";
-          setTurns((prev) => [...prev, { kind: "refusal", text: refusalText }]);
+          console.warn("[TweakBench] invalid tweak payload:", parsedResponse.error.flatten());
+          setTurns((prev) => [
+            ...prev,
+            { kind: "refusal", text: "Aiyah, that tweak came back muddled. Try again?" },
+          ]);
         }
       } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        if (err instanceof SyntaxError) {
+          const refusalText = accumulated.trim() || "Ah Mah couldn't do that one. Try a different instruction?";
+          setTurns((prev) => [...prev, { kind: "refusal", text: refusalText }]);
+          return;
+        }
         console.error("[TweakBench] stream error:", err);
         setTurns((prev) => [
           ...prev,
           { kind: "refusal", text: "Aiyah, something went wrong. Try again?" },
         ]);
       } finally {
-        setIsStreaming(false);
-        setTimeout(() => inputRef.current?.focus(), 0);
+        if (mountedRef.current && abortRef.current === abortController) {
+          abortRef.current = null;
+          setIsStreaming(false);
+          setTimeout(() => inputRef.current?.focus(), 0);
+        }
       }
     },
     [instruction, isStreaming, recipe, userId, onWorkingDraftChange],
@@ -180,7 +194,7 @@ export function TweakBench({
               Tweak bench
             </div>
             <div className="font-sans text-[11px] text-ink-faint mt-0.5">
-              Ah Mah rewrites — you watch it happen
+              Ah Mah drafts each tweak for review
             </div>
           </div>
         </div>

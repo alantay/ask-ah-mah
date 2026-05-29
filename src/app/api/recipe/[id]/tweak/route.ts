@@ -39,14 +39,21 @@ Return ONLY a valid JSON object matching this schema — no markdown fences, no 
 {
   "recipe": { ${RECIPE_FIELDS} },
   "changes": [
-    { "kind": "<one of: ${CHANGE_KINDS}>", "ref": "<ingredient name or step index>", "label": "<narrative label>" }
+    {
+      "kind": "<one of: ${CHANGE_KINDS}>",
+      "ref": { "type": "ingredient|step", "index": 0, "basis": "original|workingDraft" },
+      "label": "<narrative label>"
+    }
   ]
 }
 \`\`\`
 
 The \`changes\` array must list **every structural delta against the original recipe** (not against the working draft). Each entry needs:
 - \`kind\`: the type of change
-- \`ref\`: for ingredient changes, the ingredient name; for step changes, the step index (0-based number); omit for recipe-level changes (title, description, tags, servings, time)
+- \`ref\`: omit for recipe-level changes (title, description, tags, servings, time). For row changes, use a structural locator with:
+  - \`type\`: "ingredient" or "step"
+  - \`index\`: a 0-based row index
+  - \`basis\`: "workingDraft" for rows visible in the returned recipe (\`ingredient_added\`, \`ingredient_changed\`, \`step_added\`, \`step_replaced\`); "original" for removed rows (\`ingredient_removed\`, \`step_removed\`)
 - \`label\`: a short narrative label in Ah Mah's voice (e.g. "Added cornstarch to velvet the chicken")`;
 }
 
@@ -94,11 +101,20 @@ export async function POST(
       return NextResponse.json({ error: "recipe id mismatch" }, { status: 400 });
     }
 
-    // workingDraft defaults to originalRecipe on the first turn
-    const parsedDraft = workingDraftRaw
-      ? RecipeBlockWithIdSchema.safeParse(workingDraftRaw)
-      : parsedOriginal;
-    const workingDraft = parsedDraft.success ? parsedDraft.data : parsedOriginal.data;
+    let workingDraft = parsedOriginal.data;
+    if (workingDraftRaw !== undefined) {
+      const parsedDraft = RecipeBlockWithIdSchema.safeParse(workingDraftRaw);
+      if (!parsedDraft.success) {
+        return NextResponse.json(
+          { error: "Invalid workingDraft payload", details: parsedDraft.error.flatten() },
+          { status: 400 }
+        );
+      }
+      if (parsedDraft.data.id !== id) {
+        return NextResponse.json({ error: "workingDraft id mismatch" }, { status: 400 });
+      }
+      workingDraft = parsedDraft.data;
+    }
 
     const result = streamText({
       model: openai("gpt-4.1-mini"),

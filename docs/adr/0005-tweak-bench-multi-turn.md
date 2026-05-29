@@ -26,7 +26,7 @@ Each turn the model returns a JSON object with:
 - `recipe` — the full updated `RecipeBlock`
 - `changes` — an array of `{ kind, ref, label }` entries
 
-`ref` is a structural anchor (ingredient name or step index) that drives the inline diff overlay. `label` is narrative text rendered in the "What changed" panel. Because both views read from the same source, they cannot disagree.
+`ref` is an optional structural locator object (`type`, `index`, `basis`) that drives the inline diff overlay for ingredient and step rows. It uses `workingDraft` indices for visible added/changed rows and `original` indices for removed rows. `label` is narrative text rendered in the "What changed" panel. Because both views read from the same source, they cannot disagree.
 
 The change list is **cumulative against the original saved recipe** — not against the previous turn's draft. The route receives both `originalRecipe` and `workingDraft`; the model applies the instruction to `workingDraft` but writes the change list against `originalRecipe`. This means the diff overlay always answers "what am I about to commit to my cookbook."
 

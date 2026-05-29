@@ -51,37 +51,49 @@ function changesToDiff(
 
   if (!changes.length) return { changedIngredients, deletedIngredients, changedSteps, deletedSteps };
 
-  const addedOrChangedNames = new Set(
-    changes
-      .filter((c) => c.kind === "ingredient_added" || c.kind === "ingredient_changed")
-      .map((c) => String(c.ref)),
-  );
-  workingDraft.ingredients.forEach((ing, i) => {
-    if (addedOrChangedNames.has(ing.name)) changedIngredients.add(i);
+  changes.forEach((change) => {
+    const ref = change.ref;
+    if (!ref) return;
+
+    if (
+      ref.type === "ingredient" &&
+      ref.basis === "workingDraft" &&
+      ref.index < workingDraft.ingredients.length &&
+      (change.kind === "ingredient_added" || change.kind === "ingredient_changed")
+    ) {
+      changedIngredients.add(ref.index);
+      return;
+    }
+
+    if (
+      ref.type === "ingredient" &&
+      ref.basis === "original" &&
+      ref.index < original.ingredients.length &&
+      change.kind === "ingredient_removed"
+    ) {
+      deletedIngredients.add(ref.index);
+      return;
+    }
+
+    if (
+      ref.type === "step" &&
+      ref.basis === "workingDraft" &&
+      ref.index < (workingDraft.steps?.length ?? 0) &&
+      (change.kind === "step_added" || change.kind === "step_replaced")
+    ) {
+      changedSteps.add(ref.index);
+      return;
+    }
+
+    if (
+      ref.type === "step" &&
+      ref.basis === "original" &&
+      ref.index < (original.steps?.length ?? 0) &&
+      change.kind === "step_removed"
+    ) {
+      deletedSteps.add(ref.index);
+    }
   });
-
-  const removedNames = new Set(
-    changes
-      .filter((c) => c.kind === "ingredient_removed")
-      .map((c) => String(c.ref)),
-  );
-  original.ingredients.forEach((ing, i) => {
-    if (removedNames.has(ing.name)) deletedIngredients.add(i);
-  });
-
-  changes
-    .filter((c) => c.kind === "step_replaced" || c.kind === "step_added")
-    .forEach((c) => {
-      const idx = Number(c.ref);
-      if (!isNaN(idx)) changedSteps.add(idx);
-    });
-
-  changes
-    .filter((c) => c.kind === "step_removed")
-    .forEach((c) => {
-      const idx = Number(c.ref);
-      if (!isNaN(idx)) deletedSteps.add(idx);
-    });
 
   return { changedIngredients, deletedIngredients, changedSteps, deletedSteps };
 }
