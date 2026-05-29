@@ -50,7 +50,7 @@ export default function ConversationItemMenu({
             type="button"
             aria-label="Conversation actions"
             onClick={(e) => e.stopPropagation()}
-            className="flex items-center justify-center w-6 h-6 rounded-md text-ink-faint hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
+            className="flex items-center justify-center w-11 h-11 rounded-md text-ink-faint hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
           >
             <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
               <circle cx="3" cy="8" r="1.4" />

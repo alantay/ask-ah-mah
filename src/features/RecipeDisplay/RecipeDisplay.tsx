@@ -495,9 +495,9 @@ function TweakBar({
                 <button
                   onClick={onDismiss}
                   aria-label="Dismiss"
-                  className="ml-3 shrink-0 w-6 h-6 inline-flex items-center justify-center border border-border rounded-full text-[11px] text-muted-foreground hover:bg-muted/60 cursor-pointer transition-colors"
+                  className="ml-3 shrink-0 w-11 h-11 inline-flex items-center justify-center cursor-pointer transition-colors group"
                 >
-                  ✕
+                  <span className="w-6 h-6 inline-flex items-center justify-center border border-border rounded-full text-[11px] text-muted-foreground group-hover:bg-muted/60 transition-colors">✕</span>
                 </button>
               </div>
               {/* Quick-tweak chips */}
@@ -867,7 +867,7 @@ export default function RecipeDisplay({
               {!hideBackButton && (
                 <button
                   onClick={onBack}
-                  className="font-sans text-[11.5px] font-semibold tracking-[0.14em] uppercase text-ink-faint hover:text-foreground transition-colors cursor-pointer"
+                  className="min-h-11 inline-flex items-center font-sans text-[11.5px] font-semibold tracking-[0.14em] uppercase text-ink-faint hover:text-foreground transition-colors cursor-pointer"
                   aria-label="Back to cookbook"
                 >
                   ← Back to cookbook
@@ -876,7 +876,7 @@ export default function RecipeDisplay({
               {canCook && (
                 <button
                   onClick={handleStartCooking}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12.5px] font-semibold text-primary-foreground bg-primary border border-primary rounded-md cursor-pointer shadow-[0_1px_0_oklch(0.46_0.135_35)] hover:opacity-90 transition-opacity"
+                  className="inline-flex items-center gap-1.5 min-h-11 px-3 py-1.5 text-[12.5px] font-semibold text-primary-foreground bg-primary border border-primary rounded-md cursor-pointer shadow-[0_1px_0_oklch(0.46_0.135_35)] hover:opacity-90 transition-opacity"
                   aria-label="Start cooking — step-by-step view with screen stay-on"
                 >
                   <svg width="11" height="11" viewBox="0 0 16 16" fill="none">

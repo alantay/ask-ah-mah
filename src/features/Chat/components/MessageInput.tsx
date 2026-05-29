@@ -36,7 +36,7 @@ export const MessageInput = ({
           type="submit"
           size="icon"
           aria-label="Send message"
-          className="shrink-0 disabled:cursor-not-allowed rounded-lg"
+          className="shrink-0 disabled:cursor-not-allowed rounded-lg h-11 w-11"
           disabled={disabled}
         >
           <svg
