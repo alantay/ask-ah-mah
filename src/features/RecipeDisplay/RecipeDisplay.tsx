@@ -1,12 +1,16 @@
 "use client";
 
-import { CookingMode, ServingsStepper } from "@/features/Recipe";
 import { useSessionContext } from "@/contexts/SessionContext";
-import { RecipeIngredient, RecipeStep, RecipeWithId } from "@/lib/recipes/schemas";
+import { CookingMode, ServingsStepper } from "@/features/Recipe";
+import {
+  RecipeIngredient,
+  RecipeStep,
+  RecipeWithId,
+} from "@/lib/recipes/schemas";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Streamdown } from "streamdown";
 import { toast } from "sonner";
+import { Streamdown } from "streamdown";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -46,7 +50,12 @@ const QUICK_TWEAKS = [
 function diffRecipes(
   original: RecipeWithId,
   tweaked: RecipeWithId,
-): { ingredients: Set<number>; steps: Set<number>; deletedIngredients: Set<number>; deletedSteps: Set<number> } {
+): {
+  ingredients: Set<number>;
+  steps: Set<number>;
+  deletedIngredients: Set<number>;
+  deletedSteps: Set<number>;
+} {
   const changedIngredients = new Set<number>();
   const changedSteps = new Set<number>();
   const deletedIngredients = new Set<number>();
@@ -86,7 +95,12 @@ function diffRecipes(
     }
   }
 
-  return { ingredients: changedIngredients, steps: changedSteps, deletedIngredients, deletedSteps };
+  return {
+    ingredients: changedIngredients,
+    steps: changedSteps,
+    deletedIngredients,
+    deletedSteps,
+  };
 }
 
 // ─── RecipeBody ──────────────────────────────────────────────────────────────
@@ -113,16 +127,22 @@ function RecipeBody({
   originalRecipe,
   tweakState,
 }: RecipeBodyProps) {
-  const [servings, setServings] = useState<number>(selectedRecipe.baseServings ?? 2);
+  const [servings, setServings] = useState<number>(
+    selectedRecipe.baseServings ?? 2,
+  );
   const baseServings = selectedRecipe.baseServings || 2;
   const ingredients = (selectedRecipe.ingredients || []) as RecipeIngredient[];
-  const origIngredients = (originalRecipe?.ingredients || []) as RecipeIngredient[];
+  const origIngredients = (originalRecipe?.ingredients ||
+    []) as RecipeIngredient[];
   const origSteps = (originalRecipe?.steps || []) as RecipeStep[];
   const prep = (selectedRecipe.prep ?? []) as string[];
   const steps = (selectedRecipe.steps || []) as RecipeStep[];
   const scale = servings / baseServings;
 
-  const showHighlights = tweakState === "streaming" || tweakState === "preview" || tweakState === "saved";
+  const showHighlights =
+    tweakState === "streaming" ||
+    tweakState === "preview" ||
+    tweakState === "saved";
 
   return (
     <>
@@ -131,7 +151,10 @@ function RecipeBody({
         className="relative h-[180px] sm:h-[260px] border-b border-border flex items-end overflow-hidden"
         style={
           !selectedRecipe.imageUrl
-            ? { background: "linear-gradient(135deg, oklch(0.55 0.13 35) 0%, oklch(0.42 0.10 30) 100%)" }
+            ? {
+                background:
+                  "linear-gradient(135deg, oklch(0.55 0.13 35) 0%, oklch(0.42 0.10 30) 100%)",
+              }
             : undefined
         }
       >
@@ -154,7 +177,10 @@ function RecipeBody({
         )}
         <div
           className="relative w-full px-4 sm:px-9 pt-6 pb-5 text-white"
-          style={{ background: "linear-gradient(to top, oklch(0 0 0 / 0.5), transparent)" }}
+          style={{
+            background:
+              "linear-gradient(to top, oklch(0 0 0 / 0.5), transparent)",
+          }}
         >
           {selectedRecipe.tags && selectedRecipe.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-2.5">
@@ -196,19 +222,25 @@ function RecipeBody({
         {selectedRecipe.description && (
           <div className="flex gap-3.5 items-start mb-6 pb-5 border-b border-dashed border-border">
             <div className="relative w-10 h-10 shrink-0">
-              <Image src="/granny-icon.png" alt="" fill className="object-contain" />
+              <Image
+                src="/granny-icon.png"
+                alt=""
+                fill
+                className="object-contain"
+              />
             </div>
             <div className="flex-1 min-w-0">
               <div className="font-sans text-[10.5px] font-bold tracking-[0.16em] uppercase text-ink-faint mb-1 flex items-center gap-2">
                 From Ah Mah
                 {tweakState === "saved" && (
-                  <span className="text-emerald-600 tracking-[0.14em]">· tweaked just now</span>
+                  <span className="text-emerald-600 tracking-[0.14em]">
+                    · tweaked just now
+                  </span>
                 )}
               </div>
               <div className="font-display italic text-[15px] sm:text-base text-foreground leading-[1.5] max-w-prose">
                 {selectedRecipe.description}
               </div>
-
             </div>
           </div>
         )}
@@ -242,13 +274,16 @@ function RecipeBody({
             </div>
             <ul className="list-none p-0 mt-2 border-t border-border">
               {ingredients.map((ing, i) => {
-                const scaled = ing.amount != null ? ing.amount * scale : undefined;
+                const scaled =
+                  ing.amount != null ? ing.amount * scale : undefined;
                 const isChanged = showHighlights && changedIngredients.has(i);
                 return (
                   <li
                     key={i}
                     className={`flex items-baseline gap-3 py-2.5 border-b border-dashed border-border transition-colors ${
-                      isChanged ? "bg-amber-50 dark:bg-amber-950/20 -mx-1 px-1 rounded" : ""
+                      isChanged
+                        ? "bg-amber-50 dark:bg-amber-950/20 -mx-1 px-1 rounded"
+                        : ""
                     }`}
                   >
                     <span
@@ -273,7 +308,8 @@ function RecipeBody({
                 Array.from(deletedIngredients).map((i) => {
                   const ing = origIngredients[i];
                   if (!ing) return null;
-                  const scaled = ing.amount != null ? ing.amount * scale : undefined;
+                  const scaled =
+                    ing.amount != null ? ing.amount * scale : undefined;
                   return (
                     <li
                       key={`deleted-ing-${i}`}
@@ -337,7 +373,9 @@ function RecipeBody({
                   <li
                     key={i}
                     className={`flex gap-4 transition-colors ${
-                      isChanged ? "bg-amber-50 dark:bg-amber-950/20 -mx-1 px-1 rounded-lg py-1" : ""
+                      isChanged
+                        ? "bg-amber-50 dark:bg-amber-950/20 -mx-1 px-1 rounded-lg py-1"
+                        : ""
                     }`}
                   >
                     <span className="font-mono text-[13px] font-bold text-ink-faint tabular-nums pt-0.5 shrink-0 w-5 text-right">
@@ -353,7 +391,9 @@ function RecipeBody({
                         {step.body}
                       </div>
                       {step.tip && (
-                        <div className="mt-1.5 text-[12.5px] text-ink-faint italic">{step.tip}</div>
+                        <div className="mt-1.5 text-[12.5px] text-ink-faint italic">
+                          {step.tip}
+                        </div>
                       )}
                     </div>
                   </li>
@@ -388,7 +428,9 @@ function RecipeBody({
             </ol>
           ) : (
             <div className="recipe-prose">
-              <Streamdown>{extractInstructions(selectedRecipe.instructions || "")}</Streamdown>
+              <Streamdown>
+                {extractInstructions(selectedRecipe.instructions || "")}
+              </Streamdown>
             </div>
           )}
         </section>
@@ -400,7 +442,13 @@ function RecipeBody({
 // ─── Workshop card (Direction B — floating, not sticky) ──────────────────────
 
 const TweakIcon = () => (
-  <svg width="13" height="13" viewBox="0 0 16 16" fill="none" className="shrink-0">
+  <svg
+    width="13"
+    height="13"
+    viewBox="0 0 16 16"
+    fill="none"
+    className="shrink-0"
+  >
     <path
       d="M3 10.5 L8.5 5 L11 7.5 L5.5 13 H3 V10.5 Z M8.5 5 L10 3.5 L12.5 6 L11 7.5"
       stroke="currentColor"
@@ -438,7 +486,11 @@ function WorkshopCard({
   isSaving,
   inputRef,
 }: WorkshopCardProps) {
-  if (tweakState !== "open" && tweakState !== "streaming" && tweakState !== "preview") {
+  if (
+    tweakState !== "open" &&
+    tweakState !== "streaming" &&
+    tweakState !== "preview"
+  ) {
     return null;
   }
 
@@ -526,7 +578,9 @@ function WorkshopCard({
                     <span
                       key={i}
                       className="w-[5px] h-[5px] rounded-full bg-primary"
-                      style={{ animation: `tweakDot 1.2s ease-in-out ${i * 0.15}s infinite` }}
+                      style={{
+                        animation: `tweakDot 1.2s ease-in-out ${i * 0.15}s infinite`,
+                      }}
                     />
                   ))}
                 </span>
@@ -615,13 +669,22 @@ export default function RecipeDisplay({
   const canCook = steps.length > 0;
 
   // Compute changed fields (memoised — only recalculates when the recipes change)
-  const { ingredients: changedIngredients, steps: changedSteps, deletedIngredients, deletedSteps } = useMemo(
+  const {
+    ingredients: changedIngredients,
+    steps: changedSteps,
+    deletedIngredients,
+    deletedSteps,
+  } = useMemo(
     () => diffRecipes(originalRecipeRef.current, tweakedRecipe),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [tweakedRecipe],
   );
 
-  const totalChanges = changedIngredients.size + changedSteps.size + deletedIngredients.size + deletedSteps.size;
+  const totalChanges =
+    changedIngredients.size +
+    changedSteps.size +
+    deletedIngredients.size +
+    deletedSteps.size;
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
@@ -662,7 +725,11 @@ export default function RecipeDisplay({
         const res = await fetch(`/api/recipe/${recipe.id}/tweak`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, instruction: p, recipe: originalRecipeRef.current }),
+          body: JSON.stringify({
+            userId,
+            instruction: p,
+            recipe: originalRecipeRef.current,
+          }),
         });
 
         if (!res.ok || !res.body) {
@@ -688,10 +755,15 @@ export default function RecipeDisplay({
               const updatedRecipe: RecipeWithId = {
                 ...originalRecipeRef.current,
                 name: parsed.title ?? originalRecipeRef.current.name,
-                description: parsed.description ?? originalRecipeRef.current.description,
-                totalTimeMinutes: parsed.totalTimeMinutes ?? originalRecipeRef.current.totalTimeMinutes,
-                baseServings: parsed.baseServings ?? originalRecipeRef.current.baseServings,
-                ingredients: parsed.ingredients ?? originalRecipeRef.current.ingredients,
+                description:
+                  parsed.description ?? originalRecipeRef.current.description,
+                totalTimeMinutes:
+                  parsed.totalTimeMinutes ??
+                  originalRecipeRef.current.totalTimeMinutes,
+                baseServings:
+                  parsed.baseServings ?? originalRecipeRef.current.baseServings,
+                ingredients:
+                  parsed.ingredients ?? originalRecipeRef.current.ingredients,
                 prep: parsed.prep ?? originalRecipeRef.current.prep,
                 steps: parsed.steps ?? originalRecipeRef.current.steps,
                 tags: parsed.tags ?? originalRecipeRef.current.tags,
@@ -711,7 +783,9 @@ export default function RecipeDisplay({
           setTweakState("preview");
         } else {
           // AI responded with non-JSON (e.g. refused the request) — surface an error
-          toast.error("Ah Mah couldn't tweak this one. Try a different instruction?");
+          toast.error(
+            "Ah Mah couldn't tweak this one. Try a different instruction?",
+          );
           setTweakState("open");
         }
       } catch (err) {
@@ -786,7 +860,9 @@ export default function RecipeDisplay({
   };
 
   const hasWorkshopCard =
-    tweakState === "open" || tweakState === "streaming" || tweakState === "preview";
+    tweakState === "open" ||
+    tweakState === "streaming" ||
+    tweakState === "preview";
 
   if (cooking) {
     return (
@@ -810,8 +886,10 @@ export default function RecipeDisplay({
       `}</style>
 
       <div className="flex flex-col h-full relative">
-        <div className={`flex-1 overflow-y-auto ${hasWorkshopCard ? "pb-52" : "pb-24"}`}>
-          <div className="mx-auto max-w-3xl px-4 sm:px-6 pt-4 sm:pt-5 pb-8">
+        <div
+          className={`flex-1 overflow-y-auto ${hasWorkshopCard ? "pb-52" : "pb-24"}`}
+        >
+          <div className="mx-auto max-w-4xl px-4 sm:px-6 pt-4 sm:pt-5 pb-8">
             <div className="flex items-center justify-between mb-3 sm:mb-4">
               {!hideBackButton && (
                 <button
