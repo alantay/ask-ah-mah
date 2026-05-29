@@ -1,12 +1,8 @@
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { RecipeBlockSchema, type RecipeBlock } from "./schemas";
-import { TAG_SETS } from "./tagColors";
 import { normalizeTags } from "./normalizeTags";
-
-const TAG_CATEGORIES = Object.entries(TAG_SETS)
-  .map(([cat, tags]) => `${cat.toUpperCase()}: ${tags.join(", ")}`)
-  .join("\n");
+import { PROMPT_FRAGMENTS } from "@/lib/prompts/fragments";
 
 export async function parseRecipeText(text: string): Promise<RecipeBlock> {
   const result = await generateObject({
@@ -21,7 +17,7 @@ FIELDS:
 - baseServings: number of servings as written; infer 2–4 if unstated
 - totalTimeMinutes: total time in minutes if stated; omit if not mentioned
 - ingredients: array of { name, category, amount, unit, note }
-  - category must be one of: Protein, Carbs, Vegetable, Condiments, Spice, Misc
+  - category must be one of: ${PROMPT_FRAGMENTS.categoryList}
   - amount is a string (e.g. "1 1/2", "200") — omit for "to taste" items
   - unit is the normalised unit string after applying the UNIT NORMALIZATION rules below
 - prep: array of short imperative strings for knife work and prep done BEFORE heat (e.g. "Dice 1 onion", "Mince 3 cloves garlic"). Empty array if no real prep.
@@ -75,7 +71,7 @@ Temperatures in step bodies — convert °F to °C (formula: (F−32)×5/9, roun
 Fallback — if you are not confident about a conversion, keep the source unit and add a brief note explaining the original value.
 
 TAG CATEGORIES:
-${TAG_CATEGORIES}
+${PROMPT_FRAGMENTS.tagCatalog}
 
 RECIPE TEXT:
 ${text}`,

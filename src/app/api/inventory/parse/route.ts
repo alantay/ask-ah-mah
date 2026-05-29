@@ -1,6 +1,7 @@
 import { addInventoryItem } from "@/lib/inventory/Inventory";
 import { AddInventoryItemSchema } from "@/lib/inventory/schemas";
 import { missingUserId } from "@/lib/http";
+import { PROMPT_FRAGMENTS } from "@/lib/prompts/fragments";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { NextRequest, NextResponse } from "next/server";
@@ -29,18 +30,10 @@ RULES:
 - Each item gets: name, type ("ingredient" | "kitchenware"), shelfLife ("short" | "medium" | "long" | "frozen"), and OPTIONAL quantity + unit.
 - ONLY set quantity/unit when the user explicitly states an amount (e.g., "200g chicken" → quantity=200, unit="g"; "2 chicken breasts" → quantity=2, unit="pieces"). If they say "some bok choy" or just "eggs", LEAVE quantity AND unit UNSET — unset means "they have it, amount unlimited".
 - shelfLife rules:
-  - "short" — leafy greens, herbs, seafood, dairy, cooked leftovers, fresh fish, mushrooms
-  - "medium" — most meat, most fresh produce, eggs, tofu, bread
-  - "long" — oils, dry goods (rice, pasta, flour), spices, sauces, canned/bottled goods, ALL kitchenware
-  - "frozen" — anything explicitly stored in the freezer (frozen vegetables, frozen meat, frozen dumplings, ice cream, sukiyaki/shabu slices sold frozen)
+${PROMPT_FRAGMENTS.shelfLifeRules}
 - type rules: kitchenware = pots, pans, utensils, appliances. Everything edible = ingredient.
 - category rules (REQUIRED for type=ingredient, OMIT for type=kitchenware):
-  - "Protein" — meat, poultry, seafood, eggs, tofu, tempeh, legumes
-  - "Carbs" — rice, noodles, pasta, bread, flour, potatoes, starches
-  - "Vegetable" — all produce, herbs, mushrooms (incl. dried), leafy greens, aromatics (garlic, ginger, spring onion)
-  - "Condiments" — sauces, oils, vinegars, pastes, sugar, salt
-  - "Spice" — dry spices and spice blends (pepper, cumin, paprika, chili flakes, garam masala)
-  - "Misc" — fruit, dairy, snacks, anything that doesn't clearly fit above
+${PROMPT_FRAGMENTS.categoryRules}
 - Normalize names to singular, title case where natural ("chicken breasts" → "Chicken breast", "bok choy" → "Bok choy").
 - unit MUST come from this allowlist if used: g, kg, oz, lb, ml, l, cup, tbsp, tsp, piece, pieces, clove, cloves, bottle, bottles, can, cans, pack, packs, bunch, bunches, pinch, dash, slice, slices.
 
