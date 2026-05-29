@@ -108,7 +108,8 @@ const Chat = () => {
         onRecipeDetected={handleRecipeDetected}
       />
       {status === "ready" && messageCount === 0 && (
-        <div className="flex gap-2 px-4 pb-1 flex-wrap">
+        <div className="px-4 pb-1">
+          <div className="flex gap-2 flex-wrap max-w-5xl mx-auto">
           {SUGGESTIONS.map((s) => (
             <button
               key={s}
@@ -118,6 +119,7 @@ const Chat = () => {
               {s}
             </button>
           ))}
+          </div>
         </div>
       )}
       <MessageInput
