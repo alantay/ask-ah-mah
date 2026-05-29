@@ -1,12 +1,16 @@
 "use client";
 
-import { CookingMode, ServingsStepper } from "@/features/Recipe";
 import { useSessionContext } from "@/contexts/SessionContext";
-import { RecipeIngredient, RecipeStep, RecipeWithId } from "@/lib/recipes/schemas";
+import { CookingMode, ServingsStepper } from "@/features/Recipe";
+import {
+  RecipeIngredient,
+  RecipeStep,
+  RecipeWithId,
+} from "@/lib/recipes/schemas";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Streamdown } from "streamdown";
 import { toast } from "sonner";
+import { Streamdown } from "streamdown";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -46,7 +50,12 @@ const QUICK_TWEAKS = [
 function diffRecipes(
   original: RecipeWithId,
   tweaked: RecipeWithId,
-): { ingredients: Set<number>; steps: Set<number>; deletedIngredients: Set<number>; deletedSteps: Set<number> } {
+): {
+  ingredients: Set<number>;
+  steps: Set<number>;
+  deletedIngredients: Set<number>;
+  deletedSteps: Set<number>;
+} {
   const changedIngredients = new Set<number>();
   const changedSteps = new Set<number>();
   const deletedIngredients = new Set<number>();
@@ -86,7 +95,12 @@ function diffRecipes(
     }
   }
 
-  return { ingredients: changedIngredients, steps: changedSteps, deletedIngredients, deletedSteps };
+  return {
+    ingredients: changedIngredients,
+    steps: changedSteps,
+    deletedIngredients,
+    deletedSteps,
+  };
 }
 
 // ─── RecipeBody ──────────────────────────────────────────────────────────────
@@ -102,8 +116,6 @@ interface RecipeBodyProps {
   /** Original recipe — needed to render deleted rows */
   originalRecipe?: RecipeWithId;
   tweakState: TweakState;
-  onTweakClick: () => void;
-  onTweakAgain: () => void;
 }
 
 function RecipeBody({
@@ -114,19 +126,23 @@ function RecipeBody({
   deletedSteps = new Set(),
   originalRecipe,
   tweakState,
-  onTweakClick,
-  onTweakAgain,
 }: RecipeBodyProps) {
-  const [servings, setServings] = useState<number>(selectedRecipe.baseServings ?? 2);
+  const [servings, setServings] = useState<number>(
+    selectedRecipe.baseServings ?? 2,
+  );
   const baseServings = selectedRecipe.baseServings || 2;
   const ingredients = (selectedRecipe.ingredients || []) as RecipeIngredient[];
-  const origIngredients = (originalRecipe?.ingredients || []) as RecipeIngredient[];
+  const origIngredients = (originalRecipe?.ingredients ||
+    []) as RecipeIngredient[];
   const origSteps = (originalRecipe?.steps || []) as RecipeStep[];
   const prep = (selectedRecipe.prep ?? []) as string[];
   const steps = (selectedRecipe.steps || []) as RecipeStep[];
   const scale = servings / baseServings;
 
-  const showHighlights = tweakState === "streaming" || tweakState === "preview" || tweakState === "saved";
+  const showHighlights =
+    tweakState === "streaming" ||
+    tweakState === "preview" ||
+    tweakState === "saved";
 
   return (
     <>
@@ -135,7 +151,10 @@ function RecipeBody({
         className="relative h-[180px] sm:h-[260px] border-b border-border flex items-end overflow-hidden"
         style={
           !selectedRecipe.imageUrl
-            ? { background: "linear-gradient(135deg, oklch(0.55 0.13 35) 0%, oklch(0.42 0.10 30) 100%)" }
+            ? {
+                background:
+                  "linear-gradient(135deg, oklch(0.55 0.13 35) 0%, oklch(0.42 0.10 30) 100%)",
+              }
             : undefined
         }
       >
@@ -158,7 +177,10 @@ function RecipeBody({
         )}
         <div
           className="relative w-full px-4 sm:px-9 pt-6 pb-5 text-white"
-          style={{ background: "linear-gradient(to top, oklch(0 0 0 / 0.5), transparent)" }}
+          style={{
+            background:
+              "linear-gradient(to top, oklch(0 0 0 / 0.5), transparent)",
+          }}
         >
           {selectedRecipe.tags && selectedRecipe.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-2.5">
@@ -200,57 +222,25 @@ function RecipeBody({
         {selectedRecipe.description && (
           <div className="flex gap-3.5 items-start mb-6 pb-5 border-b border-dashed border-border">
             <div className="relative w-10 h-10 shrink-0">
-              <Image src="/granny-icon.png" alt="" fill className="object-contain" />
+              <Image
+                src="/granny-icon.png"
+                alt=""
+                fill
+                className="object-contain"
+              />
             </div>
             <div className="flex-1 min-w-0">
               <div className="font-sans text-[10.5px] font-bold tracking-[0.16em] uppercase text-ink-faint mb-1 flex items-center gap-2">
                 From Ah Mah
                 {tweakState === "saved" && (
-                  <span className="text-emerald-600 tracking-[0.14em]">· tweaked just now</span>
+                  <span className="text-emerald-600 tracking-[0.14em]">
+                    · tweaked just now
+                  </span>
                 )}
               </div>
               <div className="font-display italic text-[15px] sm:text-base text-foreground leading-[1.5] max-w-prose">
                 {selectedRecipe.description}
               </div>
-
-              {/* State 1 — inline tweak button (resting) */}
-              {tweakState === "resting" && (
-                <button
-                  onClick={onTweakClick}
-                  className="mt-3 inline-flex items-center gap-2 px-3.5 py-1.5 text-[12.5px] font-semibold text-primary bg-primary/5 border border-dashed border-primary/60 rounded-full cursor-pointer hover:bg-primary/10 transition-colors"
-                >
-                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                    <path
-                      d="M3 10.5 L8.5 5 L11 7.5 L5.5 13 H3 V10.5 Z M8.5 5 L10 3.5 L12.5 6 L11 7.5"
-                      stroke="currentColor"
-                      strokeWidth="1.4"
-                      strokeLinejoin="round"
-                      fill="none"
-                    />
-                  </svg>
-                  Want Ah Mah to tweak this?
-                  <span className="text-ink-faint ml-0.5">→</span>
-                </button>
-              )}
-
-              {/* State 5 — tweak again (saved) */}
-              {tweakState === "saved" && (
-                <button
-                  onClick={onTweakAgain}
-                  className="mt-3 inline-flex items-center gap-2 px-3.5 py-1.5 text-[12.5px] font-semibold text-primary bg-primary/5 border border-dashed border-primary/60 rounded-lg cursor-pointer hover:bg-primary/10 transition-colors"
-                >
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                    <path
-                      d="M3 10.5 L8.5 5 L11 7.5 L5.5 13 H3 V10.5 Z M8.5 5 L10 3.5 L12.5 6 L11 7.5"
-                      stroke="currentColor"
-                      strokeWidth="1.4"
-                      strokeLinejoin="round"
-                      fill="none"
-                    />
-                  </svg>
-                  Tweak again
-                </button>
-              )}
             </div>
           </div>
         )}
@@ -284,13 +274,16 @@ function RecipeBody({
             </div>
             <ul className="list-none p-0 mt-2 border-t border-border">
               {ingredients.map((ing, i) => {
-                const scaled = ing.amount != null ? ing.amount * scale : undefined;
+                const scaled =
+                  ing.amount != null ? ing.amount * scale : undefined;
                 const isChanged = showHighlights && changedIngredients.has(i);
                 return (
                   <li
                     key={i}
                     className={`flex items-baseline gap-3 py-2.5 border-b border-dashed border-border transition-colors ${
-                      isChanged ? "bg-amber-50 dark:bg-amber-950/20 -mx-1 px-1 rounded" : ""
+                      isChanged
+                        ? "bg-amber-50 dark:bg-amber-950/20 -mx-1 px-1 rounded"
+                        : ""
                     }`}
                   >
                     <span
@@ -315,7 +308,8 @@ function RecipeBody({
                 Array.from(deletedIngredients).map((i) => {
                   const ing = origIngredients[i];
                   if (!ing) return null;
-                  const scaled = ing.amount != null ? ing.amount * scale : undefined;
+                  const scaled =
+                    ing.amount != null ? ing.amount * scale : undefined;
                   return (
                     <li
                       key={`deleted-ing-${i}`}
@@ -379,7 +373,9 @@ function RecipeBody({
                   <li
                     key={i}
                     className={`flex gap-4 transition-colors ${
-                      isChanged ? "bg-amber-50 dark:bg-amber-950/20 -mx-1 px-1 rounded-lg py-1" : ""
+                      isChanged
+                        ? "bg-amber-50 dark:bg-amber-950/20 -mx-1 px-1 rounded-lg py-1"
+                        : ""
                     }`}
                   >
                     <span className="font-mono text-[13px] font-bold text-ink-faint tabular-nums pt-0.5 shrink-0 w-5 text-right">
@@ -395,7 +391,9 @@ function RecipeBody({
                         {step.body}
                       </div>
                       {step.tip && (
-                        <div className="mt-1.5 text-[12.5px] text-ink-faint italic">{step.tip}</div>
+                        <div className="mt-1.5 text-[12.5px] text-ink-faint italic">
+                          {step.tip}
+                        </div>
                       )}
                     </div>
                   </li>
@@ -430,7 +428,9 @@ function RecipeBody({
             </ol>
           ) : (
             <div className="recipe-prose">
-              <Streamdown>{extractInstructions(selectedRecipe.instructions || "")}</Streamdown>
+              <Streamdown>
+                {extractInstructions(selectedRecipe.instructions || "")}
+              </Streamdown>
             </div>
           )}
         </section>
@@ -439,11 +439,30 @@ function RecipeBody({
   );
 }
 
-// ─── Bottom bar ──────────────────────────────────────────────────────────────
+// ─── Workshop card (Direction B — floating, not sticky) ──────────────────────
 
-interface TweakBarProps {
+const TweakIcon = () => (
+  <svg
+    width="13"
+    height="13"
+    viewBox="0 0 16 16"
+    fill="none"
+    className="shrink-0"
+  >
+    <path
+      d="M3 10.5 L8.5 5 L11 7.5 L5.5 13 H3 V10.5 Z M8.5 5 L10 3.5 L12.5 6 L11 7.5"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinejoin="round"
+      fill="none"
+    />
+  </svg>
+);
+
+interface WorkshopCardProps {
   tweakState: TweakState;
   instruction: string;
+  totalChanges: number;
   onInstructionChange: (v: string) => void;
   onSend: (prompt?: string) => void;
   onDismiss: () => void;
@@ -454,9 +473,10 @@ interface TweakBarProps {
   inputRef: React.RefObject<HTMLInputElement | null>;
 }
 
-function TweakBar({
+function WorkshopCard({
   tweakState,
   instruction,
+  totalChanges,
   onInstructionChange,
   onSend,
   onDismiss,
@@ -465,170 +485,152 @@ function TweakBar({
   onDiscard,
   isSaving,
   inputRef,
-}: TweakBarProps) {
-  if (tweakState !== "open" && tweakState !== "streaming" && tweakState !== "preview") {
+}: WorkshopCardProps) {
+  if (
+    tweakState !== "open" &&
+    tweakState !== "streaming" &&
+    tweakState !== "preview"
+  ) {
     return null;
   }
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border/60 shadow-[0_-4px_24px_oklch(0_0_0/0.08)]"
+      className="absolute inset-x-4 sm:inset-x-6 bottom-4 sm:bottom-5 max-w-3xl mx-auto bg-card border border-border rounded-2xl shadow-[0_24px_48px_-20px_oklch(0_0_0/0.35),0_1px_0_var(--color-border-soft)] z-40 overflow-hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3.5">
-        {/* State 2 — open input */}
+      <div className="p-3.5 sm:p-4">
+        {/* State 2 — open */}
         {tweakState === "open" && (
-          <div className="flex gap-3">
-            <div className="relative w-8 h-8 shrink-0 mt-1">
-              <Image
-                src="/granny-avatar.png"
-                alt="Ah Mah"
-                fill
-                className="object-cover rounded-full border border-border"
-              />
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-6 h-6 rounded-[7px] bg-primary/8 border border-primary/40 text-primary inline-flex items-center justify-center">
+                  <TweakIcon />
+                </div>
+                <div>
+                  <div className="font-display italic font-semibold text-[15px] text-foreground tracking-tight leading-none">
+                    Tweak workshop
+                  </div>
+                  <div className="font-sans text-[11px] text-ink-faint mt-0.5">
+                    Describe a change. Ah Mah will rewrite the recipe.
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={onDismiss}
+                aria-label="Dismiss"
+                className="w-7 h-7 inline-flex items-center justify-center border border-border rounded-full text-[11px] text-muted-foreground hover:bg-muted/60 transition-colors cursor-pointer shrink-0"
+              >
+                ✕
+              </button>
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-2">
-                <p className="font-display italic text-[13.5px] text-muted-foreground leading-snug">
-                  What should I change, ah? Tell me anything — taste, ingredients, time.
-                </p>
+            {/* Quick-tweak chips */}
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {QUICK_TWEAKS.map((chip) => (
                 <button
-                  onClick={onDismiss}
-                  aria-label="Dismiss"
-                  className="ml-3 shrink-0 w-6 h-6 inline-flex items-center justify-center border border-border rounded-full text-[11px] text-muted-foreground hover:bg-muted/60 cursor-pointer transition-colors"
+                  key={chip}
+                  onClick={() => onSend(chip)}
+                  className="px-2.5 py-1 text-[11px] font-medium text-muted-foreground bg-background border border-border/70 rounded-full cursor-pointer hover:bg-muted/60 transition-colors"
                 >
-                  ✕
+                  {chip}
                 </button>
-              </div>
-              {/* Quick-tweak chips */}
-              <div className="flex flex-wrap gap-1.5 mb-2.5">
-                {QUICK_TWEAKS.map((chip) => (
-                  <button
-                    key={chip}
-                    onClick={() => onSend(chip)}
-                    className="px-2.5 py-1 text-[11px] font-medium text-muted-foreground bg-card border border-border/70 rounded-full cursor-pointer hover:bg-muted/60 transition-colors"
-                  >
-                    {chip}
-                  </button>
-                ))}
-              </div>
-              {/* Input row */}
-              <div className="flex items-center gap-2.5 px-4 py-2 bg-card border border-border rounded-full shadow-[0_1px_0_var(--color-border-soft),0_8px_24px_-16px_oklch(0_0_0/0.2)]">
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  className="shrink-0 text-primary"
-                >
-                  <path
-                    d="M3 10.5 L8.5 5 L11 7.5 L5.5 13 H3 V10.5 Z M8.5 5 L10 3.5 L12.5 6 L11 7.5"
-                    stroke="currentColor"
-                    strokeWidth="1.4"
-                    strokeLinejoin="round"
-                    fill="none"
-                  />
+              ))}
+            </div>
+            {/* Input row */}
+            <div className="flex items-center gap-2.5 px-4 py-2 bg-background border border-border rounded-full shadow-[0_1px_0_var(--color-border-soft),0_8px_24px_-16px_oklch(0_0_0/0.15)]">
+              <TweakIcon />
+              <input
+                ref={inputRef}
+                value={instruction}
+                onChange={(e) => onInstructionChange(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") onSend();
+                }}
+                placeholder="e.g. less spicy, add cucumber for crunch…"
+                className="flex-1 bg-transparent border-none outline-none text-[13.5px] text-foreground placeholder:text-muted-foreground font-sans"
+              />
+              <button
+                onClick={() => onSend()}
+                disabled={!instruction.trim()}
+                aria-label="Send"
+                className={`w-8 h-8 rounded-full inline-flex items-center justify-center shrink-0 transition-colors cursor-pointer ${
+                  instruction.trim()
+                    ? "bg-primary border border-primary/80 text-primary-foreground shadow-[0_1px_0_oklch(0.46_0.135_35)] hover:opacity-90"
+                    : "bg-muted border border-border text-muted-foreground cursor-not-allowed"
+                }`}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                  <path d="M3 12 L21 4 L13 21 L11 13 Z" fill="currentColor" />
                 </svg>
-                <input
-                  ref={inputRef}
-                  value={instruction}
-                  onChange={(e) => onInstructionChange(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") onSend();
-                  }}
-                  placeholder="Tell Ah Mah what to change…"
-                  className="flex-1 bg-transparent border-none outline-none text-[13.5px] text-foreground placeholder:text-muted-foreground font-sans"
-                />
-                <button
-                  onClick={() => onSend()}
-                  disabled={!instruction.trim()}
-                  aria-label="Send"
-                  className={`w-8 h-8 rounded-full inline-flex items-center justify-center shrink-0 transition-colors cursor-pointer ${
-                    instruction.trim()
-                      ? "bg-primary border border-primary/80 text-primary-foreground shadow-[0_1px_0_oklch(0.46_0.135_35)] hover:opacity-90"
-                      : "bg-muted border border-border text-muted-foreground cursor-not-allowed"
-                  }`}
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-                    <path d="M3 12 L21 4 L13 21 L11 13 Z" fill="currentColor" />
-                  </svg>
-                </button>
-              </div>
+              </button>
             </div>
           </div>
         )}
 
         {/* State 3 — streaming */}
         {tweakState === "streaming" && (
-          <div className="flex gap-3">
-            <div className="relative w-8 h-8 shrink-0 mt-1">
-              <Image
-                src="/granny-avatar.png"
-                alt="Ah Mah"
-                fill
-                className="object-cover rounded-full border border-border"
-              />
-            </div>
-            <div className="flex-1">
-              <div className="inline-flex items-center gap-2 px-3.5 py-2 bg-card border border-border rounded-xl text-[13px] text-foreground">
-                <span className="text-muted-foreground">You said:</span>
-                <span className="font-display italic text-[14px]">&ldquo;{instruction}&rdquo;</span>
-              </div>
-              <div className="mt-2 flex items-center gap-2 text-[11.5px] text-muted-foreground">
-                <span className="inline-flex gap-1">
+          <div>
+            <div className="flex items-center justify-between mb-2.5">
+              <div className="inline-flex items-center gap-2 font-sans text-[12px] font-semibold text-primary">
+                <span className="inline-flex gap-[3px]">
                   {[0, 1, 2].map((i) => (
                     <span
                       key={i}
-                      className="w-1.5 h-1.5 rounded-full bg-primary"
-                      style={{ animation: `tweakDot 1.2s ease-in-out ${i * 0.15}s infinite` }}
+                      className="w-[5px] h-[5px] rounded-full bg-primary"
+                      style={{
+                        animation: `tweakDot 1.2s ease-in-out ${i * 0.15}s infinite`,
+                      }}
                     />
                   ))}
                 </span>
-                Ah Mah is rewriting above…
+                Ah Mah is rewriting…
               </div>
+            </div>
+            <div className="px-3 py-2 bg-primary/5 border border-dashed border-primary/40 rounded-lg font-display italic text-[13px] text-primary">
+              &ldquo;{instruction}&rdquo;
             </div>
           </div>
         )}
 
         {/* State 4 — preview ready */}
         {tweakState === "preview" && (
-          <div className="flex gap-3 items-start">
-            <div className="relative w-8 h-8 shrink-0 mt-1">
-              <Image
-                src="/granny-avatar.png"
-                alt="Ah Mah"
-                fill
-                className="object-cover rounded-full border border-border"
-              />
-            </div>
-            <div className="flex-1">
-              <p className="font-display italic text-[14px] text-foreground mb-1">
-                How does this look? Save it to your cookbook, or tell me what&rsquo;s still off.
-              </p>
-              <p className="text-[11px] text-muted-foreground mb-3">
-                &ldquo;{instruction}&rdquo;
-              </p>
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <button
-                  onClick={onSave}
-                  disabled={isSaving}
-                  className="px-3.5 py-2 text-[13px] font-semibold text-primary-foreground bg-primary border border-primary rounded-lg shadow-[0_1px_0_oklch(0.46_0.135_35)] hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-60"
-                >
-                  {isSaving ? "Saving…" : "Save changes"}
-                </button>
-                <button
-                  onClick={onTryAgain}
-                  className="px-3 py-2 text-[12.5px] font-semibold text-foreground bg-card border border-border rounded-lg cursor-pointer hover:bg-muted/60 transition-colors"
-                >
-                  Try a different tweak
-                </button>
-                <button
-                  onClick={onDiscard}
-                  className="px-1.5 py-2 text-[11.5px] font-semibold tracking-[0.14em] uppercase text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
-                >
-                  Discard
-                </button>
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <div className="font-display italic font-semibold text-[15px] text-foreground tracking-tight leading-none">
+                  Preview ready
+                  {totalChanges > 0 && (
+                    <span className="font-sans not-italic font-normal text-[12px] text-ink-faint ml-2">
+                      — {totalChanges} change{totalChanges !== 1 ? "s" : ""}
+                    </span>
+                  )}
+                </div>
+                <div className="font-sans text-[11px] text-ink-faint mt-1">
+                  &ldquo;{instruction}&rdquo;
+                </div>
               </div>
+            </div>
+            <div className="flex items-center justify-end gap-2.5 flex-wrap">
+              <button
+                onClick={onDiscard}
+                className="px-3 py-2 text-[12px] font-semibold tracking-[0.14em] uppercase text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
+              >
+                Discard
+              </button>
+              <button
+                onClick={onTryAgain}
+                className="px-3.5 py-2 text-[12.5px] font-semibold text-foreground bg-background border border-border rounded-lg cursor-pointer hover:bg-muted/60 transition-colors"
+              >
+                Tweak again
+              </button>
+              <button
+                onClick={onSave}
+                disabled={isSaving}
+                className="px-4 py-2 text-[13px] font-semibold text-primary-foreground bg-primary border border-primary rounded-lg shadow-[0_1px_0_oklch(0.46_0.135_35)] hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-60"
+              >
+                {isSaving ? "Saving…" : "Save changes"}
+              </button>
             </div>
           </div>
         )}
@@ -667,11 +669,22 @@ export default function RecipeDisplay({
   const canCook = steps.length > 0;
 
   // Compute changed fields (memoised — only recalculates when the recipes change)
-  const { ingredients: changedIngredients, steps: changedSteps, deletedIngredients, deletedSteps } = useMemo(
+  const {
+    ingredients: changedIngredients,
+    steps: changedSteps,
+    deletedIngredients,
+    deletedSteps,
+  } = useMemo(
     () => diffRecipes(originalRecipeRef.current, tweakedRecipe),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [tweakedRecipe],
   );
+
+  const totalChanges =
+    changedIngredients.size +
+    changedSteps.size +
+    deletedIngredients.size +
+    deletedSteps.size;
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
@@ -712,7 +725,11 @@ export default function RecipeDisplay({
         const res = await fetch(`/api/recipe/${recipe.id}/tweak`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, instruction: p, recipe: originalRecipeRef.current }),
+          body: JSON.stringify({
+            userId,
+            instruction: p,
+            recipe: originalRecipeRef.current,
+          }),
         });
 
         if (!res.ok || !res.body) {
@@ -738,10 +755,15 @@ export default function RecipeDisplay({
               const updatedRecipe: RecipeWithId = {
                 ...originalRecipeRef.current,
                 name: parsed.title ?? originalRecipeRef.current.name,
-                description: parsed.description ?? originalRecipeRef.current.description,
-                totalTimeMinutes: parsed.totalTimeMinutes ?? originalRecipeRef.current.totalTimeMinutes,
-                baseServings: parsed.baseServings ?? originalRecipeRef.current.baseServings,
-                ingredients: parsed.ingredients ?? originalRecipeRef.current.ingredients,
+                description:
+                  parsed.description ?? originalRecipeRef.current.description,
+                totalTimeMinutes:
+                  parsed.totalTimeMinutes ??
+                  originalRecipeRef.current.totalTimeMinutes,
+                baseServings:
+                  parsed.baseServings ?? originalRecipeRef.current.baseServings,
+                ingredients:
+                  parsed.ingredients ?? originalRecipeRef.current.ingredients,
                 prep: parsed.prep ?? originalRecipeRef.current.prep,
                 steps: parsed.steps ?? originalRecipeRef.current.steps,
                 tags: parsed.tags ?? originalRecipeRef.current.tags,
@@ -761,7 +783,9 @@ export default function RecipeDisplay({
           setTweakState("preview");
         } else {
           // AI responded with non-JSON (e.g. refused the request) — surface an error
-          toast.error("Ah Mah couldn't tweak this one. Try a different instruction?");
+          toast.error(
+            "Ah Mah couldn't tweak this one. Try a different instruction?",
+          );
           setTweakState("open");
         }
       } catch (err) {
@@ -835,9 +859,10 @@ export default function RecipeDisplay({
     }
   };
 
-  // Keep tweakState bottom bar above iOS home indicator
-  const hasBottomBar =
-    tweakState === "open" || tweakState === "streaming" || tweakState === "preview";
+  const hasWorkshopCard =
+    tweakState === "open" ||
+    tweakState === "streaming" ||
+    tweakState === "preview";
 
   if (cooking) {
     return (
@@ -852,7 +877,7 @@ export default function RecipeDisplay({
 
   return (
     <>
-      {/* Dot animation keyframes injected as a style tag */}
+      {/* Dot animation keyframes */}
       <style>{`
         @keyframes tweakDot {
           0%, 80%, 100% { opacity: 0.2; transform: scale(0.85); }
@@ -860,14 +885,16 @@ export default function RecipeDisplay({
         }
       `}</style>
 
-      <div className="flex flex-col h-full">
-        <div className={`flex-1 overflow-y-auto ${hasBottomBar ? "pb-36" : ""}`}>
-          <div className="mx-auto max-w-3xl px-4 sm:px-6 pt-4 sm:pt-5 pb-8">
+      <div className="flex flex-col h-full relative">
+        <div
+          className={`flex-1 overflow-y-auto ${hasWorkshopCard ? "pb-52" : "pb-24"}`}
+        >
+          <div className="mx-auto max-w-4xl px-4 sm:px-6 pt-4 sm:pt-5 pb-8">
             <div className="flex items-center justify-between mb-3 sm:mb-4">
               {!hideBackButton && (
                 <button
                   onClick={onBack}
-                  className="font-sans text-[11.5px] font-semibold tracking-[0.14em] uppercase text-ink-faint hover:text-foreground transition-colors cursor-pointer"
+                  className="min-h-11 inline-flex items-center font-sans text-[11.5px] font-semibold tracking-[0.14em] uppercase text-ink-faint hover:text-foreground transition-colors cursor-pointer"
                   aria-label="Back to cookbook"
                 >
                   ← Back to cookbook
@@ -876,7 +903,7 @@ export default function RecipeDisplay({
               {canCook && (
                 <button
                   onClick={handleStartCooking}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12.5px] font-semibold text-primary-foreground bg-primary border border-primary rounded-md cursor-pointer shadow-[0_1px_0_oklch(0.46_0.135_35)] hover:opacity-90 transition-opacity"
+                  className="inline-flex items-center gap-1.5 min-h-11 px-3 py-1.5 text-[12.5px] font-semibold text-primary-foreground bg-primary border border-primary rounded-md cursor-pointer shadow-[0_1px_0_oklch(0.46_0.135_35)] hover:opacity-90 transition-opacity"
                   aria-label="Start cooking — step-by-step view with screen stay-on"
                 >
                   <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
@@ -895,26 +922,38 @@ export default function RecipeDisplay({
                 deletedSteps={deletedSteps}
                 originalRecipe={originalRecipeRef.current}
                 tweakState={tweakState}
-                onTweakClick={openTweak}
-                onTweakAgain={tweakAgain}
               />
             </div>
           </div>
         </div>
-      </div>
 
-      <TweakBar
-        tweakState={tweakState}
-        instruction={instruction}
-        onInstructionChange={setInstruction}
-        onSend={sendTweak}
-        onDismiss={dismissTweak}
-        onSave={saveChanges}
-        onTryAgain={tryAgain}
-        onDiscard={discardChanges}
-        isSaving={isSaving}
-        inputRef={inputRef}
-      />
+        {/* Direction B — floating pill (resting / saved) */}
+        {(tweakState === "resting" || tweakState === "saved") && (
+          <button
+            onClick={openTweak}
+            className="absolute right-5 bottom-5 inline-flex items-center gap-2 px-[18px] py-[11px] font-sans text-[13px] font-semibold text-primary-foreground bg-primary border border-primary/80 rounded-full cursor-pointer shadow-[0_12px_32px_-10px_oklch(0_0_0/0.35),0_1px_0_oklch(0.46_0.135_35),inset_0_1px_0_oklch(0.65_0.13_38)] hover:opacity-90 transition-opacity z-40"
+            style={{ bottom: "max(20px, env(safe-area-inset-bottom, 20px))" }}
+          >
+            <TweakIcon />
+            Tweak this recipe
+          </button>
+        )}
+
+        {/* Direction B — floating workshop card (open / streaming / preview) */}
+        <WorkshopCard
+          tweakState={tweakState}
+          instruction={instruction}
+          totalChanges={totalChanges}
+          onInstructionChange={setInstruction}
+          onSend={sendTweak}
+          onDismiss={dismissTweak}
+          onSave={saveChanges}
+          onTryAgain={tryAgain}
+          onDiscard={discardChanges}
+          isSaving={isSaving}
+          inputRef={inputRef}
+        />
+      </div>
     </>
   );
 }

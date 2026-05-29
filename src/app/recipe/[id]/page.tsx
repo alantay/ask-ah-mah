@@ -21,15 +21,17 @@ export default function RecipePage() {
 
   if (isLoading) {
     return (
-      <div className="h-[calc(100dvh-3.25rem)] sm:h-[calc(100dvh-3.75rem)] md:h-[calc(100dvh-4.5rem)] flex items-center justify-center">
-        <p className="font-display italic text-muted-foreground">Pulling out the recipe…</p>
+      <div className="flex items-center justify-center">
+        <p className="font-display italic text-muted-foreground">
+          Pulling out the recipe…
+        </p>
       </div>
     );
   }
 
   if (!recipe) {
     return (
-      <div className="h-[calc(100dvh-3.25rem)] sm:h-[calc(100dvh-3.75rem)] md:h-[calc(100dvh-4.5rem)] flex flex-col items-center justify-center gap-4">
+      <div className="flex flex-col items-center justify-center gap-4">
         <p className="font-display italic text-muted-foreground">
           Can&rsquo;t find that one, lah.
         </p>
@@ -44,8 +46,11 @@ export default function RecipePage() {
   }
 
   return (
-    <div className="h-[calc(100dvh-3.25rem)] sm:h-[calc(100dvh-3.75rem)] md:h-[calc(100dvh-4.5rem)] overflow-hidden">
-      <RecipeDisplay recipe={recipe} onBack={() => router.push("/?tab=cookbook")} />
+    <div className="flex-1 min-h-0 overflow-hidden">
+      <RecipeDisplay
+        recipe={recipe}
+        onBack={() => router.push("/?tab=cookbook")}
+      />
     </div>
   );
 }
