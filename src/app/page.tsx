@@ -3,16 +3,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChatWrapper from "@/features/Chat/components/ChatWrapper";
 import InventoryWrapper from "@/features/Inventory/components/InventoryWrapper";
 import RecipeList from "@/features/RecipeList/RecipeList";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useActiveTab } from "@/hooks/useActiveTab";
+import { useRouter } from "next/navigation";
 import { Suspense } from "react";
-
-const VALID_TABS = ["chat", "pantry", "cookbook"] as const;
 
 function HomeContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const raw = searchParams.get("tab");
-  const activeTab = raw && (VALID_TABS as readonly string[]).includes(raw) ? raw : "chat";
+  const activeTab = useActiveTab();
 
   const setActiveTab = (tab: string) => {
     router.replace(`/?tab=${tab}`, { scroll: false });
