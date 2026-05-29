@@ -200,6 +200,7 @@ describe("MessageInput", () => {
       await waitFor(() => {
         expect(mockOnSendMessage).toHaveBeenCalledTimes(1);
         expect(mockOnSendMessage).toHaveBeenCalledWith("Hello, world!");
+        expect(input).toHaveValue("");
       });
     });
 
@@ -239,6 +240,9 @@ describe("MessageInput", () => {
       fireEvent.submit(form);
 
       expect(handleSubmit).toHaveBeenCalledTimes(1);
+      await waitFor(() => {
+        expect(mockOnSendMessage).toHaveBeenCalledWith("Test message");
+      });
     });
 
     it("should handle Enter key submission", async () => {
@@ -385,10 +389,11 @@ describe("MessageInput", () => {
       const button = screen.getByTestId("button");
 
       expect(input).not.toBeDisabled();
-      expect(button).not.toBeDisabled();
+      expect(button).toBeDisabled();
 
       await user.type(input, "This should work");
       expect(input).toHaveValue("This should work");
+      expect(button).not.toBeDisabled();
     });
   });
 
@@ -552,6 +557,7 @@ describe("MessageInput", () => {
       // Focus input
       input.focus();
       expect(input).toHaveFocus();
+      await user.type(input, "Ready to send");
 
       // Tab to button
       await user.tab();
