@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
 import RecipeCard from "./components/RecipeCard";
 import { AddRecipeModal } from "./components/AddRecipeModal";
+import { RecipeSidebar } from "./components/RecipeSidebar";
 
 const HIDE_SCROLLBAR =
   "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
@@ -20,7 +21,8 @@ interface RecipeListProps {
 export default function RecipeList({ onChatClick }: RecipeListProps) {
   const { userId } = useSessionContext();
   const router = useRouter();
-  const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
 
@@ -54,9 +56,21 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
   }, {} as Record<string, number>);
   const tagEntries = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
 
+  const handleTagToggle = (tag: string) => {
+    setActiveTags((prev) => {
+      const next = new Set(prev);
+      next.has(tag) ? next.delete(tag) : next.add(tag);
+      return next;
+    });
+  };
+
   const searchLower = search.trim().toLowerCase();
   const filtered = allRecipes
-    .filter((r) => !activeTag || r.tags?.includes(activeTag))
+    .filter(
+      (r) =>
+        activeTags.size === 0 ||
+        [...activeTags].every((t) => r.tags?.includes(t)),
+    )
     .filter(
       (r) =>
         !searchLower ||
@@ -93,18 +107,34 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
           {!isEmpty && (
-            <label className="flex items-center gap-2 px-3 py-[7px] bg-card border border-border rounded-full sm:min-w-[200px] flex-1 sm:flex-none text-muted-foreground cursor-text">
-              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" className="shrink-0">
-                <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.4" />
-                <path d="m10.5 10.5 3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-              </svg>
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search your cookbook…"
-                className="flex-1 bg-transparent border-none outline-none text-[13px] placeholder:text-muted-foreground text-foreground min-w-0"
-              />
-            </label>
+            <>
+              <button
+                onClick={() => setMobileFilterOpen(true)}
+                className="sm:hidden shrink-0 flex items-center gap-1.5 px-3 py-[7px] font-sans text-[13px] font-medium text-muted-foreground bg-card border border-border rounded-full cursor-pointer hover:text-foreground transition-colors"
+              >
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M1 3h10M3 6h6M5 9h2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                </svg>
+                Filter
+                {activeTags.size > 0 && (
+                  <span className="ml-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold">
+                    {activeTags.size}
+                  </span>
+                )}
+              </button>
+              <label className="flex items-center gap-2 px-3 py-[7px] bg-card border border-border rounded-full sm:min-w-[200px] flex-1 sm:flex-none text-muted-foreground cursor-text">
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" className="shrink-0">
+                  <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.4" />
+                  <path d="m10.5 10.5 3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                </svg>
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search your cookbook…"
+                  className="flex-1 bg-transparent border-none outline-none text-[13px] placeholder:text-muted-foreground text-foreground min-w-0"
+                />
+              </label>
+            </>
           )}
           <button
             onClick={() => setShowAdd(true)}
@@ -118,66 +148,45 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
         </div>
       </div>
 
-      {/* Tag chip rail — horizontal scroll on mobile, wraps at sm+ */}
-      {!isEmpty && tagEntries.length > 0 && (
-        <div
-          className={`flex px-4 sm:px-9 py-3 border-b border-border gap-2 items-center shrink-0 flex-nowrap sm:flex-wrap overflow-x-auto sm:overflow-visible ${HIDE_SCROLLBAR}`}
-        >
-          <span className="hidden sm:inline text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground mr-1 shrink-0">
-            Filter
-          </span>
-          <button
-            onClick={() => setActiveTag(null)}
-            className={`shrink-0 min-h-11 px-3 py-1 text-[11px] font-medium rounded-full border transition-colors cursor-pointer ${
-              !activeTag
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-transparent text-muted-foreground border-border hover:text-foreground"
-            }`}
-          >
-            All · {allRecipes.length}
-          </button>
-          {tagEntries.map(([tag, count]) => (
-            <button
-              key={tag}
-              onClick={() => setActiveTag(activeTag === tag ? null : tag)}
-              className={`shrink-0 min-h-11 px-3 py-1 text-[11px] font-medium rounded-full border transition-colors cursor-pointer ${
-                activeTag === tag
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-transparent text-muted-foreground border-border hover:text-foreground"
-              }`}
-            >
-              {tag} · {count}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Grid area */}
-      <div className="flex-1 overflow-y-auto px-4 sm:px-9 py-5">
-        {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[18px]">
-            {[0, 1, 2].map((i) => <SkeletonCard key={i} />)}
-          </div>
-        ) : isEmpty ? (
-          <CookbookEmpty onChatClick={onChatClick} onPasteClick={() => setShowAdd(true)} />
-        ) : filtered.length === 0 ? (
-          <p className="font-display italic text-[14px] text-muted-foreground">
-            {activeTag
-              ? `Nothing tagged "${activeTag}". Try another?`
-              : "Nothing matches. Try a different word?"}
-          </p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[18px]">
-            {filtered.map((recipe) => (
-              <RecipeCard
-                key={recipe.id}
-                recipe={recipe}
-                onSelect={(r) => router.push(`/recipe/${r.id}`)}
-                onDelete={deleteRecipe}
-              />
-            ))}
-          </div>
+      {/* Sidebar + grid */}
+      <div className="flex-1 flex overflow-hidden">
+        {!isEmpty && tagEntries.length > 0 && (
+          <RecipeSidebar
+            tagCounts={tagCounts}
+            activeTags={activeTags}
+            onToggle={handleTagToggle}
+            onClear={() => setActiveTags(new Set())}
+            mobileOpen={mobileFilterOpen}
+            onMobileClose={() => setMobileFilterOpen(false)}
+          />
         )}
+
+        <div className={`flex-1 overflow-y-auto px-4 sm:px-6 py-5 ${HIDE_SCROLLBAR}`}>
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-[18px]">
+              {[0, 1, 2].map((i) => <SkeletonCard key={i} />)}
+            </div>
+          ) : isEmpty ? (
+            <CookbookEmpty onChatClick={onChatClick} onPasteClick={() => setShowAdd(true)} />
+          ) : filtered.length === 0 ? (
+            <p className="font-display italic text-[14px] text-muted-foreground">
+              {activeTags.size > 0
+                ? "Nothing matches those filters. Try removing one?"
+                : "Nothing matches. Try a different word?"}
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-[18px]">
+              {filtered.map((recipe) => (
+                <RecipeCard
+                  key={recipe.id}
+                  recipe={recipe}
+                  onSelect={(r) => router.push(`/recipe/${r.id}`)}
+                  onDelete={deleteRecipe}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <AddRecipeModal open={showAdd} onOpenChange={setShowAdd} />
