@@ -2,8 +2,6 @@
 
 import { useConversationContext } from "@/contexts/ConversationContext";
 import type { ConversationEntity } from "@/lib/conversations";
-import { useState } from "react";
-import { CONVERSATIONS_SEARCH_PLACEHOLDER } from "./constants";
 import { ConversationItem } from "./components/ConversationItem";
 import { ConversationListSkeleton } from "./components/ConversationListSkeleton";
 
@@ -47,20 +45,12 @@ export function Conversations({ onItemClick }: ConversationsProps) {
     renameConversation,
     deleteConversation,
   } = useConversationContext();
-  const [search, setSearch] = useState("");
 
-  // Only show conversations that have at least one message
   const committedConversations = allConversations.filter(
     (c) => (c._count?.messages ?? 0) > 0 || c.id === pendingConversationId
   );
 
-  const filtered = search.trim()
-    ? committedConversations.filter((c) =>
-        (c.title ?? "New chat").toLowerCase().includes(search.toLowerCase())
-      )
-    : committedConversations;
-
-  const groups = groupConversations(filtered);
+  const groups = groupConversations(committedConversations);
 
   const handleItemClick = (id: string) => {
     setActiveConversation(id);
@@ -70,42 +60,16 @@ export function Conversations({ onItemClick }: ConversationsProps) {
   return (
     <div className="flex flex-col h-full gap-3">
       {/* Header */}
-      <div>
-        <div className="font-display italic font-medium text-[22px] text-foreground leading-tight">
-          Conversations
-        </div>
-        <div className="text-xs text-ink-faint mt-0.5">Each kitchen session, kept</div>
-      </div>
-
-      {/* Search */}
-      <div className="relative">
-        <svg
-          className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-faint pointer-events-none"
-          width="12"
-          height="12"
-          viewBox="0 0 16 16"
-          fill="none"
-        >
-          <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.5" />
-          <path d="M11 11l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={CONVERSATIONS_SEARCH_PLACEHOLDER}
-          className="bg-card border border-border rounded-lg pl-7 pr-3 py-1.5 text-sm w-full outline-none focus:border-primary transition-colors"
-        />
+      <div className="font-display italic font-medium text-[22px] text-foreground leading-tight">
+        Conversations
       </div>
 
       {/* List */}
       <div className="flex-1 min-h-0 overflow-y-auto">
         {isLoading && allConversations.length === 0 ? (
           <ConversationListSkeleton />
-        ) : filtered.length === 0 ? (
-          <div className="italic text-ink-faint text-sm">
-            {search ? "No results" : "No conversations yet"}
-          </div>
+        ) : committedConversations.length === 0 ? (
+          <div className="italic text-ink-faint text-sm">No conversations yet</div>
         ) : (
           <div className="flex flex-col gap-3">
             {groups.map((group) => (

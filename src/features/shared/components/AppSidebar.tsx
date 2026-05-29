@@ -13,23 +13,11 @@ const ChatIcon = () => (
   </svg>
 );
 
-const ChatIconFilled = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-  </svg>
-);
-
 const PantryIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
     <line x1="3" y1="6" x2="21" y2="6" />
     <path d="M16 10a4 4 0 01-8 0" />
-  </svg>
-);
-
-const PantryIconFilled = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
   </svg>
 );
 
@@ -40,16 +28,10 @@ const CookbookIcon = () => (
   </svg>
 );
 
-const CookbookIconFilled = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
-  </svg>
-);
-
 const NAV_ITEMS = [
-  { id: "chat",     label: "New Chat",  Icon: ChatIcon,     IconFilled: ChatIconFilled },
-  { id: "pantry",   label: "Pantry",    Icon: PantryIcon,   IconFilled: PantryIconFilled },
-  { id: "cookbook", label: "Cookbook",  Icon: CookbookIcon, IconFilled: CookbookIconFilled },
+  { id: "chat",     label: "New Chat",  Icon: ChatIcon     },
+  { id: "pantry",   label: "Pantry",    Icon: PantryIcon   },
+  { id: "cookbook", label: "Cookbook",  Icon: CookbookIcon },
 ] as const;
 
 export function AppSidebar() {
@@ -99,7 +81,7 @@ export function AppSidebar() {
 
       {/* Primary nav */}
       <nav className="px-2 pb-2 flex flex-col gap-0.5 shrink-0">
-        {NAV_ITEMS.map(({ id, label, Icon, IconFilled }) => {
+        {NAV_ITEMS.map(({ id, label, Icon }) => {
           const isActive = id === "chat" ? isNewChatActive : activeTab === id;
           return (
             <button
@@ -113,7 +95,7 @@ export function AppSidebar() {
               ].join(" ")}
             >
               <span className={isActive ? "text-primary" : ""}>
-                {isActive ? <IconFilled /> : <Icon />}
+                <Icon />
               </span>
               {label}
             </button>
