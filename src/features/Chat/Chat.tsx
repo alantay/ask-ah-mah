@@ -4,6 +4,7 @@ import { useConversationContext } from "@/contexts/ConversationContext";
 import { ConversationsMobileSheet } from "@/features/Conversations";
 import { useChatSession } from "./hooks/useChatSession";
 import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import ConversationItemMenu from "@/features/Conversations/components/ConversationItemMenu";
 import { MessageInput } from "./components/MessageInput";
 import { MessageList } from "./components/MessageList";
@@ -25,6 +26,7 @@ const Chat = () => {
     renameConversation,
     deleteConversation,
   } = useConversationContext();
+  const router = useRouter();
 
   const [convSheetOpen, setConvSheetOpen] = useState(false);
   const [mobileRenaming, setMobileRenaming] = useState(false);
@@ -110,15 +112,22 @@ const Chat = () => {
       {status === "ready" && messageCount === 0 && (
         <div className="px-4 pb-1">
           <div className="flex gap-2 flex-wrap max-w-5xl mx-auto">
-          {SUGGESTIONS.map((s) => (
+            {/* Cook-with chip — routes to Pantry selection mode */}
             <button
-              key={s}
-              onClick={() => handleSendMessage(s)}
-              className="inline-flex items-center min-h-11 px-3.5 text-[12.5px] text-muted-foreground border border-border rounded-full hover:border-border-soft hover:text-foreground transition-colors cursor-pointer"
+              onClick={() => router.replace("/?tab=pantry&selectionMode=1")}
+              className="inline-flex items-center gap-1.5 min-h-11 px-3.5 text-[12.5px] text-muted-foreground border border-border rounded-full hover:border-border-soft hover:text-foreground transition-colors cursor-pointer"
             >
-              {s}
+              🥬 Cook with what I have →
             </button>
-          ))}
+            {SUGGESTIONS.map((s) => (
+              <button
+                key={s}
+                onClick={() => handleSendMessage(s)}
+                className="inline-flex items-center min-h-11 px-3.5 text-[12.5px] text-muted-foreground border border-border rounded-full hover:border-border-soft hover:text-foreground transition-colors cursor-pointer"
+              >
+                {s}
+              </button>
+            ))}
           </div>
         </div>
       )}

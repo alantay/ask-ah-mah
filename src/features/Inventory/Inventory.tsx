@@ -15,8 +15,8 @@ type GetInventoryResponse = {
 };
 import { cn } from "@/lib/utils";
 import { fetcher } from "@/lib/utils";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
 import { InventoryItemRow } from "./components/InventoryItemRow";
@@ -107,6 +107,17 @@ const Inventory = () => {
   const { userId } = useSessionContext();
   const { queueCookWithMessage, startNewConversation } = useConversationContext();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Auto-enter selection mode when routed from Chat chip (?selectionMode=1)
+  useEffect(() => {
+    if (searchParams.get("selectionMode") === "1") {
+      setSelectionMode(true);
+      setSelectedIds(new Set());
+      // Clear the param without re-rendering the parent
+      router.replace("/?tab=pantry", { scroll: false });
+    }
+  }, [searchParams, router]);
 
   const { data, error, isLoading } = useSWR<GetInventoryResponse>(
     userId ? `/api/inventory?userId=${userId}` : null,
