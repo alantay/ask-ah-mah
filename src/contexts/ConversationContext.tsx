@@ -31,6 +31,11 @@ interface ConversationContextType {
   renameConversation: (id: string, title: string) => Promise<void>;
   autoTitleActiveConversation: (title: string) => Promise<boolean>;
   deleteConversation: (id: string) => Promise<void>;
+  // Cook With What You Have: a pending synthetic message queued by the Pantry.
+  // useChatSession watches this and auto-sends it once status is "ready".
+  pendingCookWithMessage: string | null;
+  queueCookWithMessage: (message: string) => void;
+  clearCookWithMessage: () => void;
 }
 
 const ConversationContext = createContext<ConversationContextType | undefined>(
@@ -48,6 +53,7 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
   });
 
   const [pendingConversationId, setPendingConversationId] = useState<string | null>(null);
+  const [pendingCookWithMessage, setPendingCookWithMessage] = useState<string | null>(null);
 
   // Fetch the conversations list
   const listKey = userId ? `/api/conversation?userId=${userId}` : null;
@@ -252,6 +258,9 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
         renameConversation,
         autoTitleActiveConversation,
         deleteConversation,
+        pendingCookWithMessage,
+        queueCookWithMessage: setPendingCookWithMessage,
+        clearCookWithMessage: () => setPendingCookWithMessage(null),
       }}
     >
       {children}

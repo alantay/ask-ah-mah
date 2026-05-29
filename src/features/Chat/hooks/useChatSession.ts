@@ -24,6 +24,8 @@ export function useChatSession() {
     setPendingConversation,
     commitConversation,
     autoTitleActiveConversation,
+    pendingCookWithMessage,
+    clearCookWithMessage,
   } = useConversationContext();
 
   const [submittedAt, setSubmittedAt] = useState<number | null>(null);
@@ -165,6 +167,18 @@ export function useChatSession() {
   useEffect(() => {
     if (status !== "submitted") setSubmittedAt(null);
   }, [status]);
+
+  // Auto-send a Cook With What You Have message queued by the Pantry.
+  // Fires once status is "ready" and the session is in staging state.
+  useEffect(() => {
+    if (!pendingCookWithMessage) return;
+    if (status !== "ready") return;
+    if (activeConversationId !== null) return; // only in staging
+    const msg = pendingCookWithMessage;
+    clearCookWithMessage();
+    void handleSendMessage(msg);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingCookWithMessage, status, activeConversationId]);
 
   const handleRecipeDetected = useCallback(
     (recipeTitle: string) => {
