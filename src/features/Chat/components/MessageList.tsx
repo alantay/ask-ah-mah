@@ -28,6 +28,7 @@ interface MessageListProps {
   messages: UIMessage[];
   status: string;
   submittedAt: number | null;
+  isSending?: boolean;
   userId: string;
   onSend?: (text: string) => void;
   onRecipeDetected?: (title: string) => void;
@@ -83,6 +84,7 @@ export const MessageList = ({
   messages,
   status,
   submittedAt,
+  isSending = false,
   userId,
   onSend = () => {},
   onRecipeDetected,
@@ -438,9 +440,10 @@ export const MessageList = ({
             );
           })}
 
-          {/* Ghost loader bubble — visible while submitted, and while
-              streaming until the assistant has emitted visible content. */}
-          {shouldShowLoader(status, messages) && (
+          {/* Ghost loader bubble — visible during the pre-send gap (isSending),
+              while submitted, and while streaming until the assistant has
+              emitted visible content. */}
+          {(isSending || shouldShowLoader(status, messages)) && (
             <div className="py-4">
               <ChatLoader submittedAt={submittedAt} />
             </div>
