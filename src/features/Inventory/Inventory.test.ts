@@ -2,11 +2,11 @@ import { buildCookWithMessage } from "./Inventory";
 import type { InventoryItem } from "@/lib/inventory/schemas";
 
 function makeIngredient(name: string): InventoryItem {
-  return { id: name, userId: "u1", name, type: "ingredient", shelfLife: "medium" };
+  return { id: name, userId: "u1", name, type: "ingredient" };
 }
 
 function makeEquipment(name: string): InventoryItem {
-  return { id: name, userId: "u1", name, type: "kitchenware", shelfLife: "long" };
+  return { id: name, userId: "u1", name, type: "kitchenware" };
 }
 
 describe("buildCookWithMessage", () => {

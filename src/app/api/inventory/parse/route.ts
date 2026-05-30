@@ -27,10 +27,8 @@ export async function POST(req: NextRequest) {
       prompt: `Parse the following freeform inventory entry into structured items. The user is dumping what they just bought or what they have on hand.
 
 RULES:
-- Each item gets: name, type ("ingredient" | "kitchenware"), shelfLife ("short" | "medium" | "long" | "frozen"), and OPTIONAL quantity + unit.
+- Each item gets: name, type ("ingredient" | "kitchenware"), and OPTIONAL quantity + unit.
 - ONLY set quantity/unit when the user explicitly states an amount (e.g., "200g chicken" → quantity=200, unit="g"; "2 chicken breasts" → quantity=2, unit="pieces"). If they say "some bok choy" or just "eggs", LEAVE quantity AND unit UNSET — unset means "they have it, amount unlimited".
-- shelfLife rules:
-${PROMPT_FRAGMENTS.shelfLifeRules}
 - type rules: kitchenware = pots, pans, utensils, appliances. Everything edible = ingredient.
 - category rules (REQUIRED for type=ingredient, OMIT for type=kitchenware):
 ${PROMPT_FRAGMENTS.categoryRules}

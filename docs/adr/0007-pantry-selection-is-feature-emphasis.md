@@ -36,5 +36,5 @@ The selection is a *preference signal*, not a fence. The user is saying "feature
 ## Consequences
 
 - **UI copy diverges from the glossary.** Cards are labeled *"Right now"* and *"Worth a small trip"*, not "Close" and "Stretch." The glossary terms are internal; the captions are the product promise.
-- **Shelf-life prioritization is part of the contract.** The model sees `shelfLife` for every pantry item and is instructed to prioritize short-shelf ingredients. This is the latent justification for keeping `shelfLife` in the data model — see [progress.md](../progress.md) for context.
+- **Shelf-life is not part of the contract.** The model does not receive `shelfLife` data and does not prioritize items by freshness. See [ADR-0008](0008-no-shelf-life-ui.md).
 - **Kitchenware selection follows the same metaphor.** Selecting a wok = "prefer recipes that use a wok," not "only use a wok." Selecting nothing = any equipment is fair game.

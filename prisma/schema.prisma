@@ -15,7 +15,6 @@ model InventoryItem {
   category    String?
   quantity    Int?
   unit        String?
-  shelfLife   String   @default("medium")
   dateAdded   DateTime @default(now())
   lastUpdated DateTime @updatedAt
   userId      String
