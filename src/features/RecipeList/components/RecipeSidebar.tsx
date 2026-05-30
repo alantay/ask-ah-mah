@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { TAG_SETS, TagCategory, getTagCategory } from "@/lib/recipes/tagColors";
+
+const VISIBLE_LIMIT = 5;
 
 const CATEGORY_LABELS: Record<Exclude<TagCategory, "other">, string> = {
   cuisine: "Cuisine",
@@ -159,42 +162,78 @@ function SidebarContent({
   return (
     <div className="flex flex-col gap-5 px-3 py-4">
       {grouped.map(({ cat, label, tags }) => (
-        <section key={cat}>
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground/60 mb-1.5 px-1">
-            {label}
-          </p>
-          <div className="flex flex-col">
-            {tags.map((tag) => (
-              <CheckboxRow
-                key={tag}
-                tag={tag}
-                count={tagCounts[tag]}
-                checked={activeTags.has(tag)}
-                onToggle={() => onToggle(tag)}
-              />
-            ))}
-          </div>
-        </section>
+        <CollapsibleTagGroup
+          key={cat}
+          label={label}
+          tags={tags}
+          tagCounts={tagCounts}
+          activeTags={activeTags}
+          onToggle={onToggle}
+        />
       ))}
       {otherTags.length > 0 && (
-        <section>
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground/60 mb-1.5 px-1">
-            Other
-          </p>
-          <div className="flex flex-col">
-            {otherTags.map((tag) => (
-              <CheckboxRow
-                key={tag}
-                tag={tag}
-                count={tagCounts[tag]}
-                checked={activeTags.has(tag)}
-                onToggle={() => onToggle(tag)}
-              />
-            ))}
-          </div>
-        </section>
+        <CollapsibleTagGroup
+          label="Other"
+          tags={otherTags}
+          tagCounts={tagCounts}
+          activeTags={activeTags}
+          onToggle={onToggle}
+        />
       )}
     </div>
+  );
+}
+
+function CollapsibleTagGroup({
+  label,
+  tags,
+  tagCounts,
+  activeTags,
+  onToggle,
+}: {
+  label: string;
+  tags: string[];
+  tagCounts: Record<string, number>;
+  activeTags: Set<string>;
+  onToggle: (tag: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const visible = expanded ? tags : tags.slice(0, VISIBLE_LIMIT);
+  const hidden = tags.length - visible.length;
+
+  return (
+    <section>
+      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground/60 mb-1.5 px-1">
+        {label}
+      </p>
+      <div className="flex flex-col">
+        {visible.map((tag) => (
+          <CheckboxRow
+            key={tag}
+            tag={tag}
+            count={tagCounts[tag]}
+            checked={activeTags.has(tag)}
+            onToggle={() => onToggle(tag)}
+          />
+        ))}
+        {hidden > 0 && (
+          <button
+            onClick={() => setExpanded(true)}
+            className="self-start px-1 py-[5px] text-[12px] font-semibold text-primary hover:text-primary/70 transition-colors cursor-pointer"
+          >
+            + {hidden} more
+          </button>
+        )}
+        {expanded && tags.length > VISIBLE_LIMIT && (
+          <button
+            onClick={() => setExpanded(false)}
+            className="self-start px-1 py-[5px] text-[12px] font-semibold text-ink-faint hover:text-muted-foreground transition-colors cursor-pointer"
+          >
+            Show less
+          </button>
+        )}
+      </div>
+    </section>
   );
 }
 

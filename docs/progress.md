@@ -45,6 +45,10 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
   - `Conversation` rows are only created on first message, not on "New Chat" click — see ADR-0002. Clicking "New Chat" enters Staging State (client-only); the DB row is created in `useChatSession` when the first message is sent.
   - Chat panel uses `xl:container mx-auto` for side gutters at xl+ screens; message content is capped at `max-w-5xl mx-auto`.
 
+- **Visual polish pass** (May 2026): Four changes from cookbook mockup review: (1) Logo wordmark switched from Nunito to Fraunces italic with a two-tone split — "Ask " in faint taupe (`--ink-faint`), "Ah Mah" in terracotta (`--primary`). (2) Reusable `variant="cta"` added to shadcn `Button` (terracotta gradient + color-matched shadow + lift-on-hover); Add recipe is its first consumer. (3) Cookbook filter sidebar: per-category "+N more" / "Show less" collapse (VISIBLE_LIMIT = 5) so long tag lists don't overwhelm. (4) App-wide linen grain texture: replaced dot-grain SVG `.paper` class with a directional `repeating-linear-gradient` stripe, also applied globally to `body`.
+
+- **Send guard** (May 2026): Fixed double-submission bug — a synchronous `sendingRef` lock and `isSending` state now cover the async pre-send gap (conversation create + message save) before the AI SDK `status` transitions from `"ready"`. Loader shows immediately on submit; input stays disabled until the request is fully in-flight.
+
 ## V2 — In Progress
 
 ### Cook With What You Have — In Review (May 2026)

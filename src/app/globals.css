@@ -164,14 +164,25 @@
   }
   body {
     @apply bg-background text-foreground;
+    background-image: repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 2px,
+      rgba(139, 122, 104, 0.035) 2px,
+      rgba(139, 122, 104, 0.035) 3px
+    );
   }
 }
 
-/* Paper grain via SVG feTurbulence noise */
+/* Directional linen grain — matches the body texture so all paper surfaces stay unified */
 .paper {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 0.22 0 0 0 0 0.16 0 0 0 0 0.10 0 0 0 0.055 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 200px 200px;
-  background-blend-mode: multiply;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0px,
+    transparent 2px,
+    rgba(139, 122, 104, 0.035) 2px,
+    rgba(139, 122, 104, 0.035) 3px
+  );
 }
 
 ::-webkit-scrollbar {

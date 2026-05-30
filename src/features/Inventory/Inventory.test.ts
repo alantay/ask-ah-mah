@@ -23,12 +23,12 @@ describe("buildCookWithMessage", () => {
       [makeIngredient("chicken"), makeIngredient("bok choy")],
       [makeEquipment("air fryer")],
     );
-    expect(msg).toBe("Suggest recipes using: chicken, bok choy — featuring air fryer");
+    expect(msg).toBe("Suggest recipes using: chicken, bok choy. Kitchenware: air fryer");
   });
 
   it("equipment only (no ingredients)", () => {
     const msg = buildCookWithMessage([], [makeEquipment("wok")]);
-    expect(msg).toBe("Suggest recipes using:  — featuring wok");
+    expect(msg).toBe("Suggest recipes using: no featured ingredients. Kitchenware: wok");
   });
 
   it("multiple equipment items joined with comma", () => {
@@ -36,6 +36,6 @@ describe("buildCookWithMessage", () => {
       [makeIngredient("egg")],
       [makeEquipment("wok"), makeEquipment("rice cooker")],
     );
-    expect(msg).toBe("Suggest recipes using: egg — featuring wok, rice cooker");
+    expect(msg).toBe("Suggest recipes using: egg. Kitchenware: wok, rice cooker");
   });
 });
