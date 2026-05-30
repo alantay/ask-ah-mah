@@ -139,9 +139,8 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
           )}
           <Button
             variant="cta"
-            size="sm"
             onClick={() => setShowAdd(true)}
-            className="shrink-0 rounded-full font-sans text-[13px] cursor-pointer"
+            className="shrink-0 rounded-full font-sans text-[13px] font-semibold px-5 cursor-pointer"
           >
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
