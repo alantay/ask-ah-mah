@@ -34,7 +34,7 @@ function HomeContent() {
           >
             <div className="flex h-full border border-border rounded-lg overflow-hidden relative">
               {/* Chat panel */}
-              <section className="flex-1 min-w-0 relative flex flex-col bg-chat paper">
+              <section className="flex-1 min-w-0 relative flex flex-col bg-chat">
                 <ChatWrapper />
               </section>
             </div>

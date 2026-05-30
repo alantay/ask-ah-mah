@@ -10,7 +10,6 @@ import useSWR, { mutate } from "swr";
 import RecipeCard from "./components/RecipeCard";
 import { AddRecipeModal } from "./components/AddRecipeModal";
 import { RecipeSidebar } from "./components/RecipeSidebar";
-import { Button } from "@/components/ui/button";
 
 const HIDE_SCROLLBAR =
   "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
@@ -80,7 +79,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
     );
 
   return (
-    <div className="h-full flex flex-col bg-muted">
+    <div className="h-full flex flex-col bg-muted paper">
       {/* Title strip — hidden on mobile; Cookbook tab below the app header
           already labels this surface and the chip rail carries `All · N`. */}
       <div className="px-4 sm:px-9 pt-3 sm:pt-6 pb-[18px] sm:border-b sm:border-border flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-6 shrink-0">
@@ -137,16 +136,15 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
               </label>
             </>
           )}
-          <Button
-            variant="cta"
+          <button
             onClick={() => setShowAdd(true)}
-            className="shrink-0 rounded-full font-sans text-[13px] font-semibold px-5 cursor-pointer"
+            className="shrink-0 flex items-center gap-1.5 px-3 py-[7px] font-sans text-[13px] font-semibold text-primary-foreground bg-primary border border-primary rounded-full shadow-[0_1px_0_oklch(0.46_0.135_35)] hover:opacity-90 transition-opacity cursor-pointer"
           >
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
             </svg>
             Add recipe
-          </Button>
+          </button>
         </div>
       </div>
 
