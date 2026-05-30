@@ -62,16 +62,20 @@ export function AppSidebar() {
 
   return (
     <aside className="hidden lg:flex flex-col w-[240px] shrink-0 bg-muted paper border-r border-border h-dvh sticky top-0 overflow-hidden">
-      {/* Brand */}
+      {/* Brand — click to start a new chat */}
       <div className="px-4 py-4 shrink-0">
-        <div className="flex items-center gap-2.5">
+        <button
+          onClick={() => handleNavClick("chat")}
+          aria-label="Ask Ah Mah — start a new chat"
+          className="flex items-center gap-2.5 -mx-1 px-1 py-0.5 rounded-lg hover:opacity-80 transition-opacity cursor-pointer"
+        >
           <div className="relative w-8 h-8 shrink-0">
             <Image src="/granny-icon.png" alt="Ask Ah Mah" fill className="object-contain" />
           </div>
           <span className="text-xl font-display italic tracking-[-0.015em] leading-none">
-              <span className="font-normal text-ink-faint">Ask </span><span className="font-semibold text-primary">Ah Mah</span>
-            </span>
-        </div>
+            <span className="font-normal text-ink-faint">Ask </span><span className="font-semibold text-primary">Ah Mah</span>
+          </span>
+        </button>
       </div>
 
       {/* Primary nav */}
