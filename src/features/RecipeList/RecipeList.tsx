@@ -79,7 +79,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
     );
 
   return (
-    <div className="h-full flex flex-col bg-muted">
+    <div className="h-full flex flex-col bg-muted paper">
       {/* Title strip — hidden on mobile; Cookbook tab below the app header
           already labels this surface and the chip rail carries `All · N`. */}
       <div className="px-4 sm:px-9 pt-3 sm:pt-6 pb-[18px] sm:border-b sm:border-border flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-6 shrink-0">

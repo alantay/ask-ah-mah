@@ -68,7 +68,9 @@ export function AppSidebar() {
           <div className="relative w-8 h-8 shrink-0">
             <Image src="/granny-icon.png" alt="Ask Ah Mah" fill className="object-contain" />
           </div>
-          <span className="text-xl font-bold font-logo text-primary leading-none">Ask Ah Mah</span>
+          <span className="text-xl font-display italic tracking-[-0.015em] leading-none">
+              <span className="font-normal text-ink-faint">Ask </span><span className="font-semibold text-primary">Ah Mah</span>
+            </span>
         </div>
       </div>
 

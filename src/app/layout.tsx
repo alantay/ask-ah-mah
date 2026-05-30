@@ -124,7 +124,7 @@ export default function RootLayout({
             <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
               {/* Mobile-only top bar */}
               <div className="lg:hidden pb-2 pt-2 border-b px-4 flex justify-between items-center shrink-0">
-                <h1 className="text-xl font-bold font-logo flex items-center gap-2 text-primary">
+                <h1 className="text-xl font-display italic tracking-[-0.015em] leading-none flex items-center gap-2">
                   <div className="relative w-8 h-8">
                     <Image
                       src="/granny-icon.png"
@@ -133,7 +133,7 @@ export default function RootLayout({
                       className="object-contain"
                     />
                   </div>
-                  Ask Ah Mah
+                  <span className="font-normal text-ink-faint">Ask </span><span className="font-semibold text-primary">Ah Mah</span>
                 </h1>
                 <div className="flex items-center gap-2">
                   <AuthButton />
