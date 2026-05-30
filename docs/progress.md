@@ -47,6 +47,17 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 
 ## V2 — In Progress
 
+### Cook With What You Have — In Review (May 2026)
+- **Selection mode** on the Pantry surface: "Cook with what you have" toggle enters a checkbox mode on ingredient and kitchenware rows. Kitchenware selection = preferred equipment (preference, not constraint — ADR-0007).
+- **CTA adapts** to selection shape: "Suggest recipe (N selected)" for ingredients, "Surprise me with [Air fryer]" for equipment-only.
+- **Short-shelf shortcut**: "Select use-soon items" button pre-selects all amber-dot ingredients in one tap — cashes in the `shelfLife` tracking from V1.
+- **Submit flow**: composes a synthetic Mode 3 message ("Suggest recipes using: …"), enters Staging State via `ConversationContext`, navigates to Chat. Chat auto-sends the queued message once `status === "ready"`.
+- **Mode 3 prompt**: new section in `CHAT_SYSTEM_PROMPT`. Close Recipe (0–2 Additions, `closeness: "close"`) + Stretch Recipe (3–4 Additions, `closeness: "stretch"`). Additions = items not in pantry; free staples: salt/pepper/oil/water.
+- **Recipe cards**: render "Right now" / "Worth a small trip" caption chip when `closeness` is set.
+- **More ideas button**: shown below Cook-With response pairs; sends "More ideas — different from these" in same Conversation.
+- **Chat staging chip**: "🥬 Cook with what I have →" routes to Pantry and auto-enters selection mode via `?selectionMode=1` URL param.
+- Key decisions: ADR-0006 (reuses `/api/chat`, not a dedicated route), ADR-0007 (selection = emphasis not constraint).
+
 ### Recipe Tweak UI (Direction C) — Shipped May 2026
 - **5-state interactive flow** inside `RecipeDisplay`: resting → open → streaming → preview → saved.
 - **State 1 (Resting)**: inline dashed-border "Want Ah Mah to tweak this?" button below the Ah Mah note section.

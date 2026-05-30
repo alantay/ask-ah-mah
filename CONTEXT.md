@@ -75,3 +75,43 @@ A single turn within a **Tweak Bench** session. The user types one refinement in
 The AI call goes through a dedicated route (`POST /api/recipe/[id]/tweak`), separate from the chat pipeline.
 
 Related: [ADR-0005](docs/adr/0005-tweak-bench-multi-turn.md)
+
+---
+
+## Cook With What You Have
+
+The Pantry-rooted interaction where a user enters selection mode, marks a **Featured Selection** of pantry items (and optionally preferred kitchenware), and submits to spawn a new **Conversation**. The assistant streams a **Close Recipe** and a **Stretch Recipe** in that conversation. The selection is a transient front-door payload — it lives only long enough to compose the first message, then clears.
+
+Entry points: a CTA at the top of the Pantry, and a suggestion chip in the Chat **Staging State** that navigates to Pantry and enters selection mode.
+
+Related: [ADR-0006](docs/adr/0006-cook-with-what-you-have-is-a-conversation.md), [ADR-0007](docs/adr/0007-pantry-selection-is-feature-emphasis.md)
+
+---
+
+## Featured Selection
+
+The set of pantry items the user has marked to *star* in a Cook With What You Have submission. Items can be ingredients or kitchenware. The selection is **emphasis, not constraint** — non-selected pantry items remain fair game for the model to use silently; selected items must appear or be addressed.
+
+Related: [ADR-0007](docs/adr/0007-pantry-selection-is-feature-emphasis.md)
+
+---
+
+## Close Recipe
+
+The first recipe slot in a Cook With What You Have response. Uses 0–2 **Additions** beyond the user's pantry; the model is told to prefer fewer. Omitted entirely (with a one-line explanation) when the Featured Selection is too sparse to support any recipe at 0–2 additions.
+
+UI label: **"Right now."** The internal term is `Close`.
+
+---
+
+## Stretch Recipe
+
+The second recipe slot in a Cook With What You Have response. Uses 3–4 Additions beyond pantry, with a hard cap of 4. Always present in the response, even when the Close Recipe is omitted.
+
+UI label: **"Worth a small trip."** The internal term is `Stretch`.
+
+---
+
+## Addition
+
+An ingredient a generated recipe calls for that is not present in the user's pantry. The Addition count distinguishes Close from Stretch. Salt, pepper, water, and cooking oil are **free staples** — never counted as Additions even if absent from the pantry. Everything else in the pantry is also free; only items genuinely missing are Additions.

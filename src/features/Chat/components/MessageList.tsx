@@ -353,6 +353,29 @@ export const MessageList = ({
                   {/* Skeleton appended while recipe fence is still open */}
                   {hasOpenFence && <SkeletonRecipeCard />}
 
+                  {/* "More ideas" button — shown on completed Cook-With responses */}
+                  {!hasOpenFence &&
+                    status === "ready" &&
+                    isLastMsg &&
+                    blocks.some(
+                      (b) => b.kind === "recipe" && b.payload.closeness,
+                    ) && (
+                      <div className="mt-3">
+                        <button
+                          onClick={() =>
+                            onSend?.("More ideas — different from these")
+                          }
+                          className="inline-flex items-center gap-2 px-3.5 py-2 text-[12.5px] font-semibold text-muted-foreground border border-border rounded-full hover:border-border-soft hover:text-foreground transition-colors cursor-pointer"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                            <path d="M2 8a6 6 0 1 0 6-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                            <path d="M5 5L2 8l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                          More ideas like these
+                        </button>
+                      </div>
+                    )}
+
                   {/* Legacy recipe save buttons */}
                   {!hasOpenFence &&
                     blocks.some((b) => b.kind === "legacy") &&

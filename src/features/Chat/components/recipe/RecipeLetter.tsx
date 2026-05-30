@@ -1,16 +1,14 @@
 "use client";
 
 import { useSessionContext } from "@/contexts/SessionContext";
-import {
-  Category,
-  InventoryItem,
-} from "@/lib/inventory/schemas";
+import { InventoryItem } from "@/lib/inventory/schemas";
 
 type GetInventoryResponse = {
   kitchenwareInventory: InventoryItem[];
   ingredientInventory: InventoryItem[];
 };
 import { ingredientMatches } from "@/lib/recipes/matchIngredient";
+import { RecipeBlock, RecipeIngredientModel } from "@/lib/recipes/schemas";
 import { cn } from "@/lib/utils";
 import { fetcher } from "@/lib/utils";
 import { ShoppingCart, TimerIcon } from "lucide-react";
@@ -20,34 +18,9 @@ import { toast } from "sonner";
 import useSWR, { useSWRConfig } from "swr";
 import { ScaledNum, scaleAmount } from "@/features/Recipe";
 
-interface Ingredient {
-  name: string;
-  category?: Category;
-  amount?: string;
-  unit?: string;
-  note?: string;
-}
-
-interface Step {
-  title: string;
-  body: string;
-  tip?: string;
-}
-
-interface RecipeData {
-  title: string;
-  description?: string;
-  totalTimeMinutes?: number;
-  baseServings: number;
-  ingredients: Ingredient[];
-  prep?: string[];
-  steps: Step[];
-  tags?: string[];
-}
-
 export interface RecipeLetterProps {
-  recipe: RecipeData;
-  onSave?: (recipe: RecipeData) => void;
+  recipe: RecipeBlock;
+  onSave?: (recipe: RecipeBlock) => void;
   isSaved?: boolean;
   onSend?: (text: string) => void;
 }
@@ -98,7 +71,7 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
     fetcher,
   );
 
-  const addToPantry = async (ing: Ingredient) => {
+  const addToPantry = async (ing: RecipeIngredientModel) => {
     if (!userId || inFlight.has(ing.name)) return;
     setInFlight((prev) => new Set(prev).add(ing.name));
     try {
@@ -200,8 +173,23 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
     );
   }
 
+  const closenessLabel =
+    recipe.closeness === "close"
+      ? "Right now"
+      : recipe.closeness === "stretch"
+        ? "Worth a small trip"
+        : null;
+
   return (
     <div className="border-y border-border-soft px-4 sm:px-[26px] pt-5 pb-[22px] relative">
+      {/* Cook-With closeness caption */}
+      {closenessLabel && (
+        <div className="mb-3">
+          <span className="inline-flex items-center gap-1 font-sans text-[10px] font-bold tracking-[0.16em] uppercase px-2 py-0.5 rounded-full border border-dashed border-primary/40 text-primary bg-primary/5">
+            {recipe.closeness === "close" ? "✓" : "↗"} {closenessLabel}
+          </span>
+        </div>
+      )}
       {/* Title */}
       <div className="font-display text-3xl font-semibold text-foreground leading-[1.05] tracking-tight mb-2">
         {recipe.title}
