@@ -7,7 +7,7 @@
 
 The persistent-kitchen MVP. Highlights:
 - Structured recipes (`baseServings` + `ingredients` JSON, +/- servings stepper, strict-unit shortfall badges, multi-recipe save).
-- Freeform inventory entry via `POST /api/inventory/parse`; optional `quantity`/`unit`; `shelfLife` enum with amber-dot UI for short-life items.
+- Freeform inventory entry via `POST /api/inventory/parse`; optional `quantity`/`unit`.
 - Unified system prompt (light Singlish, technique-why focus, targeted `getInventory` use).
 - Default inventory seed on first session (`POST /api/inventory/seed`).
 - Kopitiam Modern surface redesign (tokenized colors, paper texture, chat/cookbook tabs, responsive pantry).
@@ -54,7 +54,6 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 ### Cook With What You Have — In Review (May 2026)
 - **Selection mode** on the Pantry surface: "Cook with what you have" toggle enters a checkbox mode on ingredient and kitchenware rows. Kitchenware selection = preferred equipment (preference, not constraint — ADR-0007).
 - **CTA adapts** to selection shape: "Suggest recipe (N selected)" for ingredients, "Surprise me with [Air fryer]" for equipment-only.
-- **Short-shelf shortcut**: "Select use-soon items" button pre-selects all amber-dot ingredients in one tap — cashes in the `shelfLife` tracking from V1.
 - **Submit flow**: composes a synthetic Mode 3 message ("Suggest recipes using: …"), enters Staging State via `ConversationContext`, navigates to Chat. Chat auto-sends the queued message once `status === "ready"`.
 - **Mode 3 prompt**: new section in `CHAT_SYSTEM_PROMPT`. Close Recipe (0–2 Additions, `closeness: "close"`) + Stretch Recipe (3–4 Additions, `closeness: "stretch"`). Additions = items not in pantry; free staples: salt/pepper/oil/water.
 - **Recipe cards**: render "Right now" / "Worth a small trip" caption chip when `closeness` is set.
@@ -78,7 +77,7 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - [ ] Add "mark done → route into inventory" flow.
 
 ## V3+ — Ideas (KIV)
-- [ ] Aging / "going bad soon" alerts (`shelfLife` + `dateAdded`).
+- [ ] Aging / "going bad soon" alerts (deferred — app cannot reliably know freshness; see ADR-0008).
 - [ ] Streaming recipe scaling for unsaved in-chat recipes.
 - [ ] Cross-unit shortfall conversion.
 - [ ] Move fully from `prisma db push` workflow to migration-first flow.
@@ -95,6 +94,7 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 
 ## Decisions
 
+- **`shelfLife` removed** (May 2026): The field was used for amber-dot UI and Mode 3 recipe prioritization. Removed because the app cannot reliably know freshness — users freeze, restock, and manage their own food without updating the app. Recipes should be generated because the dish needs those ingredients, not because the app guesses they're expiring. See ADR-0008.
 - **Optional quantity = "unlimited"**: unset `quantity` means the item has no limit. Avoids forcing a count on pantry staples where "do I have enough?" is never the question.
 - **Structured-on-save over streaming extraction**: metadata (`baseServings`, `ingredients`, `description`, `totalTimeMinutes`) is extracted when the user saves a recipe, not streamed inline. Simpler streaming path; extraction failures degrade gracefully without breaking the chat.
 - **Strict-unit shortfall first; cross-unit conversion deferred**: `unit` must match exactly for shortfall calculation. Cross-unit conversion (e.g. `g` vs `kg`) is a V3+ problem — the complexity isn't justified until users actually hit it.

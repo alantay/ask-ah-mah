@@ -66,7 +66,6 @@ const INVENTORY_WITH_CHICKEN = {
       name: 'chicken thigh',
       type: 'ingredient' as const,
       category: 'Protein' as const,
-      shelfLife: 'medium' as const,
       dateAdded: new Date().toISOString(),
       lastUpdated: new Date().toISOString(),
     },

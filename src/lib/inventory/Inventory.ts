@@ -39,7 +39,6 @@ export async function addInventoryItem(
       update: {
         quantity: item.quantity ?? null,
         unit: item.unit ?? null,
-        shelfLife: item.shelfLife,
         category: item.category ?? null,
         lastUpdated: nowIso,
       },
@@ -48,7 +47,6 @@ export async function addInventoryItem(
         type: item.type,
         quantity: item.quantity ?? null,
         unit: item.unit ?? null,
-        shelfLife: item.shelfLife,
         category: item.category ?? null,
         dateAdded: nowIso,
         lastUpdated: nowIso,

@@ -66,13 +66,6 @@ export function InventoryItemRow({
           )}
         </span>
         <span className="font-display text-[14px] leading-snug flex items-baseline gap-1.5 min-w-0 flex-1">
-          {item.shelfLife === "short" && (
-            <span
-              aria-label="Short shelf life"
-              title="Short shelf life — use soon"
-              className="inline-block h-1.5 w-1.5 rounded-full bg-tertiary shrink-0"
-            />
-          )}
           <span className="truncate">{item.name}</span>
         </span>
         {qty && (
@@ -87,13 +80,6 @@ export function InventoryItemRow({
   return (
     <li className="group flex items-baseline gap-2 py-1.5 border-b border-dotted border-border last:border-0">
       <span className="font-display text-[14px] text-foreground leading-snug flex items-baseline gap-1.5 min-w-0">
-        {item.shelfLife === "short" && (
-          <span
-            aria-label="Short shelf life"
-            title="Short shelf life — use soon"
-            className="inline-block h-1.5 w-1.5 rounded-full bg-tertiary shrink-0"
-          />
-        )}
         <span className="truncate">{item.name}</span>
       </span>
       <span className="flex-1" />

@@ -34,7 +34,7 @@ describe("buildChatTools", () => {
   describe("addInventoryItem.execute", () => {
     it("calls addInventoryItem with items and userId", async () => {
       const tools = buildChatTools(userId);
-      const items = [{ name: "eggs", type: "ingredient" as const, shelfLife: "medium" as const }];
+      const items = [{ name: "eggs", type: "ingredient" as const }];
       await tools.addInventoryItem.execute({ items });
       expect(addInventoryItem).toHaveBeenCalledWith(items, userId);
     });
@@ -42,7 +42,7 @@ describe("buildChatTools", () => {
     it("returns a confirmation message", async () => {
       const tools = buildChatTools(userId);
       const result = await tools.addInventoryItem.execute({
-        items: [{ name: "salt", type: "ingredient" as const, shelfLife: "long" as const }],
+        items: [{ name: "salt", type: "ingredient" as const }],
       });
       expect(result).toHaveProperty("content");
     });
