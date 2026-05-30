@@ -17,6 +17,7 @@ const Chat = () => {
     allMessages,
     status,
     submittedAt,
+    isSending,
     handleSendMessage,
     handleRecipeDetected,
   } = useChatSession();
@@ -105,11 +106,12 @@ const Chat = () => {
         messages={allMessages}
         status={status}
         submittedAt={submittedAt}
+        isSending={isSending}
         userId={userId}
         onSend={handleSendMessage}
         onRecipeDetected={handleRecipeDetected}
       />
-      {status === "ready" && messageCount === 0 && (
+      {status === "ready" && !isSending && messageCount === 0 && (
         <div className="px-4 pb-1">
           <div className="flex gap-2 flex-wrap max-w-5xl mx-auto">
             {/* Cook-with chip — routes to Pantry selection mode */}
@@ -133,7 +135,7 @@ const Chat = () => {
       )}
       <MessageInput
         onSendMessage={handleSendMessage}
-        disabled={status !== "ready"}
+        disabled={status !== "ready" || isSending}
       />
       <ConversationsMobileSheet open={convSheetOpen} onOpenChange={setConvSheetOpen} />
     </div>

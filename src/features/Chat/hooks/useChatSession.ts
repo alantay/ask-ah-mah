@@ -29,6 +29,10 @@ export function useChatSession() {
   } = useConversationContext();
 
   const [submittedAt, setSubmittedAt] = useState<number | null>(null);
+  const [isSending, setIsSending] = useState(false);
+  // Synchronous re-entrancy guard: prevents duplicate sends during the async
+  // pre-send gap (conversation create + message save) before status flips.
+  const sendingRef = useRef(false);
   const autoTitledConversations = useRef<Set<string>>(new Set());
   const autoTitlingConversations = useRef<Set<string>>(new Set());
 
@@ -166,6 +170,12 @@ export function useChatSession() {
 
   useEffect(() => {
     if (status !== "submitted") setSubmittedAt(null);
+    // Once status leaves "ready" the AI SDK's own disable logic takes over.
+    // Release the sync lock so it doesn't block re-sends after the response.
+    if (status !== "ready") {
+      sendingRef.current = false;
+      setIsSending(false);
+    }
   }, [status]);
 
   // Auto-send a Cook With What You Have message queued by the Pantry.
@@ -215,37 +225,51 @@ export function useChatSession() {
   const allMessages = [INITIAL_MESSAGE, ...savedMessagesFiltered, ...messages];
 
   const handleSendMessage = async (message: string) => {
+    // Synchronous guard: bail immediately if a send is already in progress.
+    if (sendingRef.current) return;
+    sendingRef.current = true;
+    setIsSending(true);
     setSubmittedAt(Date.now());
 
-    if (!activeConversationId) {
-      // Staging path: create conversation before sending
-      const res = await fetch("/api/conversation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
-      });
-      if (!res.ok) {
-        toast.error("Aiyah, could not start a new conversation. Try again!");
-        return;
+    try {
+      if (!activeConversationId) {
+        // Staging path: create conversation before sending
+        const res = await fetch("/api/conversation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId }),
+        });
+        if (!res.ok) {
+          throw new Error(`Could not start conversation (${res.status})`);
+        }
+        const { conversation } = await res.json();
+
+        // Update refs so transport injects the right id
+        convIdRef.current = conversation.id;
+        pendingConvIdRef.current = conversation.id;
+        inFlightConvIdRef.current = conversation.id;
+
+        // Optimistically show in sidebar with pending state
+        setPendingConversation(conversation);
+
+        // Save user message under the new conversation id
+        await saveMessage("user", message, conversation.id);
+      } else {
+        inFlightConvIdRef.current = activeConversationId;
+        await saveMessage("user", message);
       }
-      const { conversation } = await res.json();
 
-      // Update refs so transport injects the right id
-      convIdRef.current = conversation.id;
-      pendingConvIdRef.current = conversation.id;
-      inFlightConvIdRef.current = conversation.id;
-
-      // Optimistically show in sidebar with pending state
-      setPendingConversation(conversation);
-
-      // Save user message under the new conversation id
-      await saveMessage("user", message, conversation.id);
-    } else {
-      inFlightConvIdRef.current = activeConversationId;
-      await saveMessage("user", message);
+      // sendMessage flips status → "submitted", which releases the lock via
+      // the status effect above and hands disable/loader back to status.
+      sendMessage({ text: message });
+    } catch (err) {
+      console.error("Send failed:", err);
+      toast.error("Aiyah, could not send your message. Please try again!");
+      // Release lock so the user can retry.
+      sendingRef.current = false;
+      setIsSending(false);
+      setSubmittedAt(null);
     }
-
-    sendMessage({ text: message });
   };
 
   return {
@@ -254,6 +278,7 @@ export function useChatSession() {
     allMessages,
     status,
     submittedAt,
+    isSending,
     messagesLoading,
     handleSendMessage,
     handleRecipeDetected,
