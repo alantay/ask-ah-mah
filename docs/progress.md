@@ -98,9 +98,9 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Optional quantity = "unlimited"**: unset `quantity` means the item has no limit. Avoids forcing a count on pantry staples where "do I have enough?" is never the question.
 - **Structured-on-save over streaming extraction**: metadata (`baseServings`, `ingredients`, `description`, `totalTimeMinutes`) is extracted when the user saves a recipe, not streamed inline. Simpler streaming path; extraction failures degrade gracefully without breaking the chat.
 - **Strict-unit shortfall first; cross-unit conversion deferred**: `unit` must match exactly for shortfall calculation. Cross-unit conversion (e.g. `g` vs `kg`) is a V3+ problem — the complexity isn't justified until users actually hit it.
-- **No staple/perishable split; `shelfLife` enum instead**: `'short' | 'medium' | 'long'` is inferred on add. Avoids a binary that doesn't fit many items (e.g. opened sauces); the amber dot surfaces urgency without forcing a category.
+- ~~**No staple/perishable split; `shelfLife` enum instead**~~ *(superseded by ADR-0008 — `shelfLife` removed; see "shelfLife removed" entry above)*
 - **Description generated post-hoc, not inline in assistant response**: `processRecipe` extracts description on save. Keeping the assistant response format simple reduces prompt complexity and lets the extraction be richer than what would fit in a streamed recipe block.
-- **Aging alerts deferred from V1**: `shelfLife` + `dateAdded` are stored, but alert UI is V3+. V1 scope was inventory + recipes; alerts add a notification surface that needs its own design pass.
+- ~~**Aging alerts deferred from V1**: `shelfLife` + `dateAdded` are stored, but alert UI is V3+~~ *(superseded by ADR-0008 — `shelfLife` removed; `dateAdded` retained)*
 - **`userId` retained on `Message` rows** even though `conversationId` is now the primary scope. Simplifies raw queries and avoids joins for user-scoped cleanup jobs.
 - **`prisma migrate deploy` over `db push`** for the conversations migration: `db push` blocks on the `NOT NULL` backfill step in `20260504000000_add_conversations`.
 - **PantryDrawer absolute overlay over reflow**: pantry opens as a right-edge overlay so chat width stays stable. Tab stays mounted so the right edge doesn't jump on open/close.
