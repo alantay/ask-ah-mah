@@ -32,7 +32,7 @@ describe("ConversationItem", () => {
     );
     const card = container.firstChild as HTMLElement;
     expect(card.className).toContain("bg-secondary");
-    expect(card.className).toContain("border-[oklch(0.78_0.10_88)]");
+    expect(card.className).toContain("border-secondary-deep");
   });
 
   it("renders inactive state with stripped chrome", () => {

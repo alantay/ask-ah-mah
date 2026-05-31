@@ -215,7 +215,7 @@ export function TweakBench({
           if (turn.kind === "user") {
             return (
               <div key={i} className="flex justify-end">
-                <div className="max-w-[82%] px-3.5 py-2 bg-[oklch(0.86_0.10_88)] text-foreground rounded-2xl rounded-br-sm font-sans text-dense leading-[1.5]">
+                <div className="max-w-[82%] px-3.5 py-2 bg-secondary text-foreground rounded-2xl rounded-br-sm font-sans text-dense leading-[1.5]">
                   {turn.text}
                 </div>
               </div>
