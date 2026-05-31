@@ -28,7 +28,7 @@ const fontLogo = Nunito({
 
 export const metadata: Metadata = {
   title: {
-    default: "Ask Ah Mah — Cook with Ah Mah",
+    default: "Ask Ah Mah — Cook with what you have",
     template: "%s | Ask Ah Mah",
   },
   description:
@@ -69,7 +69,7 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Ask Ah Mah - Cooking Assistant",
+        alt: "Ask Ah Mah — your kitchen's grandmother",
       },
     ],
     locale: "en_US",

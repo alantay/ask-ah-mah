@@ -34,7 +34,7 @@ export function SignInDialog() {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Sign in to Ask Ah Mah</DialogTitle>
+          <DialogTitle>Welcome to Ah Mah&rsquo;s kitchen</DialogTitle>
           <DialogDescription>
             Your kitchen stays with you across devices.
           </DialogDescription>

@@ -213,10 +213,10 @@ export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
       });
       if (!res.ok) throw new Error("Save failed");
       mutate(`/api/recipe?userId=${userId}`);
-      toast.success("Recipe saved to your cookbook");
+      toast.success("Kept in your cookbook.");
       handleOpenChange(false);
     } catch {
-      toast.error("Failed to save recipe");
+      toast.error("Aiyah, couldn't keep it. Try again?");
     } finally {
       setSaving(false);
     }

@@ -168,7 +168,7 @@ describe('NEED pill click-to-add', () => {
     render(<RecipeLetter recipe={RECIPE} />);
     fireEvent.click(screen.getByLabelText('Add bok choy to pantry'));
     await waitFor(() =>
-      expect(mockToastSuccess).toHaveBeenCalledWith('Added bok choy to your pantry'),
+      expect(mockToastSuccess).toHaveBeenCalledWith('bok choy — in the pantry now.'),
     );
     expect(global.fetch).toHaveBeenCalledWith(
       '/api/inventory',
