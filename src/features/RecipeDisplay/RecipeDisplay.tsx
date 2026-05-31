@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { useSessionContext } from "@/contexts/SessionContext";
 import { CookingMode, ServingsStepper } from "@/features/Recipe";
 import {
@@ -566,16 +567,17 @@ export default function RecipeDisplay({
                     </button>
                   )}
                   {canCook && (
-                    <button
+                    <Button
+                      variant="cta"
                       onClick={handleStartCooking}
-                      className="inline-flex items-center gap-1.5 min-h-11 px-3 py-1.5 text-[12.5px] font-semibold text-primary-foreground bg-primary border border-primary rounded-md cursor-pointer shadow-[0_1px_0_oklch(0.46_0.135_35)] hover:opacity-90 transition-opacity"
+                      className="gap-1.5 min-h-11 px-3 py-1.5 text-[12.5px] font-semibold rounded-md"
                       aria-label="Start cooking — step-by-step view with screen stay-on"
                     >
-                      <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                      <svg width="11" height="11" viewBox="0 0 16 16" fill="none" className="size-[11px]">
                         <path d="M5 3l8 5-8 5V3z" fill="currentColor" />
                       </svg>
                       Start cooking
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>

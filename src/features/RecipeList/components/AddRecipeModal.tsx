@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import RecipeDisplay from "@/features/RecipeDisplay/RecipeDisplay";
 import { type RecipeBlock, type RecipeWithId } from "@/lib/recipes/schemas";
@@ -328,13 +329,14 @@ export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
               </div>
 
               <div className="px-5 sm:px-6 py-4 border-t border-dashed border-border shrink-0">
-                <button
+                <Button
+                  variant="ctaDeep"
                   onClick={handleExtract}
                   disabled={!text.trim()}
-                  className="w-full py-3 font-sans text-sm font-semibold text-primary-foreground bg-primary border border-[oklch(0.405_0.130_32)] rounded-xl shadow-[0_2px_0_oklch(0.405_0.130_32)] hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
+                  className="w-full py-3 font-sans text-sm font-semibold"
                 >
                   Extract recipe →
-                </button>
+                </Button>
               </div>
             </>
           )}
@@ -373,13 +375,14 @@ export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
                   </svg>
                   Back to edit
                 </button>
-                <button
+                <Button
+                  variant="ctaDeep"
                   onClick={handleSave}
                   disabled={saving}
-                  className="px-5 py-2.5 font-sans text-sm font-semibold text-primary-foreground bg-primary border border-[oklch(0.405_0.130_32)] rounded-xl shadow-[0_2px_0_oklch(0.405_0.130_32)] hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
+                  className="px-5 py-2.5 font-sans text-sm font-semibold"
                 >
                   {saving ? "Saving…" : "Save to cookbook →"}
-                </button>
+                </Button>
               </div>
             </>
           )}

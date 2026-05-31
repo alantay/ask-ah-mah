@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { useSessionContext } from "@/contexts/SessionContext";
 import RecipeDisplay from "@/features/RecipeDisplay/RecipeDisplay";
 import { RecipeWithId } from "@/lib/recipes/schemas";
@@ -35,12 +36,13 @@ export default function RecipePage() {
         <p className="font-display italic text-muted-foreground">
           Can&rsquo;t find that one, lah.
         </p>
-        <button
+        <Button
+          variant="cta"
           onClick={() => router.push("/?tab=cookbook")}
-          className="px-3.5 py-2 text-[13px] font-semibold text-primary-foreground bg-primary border border-primary rounded-lg cursor-pointer shadow-[0_1px_0_oklch(0.46_0.135_35)] hover:opacity-90 transition-opacity"
+          className="px-3.5 py-2 text-[13px] font-semibold"
         >
           Back to cookbook
-        </button>
+        </Button>
       </div>
     );
   }
