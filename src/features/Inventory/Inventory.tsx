@@ -47,7 +47,7 @@ const CategoryCard = ({
 }) => (
   <section className="bg-card border border-border rounded-lg p-4 shadow-[0_1px_0_var(--color-border-soft)]">
     <div className="flex items-baseline justify-between border-b border-dashed border-border pb-2 mb-2">
-      <span className="font-sans text-[10.5px] font-bold tracking-[0.18em] uppercase text-muted-foreground">
+      <span className="font-sans text-eyebrow font-bold tracking-[0.18em] uppercase text-muted-foreground">
         {label}
       </span>
       <span className="font-mono text-[11px] text-ink-faint tabular-nums">
@@ -328,7 +328,7 @@ const Inventory = () => {
               {totalCount > 0 && (
                 <button
                   onClick={enterSelectionMode}
-                  className="inline-flex items-center gap-1.5 min-h-11 px-3 py-1.5 text-[12.5px] font-semibold text-foreground bg-card border border-border rounded-lg cursor-pointer"
+                  className="inline-flex items-center gap-1.5 min-h-11 px-3 py-1.5 text-xs font-semibold text-foreground bg-card border border-border rounded-lg cursor-pointer"
                 >
                   Cook with what you have
                 </button>
@@ -337,7 +337,7 @@ const Inventory = () => {
                 <Button
                   variant="cta"
                   onClick={() => setIsAdding(true)}
-                  className="gap-1.5 min-h-11 px-3 py-1.5 text-[12.5px] font-semibold ml-auto"
+                  className="gap-1.5 min-h-11 px-3 py-1.5 text-xs font-semibold ml-auto"
                 >
                   <svg width="10" height="10" viewBox="0 0 12 12" fill="none" className="size-[10px]">
                     <path
@@ -358,7 +358,7 @@ const Inventory = () => {
               </span>
               <button
                 onClick={exitSelectionMode}
-                className="inline-flex items-center gap-1.5 min-h-11 px-3 py-1.5 text-[12.5px] font-semibold text-muted-foreground bg-card border border-border rounded-lg cursor-pointer"
+                className="inline-flex items-center gap-1.5 min-h-11 px-3 py-1.5 text-xs font-semibold text-muted-foreground bg-card border border-border rounded-lg cursor-pointer"
               >
                 Cancel
               </button>
@@ -476,7 +476,7 @@ const Inventory = () => {
               className={cn(
                 "w-full py-3 px-4 rounded-xl font-semibold text-[14px] transition-all",
                 totalSelected > 0
-                  ? "bg-primary text-primary-foreground shadow-[0_1px_0_oklch(0.46_0.135_35)] hover:opacity-90 cursor-pointer"
+                  ? "bg-primary text-primary-foreground shadow-cta hover:opacity-90 cursor-pointer"
                   : "bg-muted text-muted-foreground cursor-not-allowed",
               )}
             >

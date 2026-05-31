@@ -215,7 +215,7 @@ export function TweakBench({
           if (turn.kind === "user") {
             return (
               <div key={i} className="flex justify-end">
-                <div className="max-w-[82%] px-3.5 py-2 bg-[oklch(0.86_0.10_88)] text-foreground rounded-2xl rounded-br-sm font-sans text-[13.5px] leading-[1.5]">
+                <div className="max-w-[82%] px-3.5 py-2 bg-secondary text-foreground rounded-2xl rounded-br-sm font-sans text-dense leading-[1.5]">
                   {turn.text}
                 </div>
               </div>
@@ -231,7 +231,7 @@ export function TweakBench({
                 />
                 {n > 0 && (
                   <div className="pl-[37px]">
-                    <div className="font-sans text-[9.5px] font-bold tracking-[0.16em] uppercase text-ink-faint mb-2">
+                    <div className="font-sans text-eyebrow font-bold tracking-[0.16em] uppercase text-ink-faint mb-2">
                       What changed
                     </div>
                     <ul className="flex flex-col gap-1.5">
@@ -240,7 +240,7 @@ export function TweakBench({
                           <span className="text-emerald-600 shrink-0 mt-[1px]">
                             <CheckIcon />
                           </span>
-                          <span className="font-sans text-[12.5px] text-foreground leading-[1.45]">
+                          <span className="font-sans text-xs text-foreground leading-[1.45]">
                             {c.label}
                           </span>
                         </li>
@@ -374,7 +374,7 @@ function AssistantBubble({ text }: { text: string }) {
       <div className="relative w-7 h-7 shrink-0">
         <Image src="/granny-icon.png" alt="" fill className="object-contain" />
       </div>
-      <div className="flex-1 font-display italic text-[13.5px] text-foreground leading-[1.5] pt-0.5">
+      <div className="flex-1 font-display italic text-dense text-foreground leading-[1.5] pt-0.5">
         {text}
       </div>
     </div>

@@ -61,7 +61,7 @@ export default function RecipeCard({ recipe, onSelect, onDelete }: RecipeCardPro
           }}
         >
           {isOptimistic && (
-            <span className="font-mono text-[10px] tracking-widest text-foreground/40 uppercase">
+            <span className="font-mono text-eyebrow tracking-widest text-foreground/40 uppercase">
               Saving…
             </span>
           )}
@@ -79,7 +79,7 @@ export default function RecipeCard({ recipe, onSelect, onDelete }: RecipeCardPro
             <div className="font-display font-semibold text-xl text-foreground leading-tight tracking-tight group-hover:text-primary transition-colors line-clamp-2">
               {recipe.name}
             </div>
-            <div className="font-display italic text-[13.5px] text-muted-foreground leading-[1.45] line-clamp-2">
+            <div className="font-display italic text-dense text-muted-foreground leading-[1.45] line-clamp-2">
               {blurb}
             </div>
           </>

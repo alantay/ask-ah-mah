@@ -54,8 +54,8 @@ export function ConversationItem({
       className={cn(
         "group rounded-lg py-1 px-3 cursor-pointer border transition-colors flex items-center gap-2",
         isActive
-          ? "bg-secondary border-[oklch(0.78_0.10_88)] shadow-[0_1px_0_oklch(0.78_0.10_88)]"
-          : "bg-transparent border-transparent hover:border-[oklch(0.78_0.10_88)]/40",
+          ? "bg-secondary border-secondary-deep shadow-[0_1px_0_var(--secondary-deep)]"
+          : "bg-transparent border-transparent hover:border-secondary-deep/40",
       )}
     >
       {/* Title area */}

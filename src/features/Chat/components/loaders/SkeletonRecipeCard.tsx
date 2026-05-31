@@ -29,7 +29,7 @@ export function SkeletonRecipeCard() {
           </svg>
         </div>
 
-        <div className="font-sans text-[10px] font-bold tracking-widest uppercase text-muted-foreground inline-flex items-center gap-1.5">
+        <div className="font-sans text-eyebrow font-bold tracking-widest uppercase text-muted-foreground inline-flex items-center gap-1.5">
           The way I make it
           <svg
             width="13"
@@ -90,7 +90,7 @@ export function SkeletonRecipeCard() {
         {STEPS.map((s, i) => (
           <div key={i} className="mb-3.5">
             <span
-              className="inline-flex items-center justify-center size-[22px] bg-primary text-white font-display font-bold text-xs rounded-[50%_50%_50%_5px] -rotate-3 mr-2 shadow-[inset_0_-1px_0_oklch(0.405_0.130_32)] align-middle"
+              className="inline-flex items-center justify-center size-[22px] bg-primary text-white font-display font-bold text-xs rounded-[50%_50%_50%_5px] -rotate-3 mr-2 shadow-[inset_0_-1px_0_var(--primary-deep)] align-middle"
               style={{ opacity: 0.55 + 0.15 * (STEPS.length - i) }}
             >
               {i + 1}

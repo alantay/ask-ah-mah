@@ -158,7 +158,7 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
     ? `${recipe.totalTimeMinutes} min`
     : null;
   const EYEBROW_BASE =
-    "font-sans text-[10px] font-bold tracking-widest uppercase";
+    "font-sans text-eyebrow font-bold tracking-widest uppercase";
 
   const showPantryPill = !!userId;
   const canCook = recipe.steps.length > 0;
@@ -186,7 +186,7 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
       {/* Cook-With closeness caption */}
       {closenessLabel && (
         <div className="mb-3">
-          <span className="inline-flex items-center gap-1 font-sans text-[10px] font-bold tracking-[0.16em] uppercase px-2 py-0.5 rounded-full border border-dashed border-primary/40 text-primary bg-primary/5">
+          <span className="inline-flex items-center gap-1 font-sans text-eyebrow font-bold tracking-[0.16em] uppercase px-2 py-0.5 rounded-full border border-dashed border-primary/40 text-primary bg-primary/5">
             {recipe.closeness === "close" ? "✓" : "↗"} {closenessLabel}
           </span>
         </div>
@@ -216,7 +216,7 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
             <span className="text-border">·</span>
           )}
           {showPantryPill && (
-            <span className="font-sans text-[10px] font-semibold text-jade px-1.5 py-0.5 bg-[oklch(0.94_0.04_168)] border border-[oklch(0.78_0.07_168)] rounded-full tracking-normal normal-case">
+            <span className="font-sans text-eyebrow font-semibold text-jade px-1.5 py-0.5 bg-[oklch(0.94_0.04_168)] border border-[oklch(0.78_0.07_168)] rounded-full tracking-normal normal-case">
               {haveCount}/{recipe.ingredients.length} in your pantry
             </span>
           )}
@@ -228,7 +228,7 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
         <div className="mb-4 bg-[oklch(0.97_0.03_60)] border border-dashed border-[oklch(0.78_0.07_60)] rounded-xl p-3.5">
           <div className="flex items-center gap-1.5 mb-2">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-[oklch(0.6_0.14_50)]" />
-            <span className="font-sans text-[10px] font-bold tracking-[0.16em] uppercase text-[oklch(0.45_0.10_50)]">
+            <span className="font-sans text-eyebrow font-bold tracking-[0.16em] uppercase text-[oklch(0.45_0.10_50)]">
               You&rsquo;re almost there
             </span>
           </div>
@@ -252,7 +252,7 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
             {onSend && (
               <button
                 onClick={askForSubstitutions}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 font-sans text-xs font-semibold text-[oklch(0.405_0.130_32)] bg-[oklch(0.94_0.06_35)] border border-[oklch(0.405_0.130_32)] rounded-lg shadow-[0_1px_0_oklch(0.405_0.130_32)] hover:bg-[oklch(0.90_0.07_35)] transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 font-sans text-xs font-semibold text-primary-deep bg-primary-tint border border-primary-deep rounded-lg shadow-cta hover:bg-primary-tint/70 transition-colors cursor-pointer"
               >
                 Ask Ah Mah for substitutions →
               </button>
@@ -267,7 +267,7 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
           <div className="flex items-center justify-between mb-2">
             <span className={cn(EYEBROW_BASE, "text-muted-foreground")}>What to gather</span>
             <div className="flex items-center gap-1.5">
-              <span className="font-sans text-[9.5px] font-bold tracking-[0.16em] uppercase text-ink-faint">
+              <span className="font-sans text-eyebrow font-bold tracking-[0.16em] uppercase text-ink-faint">
                 Servings
               </span>
               <ServingsStepper
@@ -340,7 +340,7 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
         <div className="flex flex-col gap-4.5">
           {recipe.steps.map((step, i) => (
             <div key={i} className="flex gap-3 items-start">
-              <div className="shrink-0 size-9 bg-primary text-white flex items-center justify-center font-display font-bold text-lg rounded-[50%_50%_50%_8px] -rotate-3 shadow-[inset_0_-2px_0_oklch(0.405_0.130_32),0_1px_0_oklch(0.405_0.130_32)]">
+              <div className="shrink-0 size-9 bg-primary text-white flex items-center justify-center font-display font-bold text-lg rounded-[50%_50%_50%_8px] -rotate-3 shadow-[inset_0_-2px_0_var(--primary-deep),0_1px_0_var(--primary-deep)]">
                 {i + 1}
               </div>
               <div className="flex-1 min-w-0">

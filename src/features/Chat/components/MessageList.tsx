@@ -367,7 +367,7 @@ export const MessageList = ({
                           onClick={() =>
                             onSend?.("More ideas — different from these")
                           }
-                          className="inline-flex items-center gap-2 px-3.5 py-2 text-[12.5px] font-semibold text-muted-foreground border border-border rounded-full hover:border-border-soft hover:text-foreground transition-colors cursor-pointer"
+                          className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-muted-foreground border border-border rounded-full hover:border-border-soft hover:text-foreground transition-colors cursor-pointer"
                         >
                           <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
                             <path d="M2 8a6 6 0 1 0 6-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
