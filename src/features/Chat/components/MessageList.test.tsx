@@ -381,7 +381,7 @@ describe("MessageList", () => {
 
       await waitFor(() => {
         expect(toast.success).toHaveBeenCalledWith(
-          "Recipe Scrambled Eggs saved!"
+          "Saved — Ah Mah will remember this one."
         );
       });
     });

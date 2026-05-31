@@ -28,7 +28,7 @@ const fontLogo = Nunito({
 
 export const metadata: Metadata = {
   title: {
-    default: "Ask Ah Mah — Cook with Ah Mah",
+    default: "Ask Ah Mah — Cook with what you have",
     template: "%s | Ask Ah Mah",
   },
   description:
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   openGraph: {
-    title: "Ask Ah Mah — Cook with Ah Mah",
+    title: "Ask Ah Mah — Cook with what you have",
     description:
       "Ah Mah remembers what's in your kitchen and cooks alongside you. No forms, no spreadsheets — just chat.",
     url: "https://ask-ah-mah.vercel.app",
@@ -69,7 +69,7 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Ask Ah Mah - Cooking Assistant",
+        alt: "Ask Ah Mah — your kitchen's grandmother",
       },
     ],
     locale: "en_US",
@@ -77,7 +77,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Ask Ah Mah — Cook with Ah Mah",
+    title: "Ask Ah Mah — Cook with what you have",
     description:
       "Ah Mah remembers what's in your kitchen and cooks alongside you. No forms, no spreadsheets — just chat.",
     images: ["/og-image.png"],

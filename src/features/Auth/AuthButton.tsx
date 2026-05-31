@@ -16,7 +16,7 @@ export function AuthButton() {
 
   const handleSignOut = async () => {
     await authClient.signOut();
-    toast.success("Signed out");
+    toast.success("See you soon, ah.");
     window.location.reload();
   };
 
