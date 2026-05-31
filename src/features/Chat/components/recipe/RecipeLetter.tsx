@@ -7,6 +7,7 @@ type GetInventoryResponse = {
   kitchenwareInventory: InventoryItem[];
   ingredientInventory: InventoryItem[];
 };
+import { Button } from "@/components/ui/button";
 import { ingredientMatches } from "@/lib/recipes/matchIngredient";
 import { RecipeBlock, RecipeIngredientModel } from "@/lib/recipes/schemas";
 import { cn } from "@/lib/utils";
@@ -387,15 +388,16 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
             )
           )}
           {canCook && (
-            <button
+            <Button
+              variant="cta"
               onClick={() => setCooking(true)}
-              className="ml-auto px-3 py-1.5 font-sans text-xs font-semibold text-white bg-primary border border-[oklch(0.405_0.130_32)] rounded-lg cursor-pointer shadow-[0_1px_0_oklch(0.405_0.130_32)] hover:bg-[oklch(0.50_0.130_32)] transition-colors inline-flex items-center gap-1.5"
+              className="ml-auto px-3 py-1.5 font-sans text-xs font-semibold gap-1.5"
             >
-              <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none" className="size-[11px]">
                 <path d="M5 3l8 5-8 5V3z" fill="currentColor"/>
               </svg>
               Start cooking
-            </button>
+            </Button>
           )}
         </div>
       )}

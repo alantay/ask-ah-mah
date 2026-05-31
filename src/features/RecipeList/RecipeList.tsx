@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { useSessionContext } from "@/contexts/SessionContext";
 import { RecipeWithId } from "@/lib/recipes/schemas";
 import { fetcher } from "@/lib/utils";
@@ -136,15 +137,16 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
               </label>
             </>
           )}
-          <button
+          <Button
+            variant="cta"
             onClick={() => setShowAdd(true)}
-            className="shrink-0 flex items-center gap-1.5 px-3 py-[7px] font-sans text-[13px] font-semibold text-primary-foreground bg-primary border border-primary rounded-full shadow-[0_1px_0_oklch(0.46_0.135_35)] hover:opacity-90 transition-opacity cursor-pointer"
+            className="shrink-0 gap-1.5 px-3 py-[7px] font-sans text-[13px] font-semibold rounded-full"
           >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="size-[12px]">
               <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
             </svg>
             Add recipe
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -213,12 +215,13 @@ function CookbookEmpty({ onChatClick, onPasteClick }: { onChatClick?: () => void
           </div>
         </div>
         <div className="flex flex-col gap-2">
-          <button
+          <Button
+            variant="cta"
             onClick={onChatClick}
-            className="self-start px-3.5 py-2 text-[13px] font-semibold text-primary-foreground bg-primary border border-primary rounded-lg cursor-pointer shadow-[0_1px_0_oklch(0.46_0.135_35)] hover:opacity-90 transition-opacity"
+            className="self-start px-3.5 py-2 text-[13px] font-semibold"
           >
             Ask Ah Mah for a recipe →
-          </button>
+          </Button>
           <button
             onClick={onPasteClick}
             className="self-start font-sans text-[12px] text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
