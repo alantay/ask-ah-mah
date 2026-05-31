@@ -49,6 +49,26 @@
   --color-tertiary: var(--tertiary);
   --color-jade: var(--jade);
   --color-jade-foreground: var(--jade-foreground);
+  --color-primary-deep: var(--primary-deep);
+
+  /* Kopitiam type scale — only sizes that don't map cleanly to Tailwind defaults.
+     Use Tailwind text-xs (12) / text-sm (14) / text-lg (18) / text-xl (20) for everything else.
+     Ban arbitrary text-[Npx] outside this scale. */
+  --text-micro: 11px;
+  --text-micro--line-height: 1.35;
+  --text-dense: 13px;
+  --text-dense--line-height: 1.4;
+  --text-emphasis: 15px;
+  --text-emphasis--line-height: 1.5;
+  --text-heading: 22px;
+  --text-heading--line-height: 1.15;
+  --text-display: 40px;
+  --text-display--line-height: 1;
+
+  /* CTA hard shadows — the "stamped paper" depth under the terracotta primary button.
+     Always use these tokens for the hard-shadow pattern; never reinvent inline. */
+  --shadow-cta: 0 1px 0 var(--primary-deep);
+  --shadow-cta-deep: 0 2px 0 var(--primary-deep);
 }
 
 :root {
@@ -79,6 +99,8 @@
   /* Terracotta primary */
   --primary: oklch(0.56 0.135 35);
   --primary-foreground: oklch(0.97 0.02 80);
+  /* Deeper terracotta — used for the hard-shadow underbite on primary CTAs */
+  --primary-deep: oklch(0.46 0.135 35);
 
   /* Butter — user message bubbles */
   --secondary: oklch(0.86 0.1 88);
@@ -127,6 +149,7 @@
   --chat: oklch(0.25 0.025 50);
   --primary: oklch(0.66 0.14 35);
   --primary-foreground: oklch(0.22 0.028 50);
+  --primary-deep: oklch(0.54 0.14 35);
   --secondary: oklch(0.5 0.075 88);
   --secondary-foreground: oklch(0.95 0.025 78);
   --muted: oklch(0.3 0.025 50);
