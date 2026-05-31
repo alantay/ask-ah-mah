@@ -80,13 +80,13 @@ function SuggestionCard({
           {option.tags.map(t => (
             <span
               key={t}
-              className="font-sans text-[10px] font-semibold px-1.5 py-0.25 text-muted-foreground bg-transparent border border-border rounded-full tracking-wider lowercase"
+              className="font-sans text-eyebrow font-semibold px-1.5 py-0.25 text-muted-foreground bg-transparent border border-border rounded-full tracking-wider lowercase"
             >
               {t}
             </span>
           ))}
         </div>
-        <span className="font-mono text-[10px] text-ink-faint">⏱ {option.time}</span>
+        <span className="font-mono text-eyebrow text-ink-faint">⏱ {option.time}</span>
       </div>
 
       {/* Title */}

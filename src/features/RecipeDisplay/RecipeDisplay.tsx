@@ -174,7 +174,7 @@ function RecipeBody({
               {selectedRecipe.tags.map((tag, i) => (
                 <span
                   key={`${tag}-${i}`}
-                  className="text-[10.5px] font-semibold tracking-wide px-[9px] py-[3px] rounded-full text-white border border-white/35 bg-white/[0.18] backdrop-blur-[4px]"
+                  className="text-eyebrow font-semibold tracking-wide px-[9px] py-[3px] rounded-full text-white border border-white/35 bg-white/[0.18] backdrop-blur-[4px]"
                 >
                   {tag}
                 </span>
@@ -195,7 +195,7 @@ function RecipeBody({
               href={selectedRecipe.photographerUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="absolute bottom-2 right-3 font-sans text-[10px] text-white/70 hover:text-white transition-colors leading-none"
+              className="absolute bottom-2 right-3 font-sans text-eyebrow text-white/70 hover:text-white transition-colors leading-none"
               style={{ textShadow: "0 1px 2px rgba(0,0,0,0.6)" }}
             >
               Photo by {selectedRecipe.photographerName}
@@ -217,7 +217,7 @@ function RecipeBody({
               />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="font-sans text-[10.5px] font-bold tracking-[0.16em] uppercase text-ink-faint mb-1">
+              <div className="font-sans text-eyebrow font-bold tracking-[0.16em] uppercase text-ink-faint mb-1">
                 From Ah Mah
               </div>
               <div className="font-display italic text-[15px] sm:text-base text-foreground leading-[1.5] max-w-prose">
@@ -231,7 +231,7 @@ function RecipeBody({
         {selectedRecipe.totalTimeMinutes && (
           <div className="flex flex-wrap items-end gap-3 mb-7">
             <div className="flex flex-col px-3.5 py-2 bg-card border border-border rounded-lg shadow-[0_1px_0_var(--color-border-soft)] min-w-[78px]">
-              <span className="font-sans text-[9.5px] font-bold tracking-[0.16em] uppercase text-ink-faint">
+              <span className="font-sans text-eyebrow font-bold tracking-[0.16em] uppercase text-ink-faint">
                 Total time
               </span>
               <span className="font-display font-semibold text-[18px] text-foreground tabular-nums mt-0.5">
@@ -373,7 +373,7 @@ function RecipeBody({
                         {step.body}
                       </div>
                       {step.tip && (
-                        <div className="mt-1.5 text-[12.5px] text-ink-faint italic">
+                        <div className="mt-1.5 text-xs text-ink-faint italic">
                           {step.tip}
                         </div>
                       )}
@@ -549,7 +549,7 @@ export default function RecipeDisplay({
                 {!hideBackButton && (
                   <button
                     onClick={onBack}
-                    className="min-h-11 inline-flex items-center font-sans text-[11.5px] font-semibold tracking-[0.14em] uppercase text-ink-faint hover:text-foreground transition-colors cursor-pointer"
+                    className="min-h-11 inline-flex items-center font-sans text-micro font-semibold tracking-[0.14em] uppercase text-ink-faint hover:text-foreground transition-colors cursor-pointer"
                     aria-label="Back to cookbook"
                   >
                     ← Back to cookbook
@@ -559,7 +559,7 @@ export default function RecipeDisplay({
                   {!benchOpen && (
                     <button
                       onClick={() => setBenchOpen(true)}
-                      className="inline-flex items-center gap-1.5 min-h-11 px-3 py-1.5 text-[12.5px] font-semibold text-primary bg-card border border-border rounded-md cursor-pointer hover:bg-muted/60 transition-colors"
+                      className="inline-flex items-center gap-1.5 min-h-11 px-3 py-1.5 text-xs font-semibold text-primary bg-card border border-border rounded-md cursor-pointer hover:bg-muted/60 transition-colors"
                       aria-label="Tweak this recipe"
                     >
                       <TweakIcon />
@@ -570,7 +570,7 @@ export default function RecipeDisplay({
                     <Button
                       variant="cta"
                       onClick={handleStartCooking}
-                      className="gap-1.5 min-h-11 px-3 py-1.5 text-[12.5px] font-semibold rounded-md"
+                      className="gap-1.5 min-h-11 px-3 py-1.5 text-xs font-semibold rounded-md"
                       aria-label="Start cooking — step-by-step view with screen stay-on"
                     >
                       <svg width="11" height="11" viewBox="0 0 16 16" fill="none" className="size-[11px]">

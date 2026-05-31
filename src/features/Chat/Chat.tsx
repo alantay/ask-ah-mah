@@ -76,7 +76,7 @@ const Chat = () => {
         {mobileRenaming ? (
           <input
             autoFocus
-            className="flex-1 mx-2 font-display italic font-medium text-[16.5px] text-foreground bg-transparent border-b border-primary outline-none"
+            className="flex-1 mx-2 font-display italic font-medium text-base text-foreground bg-transparent border-b border-primary outline-none"
             value={mobileRenameValue}
             onChange={(e) => setMobileRenameValue(e.target.value)}
             onBlur={commitMobileRename}
@@ -87,7 +87,7 @@ const Chat = () => {
           />
         ) : (
           <>
-            <span className="flex-1 mx-2 font-display italic font-medium text-[16.5px] text-foreground leading-tight tracking-tight truncate">
+            <span className="flex-1 mx-2 font-display italic font-medium text-base text-foreground leading-tight tracking-tight truncate">
               {activeConversation?.title ?? "New chat"}
             </span>
             <ConversationItemMenu
@@ -117,7 +117,7 @@ const Chat = () => {
             {/* Cook-with chip — routes to Pantry selection mode */}
             <button
               onClick={() => router.replace("/?tab=pantry&selectionMode=1")}
-              className="inline-flex items-center gap-1.5 min-h-11 px-3.5 text-[12.5px] text-muted-foreground border border-border rounded-full hover:border-border-soft hover:text-foreground transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 min-h-11 px-3.5 text-xs text-muted-foreground border border-border rounded-full hover:border-border-soft hover:text-foreground transition-colors cursor-pointer"
             >
               🥬 Cook with what I have →
             </button>
@@ -125,7 +125,7 @@ const Chat = () => {
               <button
                 key={s}
                 onClick={() => handleSendMessage(s)}
-                className="inline-flex items-center min-h-11 px-3.5 text-[12.5px] text-muted-foreground border border-border rounded-full hover:border-border-soft hover:text-foreground transition-colors cursor-pointer"
+                className="inline-flex items-center min-h-11 px-3.5 text-xs text-muted-foreground border border-border rounded-full hover:border-border-soft hover:text-foreground transition-colors cursor-pointer"
               >
                 {s}
               </button>

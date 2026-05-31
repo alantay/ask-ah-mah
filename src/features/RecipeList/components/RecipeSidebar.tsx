@@ -203,7 +203,7 @@ function CollapsibleTagGroup({
 
   return (
     <section>
-      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground/60 mb-1.5 px-1">
+      <p className="text-eyebrow font-bold uppercase tracking-[0.16em] text-muted-foreground/60 mb-1.5 px-1">
         {label}
       </p>
       <div className="flex flex-col">
@@ -280,7 +280,7 @@ function CheckboxRow({
       >
         {tag}
       </span>
-      <span className="text-[10px] text-muted-foreground/50 tabular-nums shrink-0">
+      <span className="text-eyebrow text-muted-foreground/50 tabular-nums shrink-0">
         {count}
       </span>
     </button>

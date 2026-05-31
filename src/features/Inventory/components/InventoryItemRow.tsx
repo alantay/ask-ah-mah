@@ -69,7 +69,7 @@ export function InventoryItemRow({
           <span className="truncate">{item.name}</span>
         </span>
         {qty && (
-          <span className="font-mono text-[11.5px] text-ink-faint tabular-nums shrink-0">
+          <span className="font-mono text-micro text-ink-faint tabular-nums shrink-0">
             {qty}
           </span>
         )}
@@ -84,7 +84,7 @@ export function InventoryItemRow({
       </span>
       <span className="flex-1" />
       {qty && (
-        <span className="font-mono text-[11.5px] text-ink-faint tabular-nums shrink-0 group-hover:opacity-30 sm:group-hover:opacity-30 transition-opacity">
+        <span className="font-mono text-micro text-ink-faint tabular-nums shrink-0 group-hover:opacity-30 sm:group-hover:opacity-30 transition-opacity">
           {qty}
         </span>
       )}

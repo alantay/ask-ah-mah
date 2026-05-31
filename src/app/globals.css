@@ -54,6 +54,8 @@
   /* Kopitiam type scale — only sizes that don't map cleanly to Tailwind defaults.
      Use Tailwind text-xs (12) / text-sm (14) / text-lg (18) / text-xl (20) for everything else.
      Ban arbitrary text-[Npx] outside this scale. */
+  --text-eyebrow: 10px;
+  --text-eyebrow--line-height: 1.4;
   --text-micro: 11px;
   --text-micro--line-height: 1.35;
   --text-dense: 13px;

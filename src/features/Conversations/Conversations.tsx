@@ -77,7 +77,7 @@ export function Conversations({ onItemClick }: ConversationsProps) {
           <div className="flex flex-col gap-3">
             {groups.map((group) => (
               <div key={group.label}>
-                <div className="font-sans text-[9.5px] font-bold tracking-[0.18em] uppercase text-ink-faint mb-1.5 px-0.5">
+                <div className="font-sans text-eyebrow font-bold tracking-[0.18em] uppercase text-ink-faint mb-1.5 px-0.5">
                   {group.label}
                 </div>
                 <div className="flex flex-col gap-2">

@@ -29,7 +29,7 @@ export function SkeletonRecipeCard() {
           </svg>
         </div>
 
-        <div className="font-sans text-[10px] font-bold tracking-widest uppercase text-muted-foreground inline-flex items-center gap-1.5">
+        <div className="font-sans text-eyebrow font-bold tracking-widest uppercase text-muted-foreground inline-flex items-center gap-1.5">
           The way I make it
           <svg
             width="13"

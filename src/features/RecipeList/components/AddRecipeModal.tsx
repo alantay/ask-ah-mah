@@ -294,7 +294,7 @@ export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
                   placeholder="Paste recipe text here. Messy is fine."
                   className={[
                     "w-full flex-1 min-h-[140px] sm:min-h-0 resize-none rounded-lg border bg-card px-4 py-3",
-                    "font-sans text-[13.5px] text-foreground placeholder:text-muted-foreground leading-relaxed",
+                    "font-sans text-dense text-foreground placeholder:text-muted-foreground leading-relaxed",
                     "outline-none transition-all",
                     error
                       ? "border-[oklch(0.78_0.10_27)] ring-[3px] ring-[oklch(0.78_0.10_27)/0.12]"
@@ -319,10 +319,10 @@ export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
                 )}
 
                 <div className="flex items-center justify-between shrink-0">
-                  <span className="font-sans text-[10.5px] text-muted-foreground">
+                  <span className="font-sans text-eyebrow text-muted-foreground">
                     Tip: paste just the recipe portion for the cleanest result.
                   </span>
-                  <span className="hidden sm:inline font-mono text-[10.5px] text-muted-foreground tabular-nums">
+                  <span className="hidden sm:inline font-mono text-eyebrow text-muted-foreground tabular-nums">
                     {text.length.toLocaleString()} / {CHAR_LIMIT.toLocaleString()}
                   </span>
                 </div>
@@ -347,7 +347,7 @@ export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
               <div className="flex-1 overflow-y-auto">
                 <ExtractingSkeleton revealStage={revealStage} />
               </div>
-              <div className="px-6 py-3 border-t border-dashed border-border text-center font-sans text-[11.5px] text-muted-foreground shrink-0">
+              <div className="px-6 py-3 border-t border-dashed border-border text-center font-sans text-micro text-muted-foreground shrink-0">
                 Pulling out ingredients, steps, and timing… usually 4–6 seconds.
               </div>
             </>
@@ -368,7 +368,7 @@ export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
               <div className="px-5 sm:px-6 py-4 border-t border-border flex items-center justify-between gap-3 shrink-0">
                 <button
                   onClick={() => setStep("paste")}
-                  className="inline-flex items-center gap-1.5 font-sans text-[12.5px] text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1.5 font-sans text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 >
                   <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
                     <path d="M10 4l-4 4 4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
