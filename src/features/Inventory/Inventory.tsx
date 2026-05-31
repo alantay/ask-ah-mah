@@ -15,6 +15,7 @@ type GetInventoryResponse = {
 };
 import { cn } from "@/lib/utils";
 import { fetcher } from "@/lib/utils";
+import { Check, CookingPot, Plus, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -282,41 +283,35 @@ const Inventory = () => {
             {!selectionMode ? (
               <>
                 {totalCount > 0 && (
-                  <button
+                  <Button
+                    variant="cta"
                     onClick={enterSelectionMode}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-foreground bg-card border border-border rounded-lg cursor-pointer hover:bg-muted transition-colors"
+                    className="gap-1.5 px-3.5 py-2 text-[13px] font-semibold shrink-0"
                   >
+                    <CookingPot className="size-[15px]" />
                     Cook with what you have
-                  </button>
+                  </Button>
                 )}
                 {!isAdding && (
                   <Button
-                    variant="cta"
+                    variant={totalCount > 0 ? "outline" : "cta"}
                     onClick={() => setIsAdding(true)}
                     className="gap-1.5 px-3.5 py-2 text-[13px] font-semibold shrink-0"
                   >
-                    <svg width="11" height="11" viewBox="0 0 12 12" fill="none" className="size-[11px]">
-                      <path
-                        d="M6 1.5V10.5M1.5 6H10.5"
-                        stroke="currentColor"
-                        strokeWidth="1.7"
-                        strokeLinecap="round"
-                      />
-                    </svg>
+                    <Plus className="size-[15px]" />
                     Add to pantry
                   </Button>
                 )}
               </>
             ) : (
-              <button
+              <Button
+                variant="outline"
                 onClick={exitSelectionMode}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-muted-foreground bg-card border border-border rounded-lg cursor-pointer hover:bg-muted transition-colors"
+                className="gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-muted-foreground shrink-0"
               >
-                <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                  <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
+                <X className="size-[15px]" />
                 Cancel
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -326,27 +321,22 @@ const Inventory = () => {
           {!selectionMode ? (
             <>
               {totalCount > 0 && (
-                <button
+                <Button
+                  variant="cta"
                   onClick={enterSelectionMode}
-                  className="inline-flex items-center gap-1.5 min-h-11 px-3 py-1.5 text-xs font-semibold text-foreground bg-card border border-border rounded-lg cursor-pointer"
+                  className="gap-1.5 min-h-11 px-3 py-1.5 text-xs font-semibold"
                 >
+                  <CookingPot className="size-[14px]" />
                   Cook with what you have
-                </button>
+                </Button>
               )}
               {!isAdding && (
                 <Button
-                  variant="cta"
+                  variant={totalCount > 0 ? "outline" : "cta"}
                   onClick={() => setIsAdding(true)}
                   className="gap-1.5 min-h-11 px-3 py-1.5 text-xs font-semibold ml-auto"
                 >
-                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none" className="size-[10px]">
-                    <path
-                      d="M6 1.5V10.5M1.5 6H10.5"
-                      stroke="currentColor"
-                      strokeWidth="1.7"
-                      strokeLinecap="round"
-                    />
-                  </svg>
+                  <Plus className="size-[14px]" />
                   Add to pantry
                 </Button>
               )}
@@ -356,12 +346,14 @@ const Inventory = () => {
               <span className="font-display italic text-[14px] text-muted-foreground">
                 {totalSelected > 0 ? `${totalSelected} selected` : "Tap items to select"}
               </span>
-              <button
+              <Button
+                variant="outline"
                 onClick={exitSelectionMode}
-                className="inline-flex items-center gap-1.5 min-h-11 px-3 py-1.5 text-xs font-semibold text-muted-foreground bg-card border border-border rounded-lg cursor-pointer"
+                className="gap-1.5 min-h-11 px-3 py-1.5 text-xs font-semibold text-muted-foreground"
               >
+                <X className="size-[14px]" />
                 Cancel
-              </button>
+              </Button>
             </div>
           )}
         </div>
@@ -370,9 +362,7 @@ const Inventory = () => {
         {selectionMode && (
           <div className="hidden sm:flex items-center justify-between gap-2 mb-4 px-3 py-2.5 bg-primary/5 border border-dashed border-primary/30 rounded-lg">
             <div className="flex items-center gap-2">
-              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" className="text-primary shrink-0">
-                <path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <Check className="size-[13px] text-primary shrink-0" />
               <span className="font-display italic text-[13px] text-muted-foreground">
                 {totalSelected === 0
                   ? "Tap items to feature them — Ah Mah will build recipes around your picks."
