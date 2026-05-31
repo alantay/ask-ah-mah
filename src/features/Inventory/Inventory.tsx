@@ -290,11 +290,12 @@ const Inventory = () => {
                   </button>
                 )}
                 {!isAdding && (
-                  <button
+                  <Button
+                    variant="cta"
                     onClick={() => setIsAdding(true)}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-primary-foreground bg-primary border border-primary rounded-lg cursor-pointer shadow-[0_1px_0_oklch(0.46_0.135_35)] hover:opacity-90 transition-opacity shrink-0"
+                    className="gap-1.5 px-3.5 py-2 text-[13px] font-semibold shrink-0"
                   >
-                    <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                    <svg width="11" height="11" viewBox="0 0 12 12" fill="none" className="size-[11px]">
                       <path
                         d="M6 1.5V10.5M1.5 6H10.5"
                         stroke="currentColor"
@@ -303,7 +304,7 @@ const Inventory = () => {
                       />
                     </svg>
                     Add to pantry
-                  </button>
+                  </Button>
                 )}
               </>
             ) : (
@@ -333,11 +334,12 @@ const Inventory = () => {
                 </button>
               )}
               {!isAdding && (
-                <button
+                <Button
+                  variant="cta"
                   onClick={() => setIsAdding(true)}
-                  className="inline-flex items-center gap-1.5 min-h-11 px-3 py-1.5 text-[12.5px] font-semibold text-primary-foreground bg-primary border border-primary rounded-lg cursor-pointer shadow-[0_1px_0_oklch(0.46_0.135_35)] ml-auto"
+                  className="gap-1.5 min-h-11 px-3 py-1.5 text-[12.5px] font-semibold ml-auto"
                 >
-                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none" className="size-[10px]">
                     <path
                       d="M6 1.5V10.5M1.5 6H10.5"
                       stroke="currentColor"
@@ -346,7 +348,7 @@ const Inventory = () => {
                     />
                   </svg>
                   Add to pantry
-                </button>
+                </Button>
               )}
             </>
           ) : (

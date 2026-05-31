@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -138,12 +139,13 @@ export function CookingMode({ title, steps, prep, onExit }: CookingModeProps) {
         </button>
 
         {current < total - 1 ? (
-          <button
+          <Button
+            variant="ctaDeep"
             onClick={next}
-            className="flex-[2] py-3 font-sans text-sm font-semibold text-white bg-primary border border-[oklch(0.405_0.130_32)] rounded-xl shadow-[0_2px_0_oklch(0.405_0.130_32)] hover:bg-[oklch(0.50_0.130_32)] transition-colors cursor-pointer"
+            className="flex-[2] py-3 font-sans text-sm font-semibold"
           >
             Next step →
-          </button>
+          </Button>
         ) : (
           <button
             onClick={onExit}
