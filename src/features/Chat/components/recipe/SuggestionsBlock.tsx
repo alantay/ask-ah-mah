@@ -72,7 +72,7 @@ function SuggestionCard({
       )}
     >
       {/* Corner tab */}
-      <div className="absolute top-[-1px] right-[18px] w-5.5 h-2.5 bg-primary rounded-b shadow-[inset_0_-1px_0_oklch(0.45_0.12_32)]" />
+      <div className="absolute top-[-1px] right-[18px] w-5.5 h-2.5 bg-primary rounded-b shadow-[inset_0_-1px_0_var(--primary-deep)]" />
 
       {/* Tags + time row */}
       <div className="flex items-center justify-between">
@@ -114,13 +114,13 @@ function SuggestionCard({
         <span
           className={cn(
             'inline-flex items-center gap-1.5 font-sans text-xs font-semibold',
-            haveAll ? 'text-jade' : 'text-[oklch(0.42_0.18_25)]'
+            haveAll ? 'text-jade' : 'text-destructive'
           )}
         >
           <span
             className={cn(
               'size-[7px] rounded-full shrink-0',
-              haveAll ? 'bg-jade' : 'bg-[oklch(0.6_0.18_25)]'
+              haveAll ? 'bg-jade' : 'bg-destructive'
             )}
           />
           {total === 0
@@ -135,8 +135,8 @@ function SuggestionCard({
           className={cn(
             'px-3 py-1.5 font-sans text-xs font-semibold rounded-lg cursor-pointer inline-flex items-center gap-1',
             isPicked
-              ? 'text-[oklch(0.405_0.130_32)] bg-[oklch(0.94_0.06_35)] border border-[oklch(0.405_0.130_32)] shadow-none'
-              : 'text-white bg-primary border border-[oklch(0.405_0.130_32)] shadow-[0_1px_0_oklch(0.405_0.130_32)]'
+              ? 'text-primary-deep bg-primary-tint border border-primary-deep shadow-none'
+              : 'text-white bg-primary border border-primary-deep shadow-[0_1px_0_var(--primary-deep)]'
           )}
         >
           {isPicked ? '✓ Picked' : 'I want to cook this →'}

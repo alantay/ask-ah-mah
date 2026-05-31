@@ -476,7 +476,7 @@ const Inventory = () => {
               className={cn(
                 "w-full py-3 px-4 rounded-xl font-semibold text-[14px] transition-all",
                 totalSelected > 0
-                  ? "bg-primary text-primary-foreground shadow-[0_1px_0_oklch(0.46_0.135_35)] hover:opacity-90 cursor-pointer"
+                  ? "bg-primary text-primary-foreground shadow-cta hover:opacity-90 cursor-pointer"
                   : "bg-muted text-muted-foreground cursor-not-allowed",
               )}
             >

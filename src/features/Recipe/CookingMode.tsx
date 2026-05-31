@@ -104,7 +104,7 @@ export function CookingMode({ title, steps, prep, onExit }: CookingModeProps) {
       <div className="flex-1 overflow-y-auto flex flex-col justify-center px-6 py-8 sm:px-12 max-w-2xl mx-auto w-full">
         {/* Step number stamp */}
         <div className="mb-6 flex items-center gap-3">
-          <div className="shrink-0 size-12 bg-primary text-white flex items-center justify-center font-display font-bold text-2xl rounded-[50%_50%_50%_10px] -rotate-3 shadow-[inset_0_-2px_0_oklch(0.405_0.130_32),0_1px_0_oklch(0.405_0.130_32)]">
+          <div className="shrink-0 size-12 bg-primary text-white flex items-center justify-center font-display font-bold text-2xl rounded-[50%_50%_50%_10px] -rotate-3 shadow-[inset_0_-2px_0_var(--primary-deep),0_1px_0_var(--primary-deep)]">
             {current + 1}
           </div>
           <div className="font-display font-semibold text-2xl text-foreground leading-tight tracking-tight">
