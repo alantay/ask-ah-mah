@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { TAG_SETS, TagCategory, getTagCategory } from "@/lib/recipes/tagColors";
+import { useState } from "react";
 
 const VISIBLE_LIMIT = 5;
 
@@ -51,7 +51,7 @@ export function RecipeSidebar({
     .filter((g) => g.tags.length > 0);
 
   const otherTags = Object.keys(tagCounts).filter(
-    (t) => getTagCategory(t) === "other"
+    (t) => getTagCategory(t) === "other",
   );
 
   return (
@@ -78,33 +78,28 @@ export function RecipeSidebar({
             onClick={onMobileClose}
           />
           <div className="relative w-72 max-w-[85vw] flex flex-col bg-muted shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-              <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                Filters
-              </span>
-              <div className="flex items-center gap-3">
-                {activeTags.size > 0 && (
-                  <button
-                    onClick={onClear}
-                    className="text-[11px] text-primary hover:opacity-70 transition-opacity cursor-pointer"
-                  >
-                    Clear all
-                  </button>
-                )}
+            <div className="flex items-center justify-end gap-3 px-4 py-3 shrink-0">
+              {activeTags.size > 0 && (
                 <button
-                  onClick={onMobileClose}
-                  className="text-muted-foreground hover:text-foreground cursor-pointer"
+                  onClick={onClear}
+                  className="text-[11px] text-primary hover:opacity-70 transition-opacity cursor-pointer"
                 >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path
-                      d="m3 3 10 10M13 3 3 13"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                    />
-                  </svg>
+                  Clear all
                 </button>
-              </div>
+              )}
+              <button
+                onClick={onMobileClose}
+                className="text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path
+                    d="m3 3 10 10M13 3 3 13"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
             </div>
             <div className={`flex-1 overflow-y-auto ${HIDE_SCROLLBAR}`}>
               <SidebarContent
@@ -129,19 +124,15 @@ function SidebarHeader({
   activeTags: Set<string>;
   onClear: () => void;
 }) {
+  if (activeTags.size === 0) return null;
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-      <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-        Filters
-      </span>
-      {activeTags.size > 0 && (
-        <button
-          onClick={onClear}
-          className="text-[11px] text-primary hover:opacity-70 transition-opacity cursor-pointer"
-        >
-          Clear all
-        </button>
-      )}
+    <div className="flex items-center justify-end px-4 py-3 shrink-0">
+      <button
+        onClick={onClear}
+        className="text-[11px] text-primary hover:opacity-70 transition-opacity cursor-pointer"
+      >
+        Clear all
+      </button>
     </div>
   );
 }
@@ -203,7 +194,7 @@ function CollapsibleTagGroup({
 
   return (
     <section>
-      <p className="text-eyebrow font-bold uppercase tracking-[0.16em] text-muted-foreground/60 mb-1.5 px-1">
+      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground/60 mb-1.5 px-1">
         {label}
       </p>
       <div className="flex flex-col">
