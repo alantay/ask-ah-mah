@@ -59,7 +59,7 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   openGraph: {
-    title: "Ask Ah Mah — Cook with Ah Mah",
+    title: "Ask Ah Mah — Cook with what you have",
     description:
       "Ah Mah remembers what's in your kitchen and cooks alongside you. No forms, no spreadsheets — just chat.",
     url: "https://ask-ah-mah.vercel.app",
@@ -77,7 +77,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Ask Ah Mah — Cook with Ah Mah",
+    title: "Ask Ah Mah — Cook with what you have",
     description:
       "Ah Mah remembers what's in your kitchen and cooks alongside you. No forms, no spreadsheets — just chat.",
     images: ["/og-image.png"],
