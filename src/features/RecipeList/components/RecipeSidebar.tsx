@@ -89,6 +89,7 @@ export function RecipeSidebar({
               )}
               <button
                 onClick={onMobileClose}
+                aria-label="Close filters"
                 className="text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
