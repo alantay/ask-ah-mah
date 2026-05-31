@@ -47,7 +47,7 @@ const CategoryCard = ({
 }) => (
   <section className="bg-card border border-border rounded-lg p-4 shadow-[0_1px_0_var(--color-border-soft)]">
     <div className="flex items-baseline justify-between border-b border-dashed border-border pb-2 mb-2">
-      <span className="font-sans text-eyebrow font-bold tracking-[0.18em] uppercase text-muted-foreground">
+      <span className="font-display italic text-dense text-muted-foreground">
         {label}
       </span>
       <span className="font-mono text-[11px] text-ink-faint tabular-nums">
