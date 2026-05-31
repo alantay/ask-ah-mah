@@ -96,13 +96,13 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
           payload?.error ?? `Failed to add ${ing.name} (${res.status})`;
         throw new Error(msg);
       }
-      toast.success(`Added ${ing.name} to your pantry`);
+      toast.success(`${ing.name} — in the pantry now.`);
       mutate(inventoryKey);
     } catch (err) {
       toast.error(
         err instanceof Error
           ? err.message
-          : `Couldn't add ${ing.name} — please try again`,
+          : `Aiyah, couldn't add ${ing.name}. Try again?`,
       );
     } finally {
       setInFlight((prev) => {
@@ -143,8 +143,8 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
       })
       .join("\n");
     navigator.clipboard.writeText(lines).then(
-      () => toast.success("Shopping list copied to clipboard"),
-      () => toast.error("Couldn't copy — try selecting and copying manually"),
+      () => toast.success("Shopping list copied — go get them!"),
+      () => toast.error("Aiyah, couldn't copy — select and copy by hand?"),
     );
   };
 

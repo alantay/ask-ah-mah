@@ -501,7 +501,7 @@ export default function RecipeDisplay({
       originalRecipeRef.current = workingDraft;
       setBenchOpen(false);
       setChanges([]);
-      toast.success("Recipe saved!");
+      toast.success("Saved — into your cookbook.");
     } catch (err) {
       console.error("[RecipeDisplay] save error:", err);
       toast.error("Couldn't save. Try again?");

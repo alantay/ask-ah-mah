@@ -72,7 +72,7 @@ export function Conversations({ onItemClick }: ConversationsProps) {
         {isLoading && allConversations.length === 0 ? (
           <ConversationListSkeleton />
         ) : committedConversations.length === 0 ? (
-          <div className="italic text-ink-faint text-sm">No conversations yet</div>
+          <div className="italic text-ink-faint text-sm">No chats yet.</div>
         ) : (
           <div className="flex flex-col gap-3">
             {groups.map((group) => (

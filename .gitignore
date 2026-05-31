@@ -60,3 +60,9 @@ skills-lock.json
 
 # Git worktrees
 .worktrees/
+
+# AI scratch + local test output (never committed)
+temp/
+test-results/
+.agentindex
+.agentindexignore

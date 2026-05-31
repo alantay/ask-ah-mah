@@ -160,7 +160,7 @@ export const MessageList = ({
         { revalidate: false, populateCache: true },
       );
 
-      toast.success(`Recipe ${name} saved!`);
+      toast.success(`Saved — Ah Mah will remember this one.`);
     } catch (error) {
       console.error("Failed to save recipe:", error);
     }
@@ -205,10 +205,10 @@ export const MessageList = ({
         { revalidate: false, populateCache: true },
       );
 
-      toast.success(`Recipe "${recipeBlock.title}" saved to cookbook!`);
+      toast.success(`"${recipeBlock.title}" — kept in your cookbook.`);
     } catch (error) {
       console.error("Failed to save recipe:", error);
-      toast.error("Could not save recipe. Try again.");
+      toast.error("Aiyah, didn't save. Try again?");
     }
   };
 

@@ -148,15 +148,15 @@ const Inventory = () => {
         mutate(`/api/inventory?userId=${userId}`);
         toast.success(
           items.length === 1
-            ? `${items[0].name} added`
-            : `${items.length} items added`,
+            ? `${items[0].name} — in the pantry now.`
+            : `${items.length} things, all noted down.`,
         );
       } else {
-        toast.error("Couldn't parse that — try rephrasing");
+        toast.error("Aiyah, didn't catch that — say it another way?");
       }
     } catch (e) {
       console.error("Failed to add items:", e);
-      toast.error("Couldn't add items, try again");
+      toast.error("Aiyah, couldn't note that down. Try again?");
     } finally {
       setSubmitting(false);
     }
@@ -172,15 +172,15 @@ const Inventory = () => {
       });
       if (response.ok) {
         mutate(`/api/inventory?userId=${userId}`);
-        toast.success(`${itemName} removed from inventory`);
+        toast.success(`Okay, took out the ${itemName}.`);
       } else {
         const detail = await response.text().catch(() => "");
         console.error(`DELETE /api/inventory ${response.status}:`, detail);
-        toast.error(`${itemName} failed to remove from inventory`);
+        toast.error(`Aiyah, ${itemName} won't budge. Try again?`);
       }
     } catch (e) {
       console.error("Failed to remove item:", e);
-      toast.error(`${itemName} failed to remove from inventory`);
+      toast.error(`Aiyah, ${itemName} won't budge. Try again?`);
     }
   };
 
@@ -434,7 +434,7 @@ const Inventory = () => {
 
         {!isLoading && totalCount === 0 && selectionMode && (
           <p className="font-display italic text-[14px] text-muted-foreground">
-            Your pantry is empty. Add some items first and Ah Mah can suggest what to cook.
+            Pantry&rsquo;s empty for now. Add a few things first, then Ah Mah can suggest what to cook.
           </p>
         )}
 

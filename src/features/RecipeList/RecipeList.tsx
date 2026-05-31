@@ -42,9 +42,9 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
       });
       if (!res.ok) throw new Error("Delete failed");
       mutate(`/api/recipe?userId=${userId}`);
-      toast.success("Recipe deleted");
+      toast.success("Okay, thrown away.");
     } catch {
-      toast.error("Failed to delete recipe");
+      toast.error("Aiyah, couldn't throw it away. Try again?");
     }
   };
 
@@ -208,7 +208,7 @@ function CookbookEmpty({ onChatClick, onPasteClick }: { onChatClick?: () => void
         </div>
         <div>
           <div className="font-display font-semibold text-[22px] text-foreground leading-tight tracking-tight mb-1.5">
-            Your cookbook is empty.
+            Cookbook&rsquo;s empty for now.
           </div>
           <div className="font-display italic text-sm text-muted-foreground leading-relaxed">
             When something&rsquo;s worth a second go, tap <em>Save</em>. Ah Mah keeps it tidy.
