@@ -52,6 +52,10 @@ jest.mock("./recipe/SuggestionsBlock", () => ({
   SuggestionsBlock: () => <div data-testid="suggestions-block" />,
 }));
 
+jest.mock("./recipe/RecipeLetter", () => ({
+  RecipeLetter: () => <div data-testid="recipe-letter" />,
+}));
+
 // Mock AI Elements components
 jest.mock("@/components/ai-elements/conversation", () => ({
   Conversation: ({ children }: { children: React.ReactNode }) => (
@@ -749,6 +753,82 @@ describe("MessageList", () => {
       // Button should be focusable
       saveButton.focus();
       expect(saveButton).toHaveFocus();
+    });
+  });
+
+  describe('"More ideas" button (Cook-With responses)', () => {
+    const recipeFence = (title: string, closeness?: "close" | "stretch") =>
+      "```recipe\n" +
+      JSON.stringify({
+        title,
+        baseServings: 2,
+        ingredients: [{ name: "egg" }],
+        steps: [{ title: "Cook", body: "Cook it." }],
+        ...(closeness ? { closeness } : {}),
+      }) +
+      "\n```";
+
+    const cookWithMessage = (closeness: "close" | "stretch" = "close") =>
+      createMockMessage({
+        id: "msg-cookwith",
+        role: "assistant",
+        parts: [{ type: "text", text: recipeFence("Tomato Egg", closeness) }],
+      });
+
+    it("renders below a completed Cook-With response", () => {
+      render(
+        <MessageList {...defaultProps} messages={[cookWithMessage("close")]} />,
+      );
+
+      expect(screen.getByText("More ideas like these")).toBeInTheDocument();
+    });
+
+    it("sends 'More ideas — different from these' on click", async () => {
+      const onSend = jest.fn();
+      render(
+        <MessageList
+          {...defaultProps}
+          messages={[cookWithMessage("stretch")]}
+          onSend={onSend}
+        />,
+      );
+
+      await user.click(screen.getByText("More ideas like these"));
+
+      expect(onSend).toHaveBeenCalledWith("More ideas — different from these");
+    });
+
+    it("is hidden while the assistant is streaming", () => {
+      render(
+        <MessageList
+          {...defaultProps}
+          messages={[cookWithMessage("close")]}
+          status="streaming"
+        />,
+      );
+
+      expect(
+        screen.queryByText("More ideas like these"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("does not render on a regular recipe response (no closeness)", () => {
+      render(
+        <MessageList
+          {...defaultProps}
+          messages={[
+            createMockMessage({
+              id: "msg-regular",
+              role: "assistant",
+              parts: [{ type: "text", text: recipeFence("Plain Recipe") }],
+            }),
+          ]}
+        />,
+      );
+
+      expect(
+        screen.queryByText("More ideas like these"),
+      ).not.toBeInTheDocument();
     });
   });
 });
