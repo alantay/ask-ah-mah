@@ -64,6 +64,9 @@ export function TweakBench({
   }, [recipe.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    // Restore on (re)mount — StrictMode runs setup→cleanup→setup, and without
+    // this the ref would stay false, gating setIsStreaming(false) forever.
+    mountedRef.current = true;
     return () => {
       mountedRef.current = false;
       abortRef.current?.abort();
