@@ -15,10 +15,14 @@ import useSWR from 'swr';
 import { computePantry } from './pantryUtils';
 
 interface SuggestionsBlockProps {
-  data: SuggestionsBlockData;
+  // Partial during progressive reveal — intro/options fill in as the JSON streams.
+  data: Partial<SuggestionsBlockData>;
   allMessages: UIMessage[];
   messageIndex: number;
   onSend: (text: string) => void;
+  // While true the block is still streaming: options may be incomplete and the
+  // "I want to cook this" CTA is suppressed.
+  isStreaming?: boolean;
 }
 
 function derivePickedId(
@@ -49,6 +53,7 @@ interface SuggestionCardProps {
   isDimmed: boolean;
   inventoryItems: InventoryItem[];
   onSend: (text: string) => void;
+  isStreaming?: boolean;
 }
 
 function SuggestionCard({
@@ -57,6 +62,7 @@ function SuggestionCard({
   isDimmed,
   inventoryItems,
   onSend,
+  isStreaming = false,
 }: SuggestionCardProps) {
   const { have, total, missing } = computePantry(option.keyIngredients, inventoryItems);
   const haveAll = have === total && total > 0;
@@ -130,17 +136,19 @@ function SuggestionCard({
               : `${have}/${total} in pantry · short ${missing.length}`}
         </span>
         <div className="flex-1" />
-        <button
-          onClick={() => onSend(`${option.title} — let's go.`)}
-          className={cn(
-            'px-3 py-1.5 font-sans text-xs font-semibold rounded-lg cursor-pointer inline-flex items-center gap-1',
-            isPicked
-              ? 'text-primary-deep bg-primary-tint border border-primary-deep shadow-none'
-              : 'text-white bg-primary border border-primary-deep shadow-[0_1px_0_var(--primary-deep)]'
-          )}
-        >
-          {isPicked ? '✓ Picked' : 'I want to cook this →'}
-        </button>
+        {!isStreaming && (
+          <button
+            onClick={() => onSend(`${option.title} — let's go.`)}
+            className={cn(
+              'px-3 py-1.5 font-sans text-xs font-semibold rounded-lg cursor-pointer inline-flex items-center gap-1',
+              isPicked
+                ? 'text-primary-deep bg-primary-tint border border-primary-deep shadow-none'
+                : 'text-white bg-primary border border-primary-deep shadow-[0_1px_0_var(--primary-deep)]'
+            )}
+          >
+            {isPicked ? '✓ Picked' : 'I want to cook this →'}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -151,6 +159,7 @@ export function SuggestionsBlock({
   allMessages,
   messageIndex,
   onSend,
+  isStreaming = false,
 }: SuggestionsBlockProps) {
   const { userId } = useSessionContext();
   const { data: inventoryData } = useSWR<GetInventoryResponse>(
@@ -158,23 +167,30 @@ export function SuggestionsBlock({
     fetcher
   );
 
+  // Streaming partials may omit options/intro entirely; default them so the same
+  // render path serves both the live and the final view (ADR-0009).
+  const intro = data.intro ?? '';
+  const options = data.options ?? [];
+
   const inventoryItems: InventoryItem[] = [
     ...(inventoryData?.ingredientInventory ?? []),
     ...(inventoryData?.kitchenwareInventory ?? []),
   ];
 
-  const pickedId = derivePickedId(data.options, allMessages, messageIndex);
+  const pickedId = isStreaming
+    ? null
+    : derivePickedId(options, allMessages, messageIndex);
 
   return (
     <div className="min-w-0">
       {/* Intro */}
       <div className="font-display italic text-lg leading-relaxed text-foreground mb-3">
-        {data.intro}
+        {intro}
       </div>
 
       {/* Cards */}
       <div className="flex flex-col gap-2.5">
-        {data.options.map(option => (
+        {options.map(option => (
           <SuggestionCard
             key={option.id}
             option={option}
@@ -182,6 +198,7 @@ export function SuggestionsBlock({
             isDimmed={pickedId !== null && pickedId !== option.id}
             inventoryItems={inventoryItems}
             onSend={onSend}
+            isStreaming={isStreaming}
           />
         ))}
       </div>

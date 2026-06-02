@@ -1,3 +1,4 @@
+import { parsePartialJson } from "ai";
 import {
   RecipeBlockSchema,
   SuggestionsBlockSchema,
@@ -58,10 +59,126 @@ export function stripFences(text: string): string {
     .trim();
 }
 
-export function getOpenRecipeFenceIdx(text: string): number {
-  const marker = "```recipe\n";
-  const openIdx = text.lastIndexOf(marker);
-  if (openIdx === -1) return -1;
-  const afterOpen = text.slice(openIdx + marker.length);
-  return afterOpen.includes("\n```") ? -1 : openIdx;
+export type OpenFenceKind = "recipe" | "suggestions";
+
+export interface OpenFence {
+  kind: OpenFenceKind;
+  /** Index of the opening ``` marker, for slicing prose before it. */
+  index: number;
+  /** Everything after the `\`\`\`<kind>\n` opener — the (incomplete) JSON body. */
+  json: string;
+}
+
+// Detects a single trailing OPEN fence of either type. A response streams its
+// blocks in order, so only the final fence can be unclosed; we take the
+// last-positioned opener and confirm it has no closing `\n``` ` yet. Replaces
+// the recipe-only detector and closes the suggestions raw-JSON leak (an
+// incomplete ```suggestions used to fall through to the markdown renderer).
+export function getOpenFence(text: string): OpenFence | null {
+  const markers: { kind: OpenFenceKind; marker: string }[] = [
+    { kind: "recipe", marker: "```recipe\n" },
+    { kind: "suggestions", marker: "```suggestions\n" },
+  ];
+
+  let best: { kind: OpenFenceKind; index: number; markerLen: number } | null =
+    null;
+  for (const { kind, marker } of markers) {
+    const idx = text.lastIndexOf(marker);
+    if (idx === -1) continue;
+    if (!best || idx > best.index)
+      best = { kind, index: idx, markerLen: marker.length };
+  }
+  if (!best) return null;
+
+  const json = text.slice(best.index + best.markerLen);
+  if (json.includes("\n```")) return null; // fence is closed
+  return { kind: best.kind, index: best.index, json };
+}
+
+// Scans an incomplete JSON buffer and returns the key of the top-level array
+// that is currently being streamed (the open container directly under the root
+// object), or null if no top-level array is open. String contents are skipped
+// so braces/brackets inside values don't corrupt the depth tracking.
+export function findOpenArrayKey(json: string): string | null {
+  type Frame = { type: "object" | "array"; key: string | null };
+  const stack: Frame[] = [];
+  let inString = false;
+  let escaped = false;
+  let token = ""; // chars of the string currently being read
+  let lastString: string | null = null; // last completed string (candidate key)
+  let pendingKey: string | null = null; // key awaiting its value (after `:`)
+
+  for (const ch of json) {
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (ch === "\\") {
+        escaped = true;
+      } else if (ch === '"') {
+        inString = false;
+        lastString = token;
+      } else {
+        token += ch;
+      }
+      continue;
+    }
+
+    switch (ch) {
+      case '"':
+        inString = true;
+        token = "";
+        break;
+      case ":":
+        pendingKey = lastString;
+        lastString = null;
+        break;
+      case "{":
+        stack.push({ type: "object", key: pendingKey });
+        pendingKey = null;
+        lastString = null;
+        break;
+      case "[":
+        stack.push({ type: "array", key: pendingKey });
+        pendingKey = null;
+        lastString = null;
+        break;
+      case "}":
+      case "]":
+        stack.pop();
+        pendingKey = null;
+        lastString = null;
+        break;
+      case ",":
+        pendingKey = null;
+        lastString = null;
+        break;
+    }
+  }
+
+  if (stack[0]?.type === "object" && stack[1]?.type === "array")
+    return stack[1].key;
+  return null;
+}
+
+// Parses an incomplete fenced-block body for progressive reveal. `parsePartialJson`
+// repairs the buffer (growing strings render as a typewriter for free); we then
+// drop the in-progress trailing element of the array currently being streamed so
+// rows pop in as whole units instead of jittering field-by-field. Returns null
+// when nothing is parseable yet — callers hold the last good value.
+export async function parsePartialBlock(
+  json: string,
+): Promise<Record<string, unknown> | null> {
+  const { value, state } = await parsePartialJson(json);
+  if (state === "failed-parse" || value === null || typeof value !== "object")
+    return null;
+
+  const obj = { ...(value as Record<string, unknown>) };
+  if (Object.keys(obj).length === 0) return null;
+  if (state === "successful-parse") return obj; // whole object arrived; render all
+
+  const openKey = findOpenArrayKey(json);
+  if (openKey && Array.isArray(obj[openKey]) && obj[openKey].length > 0)
+    obj[openKey] = obj[openKey].slice(0, -1);
+
+  return obj;
 }

@@ -20,10 +20,14 @@ import useSWR, { useSWRConfig } from "swr";
 import { ScaledNum, scaleAmount } from "@/features/Recipe";
 
 export interface RecipeLetterProps {
-  recipe: RecipeBlock;
+  // Partial during progressive reveal — fields fill in as the JSON streams.
+  recipe: Partial<RecipeBlock>;
   onSave?: (recipe: RecipeBlock) => void;
   isSaved?: boolean;
   onSend?: (text: string) => void;
+  // While true the recipe is still streaming: arrays may be incomplete and all
+  // interactivity (stepper, add-to-pantry, save, cook, shortfall) is suppressed.
+  isStreaming?: boolean;
 }
 
 
@@ -59,11 +63,27 @@ function ingredientHave(name: string, inventoryNames: string[]): boolean {
   return ingredientMatches(name, inventoryNames);
 }
 
-export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterProps) {
-  const [servings, setServings] = useState(recipe.baseServings);
+export function RecipeLetter({
+  recipe,
+  onSave,
+  isSaved,
+  onSend,
+  isStreaming = false,
+}: RecipeLetterProps) {
+  // Streaming partials may be missing arrays entirely; default them so the
+  // same render path serves both the live and the final view (ADR-0009).
+  const title = recipe.title ?? "";
+  const ingredients = recipe.ingredients ?? [];
+  const prep = recipe.prep;
+  const steps = recipe.steps ?? [];
+  const baseServings = recipe.baseServings ?? 1;
+
+  const [servings, setServings] = useState(baseServings);
   const [inFlight, setInFlight] = useState<Set<string>>(new Set());
   const [cooking, setCooking] = useState(false);
-  const ratio = servings / recipe.baseServings;
+  // While streaming the stepper is hidden and baseServings may still be filling
+  // in, so show amounts as authored (ratio 1) rather than briefly mis-scaling.
+  const ratio = isStreaming ? 1 : servings / baseServings;
   const { userId } = useSessionContext();
   const { mutate } = useSWRConfig();
   const inventoryKey = userId ? `/api/inventory?userId=${userId}` : null;
@@ -119,15 +139,16 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
   ];
   const inventoryNames = inventoryItems.map((i) => i.name.trim().toLowerCase());
 
-  const haveCount = recipe.ingredients.filter((ing) =>
+  const haveCount = ingredients.filter((ing) =>
     ingredientHave(ing.name, inventoryNames),
   ).length;
 
-  const total = recipe.ingredients.length;
-  const missingIngredients = recipe.ingredients.filter(
+  const total = ingredients.length;
+  const missingIngredients = ingredients.filter(
     (ing) => !ingredientHave(ing.name, inventoryNames),
   );
   const showShortfall =
+    !isStreaming &&
     userId &&
     inventoryItems.length > 0 &&
     total > 0 &&
@@ -151,7 +172,7 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
   const askForSubstitutions = () => {
     if (!onSend) return;
     const names = missingIngredients.map((i) => i.name).join(", ");
-    onSend(`I'm missing ${names} for the ${recipe.title}. Can you suggest substitutions or alternatives?`);
+    onSend(`I'm missing ${names} for the ${title}. Can you suggest substitutions or alternatives?`);
   };
 
   const timeLabel = recipe.totalTimeMinutes
@@ -160,15 +181,15 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
   const EYEBROW_BASE =
     "font-sans text-eyebrow font-bold tracking-widest uppercase";
 
-  const showPantryPill = !!userId;
-  const canCook = recipe.steps.length > 0;
+  const showPantryPill = !!userId && !isStreaming;
+  const canCook = !isStreaming && steps.length > 0;
 
   if (cooking) {
     return (
       <CookingMode
-        title={recipe.title}
-        steps={recipe.steps}
-        prep={recipe.prep}
+        title={title}
+        steps={steps}
+        prep={prep}
         onExit={() => setCooking(false)}
       />
     );
@@ -193,7 +214,7 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
       )}
       {/* Title */}
       <div className="font-display text-3xl font-semibold text-foreground leading-[1.05] tracking-tight mb-2">
-        {recipe.title}
+        {title}
       </div>
 
       {/* Description */}
@@ -217,7 +238,7 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
           )}
           {showPantryPill && (
             <span className="font-sans text-eyebrow font-semibold text-jade px-1.5 py-0.5 bg-[oklch(0.94_0.04_168)] border border-[oklch(0.78_0.07_168)] rounded-full tracking-normal normal-case">
-              {haveCount}/{recipe.ingredients.length} in your pantry
+              {haveCount}/{ingredients.length} in your pantry
             </span>
           )}
         </div>
@@ -262,23 +283,25 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
       )}
 
       {/* Ingredients — neat 2-column grid card */}
-      {recipe.ingredients.length > 0 && (
+      {ingredients.length > 0 && (
         <div className="mb-5.5">
           <div className="flex items-center justify-between mb-2">
             <span className={cn(EYEBROW_BASE, "text-muted-foreground")}>What to gather</span>
-            <div className="flex items-center gap-1.5">
-              <span className="font-sans text-eyebrow font-bold tracking-[0.16em] uppercase text-ink-faint">
-                Servings
-              </span>
-              <ServingsStepper
-                servings={servings}
-                onDecrement={() => setServings((s) => Math.max(1, s - 1))}
-                onIncrement={() => setServings((s) => s + 1)}
-              />
-            </div>
+            {!isStreaming && (
+              <div className="flex items-center gap-1.5">
+                <span className="font-sans text-eyebrow font-bold tracking-[0.16em] uppercase text-ink-faint">
+                  Servings
+                </span>
+                <ServingsStepper
+                  servings={servings}
+                  onDecrement={() => setServings((s) => Math.max(1, s - 1))}
+                  onIncrement={() => setServings((s) => s + 1)}
+                />
+              </div>
+            )}
           </div>
           <div className="bg-card border border-border rounded-xl p-3.5 grid grid-cols-1 sm:grid-cols-2 gap-x-4.5 gap-y-1 shadow-[0_1px_0_var(--border-soft)]">
-            {recipe.ingredients.map((ing, i) => {
+            {ingredients.map((ing, i) => {
               const scaledAmt = ing.amount
                 ? scaleAmount(ing.amount, ratio)
                 : "";
@@ -286,7 +309,7 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
                 ? `${scaledAmt}${ing.unit ? " " + ing.unit : ""}`
                 : "";
               const have = ingredientHave(ing.name, inventoryNames);
-              const isLastTwo = i >= recipe.ingredients.length - 2;
+              const isLastTwo = i >= ingredients.length - 2;
               return (
                 <div
                   key={i}
@@ -306,7 +329,7 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
                       </span>
                     )}
                   </span>
-                  {userId && inventoryItems.length > 0 && !have && (
+                  {!isStreaming && userId && inventoryItems.length > 0 && !have && (
                     <NeedCartButton
                       ingredientName={ing.name}
                       onAdd={() => addToPantry(ing)}
@@ -321,11 +344,11 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
       )}
 
       {/* Before you start — mise en place */}
-      {recipe.prep && recipe.prep.length > 0 && (
+      {prep && prep.length > 0 && (
         <div className="mb-5">
           <span className={cn(EYEBROW_BASE, "text-muted-foreground block mb-2")}>Before you start</span>
           <ul className="list-none p-0 m-0 flex flex-col">
-            {recipe.prep.map((item, i) => (
+            {prep.map((item, i) => (
               <li key={i} className="flex gap-2.5 items-baseline py-2 border-b border-dashed border-border last:border-none">
                 <span className="font-mono text-[11px] font-bold text-ink-faint shrink-0">·</span>
                 <span className="font-display text-sm text-foreground leading-[1.45]">{item}</span>
@@ -336,9 +359,9 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
       )}
 
       {/* Steps — each step a conversational bubble with a numbered ink-stamp */}
-      {recipe.steps.length > 0 && (
+      {steps.length > 0 && (
         <div className="flex flex-col gap-4.5">
-          {recipe.steps.map((step, i) => (
+          {steps.map((step, i) => (
             <div key={i} className="flex gap-3 items-start">
               <div className="shrink-0 size-9 bg-primary text-white flex items-center justify-center font-display font-bold text-lg rounded-[50%_50%_50%_8px] -rotate-3 shadow-[inset_0_-2px_0_var(--primary-deep),0_1px_0_var(--primary-deep)]">
                 {i + 1}
@@ -362,7 +385,7 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
       )}
 
       {/* Action bar */}
-      {(onSave || canCook) && (
+      {!isStreaming && (onSave || canCook) && (
         <div className="flex gap-2 items-center pt-3 mt-4.5 border-t border-dashed border-border">
           {onSave && (
             isSaved ? (
@@ -377,7 +400,7 @@ export function RecipeLetter({ recipe, onSave, isSaved, onSend }: RecipeLetterPr
               </button>
             ) : (
               <button
-                onClick={() => onSave(recipe)}
+                onClick={() => onSave(recipe as RecipeBlock)}
                 className="px-3 py-1.5 font-sans text-xs font-semibold text-foreground bg-card border border-border rounded-lg cursor-pointer shadow-[0_1px_0_var(--border-soft)] hover:bg-muted/50 transition-colors inline-flex items-center gap-1"
               >
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

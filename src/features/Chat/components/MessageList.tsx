@@ -9,10 +9,16 @@ import { Response } from "@/components/ai-elements/response";
 import { Button } from "@/components/ui/button";
 import {
   extractRecipeBlocks,
-  getOpenRecipeFenceIdx,
+  getOpenFence,
+  parsePartialBlock,
   stripFences,
 } from "@/lib/recipes/parseBlocks";
-import type { RecipeBlock, RecipeWithId } from "@/lib/recipes/schemas";
+import type { OpenFenceKind } from "@/lib/recipes/parseBlocks";
+import type {
+  RecipeBlock,
+  RecipeWithId,
+  SuggestionsBlockData,
+} from "@/lib/recipes/schemas";
 import { fetcher } from "@/lib/utils";
 import type { UIMessage } from "ai";
 import { useEffect, useRef, useState } from "react";
@@ -20,7 +26,7 @@ import { toast } from "sonner";
 import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
 import { generateTempId } from "../constants";
-import { ChatLoader, SkeletonRecipeCard } from "./loaders";
+import { ChatLoader } from "./loaders";
 import { RecipeLetter } from "./recipe/RecipeLetter";
 import { SuggestionsBlock } from "./recipe/SuggestionsBlock";
 
@@ -36,24 +42,36 @@ interface MessageListProps {
 
 // ── Parsed block types ────────────────────────────────────────────────────────
 
-// Loader stays visible while submitted, and while streaming until the last
-// assistant message has emitted visible content (text, parsed block, or open
-// recipe fence). Closes the empty-bubble gap during tool-call-first turns.
-function shouldShowLoader(status: string, messages: UIMessage[]): boolean {
-  if (status === "submitted") return true;
-  if (status !== "streaming") return false;
-  const last = messages[messages.length - 1];
-  if (!last || last.role !== "assistant") return true;
-  const text = last.parts
+function messageText(message: UIMessage): string {
+  return message.parts
     .filter(
       (p): p is { type: "text"; text: string } =>
         p.type === "text" && typeof (p as { text?: string }).text === "string",
     )
     .map((p) => p.text)
     .join("");
-  if (stripFences(text).trim().length > 0) return false;
-  if (extractRecipeBlocks(text).length > 0) return false;
-  if (getOpenRecipeFenceIdx(text) !== -1) return false;
+}
+
+// Loader stays visible while submitted, and while streaming until the last
+// assistant message has emitted something we can render: prose before any open
+// block, a completed block, or — once a fence opens — the first parseable field
+// of the streaming block (`hasStreamingPartial`). This bridges the sliver
+// between fence-open and first field so we never flash a raw-JSON-free dead gap.
+function shouldShowLoader(
+  status: string,
+  messages: UIMessage[],
+  hasStreamingPartial: boolean,
+): boolean {
+  if (status === "submitted") return true;
+  if (status !== "streaming") return false;
+  const last = messages[messages.length - 1];
+  if (!last || last.role !== "assistant") return true;
+  const text = messageText(last);
+  const openFence = getOpenFence(text);
+  const prefix = openFence ? text.slice(0, openFence.index) : text;
+  if (stripFences(prefix).trim().length > 0) return false;
+  if (extractRecipeBlocks(prefix).length > 0) return false;
+  if (openFence && hasStreamingPartial) return false;
   return true;
 }
 
@@ -103,6 +121,48 @@ export const MessageList = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const shouldAutoScroll = useRef(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  // Progressive reveal (ADR-0009): the single trailing open fence of the last
+  // streaming assistant message is partial-parsed here, centrally, so the loader
+  // and the streaming block share one source of truth and never flicker apart.
+  const [streamingPartial, setStreamingPartial] = useState<{
+    messageId: string;
+    kind: OpenFenceKind;
+    data: Record<string, unknown>;
+  } | null>(null);
+
+  const lastMessage = messages[messages.length - 1];
+  const isStreamingLast =
+    status === "streaming" && lastMessage?.role === "assistant";
+  const lastText = isStreamingLast ? messageText(lastMessage) : "";
+
+  useEffect(() => {
+    if (!isStreamingLast) {
+      setStreamingPartial(null);
+      return;
+    }
+    const fence = getOpenFence(lastText);
+    if (!fence) {
+      setStreamingPartial(null);
+      return;
+    }
+    let cancelled = false;
+    parsePartialBlock(fence.json).then((data) => {
+      // null → unparseable frame; hold the last good partial (don't reset),
+      // tokens arrive near-continuously so the gap is invisible.
+      if (cancelled || data === null) return;
+      setStreamingPartial({ messageId: lastMessage.id, kind: fence.kind, data });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isStreamingLast, lastText, lastMessage?.id]);
+
+  // Only trust the partial for the message that is actually streaming now.
+  const activePartial =
+    streamingPartial && streamingPartial.messageId === lastMessage?.id
+      ? streamingPartial
+      : null;
 
   useEffect(() => {
     if (!onRecipeDetected) return;
@@ -254,19 +314,20 @@ export const MessageList = ({
               .join("");
 
             const isLastMsg = message === messages[messages.length - 1];
-            const isStreamingLast =
+            const isStreamingThis =
               status === "streaming" &&
               isLastMsg &&
               message.role === "assistant";
-            const openFenceIdx = isStreamingLast
-              ? getOpenRecipeFenceIdx(textContent)
-              : -1;
-            const hasOpenFence = openFenceIdx !== -1;
+            const openFence = isStreamingThis
+              ? getOpenFence(textContent)
+              : null;
+            const hasOpenFence = openFence !== null;
 
             // For the open-fence case, parse the prefix so any completed blocks
-            // (e.g. a closed ```suggestions```) still render as interactive components.
+            // (e.g. a closed ```suggestions``` or the Mode 3 "close" recipe) still
+            // render as interactive components.
             const prefixText = hasOpenFence
-              ? textContent.slice(0, openFenceIdx)
+              ? textContent.slice(0, openFence.index)
               : textContent;
             const blocks = extractRecipeBlocks(prefixText);
             const hasNewBlocks = blocks.some((b) => b.kind !== "legacy");
@@ -352,8 +413,32 @@ export const MessageList = ({
                     return null;
                   })}
 
-                  {/* Skeleton appended while recipe fence is still open */}
-                  {hasOpenFence && <SkeletonRecipeCard />}
+                  {/* Streaming block — the trailing open fence rendered through
+                      the same presentational component as the final view, fed by
+                      the centrally partial-parsed buffer (ADR-0009). The loader
+                      bridges until the first field parses. */}
+                  {hasOpenFence &&
+                    activePartial &&
+                    (activePartial.kind === "recipe" ? (
+                      <RecipeLetter
+                        key={`${message.id}-streaming`}
+                        recipe={activePartial.data as Partial<RecipeBlock>}
+                        isStreaming
+                      />
+                    ) : (
+                      <div key={`${message.id}-streaming`}>
+                        <hr className="border-t border-border my-3" />
+                        <SuggestionsBlock
+                          data={
+                            activePartial.data as Partial<SuggestionsBlockData>
+                          }
+                          allMessages={messages}
+                          messageIndex={messageIndex}
+                          onSend={onSend}
+                          isStreaming
+                        />
+                      </div>
+                    ))}
 
                   {/* "More ideas" button — shown on completed Cook-With responses */}
                   {!hasOpenFence &&
@@ -443,7 +528,8 @@ export const MessageList = ({
           {/* Ghost loader bubble — visible during the pre-send gap (isSending),
               while submitted, and while streaming until the assistant has
               emitted visible content. */}
-          {(isSending || shouldShowLoader(status, messages)) && (
+          {(isSending ||
+            shouldShowLoader(status, messages, activePartial !== null)) && (
             <div className="py-4">
               <ChatLoader submittedAt={submittedAt} />
             </div>
