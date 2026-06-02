@@ -70,6 +70,14 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **State 5 (Saved)**: calls `PATCH /api/recipe/[id]` to persist; sonner success toast; "Tweak again" button replaces resting-state button; "tweaked just now" badge in Ah Mah note.
 - Tweak state fully contained in `RecipeDisplay` (no page-level changes needed). `userId` sourced from `useSessionContext` internally.
 
+### Progressive reveal of streaming recipe/suggestions blocks — Shipped Jun 2026
+- **Problem**: structured replies are fenced JSON (` ```recipe ` / ` ```suggestions `). A preloader made the wait feel long; raw streaming leaked unformatted JSON.
+- **Partial-parse render path**: `parsePartialBlock` (AI SDK `parsePartialJson`) repairs the in-flight JSON each frame; `getOpenFence` locates the last unclosed fence (handles Mode 3's close+stretch pair). Centralized in one `useEffect` in `MessageList` so loader and block share state without flicker.
+- **Reveal grain**: completed array elements pop in whole (the trailing in-progress element is trimmed); scalar strings typewriter. On `failed-parse` the last good render is held.
+- **One render path**: `RecipeLetter` and `SuggestionsBlock` take an `isStreaming` prop — interactivity (Save, Cook, servings stepper, pantry pills, suggestion CTA) is gated off while streaming; the same component serves the live and final view. Streaming uses a `-streaming` React key, so the final block remounts with correct `baseServings`.
+- **Loader bridges the gap**: `shouldShowLoader` keeps `ChatLoader` visible until prose, a completed block, or the first parseable streaming field exists — no raw-JSON flash.
+- **Retired** `SkeletonRecipeCard`, `WritingItOut`, and `ShimmerWord` (dead after skeleton removal). See ADR-0009.
+
 ### Shopping list from shortfalls
 - [ ] Add one-click `Add missing to shopping list` from `RecipeDisplay`.
 - [ ] Add `ShoppingList` Prisma model (`id`, `userId`, `name`, `quantity?`, `unit?`, `addedAt`, `recipeId?`).

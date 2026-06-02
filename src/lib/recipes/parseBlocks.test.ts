@@ -1,6 +1,8 @@
 import {
   extractRecipeBlocks,
-  getOpenRecipeFenceIdx,
+  findOpenArrayKey,
+  getOpenFence,
+  parsePartialBlock,
   stripFences,
 } from "./parseBlocks";
 
@@ -142,21 +144,104 @@ Some prose.
   });
 });
 
-describe("getOpenRecipeFenceIdx", () => {
-  it("returns -1 when no recipe fence is present", () => {
-    expect(getOpenRecipeFenceIdx("just some text")).toBe(-1);
+describe("getOpenFence", () => {
+  it("returns null when no fence is present", () => {
+    expect(getOpenFence("just some text")).toBeNull();
   });
 
-  it("returns -1 when recipe fence is closed", () => {
-    const text = "```recipe\n{}\n```";
-    expect(getOpenRecipeFenceIdx(text)).toBe(-1);
+  it("returns null when the recipe fence is closed", () => {
+    expect(getOpenFence("```recipe\n{}\n```")).toBeNull();
   });
 
-  it("returns the index of an unclosed recipe fence", () => {
-    const text = "Some prose\n```recipe\n{ partial json";
-    const idx = getOpenRecipeFenceIdx(text);
-    expect(idx).toBeGreaterThanOrEqual(0);
-    expect(text.slice(idx)).toContain("```recipe");
+  it("returns null when the suggestions fence is closed", () => {
+    expect(getOpenFence('```suggestions\n{"intro":"hi"}\n```')).toBeNull();
+  });
+
+  it("detects an unclosed recipe fence with its prose offset and json body", () => {
+    const text = 'Some prose\n```recipe\n{"title":"Gin';
+    const fence = getOpenFence(text);
+    expect(fence?.kind).toBe("recipe");
+    expect(text.slice(fence!.index)).toContain("```recipe");
+    expect(fence?.json).toBe('{"title":"Gin');
+  });
+
+  it("detects an unclosed suggestions fence (previously leaked raw JSON)", () => {
+    const text = 'Here are ideas:\n```suggestions\n{"intro":"A few';
+    const fence = getOpenFence(text);
+    expect(fence?.kind).toBe("suggestions");
+    expect(fence?.json).toBe('{"intro":"A few');
+  });
+
+  it("returns the trailing open fence after an earlier closed one (Mode 3)", () => {
+    const text =
+      '```recipe\n{"title":"Close"}\n```\nAnd a stretch:\n```recipe\n{"title":"Stre';
+    const fence = getOpenFence(text);
+    expect(fence?.kind).toBe("recipe");
+    expect(fence?.json).toBe('{"title":"Stre');
+  });
+});
+
+describe("findOpenArrayKey", () => {
+  it("returns null when no top-level array is open", () => {
+    expect(findOpenArrayKey('{"title":"X"')).toBeNull();
+  });
+
+  it("returns null when a top-level array has closed", () => {
+    expect(findOpenArrayKey('{"ingredients":[{"name":"a"}],')).toBeNull();
+  });
+
+  it("names the open object-array being streamed", () => {
+    expect(
+      findOpenArrayKey('{"title":"X","ingredients":[{"name":"a"},{"name":"b'),
+    ).toBe("ingredients");
+  });
+
+  it("names the open string-array being streamed", () => {
+    expect(findOpenArrayKey('{"prep":["chop garlic","min')).toBe("prep");
+  });
+
+  it("reports the top-level array even when nested deeper inside an element", () => {
+    expect(
+      findOpenArrayKey('{"options":[{"id":"x","tags":["quick'),
+    ).toBe("options");
+  });
+
+  it("is not fooled by brackets inside string values", () => {
+    expect(findOpenArrayKey('{"title":"Soup [the good one]"')).toBeNull();
+  });
+});
+
+describe("parsePartialBlock", () => {
+  it("returns null for an empty or unparseable buffer", async () => {
+    expect(await parsePartialBlock("")).toBeNull();
+    expect(await parsePartialBlock("{")).toBeNull();
+  });
+
+  it("reveals a growing scalar string as it streams (typewriter)", async () => {
+    const partial = await parsePartialBlock('{"title":"Ginger Chick');
+    expect(partial?.title).toBe("Ginger Chick");
+  });
+
+  it("drops the in-progress trailing element of the streaming array", async () => {
+    const partial = await parsePartialBlock(
+      '{"ingredients":[{"name":"chicken"},{"name":"gin',
+    );
+    expect(partial?.ingredients).toEqual([{ name: "chicken" }]);
+  });
+
+  it("keeps every element once the array has closed", async () => {
+    const partial = await parsePartialBlock(
+      '{"ingredients":[{"name":"a"},{"name":"b"}],"steps":[{"title":"S',
+    );
+    expect(partial?.ingredients).toEqual([{ name: "a" }, { name: "b" }]);
+    expect(partial?.steps).toEqual([]); // in-progress step held back
+  });
+
+  it("returns the whole object untrimmed once the JSON is complete", async () => {
+    const partial = await parsePartialBlock(
+      '{"title":"X","baseServings":2,"ingredients":[{"name":"a"}],"steps":[]}',
+    );
+    expect(partial?.ingredients).toEqual([{ name: "a" }]);
   });
 });
 
