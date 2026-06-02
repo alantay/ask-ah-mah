@@ -168,17 +168,23 @@ export function findOpenArrayKey(json: string): string | null {
 export async function parsePartialBlock(
   json: string,
 ): Promise<Record<string, unknown> | null> {
-  const { value, state } = await parsePartialJson(json);
-  if (state === "failed-parse" || value === null || typeof value !== "object")
+  try {
+    const { value, state } = await parsePartialJson(json);
+    if (state === "failed-parse" || value === null || typeof value !== "object")
+      return null;
+
+    const obj = { ...(value as Record<string, unknown>) };
+    if (Object.keys(obj).length === 0) return null;
+    if (state === "successful-parse") return obj; // whole object arrived; render all
+
+    const openKey = findOpenArrayKey(json);
+    if (openKey && Array.isArray(obj[openKey]) && obj[openKey].length > 0)
+      obj[openKey] = obj[openKey].slice(0, -1);
+
+    return obj;
+  } catch {
+    // Treat any unexpected parser error like an unparseable frame: callers
+    // hold the last good value rather than surfacing an unhandled rejection.
     return null;
-
-  const obj = { ...(value as Record<string, unknown>) };
-  if (Object.keys(obj).length === 0) return null;
-  if (state === "successful-parse") return obj; // whole object arrived; render all
-
-  const openKey = findOpenArrayKey(json);
-  if (openKey && Array.isArray(obj[openKey]) && obj[openKey].length > 0)
-    obj[openKey] = obj[openKey].slice(0, -1);
-
-  return obj;
+  }
 }

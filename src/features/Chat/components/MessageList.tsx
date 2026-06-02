@@ -147,12 +147,21 @@ export const MessageList = ({
       return;
     }
     let cancelled = false;
-    parsePartialBlock(fence.json).then((data) => {
-      // null → unparseable frame; hold the last good partial (don't reset),
-      // tokens arrive near-continuously so the gap is invisible.
-      if (cancelled || data === null) return;
-      setStreamingPartial({ messageId: lastMessage.id, kind: fence.kind, data });
-    });
+    parsePartialBlock(fence.json)
+      .then((data) => {
+        // null → unparseable frame; hold the last good partial (don't reset),
+        // tokens arrive near-continuously so the gap is invisible.
+        if (cancelled || data === null) return;
+        setStreamingPartial({
+          messageId: lastMessage.id,
+          kind: fence.kind,
+          data,
+        });
+      })
+      .catch(() => {
+        // Defensive: parsePartialBlock already swallows parse errors, but guard
+        // the chain so a future change can't leak an unhandled rejection.
+      });
     return () => {
       cancelled = true;
     };
