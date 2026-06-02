@@ -1,5 +1,6 @@
 "use client";
 
+import { extractJsonObject, looksLikeJsonAttempt } from "@/lib/recipes/extractJsonObject";
 import type { ChangeEntry, RecipeWithId } from "@/lib/recipes/schemas";
 import {
   recipeBlockToRecipeWithId,
@@ -30,6 +31,12 @@ interface TweakBenchProps {
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const QUICK_TWEAKS = ["Less spicy", "Make it quicker", "More servings", "Swap for pantry staples"];
+
+// Friendly fallbacks — shown when the model's reply can't be applied. Never
+// surface raw/partial JSON to the user.
+const MUDDLED_MESSAGE = "Aiyah, that tweak came back muddled. Try again?";
+const GENERIC_ERROR_MESSAGE = "Aiyah, something went wrong. Try again?";
+const EMPTY_REFUSAL_FALLBACK = "Ah Mah couldn't do that one. Try a different instruction?";
 
 // ─── TweakBench ──────────────────────────────────────────────────────────────
 
@@ -134,7 +141,29 @@ export function TweakBench({
 
         if (abortController.signal.aborted) return;
 
-        const parsedJson = JSON.parse(accumulated);
+        // The model is asked for pure JSON, but may wrap it in fences, prefix
+        // prose, refuse in plain text, or get truncated by the token cap.
+        const extracted = extractJsonObject(accumulated);
+
+        if (!extracted) {
+          // No recoverable object. If it still *looked* like JSON, it's garbled
+          // or truncated — hide it behind a friendly message rather than dumping
+          // raw text. Otherwise treat it as the model's plain-text refusal.
+          const text = looksLikeJsonAttempt(accumulated)
+            ? MUDDLED_MESSAGE
+            : accumulated.trim() || EMPTY_REFUSAL_FALLBACK;
+          setTurns((prev) => [...prev, { kind: "refusal", text }]);
+          return;
+        }
+
+        let parsedJson: unknown;
+        try {
+          parsedJson = JSON.parse(extracted);
+        } catch {
+          setTurns((prev) => [...prev, { kind: "refusal", text: MUDDLED_MESSAGE }]);
+          return;
+        }
+
         const parsedResponse = TweakResponseSchema.safeParse(parsedJson);
 
         if (parsedResponse.success) {
@@ -148,23 +177,12 @@ export function TweakBench({
           ]);
         } else {
           console.warn("[TweakBench] invalid tweak payload:", parsedResponse.error.flatten());
-          setTurns((prev) => [
-            ...prev,
-            { kind: "refusal", text: "Aiyah, that tweak came back muddled. Try again?" },
-          ]);
+          setTurns((prev) => [...prev, { kind: "refusal", text: MUDDLED_MESSAGE }]);
         }
       } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") return;
-        if (err instanceof SyntaxError) {
-          const refusalText = accumulated.trim() || "Ah Mah couldn't do that one. Try a different instruction?";
-          setTurns((prev) => [...prev, { kind: "refusal", text: refusalText }]);
-          return;
-        }
         console.error("[TweakBench] stream error:", err);
-        setTurns((prev) => [
-          ...prev,
-          { kind: "refusal", text: "Aiyah, something went wrong. Try again?" },
-        ]);
+        setTurns((prev) => [...prev, { kind: "refusal", text: GENERIC_ERROR_MESSAGE }]);
       } finally {
         if (mountedRef.current && abortRef.current === abortController) {
           abortRef.current = null;

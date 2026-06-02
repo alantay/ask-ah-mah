@@ -45,31 +45,41 @@ function streamOf(text: string): ReadableStream<Uint8Array> {
   });
 }
 
-beforeEach(() => {
+const validBody = JSON.stringify(tweakResponse);
+
+function mockTweakBody(body: string) {
   global.fetch = jest.fn().mockResolvedValue({
     ok: true,
-    body: streamOf(JSON.stringify(tweakResponse)),
+    body: streamOf(body),
   }) as unknown as typeof fetch;
+}
+
+beforeEach(() => {
+  mockTweakBody(validBody);
 });
 
 afterEach(() => {
   jest.restoreAllMocks();
 });
 
-function renderBench() {
-  return render(
+function renderBench(onWorkingDraftChange: jest.Mock = jest.fn()) {
+  render(
     <StrictMode>
       <TweakBench
         recipe={recipe}
         userId="user-123"
-        onWorkingDraftChange={jest.fn()}
+        onWorkingDraftChange={onWorkingDraftChange}
         onClose={jest.fn()}
         onSave={jest.fn()}
         isSaving={false}
       />
     </StrictMode>,
   );
+  return onWorkingDraftChange;
 }
+
+const appliedWith = (label: string) =>
+  expect.arrayContaining([expect.objectContaining({ label })]);
 
 describe("TweakBench streaming lifecycle (StrictMode)", () => {
   it("clears the streaming state and reveals Save once a tweak completes", async () => {
@@ -87,5 +97,57 @@ describe("TweakBench streaming lifecycle (StrictMode)", () => {
       expect(screen.queryByText("Ah Mah is rewriting…")).not.toBeInTheDocument(),
     );
     expect(screen.getByText("Save to my cookbook")).toBeInTheDocument();
+  });
+});
+
+describe("TweakBench tolerant response parsing", () => {
+  it("applies a bare-JSON response (no regression)", async () => {
+    const onChange = renderBench();
+    fireEvent.click(screen.getByText("Less spicy"));
+    await waitFor(() => expect(screen.getByText("Toned down the chili")).toBeInTheDocument());
+    expect(onChange).toHaveBeenCalledWith(expect.anything(), appliedWith("Toned down the chili"));
+  });
+
+  it("applies a ```json fenced response", async () => {
+    mockTweakBody("```json\n" + validBody + "\n```");
+    const onChange = renderBench();
+    fireEvent.click(screen.getByText("Less spicy"));
+    await waitFor(() => expect(screen.getByText("Toned down the chili")).toBeInTheDocument());
+    expect(onChange).toHaveBeenCalledWith(expect.anything(), appliedWith("Toned down the chili"));
+    // Raw fence text must never reach the chat
+    expect(screen.queryByText(/```json/)).not.toBeInTheDocument();
+  });
+
+  it("applies a response prefixed with prose", async () => {
+    mockTweakBody("Sure, here's the updated recipe: " + validBody);
+    const onChange = renderBench();
+    fireEvent.click(screen.getByText("Less spicy"));
+    await waitFor(() => expect(screen.getByText("Toned down the chili")).toBeInTheDocument());
+    expect(onChange).toHaveBeenCalledWith(expect.anything(), appliedWith("Toned down the chili"));
+  });
+
+  it("shows a friendly message (not raw JSON) for a truncated response", async () => {
+    mockTweakBody(validBody.slice(0, 80)); // cut off mid-object, as a token cap would
+    const onChange = renderBench();
+    fireEvent.click(screen.getByText("Less spicy"));
+    await waitFor(() =>
+      expect(screen.getByText("Aiyah, that tweak came back muddled. Try again?")).toBeInTheDocument(),
+    );
+    expect(screen.queryByText(/"recipe"/)).not.toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalledWith(expect.anything(), appliedWith("Toned down the chili"));
+    // Streaming state still clears (the #254 fix stays intact)
+    expect(screen.queryByText("Ah Mah is rewriting…")).not.toBeInTheDocument();
+  });
+
+  it("surfaces a plain-text refusal from the model verbatim", async () => {
+    mockTweakBody("Aiyah, that would be a totally different dish, not a tweak.");
+    const onChange = renderBench();
+    fireEvent.click(screen.getByText("Less spicy"));
+    await waitFor(() =>
+      expect(
+        screen.getByText("Aiyah, that would be a totally different dish, not a tweak."),
+      ).toBeInTheDocument(),
+    );
+    expect(onChange).not.toHaveBeenCalledWith(expect.anything(), appliedWith("Toned down the chili"));
   });
 });
