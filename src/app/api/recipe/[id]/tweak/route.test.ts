@@ -1,0 +1,100 @@
+import { openai } from "@ai-sdk/openai";
+import { generateText } from "ai";
+import { NextRequest } from "next/server";
+import { POST } from "./route";
+
+jest.mock("@ai-sdk/openai", () => ({ openai: jest.fn() }));
+
+jest.mock("ai", () => ({ generateText: jest.fn() }));
+
+jest.mock("next/server", () => {
+  const NextResponse = jest.fn((body, init) => ({
+    kind: "raw",
+    text: async () => body,
+    status: init?.status ?? 200,
+    headers: new Map(Object.entries(init?.headers ?? {})),
+  }));
+  // @ts-expect-error attach static like the real NextResponse
+  NextResponse.json = jest.fn((data: unknown, init?: { status?: number }) => ({
+    kind: "json",
+    json: async () => data,
+    status: init?.status ?? 200,
+  }));
+  return { NextRequest: jest.fn(), NextResponse };
+});
+
+const mockedGenerateText = jest.mocked(generateText);
+const mockedOpenai = jest.mocked(openai);
+
+const validRecipeBlock = {
+  id: "recipe-1",
+  title: "Mapo Tofu",
+  baseServings: 2,
+  ingredients: [{ name: "tofu" }],
+  steps: [{ title: "Cook", body: "Cook it" }],
+};
+
+const tweakJson = JSON.stringify({
+  recipe: validRecipeBlock,
+  changes: [{ kind: "step_replaced", label: "Toned it down" }],
+});
+
+const makeRequest = (body: unknown) => ({ json: async () => body }) as NextRequest;
+const params = Promise.resolve({ id: "recipe-1" });
+
+const baseBody = {
+  userId: "user-123",
+  instruction: "less spicy",
+  originalRecipe: validRecipeBlock,
+};
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  jest.spyOn(console, "error").mockImplementation(() => {});
+  mockedOpenai.mockReturnValue("mock-model" as unknown as ReturnType<typeof openai>);
+});
+
+afterEach(() => jest.restoreAllMocks());
+
+describe("POST /api/recipe/[id]/tweak", () => {
+  it("requests a generous output token ceiling (not the old 2000 cap)", async () => {
+    mockedGenerateText.mockResolvedValue({
+      text: tweakJson,
+      finishReason: "stop",
+    } as unknown as Awaited<ReturnType<typeof generateText>>);
+
+    await POST(makeRequest(baseBody), { params });
+
+    expect(mockedGenerateText).toHaveBeenCalledWith(
+      expect.objectContaining({ maxOutputTokens: 8000 }),
+    );
+  });
+
+  it("returns the generated text with a 200 when generation completes normally", async () => {
+    mockedGenerateText.mockResolvedValue({
+      text: tweakJson,
+      finishReason: "stop",
+    } as unknown as Awaited<ReturnType<typeof generateText>>);
+
+    const res = await POST(makeRequest(baseBody), { params });
+
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe(tweakJson);
+  });
+
+  it("fails cleanly with a non-2xx when generation is cut off by length", async () => {
+    const truncated = tweakJson.slice(0, 40); // half-written, as a token cap would leave it
+    mockedGenerateText.mockResolvedValue({
+      text: truncated,
+      finishReason: "length",
+    } as unknown as Awaited<ReturnType<typeof generateText>>);
+
+    const res = await POST(makeRequest(baseBody), { params });
+
+    expect(res.status).toBe(422);
+    // The partial/truncated text must never be returned as a successful body
+    const payload = await res.json();
+    expect(JSON.stringify(payload)).not.toContain(truncated);
+    expect(payload).toHaveProperty("error");
+  });
+});
