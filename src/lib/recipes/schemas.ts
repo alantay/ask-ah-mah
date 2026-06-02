@@ -120,7 +120,11 @@ export type ChangeRef = z.infer<typeof ChangeRefSchema>;
 
 export const ChangeEntrySchema = z.object({
   kind: ChangeKindSchema,
-  ref: ChangeRefSchema.optional(),
+  // `ref` is a presentational locator (drives row highlighting for ingredient/step
+  // changes only — prep and recipe-level changes have no highlight). The model
+  // sometimes emits refs we don't model (e.g. `type: "prep"`); treat a malformed
+  // ref as "no highlight" rather than discarding the entire valid tweak.
+  ref: ChangeRefSchema.optional().catch(undefined),
   label: z.string(),
 });
 export type ChangeEntry = z.infer<typeof ChangeEntrySchema>;

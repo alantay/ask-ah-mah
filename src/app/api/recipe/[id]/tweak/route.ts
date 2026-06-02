@@ -50,7 +50,7 @@ Return ONLY a valid JSON object matching this schema — no markdown fences, no 
 
 The \`changes\` array must list **every structural delta against the original recipe** (not against the working draft). Each entry needs:
 - \`kind\`: the type of change
-- \`ref\`: omit for recipe-level changes (title, description, tags, servings, time). For row changes, use a structural locator with:
+- \`ref\`: omit for recipe-level changes (title, description, tags, servings, time) and for \`prep_updated\`. Use it only for ingredient/step row changes, as a structural locator with:
   - \`type\`: "ingredient" or "step"
   - \`index\`: a 0-based row index
   - \`basis\`: "workingDraft" for rows visible in the returned recipe (\`ingredient_added\`, \`ingredient_changed\`, \`step_added\`, \`step_replaced\`); "original" for removed rows (\`ingredient_removed\`, \`step_removed\`)
