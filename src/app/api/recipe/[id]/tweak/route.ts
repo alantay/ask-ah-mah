@@ -1,7 +1,7 @@
 import { missingUserId } from "@/lib/http";
 import { RecipeBlockSchema, TweakResponseSchema } from "@/lib/recipes/schemas";
 import { openai } from "@ai-sdk/openai";
-import { streamText } from "ai";
+import { generateText } from "ai";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -10,6 +10,12 @@ const RecipeBlockWithIdSchema = RecipeBlockSchema.extend({ id: z.string() });
 type RecipeBlockWithId = z.infer<typeof RecipeBlockWithIdSchema>;
 
 const MAX_INSTRUCTION_LENGTH = 500;
+
+// The model echoes the whole recipe back as JSON, so output size scales with
+// recipe size. Keep the ceiling well above any realistic recipe so generation
+// isn't clipped mid-object (the old 2000 cap truncated large recipes). This is
+// a ceiling, not a target — small recipes cost the same as before.
+const MAX_OUTPUT_TOKENS = 8000;
 
 const CHANGE_KINDS = TweakResponseSchema.shape.changes.element.shape.kind.options.join(", ");
 const RECIPE_FIELDS = Object.keys(RecipeBlockSchema.shape).join(", ");
@@ -116,14 +122,31 @@ export async function POST(
       workingDraft = parsedDraft.data;
     }
 
-    const result = streamText({
+    // Buffer the full generation rather than streaming: the client parses the
+    // response as one JSON object (no incremental render), so streaming buys
+    // nothing here — and buffering lets us inspect finishReason before we
+    // respond, which a streamed response can't (status is already sent).
+    const { text, finishReason } = await generateText({
       model: openai("gpt-4.1-mini"),
       system: buildSystemPrompt(parsedOriginal.data, workingDraft),
       messages: [{ role: "user", content: instruction }],
-      maxOutputTokens: 2000,
+      maxOutputTokens: MAX_OUTPUT_TOKENS,
     });
 
-    return result.toTextStreamResponse();
+    if (finishReason === "length") {
+      // Cut off by the token cap — the partial text is unparseable JSON.
+      // Fail cleanly so the client shows a friendly message instead of
+      // receiving a successful-looking truncated body.
+      return NextResponse.json(
+        { error: "Tweak response was too long to complete." },
+        { status: 422 }
+      );
+    }
+
+    return new NextResponse(text, {
+      status: 200,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
   } catch (error) {
     console.error("[/api/recipe/[id]/tweak]", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
