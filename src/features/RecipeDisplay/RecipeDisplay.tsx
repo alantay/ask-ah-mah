@@ -262,9 +262,10 @@ function RecipeBody({
                 return (
                   <li
                     key={i}
+                    data-tweak-row={`ing-${i}`}
                     className={`flex items-baseline gap-3 py-2.5 border-b border-dashed border-border transition-colors ${
                       isChanged
-                        ? "bg-amber-50 dark:bg-amber-950/20 -mx-1 px-1 rounded"
+                        ? "bg-amber-200/70 dark:bg-amber-900/30 ring-1 ring-inset ring-amber-400/60 dark:ring-amber-700/50 -mx-1 px-1 rounded"
                         : ""
                     }`}
                   >
@@ -354,9 +355,10 @@ function RecipeBody({
                 return (
                   <li
                     key={i}
+                    data-tweak-row={`step-${i}`}
                     className={`flex gap-4 transition-colors ${
                       isChanged
-                        ? "bg-amber-50 dark:bg-amber-950/20 -mx-1 px-1 rounded-lg py-1"
+                        ? "bg-amber-200/70 dark:bg-amber-900/30 ring-1 ring-inset ring-amber-400/60 dark:ring-amber-700/50 -mx-1 px-1 rounded-lg py-1"
                         : ""
                     }`}
                   >
@@ -445,6 +447,7 @@ export default function RecipeDisplay({
   const [changes, setChanges] = useState<ChangeEntry[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const originalRecipeRef = useRef<RecipeWithId>(recipe);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const steps = (workingDraft.steps ?? []) as RecipeStep[];
   const canCook = steps.length > 0;
@@ -457,6 +460,41 @@ export default function RecipeDisplay({
     );
 
   const showHighlights = changes.length > 0;
+
+  // Choreographed reveal (ADR-0010): the patch arrives whole, so after the
+  // bench's change label appears we deliberately lead the eye to the recipe —
+  // scroll the first changed row into view and pulse it. The cue points at the
+  // exact row rather than re-flowing the document.
+  useEffect(() => {
+    if (!changes.length) return;
+    const firstIng = Math.min(...changedIngredients, Infinity);
+    const firstStep = Math.min(...changedSteps, Infinity);
+    const selector =
+      Number.isFinite(firstIng)
+        ? `[data-tweak-row="ing-${firstIng}"]`
+        : Number.isFinite(firstStep)
+          ? `[data-tweak-row="step-${firstStep}"]`
+          : null;
+    if (!selector) return;
+
+    const prefersReducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const timer = setTimeout(() => {
+      const el = scrollRef.current?.querySelector<HTMLElement>(selector);
+      if (!el) return;
+      el.scrollIntoView({
+        behavior: prefersReducedMotion ? "auto" : "smooth",
+        block: "center",
+      });
+      el.classList.remove("tweak-pulse");
+      void el.offsetWidth; // restart the animation if the same row changes again
+      el.classList.add("tweak-pulse");
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, [changes, changedIngredients, changedSteps]);
 
   // Reset when navigating to a different recipe
   useEffect(() => {
@@ -537,12 +575,21 @@ export default function RecipeDisplay({
           0%, 80%, 100% { opacity: 0.2; transform: scale(0.85); }
           40% { opacity: 1; transform: scale(1); }
         }
+        @keyframes tweakPulse {
+          0%   { box-shadow: 0 0 0 0 oklch(0.78 0.16 75 / 0); }
+          25%  { box-shadow: 0 0 0 4px oklch(0.78 0.16 75 / 0.55); }
+          100% { box-shadow: 0 0 0 0 oklch(0.78 0.16 75 / 0); }
+        }
+        .tweak-pulse { animation: tweakPulse 1.1s ease-out; }
+        @media (prefers-reduced-motion: reduce) {
+          .tweak-pulse { animation: none; }
+        }
       `}</style>
 
       <div className="flex h-full overflow-hidden">
         {/* Recipe panel */}
         <div className="flex flex-col flex-1 min-w-0 relative h-full">
-          <div className="flex-1 overflow-y-auto pb-24">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto pb-24">
             <div className="mx-auto max-w-4xl px-4 sm:px-6 pt-4 sm:pt-5 pb-8">
               {/* Nav bar */}
               <div className="flex items-center justify-between mb-3 sm:mb-4">

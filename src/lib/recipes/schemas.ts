@@ -129,11 +129,41 @@ export const ChangeEntrySchema = z.object({
 });
 export type ChangeEntry = z.infer<typeof ChangeEntrySchema>;
 
-export const TweakResponseSchema = z.object({
-  recipe: RecipeBlockSchema,
+// A Recipe Tweak returns a **patch** (ADR-0010), not the whole recipe: only the
+// fields that changed, plus the change list. Every recipe field is optional;
+// `changes` is always present. Presence is the signal — see `applyTweakPatch`.
+export const TweakPatchSchema = z.strictObject({
+  title: z.string().optional(),
+  description: z.string().optional(),
+  totalTimeMinutes: z.number().optional(),
+  baseServings: z.number().optional(),
+  ingredients: z.array(RecipeIngredientModelSchema).optional(),
+  prep: z.array(z.string()).optional(),
+  steps: z.array(RecipeStepSchema).optional(),
+  tags: z.array(z.string()).optional(),
+  closeness: z.enum(["close", "stretch"]).optional(),
   changes: z.array(ChangeEntrySchema),
 });
-export type TweakResponse = z.infer<typeof TweakResponseSchema>;
+export type TweakPatch = z.infer<typeof TweakPatchSchema>;
+
+// Merge a Tweak Patch onto the working draft (pure). Presence-based:
+//   key present  → replace that field (an empty array clears it)
+//   key absent    → keep the working draft's value
+// Arrays are replaced wholesale — the model returns the entire array if any
+// element changed — so the client never applies indexed row ops (ADR-0010).
+export function applyTweakPatch(workingDraft: RecipeBlock, patch: TweakPatch): RecipeBlock {
+  const next: RecipeBlock = { ...workingDraft };
+  if (patch.title !== undefined) next.title = patch.title;
+  if (patch.description !== undefined) next.description = patch.description;
+  if (patch.totalTimeMinutes !== undefined) next.totalTimeMinutes = patch.totalTimeMinutes;
+  if (patch.baseServings !== undefined) next.baseServings = patch.baseServings;
+  if (patch.ingredients !== undefined) next.ingredients = patch.ingredients;
+  if (patch.prep !== undefined) next.prep = patch.prep;
+  if (patch.steps !== undefined) next.steps = patch.steps;
+  if (patch.tags !== undefined) next.tags = patch.tags;
+  if (patch.closeness !== undefined) next.closeness = patch.closeness;
+  return next;
+}
 
 const parseIngredientAmount = (amount: string | undefined) => {
   if (amount === undefined) return undefined;

@@ -34,8 +34,10 @@ const validRecipeBlock = {
   steps: [{ title: "Cook", body: "Cook it" }],
 };
 
+// The route passes the model's text through untouched; the client validates the
+// patch shape. A representative patch: one changed array + the change list.
 const tweakJson = JSON.stringify({
-  recipe: validRecipeBlock,
+  steps: [{ title: "Cook", body: "Cook it gently, less chili" }],
   changes: [{ kind: "step_replaced", label: "Toned it down" }],
 });
 

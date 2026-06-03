@@ -1,5 +1,5 @@
 import { missingUserId } from "@/lib/http";
-import { RecipeBlockSchema, TweakResponseSchema } from "@/lib/recipes/schemas";
+import { ChangeKindSchema, RecipeBlockSchema } from "@/lib/recipes/schemas";
 import { openai } from "@ai-sdk/openai";
 import { generateText } from "ai";
 import { NextRequest, NextResponse } from "next/server";
@@ -11,17 +11,15 @@ type RecipeBlockWithId = z.infer<typeof RecipeBlockWithIdSchema>;
 
 const MAX_INSTRUCTION_LENGTH = 500;
 
-// The model echoes the whole recipe back as JSON, so output size scales with
-// recipe size. Keep the ceiling well above any realistic recipe so generation
-// isn't clipped mid-object (the old 2000 cap truncated large recipes). This is
-// a ceiling, not a target — small recipes cost the same as before.
+// The patch is small — only changed fields, not the whole recipe (ADR-0010) —
+// so generation rarely approaches this ceiling. Kept generous so a large
+// multi-field edit isn't clipped mid-object; it's a ceiling, not a target.
 const MAX_OUTPUT_TOKENS = 8000;
 
-const CHANGE_KINDS = TweakResponseSchema.shape.changes.element.shape.kind.options.join(", ");
-const RECIPE_FIELDS = Object.keys(RecipeBlockSchema.shape).join(", ");
+const CHANGE_KINDS = ChangeKindSchema.options.join(", ");
 
 function buildSystemPrompt(originalRecipe: RecipeBlockWithId, workingDraft: RecipeBlockWithId): string {
-  return `You are a recipe editor. Apply the user's instruction to the working draft, then return a JSON object describing the result.
+  return `You are a recipe editor. Apply the user's instruction to the working draft, then return a JSON **patch** describing only what changed.
 
 ## Original recipe (the saved cookbook version — change list anchors against this)
 \`\`\`json
@@ -35,15 +33,19 @@ ${JSON.stringify(workingDraft, null, 2)}
 
 ## Instructions
 - Apply the user's instruction as a precise, minimal change to the working draft.
-- Keep all unaffected fields exactly as they are in the working draft.
+- Return ONLY the fields that changed — do NOT echo unchanged fields. Output size should reflect how much changed, not the size of the recipe.
+- Arrays (\`ingredients\`, \`steps\`, \`prep\`, \`tags\`) are all-or-nothing: if ANY element of an array changed, return the ENTIRE updated array (every element, in order). If an array is unchanged, OMIT the key.
+- To clear an array entirely (e.g. drop all tags), return it as \`[]\`. Omitting a key means "leave unchanged"; \`[]\` means "make empty" — they are different.
+- Scalar fields (\`title\`, \`description\`, \`baseServings\`, \`totalTimeMinutes\`): include only if changed.
 - Update the \`description\` ("Ah Mah's note") if the dish character meaningfully changes (e.g. protein swap, cuisine shift). Include a \`description_updated\` change entry when you do.
 - If the request would produce a wholly different dish unrelated to the current recipe, politely refuse in plain text (not JSON) and explain why.
 
 ## Response format
-Return ONLY a valid JSON object matching this schema — no markdown fences, no surrounding text:
+Return ONLY a valid JSON object — no markdown fences, no surrounding text. Include only the recipe fields that changed; \`changes\` is always required:
 \`\`\`
 {
-  "recipe": { ${RECIPE_FIELDS} },
+  // any subset of: title, description, baseServings, totalTimeMinutes, ingredients, steps, prep, tags
+  "ingredients": [ /* the WHOLE array, only if it changed */ ],
   "changes": [
     {
       "kind": "<one of: ${CHANGE_KINDS}>",

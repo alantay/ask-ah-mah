@@ -18,14 +18,14 @@ const recipe: RecipeWithId = {
   tags: ["spicy"],
 };
 
+// A Tweak Patch is flat: changed recipe fields sit at the top level alongside
+// `changes` (ADR-0010). The schema rejects a `{ recipe: {...} }` wrapper.
 const tweakResponse = {
-  recipe: {
-    title: "Mapo Tofu",
-    baseServings: 2,
-    ingredients: [{ name: "tofu", amount: "1", unit: "block" }],
-    steps: [{ title: "Cook", body: "Cook it gently" }],
-    tags: ["mild"],
-  },
+  title: "Mapo Tofu",
+  baseServings: 2,
+  ingredients: [{ name: "tofu", amount: "1", unit: "block" }],
+  steps: [{ title: "Cook", body: "Cook it gently" }],
+  tags: ["mild"],
   changes: [
     {
       kind: "step_replaced",
