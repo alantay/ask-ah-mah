@@ -439,6 +439,9 @@ function TweakProgress() {
         <div
           role="progressbar"
           aria-label="Ah Mah is drafting the tweak"
+          aria-valuenow={Math.round(pct)}
+          aria-valuemin={0}
+          aria-valuemax={100}
           className="mt-2 h-[3px] w-full overflow-hidden rounded-full bg-border/60"
         >
           <div
