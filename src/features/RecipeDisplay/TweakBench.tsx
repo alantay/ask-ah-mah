@@ -33,6 +33,25 @@ interface TweakBenchProps {
 
 const QUICK_TWEAKS = ["Less spicy", "Make it quicker", "More servings", "Swap for pantry staples"];
 
+// A tweak is a single buffered model call (~10–15s, no token-level events to
+// stream — ADR-0010), so there's no real progress to report. These staged
+// voice-lines + an easing bar make the wait *feel* like it's moving instead of
+// reading as a hang. Lines advance on a timer and hold on the last one.
+const PROGRESS_STAGES = [
+  "Reading your recipe…",
+  "Tasting as she goes…",
+  "Adjusting the seasoning…",
+  "Writing it up neat…",
+  "Almost there…",
+];
+const STAGE_MS = 3500; // time on each line before advancing
+// The bar eases toward BAR_MAX and never reaches it — the result landing (loader
+// unmounts, changes render) is the real completion signal, not a full bar.
+const BAR_MIN = 8;
+const BAR_MAX = 92;
+const BAR_TAU_MS = 6000; // easing time-constant: ~63% of the way at t = τ
+const TICK_MS = 120;
+
 // Friendly fallbacks — shown when the model's reply can't be applied. Never
 // surface raw/partial JSON to the user.
 const MUDDLED_MESSAGE = "Aiyah, that tweak came back muddled. Try again?";
@@ -296,25 +315,8 @@ export function TweakBench({
           return null;
         })}
 
-        {/* Streaming indicator */}
-        {isStreaming && (
-          <div className="flex gap-2.5 items-center">
-            <div className="relative w-7 h-7 shrink-0">
-              <Image src="/granny-icon.png" alt="" fill className="object-contain" />
-            </div>
-            <div className="inline-flex gap-[4px] items-center">
-              {[0, 1, 2].map((i) => (
-                <span
-                  key={i}
-                  className="w-[5px] h-[5px] rounded-full bg-primary"
-                  style={{
-                    animation: `tweakDot 1.2s ease-in-out ${i * 0.15}s infinite`,
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Progress affordance while Ah Mah drafts the tweak */}
+        {isStreaming && <TweakProgress />}
 
         <div ref={logEndRef} />
       </div>
@@ -404,6 +406,53 @@ export function TweakBench({
 }
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
+
+// Perceived-progress affordance for the buffered tweak wait: a staged Ah Mah
+// voice-line plus a bar that eases toward (but never reaches) BAR_MAX. Both are
+// time-driven — there's no real signal to read from a single buffered call.
+function TweakProgress() {
+  const [stage, setStage] = useState(0);
+  const [pct, setPct] = useState(BAR_MIN);
+
+  useEffect(() => {
+    const start = Date.now();
+    const id = window.setInterval(() => {
+      const t = Date.now() - start;
+      setStage(Math.min(Math.floor(t / STAGE_MS), PROGRESS_STAGES.length - 1));
+      setPct(BAR_MIN + (BAR_MAX - BAR_MIN) * (1 - Math.exp(-t / BAR_TAU_MS)));
+    }, TICK_MS);
+    return () => window.clearInterval(id);
+  }, []);
+
+  return (
+    <div className="flex gap-2.5 items-start">
+      <div className="relative w-7 h-7 shrink-0">
+        <Image src="/granny-icon.png" alt="" fill className="object-contain" />
+      </div>
+      <div className="flex-1 pt-0.5">
+        <div
+          aria-live="polite"
+          className="font-display italic text-dense text-foreground leading-[1.5]"
+        >
+          {PROGRESS_STAGES[stage]}
+        </div>
+        <div
+          role="progressbar"
+          aria-label="Ah Mah is drafting the tweak"
+          aria-valuenow={Math.round(pct)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          className="mt-2 h-[3px] w-full overflow-hidden rounded-full bg-border/60"
+        >
+          <div
+            className="h-full rounded-full bg-primary transition-[width] duration-300 ease-out motion-reduce:transition-none"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function AssistantBubble({ text }: { text: string }) {
   return (
