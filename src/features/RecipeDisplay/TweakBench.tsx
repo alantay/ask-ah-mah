@@ -122,7 +122,16 @@ export function TweakBench({
           }),
         });
 
-        if (!res.ok || !res.body) throw new Error("Tweak request failed");
+        if (!res.ok) {
+          // The route returns 422 when the model's output was truncated by the
+          // token cap — a recoverable "try again", not a hard failure.
+          if (res.status === 422) {
+            setTurns((prev) => [...prev, { kind: "refusal", text: MUDDLED_MESSAGE }]);
+            return;
+          }
+          throw new Error("Tweak request failed");
+        }
+        if (!res.body) throw new Error("Tweak request failed");
 
         const reader = res.body.getReader();
         readerRef.current = reader;

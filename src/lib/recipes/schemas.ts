@@ -132,7 +132,7 @@ export type ChangeEntry = z.infer<typeof ChangeEntrySchema>;
 // A Recipe Tweak returns a **patch** (ADR-0010), not the whole recipe: only the
 // fields that changed, plus the change list. Every recipe field is optional;
 // `changes` is always present. Presence is the signal — see `applyTweakPatch`.
-export const TweakPatchSchema = z.object({
+export const TweakPatchSchema = z.strictObject({
   title: z.string().optional(),
   description: z.string().optional(),
   totalTimeMinutes: z.number().optional(),

@@ -477,10 +477,17 @@ export default function RecipeDisplay({
           : null;
     if (!selector) return;
 
+    const prefersReducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
     const timer = setTimeout(() => {
       const el = scrollRef.current?.querySelector<HTMLElement>(selector);
       if (!el) return;
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.scrollIntoView({
+        behavior: prefersReducedMotion ? "auto" : "smooth",
+        block: "center",
+      });
       el.classList.remove("tweak-pulse");
       void el.offsetWidth; // restart the animation if the same row changes again
       el.classList.add("tweak-pulse");

@@ -66,7 +66,7 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **State 1 (Resting)**: inline dashed-border "Want Ah Mah to tweak this?" button below the Ah Mah note section.
 - **State 2 (Open)**: fixed bottom bar with granny avatar, Ah Mah voice prompt, 4 quick-tweak chips, text input + send button, ✕ dismiss.
 - **State 3 (Working)**: calls `POST /api/recipe/[id]/tweak`, which returns a **Tweak Patch** (only the changed fields, not the whole recipe — ADR-0010); client merges via `applyTweakPatch`; bottom bar shows "You said + dot animation".
-- **State 4 (Preview)**: response done; bottom bar shows Ah Mah message + Save / Try a different tweak / Discard actions. Changed ingredients and steps get an amber highlight (`bg-amber-200/70` + amber ring), and the first changed row scroll-into-views with a one-shot pulse (`tweak-pulse`) to lead the eye left.
+- **State 4 (Preview)**: response done; bottom bar shows Ah Mah message + Save / Try a different tweak / Discard actions. Changed ingredients and steps get an amber highlight (`bg-amber-200/70` + amber ring), and the first changed row scrolls into view with a one-shot pulse (`tweak-pulse`) to lead the eye left.
 - **State 5 (Saved)**: calls `PATCH /api/recipe/[id]` to persist; sonner success toast; "Tweak again" button replaces resting-state button; "tweaked just now" badge in Ah Mah note.
 - Tweak state fully contained in `RecipeDisplay` (no page-level changes needed). `userId` sourced from `useSessionContext` internally.
 
