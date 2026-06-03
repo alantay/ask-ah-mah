@@ -3,9 +3,10 @@
 import { extractJsonObject, looksLikeJsonAttempt } from "@/lib/recipes/extractJsonObject";
 import type { ChangeEntry, RecipeWithId } from "@/lib/recipes/schemas";
 import {
+  applyTweakPatch,
   recipeBlockToRecipeWithId,
   recipeWithIdToBlock,
-  TweakResponseSchema,
+  TweakPatchSchema,
 } from "@/lib/recipes/schemas";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -164,10 +165,16 @@ export function TweakBench({
           return;
         }
 
-        const parsedResponse = TweakResponseSchema.safeParse(parsedJson);
+        const parsedResponse = TweakPatchSchema.safeParse(parsedJson);
 
         if (parsedResponse.success) {
-          const newDraft = recipeBlockToRecipeWithId(parsedResponse.data.recipe, currentDraft);
+          // Patch carries only changed fields — merge onto the current draft
+          // (presence-based) rather than replacing it wholesale (ADR-0010).
+          const mergedBlock = applyTweakPatch(
+            recipeWithIdToBlock(currentDraft),
+            parsedResponse.data,
+          );
+          const newDraft = recipeBlockToRecipeWithId(mergedBlock, currentDraft);
           const newChanges = parsedResponse.data.changes;
           workingDraftRef.current = newDraft;
           onWorkingDraftChange(newDraft, newChanges);
