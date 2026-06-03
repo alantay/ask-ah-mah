@@ -70,11 +70,21 @@ Related: [ADR-0005](docs/adr/0005-tweak-bench-multi-turn.md)
 
 ## Recipe Tweak
 
-A single turn within a **Tweak Bench** session. The user types one refinement instruction (e.g. "use chicken instead of tofu") and the AI streams an updated recipe block plus a structured change list. A Recipe Tweak cannot generate a wholly unrelated dish — the model refuses in plain text and leaves the working draft unchanged.
+A single turn within a **Tweak Bench** session. The user types one refinement instruction (e.g. "use chicken instead of tofu") and the AI returns a **Tweak Patch** — the changed fields plus a structured change list — buffered in a single response (not streamed). The client applies the patch to the working draft. A Recipe Tweak cannot generate a wholly unrelated dish — the model refuses in plain text and leaves the working draft unchanged.
 
 The AI call goes through a dedicated route (`POST /api/recipe/[id]/tweak`), separate from the chat pipeline.
 
-Related: [ADR-0005](docs/adr/0005-tweak-bench-multi-turn.md)
+Related: [ADR-0005](docs/adr/0005-tweak-bench-multi-turn.md), [ADR-0010](docs/adr/0010-recipe-tweak-returns-a-patch.md)
+
+---
+
+## Tweak Patch
+
+The response a **Recipe Tweak** returns: only the recipe fields that changed (arrays — `ingredients`, `steps`, `prep`, `tags` — replaced **wholesale** if any element changed; scalar fields sent only if changed), plus the structured change list. Presence is the signal: a key present means "replace this field on the working draft," a key absent means "keep it." Clearing an array is sent as `[]` (present-but-empty), distinct from omitting the key.
+
+Supersedes the old contract, where the model echoed the **entire** recipe back each turn — which made generation time scale with recipe size (~15s for a one-word tweak) regardless of how little changed. Replacing whole arrays (rather than patching individual rows) keeps the model the single author of each list, so the recipe and the diff cannot disagree.
+
+Related: [ADR-0010](docs/adr/0010-recipe-tweak-returns-a-patch.md)
 
 ---
 
