@@ -49,9 +49,9 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 
 - **Send guard** (May 2026): Fixed double-submission bug — a synchronous `sendingRef` lock and `isSending` state now cover the async pre-send gap (conversation create + message save) before the AI SDK `status` transitions from `"ready"`. Loader shows immediately on submit; input stays disabled until the request is fully in-flight.
 
-## V2 — In Progress
+## V2 — Shipped (May–Jun 2026)
 
-### Cook With What You Have — In Review (May 2026)
+### Cook With What You Have — Shipped (May 2026, #236)
 - **Selection mode** on the Pantry surface: "Cook with what you have" toggle enters a checkbox mode on ingredient and kitchenware rows. Kitchenware selection = preferred equipment (preference, not constraint — ADR-0007).
 - **CTA adapts** to selection shape: "Suggest recipe (N selected)" for ingredients, "Surprise me with [Air fryer]" for equipment-only.
 - **Submit flow**: composes a synthetic Mode 3 message ("Suggest recipes using: …"), enters Staging State via `ConversationContext`, navigates to Chat. Chat auto-sends the queued message once `status === "ready"`.
@@ -78,6 +78,8 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Loader bridges the gap**: `shouldShowLoader` keeps `ChatLoader` visible until prose, a completed block, or the first parseable streaming field exists — no raw-JSON flash.
 - **Retired** `SkeletonRecipeCard`, `WritingItOut`, and `ShimmerWord` (dead after skeleton removal). See ADR-0009.
 
+## Next up
+
 ### Shopping list from shortfalls
 - [ ] Add one-click `Add missing to shopping list` from `RecipeDisplay`.
 - [ ] Add `ShoppingList` Prisma model (`id`, `userId`, `name`, `quantity?`, `unit?`, `addedAt`, `recipeId?`).
@@ -102,7 +104,7 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 
 ## Decisions
 
-- **`shelfLife` removed** (May 2026): The field was used for amber-dot UI and Mode 3 recipe prioritization. Removed because the app cannot reliably know freshness — users freeze, restock, and manage their own food without updating the app. Recipes should be generated because the dish needs those ingredients, not because the app guesses they're expiring. See ADR-0008.
+- **`shelfLife` removed** (May 2026) — no freshness/urgency UI; the app can't reliably know what's gone bad. Full rationale → [ADR-0008](./adr/0008-no-shelf-life-ui.md).
 - **Optional quantity = "unlimited"**: unset `quantity` means the item has no limit. Avoids forcing a count on pantry staples where "do I have enough?" is never the question.
 - **Structured-on-save over streaming extraction**: metadata (`baseServings`, `ingredients`, `description`, `totalTimeMinutes`) is extracted when the user saves a recipe, not streamed inline. Simpler streaming path; extraction failures degrade gracefully without breaking the chat.
 - **Strict-unit shortfall first; cross-unit conversion deferred**: `unit` must match exactly for shortfall calculation. Cross-unit conversion (e.g. `g` vs `kg`) is a V3+ problem — the complexity isn't justified until users actually hit it.
@@ -115,5 +117,5 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Horizontal-scroll chip rail over facet sheets (cookbook)**: surfaces all tags at a glance; facet sheets added taps and hid options.
 - **Cookbook strips pantry awareness**: `RecipeDisplay` is storage, not meal planning. HAVE/NEED badges belong in the chat-inline `RecipeLetter` only.
 - **Tweak change `ref` is a non-fatal presentational hint** (Jun 2026): A tweak's `changes[].ref` only drives row highlighting for ingredient/step changes (prep/recipe-level changes aren't highlighted). The model sometimes emits unmodeled locators like `ref.type: "prep"`, which previously failed `TweakResponseSchema` and discarded an otherwise-valid recipe ("that tweak came back muddled"). `ref` now parses with `.catch(undefined)` so a malformed locator degrades to no-highlight instead of rejecting the tweak; the prompt also tells the model to omit `ref` for `prep_updated`.
-- **Tweak returns a patch, not the whole recipe** (Jun 2026): `POST /api/recipe/[id]/tweak` previously echoed the entire recipe back, so a one-line edit waited on the model regenerating every ingredient and step (~15s observed). The contract is now a **Tweak Patch**: only changed fields, with arrays sent all-or-nothing (whole array if any element changed; `[]` to clear; key omitted = keep). The client merges with the pure `applyTweakPatch(workingDraft, patch)`. The `finishReason === "length"` 422 guard is retained. See ADR-0010.
+- **Tweak returns a patch, not the whole recipe** (Jun 2026) — only changed fields come back, cutting the full-recipe echo that made one-line edits wait ~15s. Full rationale → [ADR-0010](./adr/0010-recipe-tweak-returns-a-patch.md).
 - **Decrement-on-cook dropped**: tracking what was cooked, confirming with the user, and decrementing inventory adds a confirmation surface and an "active cooking" state model that's hard to get right. The pantry is whatever the user says it is; nudges live in chat ("I used the last of the eggs"). Removed from the V2 backlog entirely.

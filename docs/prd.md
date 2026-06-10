@@ -1,5 +1,5 @@
 ---
-description: "Next.js web app for cooking beginners with AI-powered natural language inventory management and recipe suggestions using Vercel AI SDK and Gemini Flash"
+description: "Product vision for Ask Ah Mah — a Next.js web app that helps cooking beginners turn the ingredients they already have into recipes through natural-language conversation"
 globs:
   - "**/*.{ts,tsx,js,jsx}"
   - "**/*.json"
@@ -7,299 +7,72 @@ globs:
 alwaysApply: true
 ---
 
-# Ask Ah Mah - Product Requirements Document
+# Ask Ah Mah — Product Vision
 
-## 1. Product Overview
+> **Scope of this doc:** the durable *why* and *who*. It does **not** track
+> what's built, the current architecture, or the roadmap — those drift too fast
+> to live here. For that, see:
+>
+> - **What's shipped / what's next** → [`docs/progress.md`](./progress.md)
+> - **Why things are built the way they are** → [`docs/adr/`](./adr/)
+> - **Canonical domain vocabulary** → [`CONTEXT.md`](../CONTEXT.md)
+> - **How to run it / tech stack** → [`README.md`](../README.md)
 
-### 1.1 Product Vision
+## 1. Product Vision
 
-"Ask Ah Mah" is a web application that helps cooking beginners discover recipes through natural language conversation, making cooking accessible and intuitive by managing their kitchen inventory and providing personalized recipe suggestions.
+"Ask Ah Mah" helps cooking beginners discover what to cook through natural
+language conversation. It makes cooking feel accessible and unintimidating by
+remembering what's in their kitchen and suggesting recipes built around the
+ingredients they already have.
 
-### 1.2 Problem Statement
+The persistent kitchen — inventory plus what's been cooked and saved — is the
+core moat. The app's job is to turn "I have all these ingredients but no idea
+what to make" into a recipe the user feels confident cooking.
+
+## 2. Problem Statement
 
 Beginner cooks struggle to:
 
-- Know what they can make with ingredients they have
-- Manage their kitchen inventory effectively
-- Find recipes that match their available ingredients and tools
-- Get cooking guidance in an intuitive, conversational way
-
-### 1.3 Success Metrics (Future)
-
-- User engagement: Average session time, return visits
-- Feature adoption: Inventory management usage, recipe requests per session
-- User satisfaction: Recipe completion rates, positive feedback
-
-## 2. Target Users
-
-### Primary User Persona
-
-- **Demographics**: Cooking beginners, any age
-- **Needs**: Simple recipe discovery, inventory management, cooking guidance
-- **Behavior**: Prefers natural language interaction over complex interfaces
-- **Goals**: Learn to cook with what they have available
-
-## 3. MVP Feature Requirements
-
-### 3.1 Core Features
-
-#### 3.1.1 Natural Language Inventory Management
-
-**User Stories:**
-
-- As a user, I can add ingredients to my pantry using natural language ("add eggs to pantry")
-- As a user, I can add kitchenware using natural language ("i have a kettle")
-- As a user, I can optionally specify quantities and units ("add 6 eggs" or "add 2 cups of flour")
-- As a user, I can view and edit my inventory through traditional UI elements
-
-**Acceptance Criteria:**
-
-- System recognizes and parses natural language inventory commands
-- Items are stored with optional metadata (quantity, unit)
-- Inventory persists between sessions
-- Users can manually edit inventory through UI panels
-
-#### 3.1.2 Recipe Suggestion Engine
-
-**User Stories:**
-
-- As a user, I can ask "what can I cook with what I have?" and get recipe suggestions
-- As a user, I receive 3 brief recipe suggestions that mostly use my available ingredients
-- As a user, I can see what ingredients I'm missing for each suggested recipe
-- As a user, I can ask for detailed information about any suggested recipe
-
-**Acceptance Criteria:**
-
-- AI suggests recipes based on user's pantry and kitchenware
-- Initial suggestions are brief with: name, description, key ingredients, missing ingredients, cooking time/difficulty
-- System remembers suggested recipes within the chat session
-- Detailed recipe view includes: step-by-step instructions, full ingredient list, cooking time, difficulty level, cooking tips
-- Professional markdown formatting with visual delimiters and emojis
-- Enhanced recipe format with substitutions, cooking tips, and availability markers
-
-#### 3.1.3 Chat Interface
-
-**User Stories:**
-
-- As a user, I interact with the app through a conversational chat interface
-- As a user, I can see my conversation history within the current session
-- As a user, I can reference previously suggested recipes in conversation
-
-**Acceptance Criteria:**
-
-- Chat interface with message bubbles and conversation history
-- AI maintains context for recipe suggestions within session
-- Inventory commands are processed independently (no cross-command memory needed)
-- Message persistence with full conversation history
-- Efficient JSON-based conversation storage
-
-### 3.2 UI/UX Requirements
-
-#### 3.2.1 Layout
-
-- Primary chat interface taking majority of screen space
-- Drawer-based inventory management (modern UX approach)
-- Responsive design for mobile and desktop use
-- Light and Dark mode toggle (planned)
-- Professional styling with shadcn/ui components
-
-#### 3.2.2 Inventory Management UI
-
-- Drawer-based UI for modern inventory management
-- Traditional UI elements for viewing/editing pantry items
-- Add/remove/edit functionality for ingredients and kitchenware
-- Display items with quantities/units when available
-- Toast notifications for user feedback on all operations
-
-## 4. Technical Architecture
-
-### 4.1 Technology Stack
-
-- **Frontend**: Next.js 14/15 (App Router), TypeScript, Tailwind CSS
-- **AI Integration**: Vercel AI SDK with Google Gemini Flash
-- **Data Storage**:
-  - PostgreSQL with Prisma ORM (upgraded from MVP)
-  - Single JSON conversation field per user for efficiency
-  - Message persistence with AI SDK's onFinish callback
-- **UI Components**: shadcn/ui with drawer-based inventory management
-- **Validation**: Zod for data validation
-- **Deployment**: Vercel (free tier)
-
-### 4.2 Data Structure
-
-#### 4.2.1 Inventory Item Schema
-
-interface InventoryItem {
-id: string;
-name: string;
-type: "ingredient" | "kitchenware";
-quantity?: number;
-unit?: string;
-dateAddedISO: string; // ISO8601 string
-lastUpdatedISO: string; // ISO8601 string
-}
-
-#### 4.2.2 Recipe Schema
-
-```typescript
-interface Recipe {
-  name: string;
-  description: string;
-  ingredients: Array<{
-    name: string;
-    quantity?: number;
-    unit?: string;
-    available: boolean;
-  }>;
-  instructions: string[];
-  cookingTime: number;
-  difficulty: "easy" | "medium" | "hard";
-  requiredKitchenware: string[];
-}
-```
-
-### 4.3 AI Integration Strategy
-
-#### 4.3.1 Natural Language Processing
-
-#### 4.3.1 Natural Language Processing
-
-- Use Vercel AI SDK with Gemini Flash
-- All AI calls run server-side (Route Handlers/Server Actions); never expose API keys to the client
-- Apply timeouts, retries with backoff, and per-session request budgets
-- Log prompt/response metadata (no PII) for observability
-- Implement prompt engineering for:
-  - Inventory item extraction and categorization
-  - Recipe suggestion generation
-  - Cooking instruction formatting
-
-#### 4.3.2 Prompt Structure
-
-- **Inventory Management**: Extract item name, quantity, unit, and type from natural language
-- **Recipe Suggestions**: Generate beginner-friendly recipes with substitution options, emphasize "you can do this" messaging
-- **Cooking Guidance**: Provide encouraging, step-by-step help with troubleshooting and technique explanations
-- **Substitution Logic**: Proactively suggest alternatives for missing ingredients with confidence-building language
-- **Recipe Formatting**: Professional markdown with clear sections, emojis, and visual delimiters
-- **Enhanced Instructions**: Step-by-step guidance with cooking tips and substitutions
-- **Visual Appeal**: Emoji-enhanced instructions and professional presentation
-
-## 5. Development Phases
-
-### 5.1 Phase 1: MVP Core (Weeks 1-3)
-
-- Set up Next.js project with TypeScript and Tailwind
-- Implement basic chat interface
-- Integrate Vercel AI SDK with Gemini Flash
-- Build natural language inventory management
-- Implement PostgreSQL database with Prisma (upgraded from local storage)
-
-### 5.2 Phase 2: Recipe Engine (Weeks 4-6)
-
-- Develop recipe suggestion algorithm
-- Implement recipe detail display
-- Add drawer-based inventory management UI
-- Polish chat interface and user experience
-- Enhanced recipe formatting with professional markdown
-- Message persistence and conversation history
-
-### 5.3 Phase 3: Enhancement (Weeks 7-8)
-
-- Improve AI prompts and responses
-- Add error handling and edge cases
-- Optimize performance and user experience
-- Deploy to Vercel
-- Add toast notifications and professional UI components
-- Implement comprehensive SEO metadata
-
-## 6. Additional Features Implemented (Beyond MVP)
-
-### 6.1 Enhanced Features
-
-- **Toast Notifications**: User feedback for all inventory operations using sonner
-- **Drawer-Based UI**: Modern inventory management with shadcn/ui drawer component
-- **SEO Optimization**: Comprehensive metadata and Open Graph support
-- **Enhanced Recipe Format**: Professional markdown with emojis, substitutions, and tips
-- **Message Persistence**: Full conversation history with efficient JSON storage
-- **Professional Styling**: shadcn/ui components for consistent, modern design
-
-## 7. Future Enhancements
-
-### 7.1 User Management
-
-- User accounts and authentication
-- Personal recipe history and favorites
-- Multi-device synchronization
-
-### 7.2 Advanced Features
-
-- Recipe rating and reviews
-- Nutritional information
-- Shopping list generation
-- Meal planning capabilities
-- Recipe sharing and community features
-
-### 7.3 Technical Improvements
-
-- Migration to PostgreSQL database
-- Advanced caching strategies
-- Mobile app version
-- Offline functionality
-
-## 8. Constraints and Assumptions
-
-### 8.1 Technical Constraints
-
-- Using free tiers for AI services (Gemini Flash rate limits)
-- Vercel free deployment limitations
-- No user authentication in MVP
-
-### 8.2 Assumptions
-
-- Users are comfortable with natural language interaction
-- Inventory management will be primarily conversational
-- Recipe suggestions don't need real-time updates
-- Users will primarily access via desktop/mobile web browsers
-
-## 9. Success Criteria for MVP
-
-### 9.1 Functional Success
-
-- Users can successfully add ingredients and kitchenware via natural language
-- System accurately suggests recipes based on available inventory
-- Users can get detailed cooking instructions for suggested recipes
-- Data persists between browser sessions
-- Professional UI with drawer-based inventory management
-- Enhanced recipe formatting with visual appeal
-- Toast notifications provide clear user feedback
-- Message persistence with full conversation history
-
-### 9.2 User Experience Success
-
-- Intuitive chat interface with clear conversation flow
-- Quick response times for AI interactions
-- Accessible inventory management through both chat and traditional UI
-- Modern drawer-based UI for inventory management
-- Professional styling and user feedback systems
-
-## 10. Risk Assessment
-
-### 10.1 Technical Risks
-
-- **AI API limitations**: Rate limits on free Gemini Flash tier
-- **Natural language parsing accuracy**: Complex ingredient descriptions
-- **Data persistence**: Local storage limitations for inventory data
-
-### 10.2 Mitigation Strategies
-
-- Implement graceful error handling for API failures
-- Use structured prompts to improve parsing accuracy
-- Plan migration path to proper database early
-
-## 11. Next Steps
-
-1. Set up development environment and project structure
-2. Implement basic chat interface and AI integration
-3. Build natural language inventory management system
-4. Develop recipe suggestion and detail display features
-5. Create inventory management UI panel
-6. Test, refine, and deploy MVP
+- Know what they can make with the ingredients they have on hand
+- Keep track of what's in their kitchen
+- Find recipes that match both their ingredients and their (limited) skill
+- Get cooking guidance in an intuitive, conversational way — not a wall of UI
+
+The emotional core: ingredients go bad, money gets wasted, and cooking feels
+overwhelming. The product should make the user feel encouraged, not judged.
+
+## 3. Target User
+
+- **Who:** cooking beginners, any age.
+- **Needs:** simple recipe discovery, low-friction inventory tracking,
+  confidence-building guidance.
+- **Behaviour:** prefers natural-language interaction over complex forms and
+  filters.
+- **Goal:** learn to cook with what they already have.
+
+## 4. Success Criteria
+
+Functional:
+
+- Users can add ingredients and kitchenware via natural language, and the
+  inventory persists between sessions.
+- The app suggests recipes grounded in the user's actual inventory, and is
+  honest about what's missing.
+- Users can get detailed, beginner-friendly cooking guidance for a suggestion.
+
+Experience (future, once we measure):
+
+- Engagement — average session time, return visits.
+- Adoption — inventory use, recipe requests per session.
+- Satisfaction — recipe completion, positive feedback.
+
+## 5. Durable Constraints & Assumptions
+
+- **Conversational-first.** Inventory management and recipe discovery are
+  primarily driven through chat; traditional UI is the backstop, not the front
+  door.
+- **Encouraging tone.** Every interaction should build confidence — mistakes
+  are part of learning to cook.
+- **Web-first.** Users primarily access via desktop and mobile web browsers.
+- **No real-time freshness tracking.** The app cannot reliably know what's gone
+  bad; it does not guess (see [ADR-0008](./adr/0008-no-shelf-life-ui.md)).
