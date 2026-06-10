@@ -5,19 +5,30 @@ import InventoryWrapper from "@/features/Inventory/components/InventoryWrapper";
 import RecipeList from "@/features/RecipeList/RecipeList";
 import { useActiveTab } from "@/hooks/useActiveTab";
 import { useRouter } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 function HomeContent() {
   const router = useRouter();
-  const activeTab = useActiveTab();
+  const urlTab = useActiveTab();
+
+  // Drive the visible tab from local state so switching is instant; the URL is
+  // synced in the background. Without this, the active tab is derived from the
+  // URL and every switch waits on a router round-trip (feels like it hangs).
+  const [activeTab, setLocalTab] = useState(urlTab);
+
+  // Re-sync when the URL-derived tab changes externally (e.g. /recipe/* → cookbook).
+  useEffect(() => {
+    setLocalTab(urlTab);
+  }, [urlTab]);
 
   const setActiveTab = (tab: string) => {
+    setLocalTab(tab as typeof urlTab);
     router.replace(`/?tab=${tab}`, { scroll: false });
   };
 
   return (
     <div className="bg-background paper h-full lg:h-full flex flex-col">
-      <main className="xl:container 2xl:max-w-screen-xl mx-auto h-[calc(100dvh-3.25rem)] sm:h-[calc(100dvh-3.75rem)] md:h-[calc(100dvh-4.5rem)] lg:flex-1 lg:min-h-0">
+      <main className="w-full xl:container 2xl:max-w-screen-xl mx-auto h-[calc(100dvh-3.25rem)] sm:h-[calc(100dvh-3.75rem)] md:h-[calc(100dvh-4.5rem)] lg:flex-1 lg:min-h-0">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col pt-2 lg:pt-0">
           {/* Tab strip — hidden on desktop (sidebar handles nav) */}
           <TabsList className="lg:hidden">
