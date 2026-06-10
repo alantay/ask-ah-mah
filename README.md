@@ -89,7 +89,7 @@ Ah Mah is your friendly cooking companion who:
 2. **Install dependencies**
 
    ```bash
-   npm install
+   pnpm install
    ```
 
 3. **Set up environment variables**
@@ -108,14 +108,14 @@ Ah Mah is your friendly cooking companion who:
 4. **Set up the database**
 
    ```bash
-   npx prisma migrate dev
-   npx prisma generate
+   pnpm prisma migrate dev
+   pnpm prisma generate
    ```
 
 5. **Run the development server**
 
    ```bash
-   npm run dev
+   pnpm dev
    ```
 
 6. **Open your browser**
