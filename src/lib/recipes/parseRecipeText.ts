@@ -6,7 +6,7 @@ import { PROMPT_FRAGMENTS } from "@/lib/prompts/fragments";
 
 export async function parseRecipeText(text: string): Promise<RecipeBlock> {
   const result = await generateObject({
-    model: openai("gpt-4.1-mini"),
+    model: openai("gpt-5-mini"),
     schema: RecipeBlockSchema,
     temperature: 0.2,
     prompt: `Extract the recipe from the text below into a structured format.

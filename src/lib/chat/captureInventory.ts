@@ -59,7 +59,7 @@ export async function captureMentionedInventory(
 
   try {
     const { object } = await generateObject({
-      model: openai("gpt-4.1-mini"),
+      model: openai("gpt-5-mini"),
       schema: ExtractionSchema,
       temperature: 0,
       prompt: `You extract ONLY ingredients/kitchenware the user explicitly HAS or JUST ACQUIRED, from a single chat message to a cooking assistant.

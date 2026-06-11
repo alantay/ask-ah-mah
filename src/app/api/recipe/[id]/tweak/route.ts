@@ -129,7 +129,7 @@ export async function POST(
     // nothing here — and buffering lets us inspect finishReason before we
     // respond, which a streamed response can't (status is already sent).
     const { text, finishReason } = await generateText({
-      model: openai("gpt-4.1-mini"),
+      model: openai("gpt-5-mini"),
       system: buildSystemPrompt(parsedOriginal.data, workingDraft),
       messages: [{ role: "user", content: instruction }],
       maxOutputTokens: MAX_OUTPUT_TOKENS,
