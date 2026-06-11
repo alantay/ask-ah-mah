@@ -47,10 +47,20 @@ export async function POST(req: NextRequest) {
           });
         }
 
+        // Tell the model what we already captured this turn so it doesn't
+        // redundantly call addInventoryItem for the same items (the client
+        // also dedupes, but this avoids a wasted tool step + upsert).
+        const captureNote =
+          captured.length > 0
+            ? `\n\n# Already added this turn\nThese items are ALREADY in the pantry (just added for you): ${captured
+                .map((item) => item.name)
+                .join(", ")}. Do NOT call addInventoryItem for them again — acknowledge naturally and continue.`
+            : "";
+
         const result = streamText({
           model: openai("gpt-5-mini"),
           messages: convertToModelMessages(validatedMessages),
-          system: CHAT_SYSTEM_PROMPT,
+          system: CHAT_SYSTEM_PROMPT + captureNote,
           stopWhen: [stepCountIs(5)],
           tools: buildChatTools(userId),
         });
