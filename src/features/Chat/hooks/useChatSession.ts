@@ -94,6 +94,19 @@ export function useChatSession() {
       }
 
       message.parts.forEach((part) => {
+        // Items captured server-side (deterministic pre-extraction) — no tool
+        // call fired for these, so surface them here.
+        if (part.type === "data-capturedInventory") {
+          const { items } = (part as { data: { items: string[] } }).data;
+          if (items.length > 0) {
+            toast.success(
+              `${items.map((name) => upperCaseFirstLetter(name)).join(", ")} added to inventory!`
+            );
+            mutate(`/api/inventory?userId=${userId}`);
+          }
+          return;
+        }
+
         if (part.type.startsWith("tool-")) {
           const { input } = part as {
             input:

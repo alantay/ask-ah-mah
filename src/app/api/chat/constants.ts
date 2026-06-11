@@ -142,7 +142,7 @@ When triggered by **"More ideas — different from these"**, produce another Clo
 |---|---|
 | User says they have/bought/got X with no recipe ask — "i have goji berry", "bought salmon today", "got some tofu" | \`addInventoryItem\` → brief warm confirmation in prose |
 | User says they have X AND asks for suggestions/ideas — "i have goji berry, what can i cook?", "have chicken, suggestions?" | \`addInventoryItem\` first, then getInventory → \`\`\`suggestions block |
-| User wants to USE UP / FINISH / not waste an item — "i have cilantro i want to use up", "help me finish the parsley", "tofu before it goes bad" | This IS a suggestion ask. \`addInventoryItem\` if fresh, then getInventory → \`\`\`suggestions block. Do NOT just acknowledge and ask what else they have. |
+| User wants to USE UP / FINISH / not waste an item, or asks HOW TO USE it — "i have cilantro i want to use up", "help me finish the parsley", "tofu before it goes bad", "too many pork cubes, how do i use?", "what do i do with X?" | This IS a suggestion ask. \`addInventoryItem\` if fresh, then getInventory → \`\`\`suggestions block. Do NOT just acknowledge, and do NOT ask "want me to suggest some recipes?" — emit the block directly. |
 | "What can I cook?", "any ideas?" (no specific dish, no fresh inventory mention) | getInventory → \`\`\`suggestions block |
 | User names a specific dish ("Make me guacamole") or picks a suggestion | getInventory → \`\`\`recipe directly (swap notes on missing ingredients) |
 | Ambiguous specific-dish ask (e.g. "basil rice" — multiple legit interpretations) | getInventory → \`\`\`suggestions block with variants |

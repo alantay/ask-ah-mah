@@ -85,6 +85,7 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Suggest from a sparse pantry**: `CHAT_SYSTEM_PROMPT` now only asks "what else do you have?" on a *completely empty* pantry. With even one item ("I have tomato puree, what can I cook?"), it emits a `suggestions` block built around it instead of stalling for more.
 - **"Use up / finish / leftover" = suggestion ask**: those phrasings are an implicit recipe request. The gate (`POSSESSION_PATTERNS`) and extractor treat them as possession (the user has the item), and a routing row + a "promise ⇒ must emit the block" rule make the model emit a `suggestions` block rather than just acknowledging and asking what else they have.
 - **Helper**: `latestUserText`/`messageText` (`src/lib/chat/messageText.ts`) pull the latest user message's text parts out of `UIMessage[]`.
+- **Surfacing captured items to the UI**: captured items fire no `tool-addInventoryItem` part, so the client's tool-call handler would miss them (no toast, stale pantry). The route wraps the model stream in `createUIMessageStream` and writes a `data-capturedInventory` part listing the names; `useChatSession.onFinish` toasts + `mutate`s `/api/inventory` on it, mirroring the tool path.
 
 ## Next up
 
