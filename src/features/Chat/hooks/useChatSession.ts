@@ -93,13 +93,22 @@ export function useChatSession() {
         if (content && convId) await saveMessage("assistant", content, convId);
       }
 
+      // Safely read the string names out of a data-capturedInventory part —
+      // guards against a malformed payload (missing data/items, non-array,
+      // non-string entries) so a structure change can't crash the handler.
+      const capturedItemsOf = (part: { type: string }): string[] => {
+        const data = (part as { data?: { items?: unknown } }).data;
+        if (!data || !Array.isArray(data.items)) return [];
+        return data.items.filter((item): item is string => typeof item === "string");
+      };
+
       // Names already added by the server-side capture this turn. The model
       // may still call addInventoryItem for the same items — dedupe against
       // these so the user doesn't get two toasts for one add.
       const capturedNames = new Set(
         message.parts
           .filter((part) => part.type === "data-capturedInventory")
-          .flatMap((part) => (part as { data: { items: string[] } }).data.items)
+          .flatMap(capturedItemsOf)
           .map((name) => name.toLowerCase())
       );
 
@@ -115,8 +124,7 @@ export function useChatSession() {
         // Items captured server-side (deterministic pre-extraction) — no tool
         // call fired for these, so surface them here.
         if (part.type === "data-capturedInventory") {
-          const { items } = (part as { data: { items: string[] } }).data;
-          notifyInventory(items, "added to");
+          notifyInventory(capturedItemsOf(part), "added to");
           return;
         }
 
