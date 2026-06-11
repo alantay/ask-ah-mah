@@ -93,7 +93,41 @@ export function useChatSession() {
         if (content && convId) await saveMessage("assistant", content, convId);
       }
 
+      // Safely read the string names out of a data-capturedInventory part —
+      // guards against a malformed payload (missing data/items, non-array,
+      // non-string entries) so a structure change can't crash the handler.
+      const capturedItemsOf = (part: { type: string }): string[] => {
+        const data = (part as { data?: { items?: unknown } }).data;
+        if (!data || !Array.isArray(data.items)) return [];
+        return data.items.filter((item): item is string => typeof item === "string");
+      };
+
+      // Names already added by the server-side capture this turn. The model
+      // may still call addInventoryItem for the same items — dedupe against
+      // these so the user doesn't get two toasts for one add.
+      const capturedNames = new Set(
+        message.parts
+          .filter((part) => part.type === "data-capturedInventory")
+          .flatMap(capturedItemsOf)
+          .map((name) => name.toLowerCase())
+      );
+
+      const notifyInventory = (names: string[], verb: "added to" | "removed from") => {
+        if (names.length === 0) return;
+        toast.success(
+          `${names.map((name) => upperCaseFirstLetter(name)).join(", ")} ${verb} inventory!`
+        );
+        mutate(`/api/inventory?userId=${userId}`);
+      };
+
       message.parts.forEach((part) => {
+        // Items captured server-side (deterministic pre-extraction) — no tool
+        // call fired for these, so surface them here.
+        if (part.type === "data-capturedInventory") {
+          notifyInventory(capturedItemsOf(part), "added to");
+          return;
+        }
+
         if (part.type.startsWith("tool-")) {
           const { input } = part as {
             input:
@@ -104,18 +138,16 @@ export function useChatSession() {
           switch (part.type) {
             case "tool-addInventoryItem": {
               const addInput = input as z.infer<typeof AddInventoryItemSchemaObj>;
-              toast.success(
-                `${addInput.items.map((i) => upperCaseFirstLetter(i.name)).join(", ")} added to inventory!`
-              );
-              mutate(`/api/inventory?userId=${userId}`);
+              // Skip items already surfaced by server-side capture.
+              const fresh = addInput.items
+                .map((item) => item.name)
+                .filter((name) => !capturedNames.has(name.toLowerCase()));
+              notifyInventory(fresh, "added to");
               break;
             }
             case "tool-removeInventoryItem": {
               const removeInput = input as z.infer<typeof RemoveInventoryItemSchemaObj>;
-              toast.success(
-                `${removeInput.itemNames.map((i) => upperCaseFirstLetter(i)).join(", ")} removed from inventory!`
-              );
-              mutate(`/api/inventory?userId=${userId}`);
+              notifyInventory(removeInput.itemNames, "removed from");
               break;
             }
           }

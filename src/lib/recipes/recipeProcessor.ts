@@ -99,7 +99,7 @@ RECIPE TEXT:
 ${recipeInstructions}`;
 
   const result = await generateObject({
-    model: openai("gpt-4.1-mini"),
+    model: openai("gpt-5-mini"),
     schema: RecipeMetadataSchema,
     prompt,
     temperature: 0.2,

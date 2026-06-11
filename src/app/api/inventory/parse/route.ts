@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { object } = await generateObject({
-      model: openai("gpt-4.1-mini"),
+      model: openai("gpt-5-mini"),
       schema: ParseSchema,
       temperature: 0.1,
       prompt: `Parse the following freeform inventory entry into structured items. The user is dumping what they just bought or what they have on hand.

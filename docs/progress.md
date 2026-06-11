@@ -78,6 +78,15 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Loader bridges the gap**: `shouldShowLoader` keeps `ChatLoader` visible until prose, a completed block, or the first parseable streaming field exists — no raw-JSON flash.
 - **Retired** `SkeletonRecipeCard`, `WritingItOut`, and `ShimmerWord` (dead after skeleton removal). See ADR-0009.
 
+### Vigilant pantry capture (gated pre-extraction) — Shipped Jun 2026
+- **Problem**: `gpt-4.1-mini` unreliably ignored the prompt rule to `addInventoryItem` before suggesting. "I have chicken broth, what can I cook?" often returned a recipe without ever adding the broth.
+- **Gated pre-extraction**: `captureMentionedInventory` (`src/lib/chat/captureInventory.ts`) runs server-side in `/api/chat` *before* `streamText`, so a subsequent `getInventory` already reflects mentioned items. A cheap regex gate (`mentionsPossession`) skips the extraction LLM call for pure questions; on a hit, a `temperature: 0` `generateObject` extracts only genuinely-possessed items (no negated/wished-for/dish-name items, no bare "with X" requests) and upserts them via `addInventoryItem` (idempotent on `userId_name_type`).
+- **Fallback preserved**: the chat model's `addInventoryItem` tool still runs for phrasings the gate misses. Extraction failures are swallowed (non-fatal) — the tool remains the safety net.
+- **Suggest from a sparse pantry**: `CHAT_SYSTEM_PROMPT` now only asks "what else do you have?" on a *completely empty* pantry. With even one item ("I have tomato puree, what can I cook?"), it emits a `suggestions` block built around it instead of stalling for more.
+- **"Use up / finish / leftover" = suggestion ask**: those phrasings are an implicit recipe request. The gate (`POSSESSION_PATTERNS`) and extractor treat them as possession (the user has the item), and a routing row + a "promise ⇒ must emit the block" rule make the model emit a `suggestions` block rather than just acknowledging and asking what else they have.
+- **Helper**: `latestUserText`/`messageText` (`src/lib/chat/messageText.ts`) pull the latest user message's text parts out of `UIMessage[]`.
+- **Surfacing captured items to the UI**: captured items fire no `tool-addInventoryItem` part, so the client's tool-call handler would miss them (no toast, stale pantry). The route wraps the model stream in `createUIMessageStream` and writes a `data-capturedInventory` part listing the names; `useChatSession.onFinish` toasts + `mutate`s `/api/inventory` on it, mirroring the tool path.
+
 ## Next up
 
 ### Shopping list from shortfalls
