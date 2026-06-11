@@ -22,8 +22,16 @@ const POSSESSION_PATTERNS = [
   /\bgrabbed\b/i,
   /\bstocked up\b/i,
   /\bthere(?:'s| is| are)\b.*\b(?:fridge|freezer|pantry|kitchen|cupboard|counter)\b/i,
-  /\bin (?:my|the) (?:fridge|freezer|pantry|kitchen|cupboard)\b/i,
+  /\bin (?:the |my )?(?:fridge|freezer|pantry|kitchen|cupboard|counter)\b/i,
   /\bhave (?:some|a|an)\b/i,
+  // "use up", "finish", "before it goes bad", "leftover" all imply the user
+  // already HAS the item they're talking about.
+  /\buse (?:it |them |this |that )?up\b/i,
+  /\bused up\b/i,
+  /\bfinish (?:the|my|some|this|that|off)\b/i,
+  /\bbefore (?:it|they|this|that)\b.*\b(?:goes?|go) (?:bad|off)\b/i,
+  /\bgoing (?:bad|off)\b/i,
+  /\bleftover\b/i,
 ];
 
 export function mentionsPossession(text: string): boolean {
@@ -58,8 +66,9 @@ export async function captureMentionedInventory(
 
 STRICT RULES — when in doubt, extract NOTHING:
 - Extract an item ONLY if the user states they possess it or just got it: "I have X", "I've got X", "bought X", "picked up X", "there's X in my fridge".
+- Wanting to USE UP, FINISH, or not waste an item means they HAVE it — extract it: "parsley I want to use up", "finish the tofu", "X in the fridge to use up", "leftover rice", "cilantro before it goes bad" → extract parsley/tofu/X/rice/cilantro.
 - DO NOT extract negated items: "I don't have eggs", "no chicken", "out of soy sauce" → extract nothing for those.
-- DO NOT extract items the user wants, plans to buy, or asks about: "I want to make laksa", "should I buy tofu?", "what can I cook with chicken?" (a bare "with X" is a request, not a possession claim — skip it).
+- DO NOT extract items the user merely wants to ACQUIRE, plans to buy, or asks about: "I want to make laksa", "should I buy tofu?", "what can I cook with chicken?" (a bare "with X" is a request, not a possession claim — skip it). Note the difference: "I want tofu" (wish to acquire → skip) vs "I want to use up the tofu" (already has it → extract).
 - DO NOT extract dish names, cuisines, or recipe titles. Only concrete ingredients and kitchenware.
 - If the message is purely a question or contains no genuine possession claim, return an empty items array.
 

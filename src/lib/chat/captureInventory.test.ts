@@ -32,6 +32,10 @@ describe("mentionsPossession", () => {
     "grabbed soy sauce",
     "there's leftover rice in the fridge",
     "I have a few carrots",
+    "i want some parsley in fridge to use up",
+    "help me finish the tofu",
+    "cilantro before it goes bad",
+    "leftover rice from yesterday",
   ])("matches possession phrasing: %s", (text) => {
     expect(mentionsPossession(text)).toBe(true);
   });
@@ -41,6 +45,7 @@ describe("mentionsPossession", () => {
     "how long do I boil an egg?",
     "give me a laksa recipe",
     "make it spicier",
+    "should I buy tofu?",
     "",
   ])("does not match a bare question/command: %s", (text) => {
     expect(mentionsPossession(text)).toBe(false);
