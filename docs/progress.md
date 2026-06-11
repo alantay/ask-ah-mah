@@ -78,6 +78,12 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Loader bridges the gap**: `shouldShowLoader` keeps `ChatLoader` visible until prose, a completed block, or the first parseable streaming field exists — no raw-JSON flash.
 - **Retired** `SkeletonRecipeCard`, `WritingItOut`, and `ShimmerWord` (dead after skeleton removal). See ADR-0009.
 
+### Vigilant pantry capture (gated pre-extraction) — Shipped Jun 2026
+- **Problem**: `gpt-4.1-mini` unreliably ignored the prompt rule to `addInventoryItem` before suggesting. "I have chicken broth, what can I cook?" often returned a recipe without ever adding the broth.
+- **Gated pre-extraction**: `captureMentionedInventory` (`src/lib/chat/captureInventory.ts`) runs server-side in `/api/chat` *before* `streamText`, so a subsequent `getInventory` already reflects mentioned items. A cheap regex gate (`mentionsPossession`) skips the extraction LLM call for pure questions; on a hit, a `temperature: 0` `generateObject` extracts only genuinely-possessed items (no negated/wished-for/dish-name items, no bare "with X" requests) and upserts them via `addInventoryItem` (idempotent on `userId_name_type`).
+- **Fallback preserved**: the chat model's `addInventoryItem` tool still runs for phrasings the gate misses. Extraction failures are swallowed (non-fatal) — the tool remains the safety net.
+- **Helper**: `latestUserText`/`messageText` (`src/lib/chat/messageText.ts`) pull the latest user message's text parts out of `UIMessage[]`.
+
 ## Next up
 
 ### Shopping list from shortfalls

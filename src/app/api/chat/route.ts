@@ -1,5 +1,7 @@
+import { captureMentionedInventory } from "@/lib/chat/captureInventory";
 import { loadConversationContext } from "@/lib/chat/context";
 import { chatErrorResponse } from "@/lib/chat/errors";
+import { latestUserText } from "@/lib/chat/messageText";
 import { buildChatTools } from "@/lib/chat/tools";
 import { missingUserId } from "@/lib/http";
 import { openai } from "@ai-sdk/openai";
@@ -17,6 +19,12 @@ export async function POST(req: NextRequest) {
 
     if (!userId) return missingUserId();
     if (!conversationId) return NextResponse.json({ error: "conversationId is required" }, { status: 400 });
+
+    // Deterministically capture any pantry items the user mentions BEFORE the
+    // chat model runs, so a subsequent getInventory call reflects them. Gated
+    // by a keyword heuristic; the model's addInventoryItem tool is the fallback
+    // for phrasings the gate misses. Failures here are swallowed (non-fatal).
+    await captureMentionedInventory(latestUserText(messages), userId);
 
     const validatedMessages = await loadConversationContext(conversationId, messages);
 
