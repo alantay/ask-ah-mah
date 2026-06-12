@@ -9,23 +9,20 @@ interface SegmentedProgressProps {
   lines: readonly string[];
   /** Time each line holds before advancing. */
   intervalMs?: number;
-  /** Stop on the last line (fake-progress) instead of looping back to the first. */
-  holdOnLast?: boolean;
 }
 
 /**
- * Cycling voice-line stacked over a filling segment indicator — the shared
+ * Cycling voice-line stacked over a fill-and-hold segment indicator — the shared
  * "phase 2" progress visual. No spinner or container chrome: callers wrap it
  * with their own leading visual (e.g. the Tweak Bench granny icon). The chat
  * lays text and segments apart, so it drives {@link useCyclingIndex} +
- * {@link SegmentLine}/{@link SegmentBar} directly instead of using this.
+ * {@link SegmentLines}/{@link SegmentBar} directly instead of using this.
  */
 export function SegmentedProgress({
   lines,
   intervalMs = 1600,
-  holdOnLast = false,
 }: SegmentedProgressProps) {
-  const idx = useCyclingIndex(lines.length, { intervalMs, holdOnLast });
+  const idx = useCyclingIndex(lines.length, { intervalMs });
 
   return (
     <div className="w-full">
@@ -61,8 +58,14 @@ export function SegmentLines({ lines, idx }: { lines: readonly string[]; idx: nu
   );
 }
 
-/** The row of progress segments, filled up to and including `idx`. */
+/**
+ * The row of progress segments. Fills left→right and holds: segments before the
+ * leading edge are solid, the leading edge itself pulses (never goes solid), and
+ * the rest stay empty. Once `idx` holds at the last segment, that segment keeps
+ * pulsing — "almost there", never completing.
+ */
 export function SegmentBar({ count, idx }: { count: number; idx: number }) {
+  const reduced = useReducedMotion();
   return (
     <>
       {Array.from({ length: count }, (_, i) => (
@@ -70,7 +73,12 @@ export function SegmentBar({ count, idx }: { count: number; idx: number }) {
           key={i}
           className={cn(
             'w-[22px] h-[3px] rounded-sm transition-colors duration-400',
-            i <= idx ? 'bg-primary' : 'bg-[var(--border-soft)]',
+            i < idx && 'bg-primary',
+            i === idx &&
+              (reduced
+                ? 'bg-primary/50'
+                : 'bg-primary animate-[ahmah-pulse-soft_1.6s_ease-in-out_infinite]'),
+            i > idx && 'bg-[var(--border-soft)]',
           )}
         />
       ))}

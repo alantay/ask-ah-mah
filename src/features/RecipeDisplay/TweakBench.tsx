@@ -425,7 +425,7 @@ function TweakProgress() {
       </div>
       <div className="flex-1 pt-0.5">
         {showProgress ? (
-          <SegmentedProgress lines={PROGRESS_STAGES} intervalMs={1800} holdOnLast />
+          <SegmentedProgress lines={PROGRESS_STAGES} intervalMs={1800} />
         ) : (
           <div
             aria-live="polite"

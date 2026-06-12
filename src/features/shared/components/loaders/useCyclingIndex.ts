@@ -4,27 +4,27 @@ import { useEffect, useState } from 'react';
 
 interface CyclingOptions {
   intervalMs?: number;
-  /** Stop on the last index (fake-progress) instead of looping back to 0. */
-  holdOnLast?: boolean;
 }
 
 /**
- * Advances an index 0..count-1 on a timer. The shared heartbeat behind every
- * cycling voice-line + filling segment indicator.
+ * Advances an index 0..count-1 on a timer, then holds on the last one — the
+ * shared heartbeat behind the voice-line + fill-and-hold segment indicator.
+ * Never loops: the held last step is what gives the "almost there, never quite
+ * finishes" anticipation.
  */
 export function useCyclingIndex(
   count: number,
-  { intervalMs = 1600, holdOnLast = false }: CyclingOptions = {},
+  { intervalMs = 1600 }: CyclingOptions = {},
 ): number {
   const [idx, setIdx] = useState(0);
 
   useEffect(() => {
     setIdx(0);
     const id = setInterval(() => {
-      setIdx(i => (holdOnLast ? Math.min(i + 1, count - 1) : (i + 1) % count));
+      setIdx(i => Math.min(i + 1, count - 1));
     }, intervalMs);
     return () => clearInterval(id);
-  }, [count, intervalMs, holdOnLast]);
+  }, [count, intervalMs]);
 
   return idx;
 }
