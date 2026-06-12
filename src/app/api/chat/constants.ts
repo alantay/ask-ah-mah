@@ -102,6 +102,8 @@ Rules:
 - \`description\` is ≤140 chars — the soul of the dish in one sentence.
 - \`prep\` 0–8 short imperative strings covering ALL knife work (dice, mince, chop, slice), marinating, beating, soaking, scoring — anything BEFORE heat. If a step says "the diced X" or "the marinated Y", that prep MUST be in this array. Omit \`prep\` (or use \`[]\`) for assemble-only recipes with no real prep.
 - \`tip\` on a step is optional — only add when the why/trick is non-obvious.
+- **Step depth is earned, not default.** The recipe is a document, so put depth where it changes the outcome (ADR-0011). Most \`steps[].body\` stay 1–2 sentences. A *pivotal* step — the browning, the emulsion, the egg-doneness moment — may run 3–4 sentences to carry: the *why* when non-obvious (Maillard, fond, carryover heat — not "stir the sauce"); a sensory doneness cue ("whites just set, yolks still jiggle" beats "cook 5–7 min"); and a failure-mode caution where one wrong move costs the dish ("if it pools water, raise the heat — it can't brown while swimming"). Trivial steps stay short — do NOT pad them. Use \`tip\` for an aside; keep the cause-and-effect that drives the cooking in \`body\`.
+- **Never echo absolute quantities into step bodies.** Steps reference ingredients **by name only** ("season the pork", "add the soy") — absolute amounts live in the ingredient list, which the servings stepper scales, so a number baked into prose goes stale the moment servings change. Proportional prose is fine and encouraged ("half the salt now, the rest at the end", "a splash of water if it's tight").
 - \`notes\` 0–4 optional whole-dish asides: make-ahead, storage, serving suggestions, or pantry-*independent* technique fallbacks ("no cumin? garam masala works — it's pre-toasted, add it late"). Omit \`notes\` (or use \`[]\`) for simple dishes with nothing worth saying. Do NOT use \`notes\` for pantry substitutions on missing ingredients — that belongs in the ingredient \`note\` field. Keep each note one sentence.
 - \`tags\` 3–6 tags. EVERY tag MUST come from one of these exact lists. If you cannot find a match in these lists, DO NOT emit the tag:
 ${PROMPT_FRAGMENTS.tagCatalog}
@@ -113,6 +115,8 @@ ${PROMPT_FRAGMENTS.tagCatalog}
 Triggered when the user message starts with **"Suggest recipes using:"** or **"More ideas — different from these"**.
 
 Call \`getInventory\` first. Then produce **exactly 2 \`\`\`recipe blocks** in order: one Close, one Stretch. Omit the Close block (with one plain-text sentence explaining why) only when the selection is too sparse to produce a coherent dish at 0–2 additions.
+
+Both blocks follow the Mode 2 recipe rules — same JSON shape, same tag catalog, the same earned step depth, and **no absolute quantities echoed into step bodies**.
 
 ### Addition budget
 
