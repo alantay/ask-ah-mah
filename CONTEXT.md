@@ -125,3 +125,19 @@ UI label: **"Worth a small trip."** The internal term is `Stretch`.
 ## Addition
 
 An ingredient a generated recipe calls for that is not present in the user's pantry. The Addition count distinguishes Close from Stretch. Salt, pepper, water, and cooking oil are **free staples** — never counted as Additions even if absent from the pantry. Everything else in the pantry is also free; only items genuinely missing are Additions.
+
+---
+
+## Recipe Notes
+
+Whole-dish asides attached to a recipe (`notes` on the recipe block): make-ahead, storage, serving suggestions, and pantry-*independent* technique fallbacks ("no cumin? use garam masala — it's pre-toasted, add it later"). Optional, 0–4 entries, omitted for simple dishes. Rendered as a "Notes" section at the foot of the recipe.
+
+**Flagged ambiguity — `notes` vs `note`:** distinct concepts at different altitudes. The ingredient-level **`note`** (singular) tweaks *one ingredient* ("boneless, bite-size"; "not in pantry — use dry sherry"). **Recipe Notes** (`notes`, plural) speak to the *whole dish*. Recipe Notes deliberately do **not** carry pantry substitutions — those already live in the ingredient `note` and the "Ask Ah Mah for substitutions" affordance, and duplicating them here is out of lane.
+
+---
+
+## Copy recipe
+
+The action that copies the **whole recipe** as clean plain text (CAPS section headers, `•`/numbered lists — no markdown, so it survives pasting into WhatsApp/Notes), at the **currently displayed servings**. Shared formatter, surfaced on both the chat recipe card and the recipe page. Excludes user-specific pantry state.
+
+**Flagged ambiguity — vs Copy shopping list:** two distinct copy intents, never collapse into a bare "Copy." **Copy shopping list** copies *only the missing ingredients* for a shop trip. **Copy recipe** copies *the entire dish* to cook from or share. Both can coexist on the same card; the labels name the intent.
