@@ -25,6 +25,10 @@ export function useCyclingIndex(
 
   useEffect(() => {
     setIdx(0);
+    // Nothing to cycle through 0 or 1 lines — bail before the interval so the
+    // updater never does `% 0` (NaN) or Math.min(..., -1), which would break the
+    // hook's 0..count-1 contract.
+    if (count <= 1) return;
     const id = setInterval(() => {
       setIdx(i => (loop ? (i + 1) % count : Math.min(i + 1, count - 1)));
     }, intervalMs);
