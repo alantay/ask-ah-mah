@@ -1,6 +1,15 @@
 "use client";
 
-import { extractJsonObject, looksLikeJsonAttempt } from "@/lib/recipes/extractJsonObject";
+import {
+  CyclingVoiceLines,
+  LoadingDots,
+  shuffle,
+  usePhaseAfter,
+} from "@/features/shared/components/loaders";
+import {
+  extractJsonObject,
+  looksLikeJsonAttempt,
+} from "@/lib/recipes/extractJsonObject";
 import type { ChangeEntry, RecipeWithId } from "@/lib/recipes/schemas";
 import {
   applyTweakPatch,
@@ -8,11 +17,6 @@ import {
   recipeWithIdToBlock,
   TweakPatchSchema,
 } from "@/lib/recipes/schemas";
-import {
-  LoadingDots,
-  SegmentedProgress,
-  usePhaseAfter,
-} from "@/features/shared/components/loaders";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -36,28 +40,37 @@ interface TweakBenchProps {
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const QUICK_TWEAKS = ["Less spicy", "Make it quicker", "More servings", "Swap for pantry staples"];
+const QUICK_TWEAKS = [
+  "Less spicy",
+  "Make it quicker",
+  "More servings",
+  "Swap for pantry staples",
+];
 
 // A tweak is a single buffered model call (~10–15s, no token-level events to
-// stream — ADR-0010), so there's no real progress to report. These staged
-// voice-lines drive the shared segmented indicator: they advance on a timer and
-// hold on the last one. The result landing (loader unmounts, changes render) is
-// the real completion signal — the segments never fill all the way on their own.
-const PROGRESS_STAGES = [
-  "Reading your recipe…",
-  "Tasting as she goes…",
+// stream — ADR-0010), so there's no real progress to report. Rather than fake a
+// progress bar, these Ah-Mah voice-lines are shuffled and cycled to keep the
+// wait warm; the result landing (loader unmounts, changes render) is the real
+// completion signal.
+const TWEAK_THINKING_LINES = [
+  "Reading your recipe again…",
+  "Having a little taste as she goes…",
   "Adjusting the seasoning…",
-  "Writing it up neat…",
-  "Almost there…",
+  "Swapping a few things around…",
+  "Making sure it still tastes like home…",
+  "Tidying up the steps…",
+  "Checking the timing once more…",
+  "Writing it up nice and neat…",
 ];
-// Dots show for this long before the segmented indicator appears.
+// Dots show for this long before the cycling voice-lines appear.
 const TWEAK_PROGRESS_DELAY_MS = 2000;
 
 // Friendly fallbacks — shown when the model's reply can't be applied. Never
 // surface raw/partial JSON to the user.
 const MUDDLED_MESSAGE = "Aiyah, that tweak came back muddled. Try again?";
 const GENERIC_ERROR_MESSAGE = "Aiyah, something went wrong. Try again?";
-const EMPTY_REFUSAL_FALLBACK = "Ah Mah couldn't do that one. Try a different instruction?";
+const EMPTY_REFUSAL_FALLBACK =
+  "Ah Mah couldn't do that one. Try a different instruction?";
 
 // ─── TweakBench ──────────────────────────────────────────────────────────────
 
@@ -76,7 +89,9 @@ export function TweakBench({
   // Working draft accumulates across turns — used as the model input for each new turn
   const workingDraftRef = useRef<RecipeWithId>(recipe);
   const abortRef = useRef<AbortController | null>(null);
-  const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null);
+  const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(
+    null,
+  );
   const mountedRef = useRef(true);
 
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -146,7 +161,10 @@ export function TweakBench({
           // The route returns 422 when the model's output was truncated by the
           // token cap — a recoverable "try again", not a hard failure.
           if (res.status === 422) {
-            setTurns((prev) => [...prev, { kind: "refusal", text: MUDDLED_MESSAGE }]);
+            setTurns((prev) => [
+              ...prev,
+              { kind: "refusal", text: MUDDLED_MESSAGE },
+            ]);
             return;
           }
           throw new Error("Tweak request failed");
@@ -190,7 +208,10 @@ export function TweakBench({
         try {
           parsedJson = JSON.parse(extracted);
         } catch {
-          setTurns((prev) => [...prev, { kind: "refusal", text: MUDDLED_MESSAGE }]);
+          setTurns((prev) => [
+            ...prev,
+            { kind: "refusal", text: MUDDLED_MESSAGE },
+          ]);
           return;
         }
 
@@ -212,13 +233,22 @@ export function TweakBench({
             { kind: "assistant", changes: newChanges },
           ]);
         } else {
-          console.warn("[TweakBench] invalid tweak payload:", parsedResponse.error.flatten());
-          setTurns((prev) => [...prev, { kind: "refusal", text: MUDDLED_MESSAGE }]);
+          console.warn(
+            "[TweakBench] invalid tweak payload:",
+            parsedResponse.error.flatten(),
+          );
+          setTurns((prev) => [
+            ...prev,
+            { kind: "refusal", text: MUDDLED_MESSAGE },
+          ]);
         }
       } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") return;
         console.error("[TweakBench] stream error:", err);
-        setTurns((prev) => [...prev, { kind: "refusal", text: GENERIC_ERROR_MESSAGE }]);
+        setTurns((prev) => [
+          ...prev,
+          { kind: "refusal", text: GENERIC_ERROR_MESSAGE },
+        ]);
       } finally {
         if (mountedRef.current && abortRef.current === abortController) {
           abortRef.current = null;
@@ -408,14 +438,16 @@ export function TweakBench({
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
-// Perceived-progress affordance for the buffered tweak wait. There's no real
-// signal to read from a single buffered call, so it's two timed phases: quiet
-// loading dots first, then — once the wait is clearly going to take a moment —
-// the shared segmented indicator (cycling voice-line + filling segments,
-// holding on the last line until the result lands). Sub-threshold tweaks show
-// only dots, so the segments never flash.
+// Perceived-wait affordance for the buffered tweak. There's no real signal to
+// read from a single buffered call, so it's two timed phases: quiet loading dots
+// first, then — once the wait is clearly going to take a moment — shuffled,
+// cycling Ah-Mah voice-lines that keep the wait warm until the result lands.
+// Sub-threshold tweaks show only dots, so the lines never flash.
 function TweakProgress() {
   const [startedAt] = useState(() => Date.now());
+  // Shuffle once per wait; the dots phase rests on the first shuffled line so the
+  // hand-off into the cycling lines doesn't jump.
+  const [lines] = useState(() => shuffle(TWEAK_THINKING_LINES));
   const showProgress = usePhaseAfter(startedAt, TWEAK_PROGRESS_DELAY_MS);
 
   return (
@@ -425,13 +457,13 @@ function TweakProgress() {
       </div>
       <div className="flex-1 pt-0.5">
         {showProgress ? (
-          <SegmentedProgress lines={PROGRESS_STAGES} intervalMs={1800} />
+          <CyclingVoiceLines lines={lines} intervalMs={4000} loop />
         ) : (
           <div
             aria-live="polite"
             className="flex items-center gap-2.5 font-display italic text-dense text-foreground leading-[1.5]"
           >
-            {PROGRESS_STAGES[0]}
+            {lines[0]}
             <LoadingDots />
           </div>
         )}
