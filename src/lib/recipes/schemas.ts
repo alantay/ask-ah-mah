@@ -38,6 +38,10 @@ export const RecipeBlockSchema = z.object({
   ingredients: z.array(RecipeIngredientModelSchema),
   prep: z.array(z.string()).optional(),
   steps: z.array(RecipeStepSchema),
+  // Whole-dish asides (make-ahead, storage, serving, pantry-independent
+  // technique fallbacks). NOT pantry substitutions — those live on the
+  // ingredient `note` and the "Ask Ah Mah for substitutions" affordance.
+  notes: z.array(z.string()).optional(),
   tags: z.array(z.string()).optional(),
   // Set by the model in Cook With What You Have (Mode 3) responses only.
   // "close" = 0–2 additions (UI: "Right now"); "stretch" = 3–4 additions (UI: "Worth a small trip").
@@ -82,6 +86,7 @@ export type Recipe = {
   ingredients: RecipeIngredient[];
   prep?: string[];
   steps?: RecipeStep[];          // new: structured steps (null for legacy recipes)
+  notes?: string[];              // whole-dish asides (make-ahead, storage, serving)
   description?: string;
   totalTimeMinutes?: number;
   createdAt?: Date;
@@ -187,6 +192,7 @@ export function recipeBlockToRecipeWithId(block: RecipeBlock, base: RecipeWithId
     })),
     prep: block.prep,
     steps: block.steps,
+    notes: block.notes,
     tags: block.tags,
   };
 }
@@ -207,6 +213,7 @@ export function recipeWithIdToBlock(r: RecipeWithId) {
     })),
     prep: r.prep,
     steps: r.steps ?? [],
+    notes: r.notes,
     tags: r.tags,
   };
 }

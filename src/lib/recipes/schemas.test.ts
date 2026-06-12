@@ -2,8 +2,12 @@ import {
   applyTweakPatch,
   ChangeEntrySchema,
   type RecipeBlock,
+  RecipeBlockSchema,
+  recipeBlockToRecipeWithId,
   RecipeIngredientModelSchema,
   RecipeIngredientSchema,
+  type RecipeWithId,
+  recipeWithIdToBlock,
   TweakPatchSchema,
 } from "./schemas";
 
@@ -133,5 +137,40 @@ describe("applyTweakPatch", () => {
     const snapshot = JSON.parse(JSON.stringify(base));
     applyTweakPatch(base, { ingredients: [], changes: [] });
     expect(base).toEqual(snapshot);
+  });
+
+  // notes are not part of TweakPatchSchema (non-tweakable in v1), so a tweak
+  // must carry them through untouched rather than dropping them.
+  it("preserves notes across a tweak that does not mention them", () => {
+    const withNotes: RecipeBlock = { ...base, notes: ["Keeps 3 days; freezes well."] };
+    const next = applyTweakPatch(withNotes, { title: "Milder Mapo Tofu", changes: [] });
+    expect(next.notes).toEqual(["Keeps 3 days; freezes well."]);
+  });
+});
+
+describe("recipe notes", () => {
+  it("accepts an optional notes array on the recipe block", () => {
+    const parsed = RecipeBlockSchema.parse({
+      title: "Shakshuka",
+      baseServings: 2,
+      ingredients: [{ name: "egg", category: "Protein", amount: "4" }],
+      steps: [{ title: "Poach", body: "Crack eggs into the sauce." }],
+      notes: ["Make-ahead: the sauce keeps 3 days.", "Serve with crusty bread."],
+    });
+    expect(parsed.notes).toHaveLength(2);
+  });
+
+  it("round-trips notes through both converters", () => {
+    const block = {
+      title: "Shakshuka",
+      baseServings: 2,
+      ingredients: [{ name: "egg", category: "Protein" as const, amount: "4" }],
+      steps: [{ title: "Poach", body: "Crack eggs into the sauce." }],
+      notes: ["Freezes well."],
+    };
+    const base = { id: "r1", userId: "u1" } as RecipeWithId;
+    const withId = recipeBlockToRecipeWithId(block, base);
+    expect(withId.notes).toEqual(["Freezes well."]);
+    expect(recipeWithIdToBlock(withId).notes).toEqual(["Freezes well."]);
   });
 });
