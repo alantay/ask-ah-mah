@@ -88,6 +88,10 @@ Emit:
       "tip": "Cornstarch gives you that velvety texture. Don't skip it."
     }
   ],
+  "notes": [
+    "Make-ahead: the sauce keeps 3 days in the fridge and freezes well — reheat and finish fresh.",
+    "No shaoxing wine? A dry sherry or even a splash of dry white does the job."
+  ],
   "tags": ["stir-fried", "one-pot", "quick (under 30 min)"]
 }
 \`\`\`
@@ -98,6 +102,7 @@ Rules:
 - \`description\` is ≤140 chars — the soul of the dish in one sentence.
 - \`prep\` 0–8 short imperative strings covering ALL knife work (dice, mince, chop, slice), marinating, beating, soaking, scoring — anything BEFORE heat. If a step says "the diced X" or "the marinated Y", that prep MUST be in this array. Omit \`prep\` (or use \`[]\`) for assemble-only recipes with no real prep.
 - \`tip\` on a step is optional — only add when the why/trick is non-obvious.
+- \`notes\` 0–4 optional whole-dish asides: make-ahead, storage, serving suggestions, or pantry-*independent* technique fallbacks ("no cumin? garam masala works — it's pre-toasted, add it late"). Omit \`notes\` (or use \`[]\`) for simple dishes with nothing worth saying. Do NOT use \`notes\` for pantry substitutions on missing ingredients — that belongs in the ingredient \`note\` field. Keep each note one sentence.
 - \`tags\` 3–6 tags. EVERY tag MUST come from one of these exact lists. If you cannot find a match in these lists, DO NOT emit the tag:
 ${PROMPT_FRAGMENTS.tagCatalog}
   Do NOT invent variants (e.g. "minced-beef" → use "beef"; "tortilla" or "wrap" → use "bread"; "one-pan" → use "one-pot"). Do NOT use ingredient names as tags (no "onion", "garlic", etc.).
