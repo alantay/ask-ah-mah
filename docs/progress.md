@@ -87,6 +87,12 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Helper**: `latestUserText`/`messageText` (`src/lib/chat/messageText.ts`) pull the latest user message's text parts out of `UIMessage[]`.
 - **Surfacing captured items to the UI**: captured items fire no `tool-addInventoryItem` part, so the client's tool-call handler would miss them (no toast, stale pantry). The route wraps the model stream in `createUIMessageStream` and writes a `data-capturedInventory` part listing the names; `useChatSession.onFinish` toasts + `mutate`s `/api/inventory` on it, mirroring the tool path.
 
+### Recipe is a document — Shipped Jun 2026 (#267–#269)
+- **Framing**: the recipe is a reference artifact you read, scale, and paste — exempt from chat brevity. Depth lives in the recipe, not the conversation. See [ADR-0011](./adr/0011-recipe-is-a-document.md).
+- **Recipe Notes (#267)**: new `notes?: string[]` whole-dish asides (make-ahead, storage, serving, pantry-*independent* fallbacks) end-to-end — `RecipeBlockSchema` + `Recipe` type + converters + `TweakPatchSchema` + Prisma column, rendered as a Notes section on both `RecipeLetter` and `RecipeDisplay`. Notes ride through a tweak untouched but are **not tweakable** in v1 (decision: #270 — a `notes_updated` change-kind is deferred until there's demand).
+- **Earned step depth (#268)**: prompt-only — `steps[].body` carries the *why*, sensory doneness cues, and failure-mode cautions only on pivotal steps, under a soft length cap; trivial steps stay short. Step bodies reference ingredients by name only — no absolute quantities (they'd fight the servings stepper).
+- **Copy recipe (#269)**: one shared `formatRecipeAsText(recipe, servings)` (`src/features/Recipe`) → plain text, CAPS headers, `•`/numbered lists, no markdown (survives WhatsApp/Notes). Amounts scale to the displayed servings via `scaleAmount`; amountless rows read "to taste"; sections render only when present; a "— from Ah Mah" footer. Surfaced as a **Copy recipe** button on `RecipeDisplay` (header — servings lifted out of `RecipeBody` so the header reads the current count) and in the `RecipeLetter` action bar. Excludes pantry state ("10/12 in your pantry"). **Copy shopping list stays separate** — two distinct copy intents, never collapsed into a bare "Copy".
+
 ## Next up
 
 ### Shopping list from shortfalls
