@@ -1,18 +1,17 @@
 'use client';
 
+import {
+  SegmentBar,
+  SegmentLines,
+  useCyclingIndex,
+  useReducedMotion,
+} from '@/features/shared/components/loaders';
 import { cn } from '@/lib/utils';
-import { useEffect, useState } from 'react';
 import { STATUS_LINES } from '../../constants';
-import { useReducedMotion } from './useReducedMotion';
 
 export function StatusStream() {
   const reduced = useReducedMotion();
-  const [idx, setIdx] = useState(0);
-
-  useEffect(() => {
-    const t = setInterval(() => setIdx(i => (i + 1) % STATUS_LINES.length), 1600);
-    return () => clearInterval(t);
-  }, []);
+  const idx = useCyclingIndex(STATUS_LINES.length);
 
   return (
     <div className="max-w-xl">
@@ -48,33 +47,13 @@ export function StatusStream() {
 
           {/* Cycling status text */}
           <div className="flex-1 relative min-h-6">
-            {STATUS_LINES.map((line, i) => (
-              <div
-                key={i}
-                className={cn(
-                  'absolute inset-0 flex items-center font-display italic text-base text-foreground transition-[opacity,transform]',
-                  reduced ? 'duration-200' : 'duration-400',
-                  i === idx ? 'opacity-100' : 'opacity-0',
-                  !reduced && (i === idx ? 'translate-y-0' : 'translate-y-1')
-                )}
-              >
-                {line}
-              </div>
-            ))}
+            <SegmentLines lines={STATUS_LINES} idx={idx} />
           </div>
         </div>
 
-        {/* Progress dots */}
+        {/* Progress segments */}
         <div className="flex gap-1.5 mt-2.5 ml-1">
-          {STATUS_LINES.map((_, i) => (
-            <div
-              key={i}
-              className={cn(
-                'w-[22px] h-[3px] rounded-sm transition-colors duration-400',
-                i <= idx ? 'bg-primary' : 'bg-[var(--border-soft)]'
-              )}
-            />
-          ))}
+          <SegmentBar count={STATUS_LINES.length} idx={idx} />
         </div>
       </div>
     </div>

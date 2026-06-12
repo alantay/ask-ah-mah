@@ -8,6 +8,11 @@ import {
   recipeWithIdToBlock,
   TweakPatchSchema,
 } from "@/lib/recipes/schemas";
+import {
+  LoadingDots,
+  SegmentedProgress,
+  usePhaseAfter,
+} from "@/features/shared/components/loaders";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -35,8 +40,9 @@ const QUICK_TWEAKS = ["Less spicy", "Make it quicker", "More servings", "Swap fo
 
 // A tweak is a single buffered model call (~10–15s, no token-level events to
 // stream — ADR-0010), so there's no real progress to report. These staged
-// voice-lines + an easing bar make the wait *feel* like it's moving instead of
-// reading as a hang. Lines advance on a timer and hold on the last one.
+// voice-lines drive the shared segmented indicator: they advance on a timer and
+// hold on the last one. The result landing (loader unmounts, changes render) is
+// the real completion signal — the segments never fill all the way on their own.
 const PROGRESS_STAGES = [
   "Reading your recipe…",
   "Tasting as she goes…",
@@ -44,13 +50,8 @@ const PROGRESS_STAGES = [
   "Writing it up neat…",
   "Almost there…",
 ];
-const STAGE_MS = 3500; // time on each line before advancing
-// The bar eases toward BAR_MAX and never reaches it — the result landing (loader
-// unmounts, changes render) is the real completion signal, not a full bar.
-const BAR_MIN = 8;
-const BAR_MAX = 92;
-const BAR_TAU_MS = 6000; // easing time-constant: ~63% of the way at t = τ
-const TICK_MS = 120;
+// Dots show for this long before the segmented indicator appears.
+const TWEAK_PROGRESS_DELAY_MS = 2000;
 
 // Friendly fallbacks — shown when the model's reply can't be applied. Never
 // surface raw/partial JSON to the user.
@@ -407,22 +408,15 @@ export function TweakBench({
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
-// Perceived-progress affordance for the buffered tweak wait: a staged Ah Mah
-// voice-line plus a bar that eases toward (but never reaches) BAR_MAX. Both are
-// time-driven — there's no real signal to read from a single buffered call.
+// Perceived-progress affordance for the buffered tweak wait. There's no real
+// signal to read from a single buffered call, so it's two timed phases: quiet
+// loading dots first, then — once the wait is clearly going to take a moment —
+// the shared segmented indicator (cycling voice-line + filling segments,
+// holding on the last line until the result lands). Sub-threshold tweaks show
+// only dots, so the segments never flash.
 function TweakProgress() {
-  const [stage, setStage] = useState(0);
-  const [pct, setPct] = useState(BAR_MIN);
-
-  useEffect(() => {
-    const start = Date.now();
-    const id = window.setInterval(() => {
-      const t = Date.now() - start;
-      setStage(Math.min(Math.floor(t / STAGE_MS), PROGRESS_STAGES.length - 1));
-      setPct(BAR_MIN + (BAR_MAX - BAR_MIN) * (1 - Math.exp(-t / BAR_TAU_MS)));
-    }, TICK_MS);
-    return () => window.clearInterval(id);
-  }, []);
+  const [startedAt] = useState(() => Date.now());
+  const showProgress = usePhaseAfter(startedAt, TWEAK_PROGRESS_DELAY_MS);
 
   return (
     <div className="flex gap-2.5 items-start">
@@ -430,25 +424,17 @@ function TweakProgress() {
         <Image src="/granny-icon.png" alt="" fill className="object-contain" />
       </div>
       <div className="flex-1 pt-0.5">
-        <div
-          aria-live="polite"
-          className="font-display italic text-dense text-foreground leading-[1.5]"
-        >
-          {PROGRESS_STAGES[stage]}
-        </div>
-        <div
-          role="progressbar"
-          aria-label="Ah Mah is drafting the tweak"
-          aria-valuenow={Math.round(pct)}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          className="mt-2 h-[3px] w-full overflow-hidden rounded-full bg-border/60"
-        >
+        {showProgress ? (
+          <SegmentedProgress lines={PROGRESS_STAGES} intervalMs={1800} holdOnLast />
+        ) : (
           <div
-            className="h-full rounded-full bg-primary transition-[width] duration-300 ease-out motion-reduce:transition-none"
-            style={{ width: `${pct}%` }}
-          />
-        </div>
+            aria-live="polite"
+            className="flex items-center gap-2.5 font-display italic text-dense text-foreground leading-[1.5]"
+          >
+            {PROGRESS_STAGES[0]}
+            <LoadingDots />
+          </div>
+        )}
       </div>
     </div>
   );
