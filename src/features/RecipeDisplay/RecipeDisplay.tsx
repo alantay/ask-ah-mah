@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useSessionContext } from "@/contexts/SessionContext";
-import { CookingMode, ServingsStepper } from "@/features/Recipe";
+import { CookingMode, ServingsStepper, formatRecipeAsText } from "@/features/Recipe";
 import {
   type ChangeEntry,
   type RecipeIngredient,
@@ -103,6 +103,8 @@ function changesToDiff(
 
 interface RecipeBodyProps {
   selectedRecipe: RecipeWithId;
+  servings: number;
+  onServingsChange: (next: number) => void;
   changedIngredients?: Set<number>;
   changedSteps?: Set<number>;
   deletedIngredients?: Set<number>;
@@ -113,6 +115,8 @@ interface RecipeBodyProps {
 
 function RecipeBody({
   selectedRecipe,
+  servings,
+  onServingsChange,
   changedIngredients = new Set(),
   changedSteps = new Set(),
   deletedIngredients = new Set(),
@@ -120,9 +124,6 @@ function RecipeBody({
   originalRecipe,
   showHighlights = false,
 }: RecipeBodyProps) {
-  const [servings, setServings] = useState<number>(
-    selectedRecipe.baseServings ?? 2,
-  );
   const baseServings = selectedRecipe.baseServings || 2;
   const ingredients = (selectedRecipe.ingredients || []) as RecipeIngredient[];
   const origIngredients = (originalRecipe?.ingredients || []) as RecipeIngredient[];
@@ -251,8 +252,8 @@ function RecipeBody({
               </h2>
               <ServingsStepper
                 servings={servings}
-                onDecrement={() => setServings((s) => Math.max(1, s - 1))}
-                onIncrement={() => setServings((s) => s + 1)}
+                onDecrement={() => onServingsChange(Math.max(1, servings - 1))}
+                onIncrement={() => onServingsChange(servings + 1)}
               />
             </div>
             <ul className="list-none p-0 mt-2 border-t border-border">
@@ -465,6 +466,9 @@ export default function RecipeDisplay({
 }: RecipeDisplayProps) {
   const { userId } = useSessionContext();
   const [cooking, setCooking] = useState(false);
+  // Lifted out of RecipeBody so the header "Copy recipe" action can read the
+  // currently displayed servings and scale the copied text to match.
+  const [servings, setServings] = useState<number>(recipe.baseServings ?? 2);
 
   // ── Bench state ────────────────────────────────────────────────────────────
   const [benchOpen, setBenchOpen] = useState(false);
@@ -525,6 +529,7 @@ export default function RecipeDisplay({
   useEffect(() => {
     originalRecipeRef.current = recipe;
     setWorkingDraft(recipe);
+    setServings(recipe.baseServings ?? 2);
     setChanges([]);
     setBenchOpen(false);
     setIsSaving(false);
@@ -572,6 +577,14 @@ export default function RecipeDisplay({
       setIsSaving(false);
     }
   }, [recipe.id, userId, workingDraft]);
+
+  const handleCopyRecipe = useCallback(() => {
+    const text = formatRecipeAsText(recipeWithIdToBlock(workingDraft), servings);
+    navigator.clipboard.writeText(text).then(
+      () => toast.success("Recipe copied — paste it anywhere."),
+      () => toast.error("Couldn't copy — try again?"),
+    );
+  }, [workingDraft, servings]);
 
   const handleStartCooking = () => {
     if (onStartCooking) {
@@ -628,6 +641,17 @@ export default function RecipeDisplay({
                   </button>
                 )}
                 <div className="flex items-center gap-2 ml-auto">
+                  <button
+                    onClick={handleCopyRecipe}
+                    className="inline-flex items-center gap-1.5 min-h-11 px-3 py-1.5 text-xs font-semibold text-foreground bg-card border border-border rounded-md cursor-pointer hover:bg-muted/60 transition-colors"
+                    aria-label="Copy recipe"
+                  >
+                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" className="shrink-0">
+                      <rect x="5" y="2" width="9" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
+                      <path d="M5 4H3.5A1.5 1.5 0 0 0 2 5.5v9A1.5 1.5 0 0 0 3.5 16h7A1.5 1.5 0 0 0 12 14.5V13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                    </svg>
+                    Copy recipe
+                  </button>
                   {!benchOpen && (
                     <button
                       onClick={() => setBenchOpen(true)}
@@ -658,6 +682,8 @@ export default function RecipeDisplay({
               <div className="rounded-xl border border-border bg-card overflow-hidden shadow-[0_1px_0_var(--color-border-soft)]">
                 <RecipeBody
                   selectedRecipe={workingDraft}
+                  servings={servings}
+                  onServingsChange={setServings}
                   changedIngredients={changedIngredients}
                   changedSteps={changedSteps}
                   deletedIngredients={deletedIngredients}

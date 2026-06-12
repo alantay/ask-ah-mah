@@ -17,7 +17,7 @@ import { useState } from "react";
 import { CookingMode, ServingsStepper } from "@/features/Recipe";
 import { toast } from "sonner";
 import useSWR, { useSWRConfig } from "swr";
-import { ScaledNum, scaleAmount } from "@/features/Recipe";
+import { ScaledNum, scaleAmount, formatRecipeAsText } from "@/features/Recipe";
 
 export interface RecipeLetterProps {
   // Partial during progressive reveal — fields fill in as the JSON streams.
@@ -166,6 +166,26 @@ export function RecipeLetter({
     navigator.clipboard.writeText(lines).then(
       () => toast.success("Shopping list copied — go get them!"),
       () => toast.error("Aiyah, couldn't copy — select and copy by hand?"),
+    );
+  };
+
+  const copyRecipe = () => {
+    const text = formatRecipeAsText(
+      {
+        title,
+        description: recipe.description,
+        totalTimeMinutes: recipe.totalTimeMinutes,
+        baseServings,
+        ingredients,
+        prep,
+        steps,
+        notes: recipe.notes,
+      },
+      servings,
+    );
+    navigator.clipboard.writeText(text).then(
+      () => toast.success("Recipe copied — paste it anywhere."),
+      () => toast.error("Aiyah, couldn't copy — try again?"),
     );
   };
 
@@ -402,6 +422,17 @@ export function RecipeLetter({
       {/* Action bar */}
       {!isStreaming && (onSave || canCook) && (
         <div className="flex gap-2 items-center pt-3 mt-4.5 border-t border-dashed border-border">
+          <button
+            onClick={copyRecipe}
+            aria-label="Copy recipe"
+            className="px-3 py-1.5 font-sans text-xs font-semibold text-foreground bg-card border border-border rounded-lg cursor-pointer shadow-[0_1px_0_var(--border-soft)] hover:bg-muted/50 transition-colors inline-flex items-center gap-1"
+          >
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+              <rect x="5" y="2" width="9" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
+              <path d="M5 4H3.5A1.5 1.5 0 0 0 2 5.5v9A1.5 1.5 0 0 0 3.5 16h7A1.5 1.5 0 0 0 12 14.5V13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+            </svg>
+            Copy recipe
+          </button>
           {onSave && (
             isSaved ? (
               <button
