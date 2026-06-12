@@ -1,19 +1,21 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import { usePhaseAfter } from '@/features/shared/components/loaders';
+import React, { useMemo } from 'react';
 import { getRandomNormalisedPhrase } from '../../utils';
 import { StatusStream } from './StatusStream';
 import { Typing } from './Typing';
 
-const SLOW_THRESHOLD_MS = 6000;
+// Dots give way to the segmented progress indicator after this long. Kept short
+// so the indicator shows on nearly every generation; sub-threshold replies show
+// only dots, so there's no progress flash.
+const SLOW_THRESHOLD_MS = 2000;
 
 interface ChatLoaderProps {
   submittedAt: number | null;
 }
 
 export function ChatLoader({ submittedAt }: ChatLoaderProps) {
-  const [elapsed, setElapsed] = useState(0);
-
   // Pick a stable phrase per submit
   const phrase = useMemo(
     () => getRandomNormalisedPhrase(),
@@ -21,18 +23,9 @@ export function ChatLoader({ submittedAt }: ChatLoaderProps) {
     [submittedAt],
   );
 
-  useEffect(() => {
-    if (!submittedAt) return;
-    const t = setInterval(() => setElapsed(Date.now() - submittedAt), 500);
-    return () => {
-      clearInterval(t);
-      setElapsed(0);
-    };
-  }, [submittedAt]);
+  const slow = usePhaseAfter(submittedAt, SLOW_THRESHOLD_MS);
 
-  let inner: React.ReactNode;
-  if (elapsed >= SLOW_THRESHOLD_MS) inner = <StatusStream />;
-  else inner = <Typing phrase={phrase} />;
+  const inner: React.ReactNode = slow ? <StatusStream /> : <Typing phrase={phrase} />;
 
   return <div data-testid="loader-ghost">{inner}</div>;
 }

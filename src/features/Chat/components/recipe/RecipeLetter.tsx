@@ -425,13 +425,13 @@ export function RecipeLetter({
           <button
             onClick={copyRecipe}
             aria-label="Copy recipe"
-            className="px-3 py-1.5 font-sans text-xs font-semibold text-foreground bg-card border border-border rounded-lg cursor-pointer shadow-[0_1px_0_var(--border-soft)] hover:bg-muted/50 transition-colors inline-flex items-center gap-1"
+            title="Copy recipe"
+            className="p-1.5 -ml-1.5 text-muted-foreground hover:text-foreground transition-colors cursor-pointer inline-flex items-center rounded-md"
           >
-            <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
               <rect x="5" y="2" width="9" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
               <path d="M5 4H3.5A1.5 1.5 0 0 0 2 5.5v9A1.5 1.5 0 0 0 3.5 16h7A1.5 1.5 0 0 0 12 14.5V13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
             </svg>
-            Copy recipe
           </button>
           {onSave && (
             isSaved ? (

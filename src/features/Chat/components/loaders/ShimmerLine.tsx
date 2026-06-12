@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { useReducedMotion } from './useReducedMotion';
+import { useReducedMotion } from '@/features/shared/components/loaders';
 
 interface ShimmerLineProps {
   width?: string | number;

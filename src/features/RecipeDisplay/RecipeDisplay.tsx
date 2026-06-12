@@ -643,14 +643,14 @@ export default function RecipeDisplay({
                 <div className="flex items-center gap-2 ml-auto">
                   <button
                     onClick={handleCopyRecipe}
-                    className="inline-flex items-center gap-1.5 min-h-11 px-3 py-1.5 text-xs font-semibold text-foreground bg-card border border-border rounded-md cursor-pointer hover:bg-muted/60 transition-colors"
+                    className="inline-flex items-center min-h-11 px-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                     aria-label="Copy recipe"
+                    title="Copy recipe"
                   >
-                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" className="shrink-0">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
                       <rect x="5" y="2" width="9" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
                       <path d="M5 4H3.5A1.5 1.5 0 0 0 2 5.5v9A1.5 1.5 0 0 0 3.5 16h7A1.5 1.5 0 0 0 12 14.5V13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
                     </svg>
-                    Copy recipe
                   </button>
                   {!benchOpen && (
                     <button

@@ -72,34 +72,41 @@ export const RECIPE_PROCESSING_MESSAGES = [
 
 // Normalised phrases — slot after "Ah Mah ·" in the typing loader eyebrow
 export const NORMALISED_THINKING_MESSAGES = [
-  'checking her recipe book…',
-  'rummaging through her memory…',
-  'tasting and adjusting…',
-  'stirring up some ideas…',
-  'simmering on this…',
-  'thinking hard…',
-  'wracking her brain…',
-  'putting on her thinking cap…',
-  'scratching her head…',
-  'thinking about this…',
-  'consulting her kitchen wisdom…',
-  'digging through her cooking secrets…',
-  'mixing up something good…',
-  'seasoning her thoughts…',
-  'letting ideas marinate…',
-  'cooking up an answer…',
-  'hunting through her pantry…',
-  'brewing up some suggestions…',
-  'chopping through the possibilities…',
-  'warming up her ideas…',
+  "checking her recipe book…",
+  "rummaging through her memory…",
+  "tasting and adjusting…",
+  "stirring up some ideas…",
+  "simmering on this…",
+  "thinking hard…",
+  "wracking her brain…",
+  "putting on her thinking cap…",
+  "scratching her head…",
+  "thinking about this…",
+  "consulting her kitchen wisdom…",
+  "digging through her cooking secrets…",
+  "mixing up something good…",
+  "seasoning her thoughts…",
+  "letting ideas marinate…",
+  "cooking up an answer…",
+  "hunting through her pantry…",
+  "brewing up some suggestions…",
+  "chopping through the possibilities…",
+  "warming up her ideas…",
 ] as const;
 
-// Status stream lines for the C loader variant
+// Ah-Mah voice-lines for the status-stream wait. Shuffled per wait and cycled,
+// so the loader stays lively over a long generation instead of freezing on one
+// line. Standalone lines (no linear order) — there's no real progress to narrate.
 export const STATUS_LINES = [
-  'looking at what you have…',
-  'thinking of something nice…',
-  'checking the pantry…',
-  'writing the steps…',
+  "Looking at what you have…",
+  "Hmm, what goes nicely together…",
+  "Opening the pantry, having a peek…",
+  "Thinking what Ah Mah would cook…",
+  "Tasting it in her head first…",
+  "Remembering an old family recipe…",
+  "Deciding how much spice is just right…",
+  "Writing the steps down neat for you…",
+  "Almost got it, don’t rush Ah Mah…",
 ] as const;
 
 // ID generation patterns
@@ -111,7 +118,7 @@ export const isTempId = (id: string): boolean => id.startsWith("temp-");
 // Helper function to get a random recipe processing message
 export const getRandomRecipeProcessingMessage = (): string => {
   const randomIndex = Math.floor(
-    Math.random() * RECIPE_PROCESSING_MESSAGES.length
+    Math.random() * RECIPE_PROCESSING_MESSAGES.length,
   );
   return RECIPE_PROCESSING_MESSAGES[randomIndex];
 };

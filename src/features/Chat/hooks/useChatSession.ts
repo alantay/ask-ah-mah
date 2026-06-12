@@ -201,7 +201,12 @@ export function useChatSession() {
   };
 
   useEffect(() => {
-    if (status !== "submitted") setSubmittedAt(null);
+    // Keep submittedAt through "submitted" AND early "streaming": the loader
+    // stays up until the first renderable content, and its dots→segmented-
+    // progress phase is timed from this stamp. Clearing it on "streaming" (the
+    // first token) would reset the clock and snap the loader back to dots. Only
+    // clear once the generation is actually over.
+    if (status === "ready" || status === "error") setSubmittedAt(null);
     // Once status leaves "ready" the AI SDK's own disable logic takes over.
     // Release the sync lock so it doesn't block re-sends after the response.
     if (status !== "ready") {

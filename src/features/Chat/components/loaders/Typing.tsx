@@ -1,7 +1,7 @@
 'use client';
 
+import { LoadingDots, useReducedMotion } from '@/features/shared/components/loaders';
 import { cn } from '@/lib/utils';
-import { useReducedMotion } from './useReducedMotion';
 
 interface TypingProps {
   phrase: string;
@@ -24,19 +24,8 @@ export function Typing({ phrase }: TypingProps) {
         </div>
 
         {/* Dots bubble */}
-        <div className="inline-flex items-center gap-1.5 py-3 px-4 bg-card border border-border rounded-2xl rounded-bl-sm shadow-[0_1px_0_var(--border-soft)]">
-          {[0, 1, 2].map(i => (
-            <span
-              key={i}
-              className={cn(
-                'inline-block size-[7px] rounded-full bg-primary',
-                !reduced && 'animate-[ahmah-dot_1.4s_ease-in-out_infinite]'
-              )}
-              style={{
-                animationDelay: reduced ? undefined : `${i * 0.16}s`,
-              }}
-            />
-          ))}
+        <div className="inline-flex items-center py-3 px-4 bg-card border border-border rounded-2xl rounded-bl-sm shadow-[0_1px_0_var(--border-soft)]">
+          <LoadingDots />
         </div>
       </div>
     </div>
