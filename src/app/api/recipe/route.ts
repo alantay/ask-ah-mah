@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     metadata = await processRecipe(name, instructions);
   } catch (error) {
     console.error("processRecipe failed, saving without metadata:", error);
-    metadata = { tags: [], baseServings: 2, ingredients: [], description: "" };
+    metadata = { tags: [], baseServings: 2, ingredients: [], description: "", prep: [], notes: [] };
   }
 
   const tags = normalizeTags(metadata.tags ?? []);
@@ -44,6 +44,8 @@ export async function POST(req: NextRequest) {
       recipeId,
       baseServings: metadata.baseServings,
       ingredients: metadata.ingredients,
+      prep: metadata.prep,
+      notes: metadata.notes,
       description: metadata.description,
       totalTimeMinutes: metadata.totalTimeMinutes,
     },

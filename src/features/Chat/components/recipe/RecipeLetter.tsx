@@ -384,6 +384,21 @@ export function RecipeLetter({
         </div>
       )}
 
+      {/* Notes — whole-dish asides (make-ahead, storage, serving) */}
+      {recipe.notes && recipe.notes.length > 0 && (
+        <div className="mt-5">
+          <span className={cn(EYEBROW_BASE, "text-muted-foreground block mb-2")}>Notes</span>
+          <ul className="list-none p-0 m-0 flex flex-col">
+            {recipe.notes.map((note, i) => (
+              <li key={i} className="flex gap-2.5 items-baseline py-2 border-b border-dashed border-border last:border-none">
+                <span className="font-mono text-[11px] font-bold text-ink-faint shrink-0">·</span>
+                <span className="font-display text-sm text-foreground leading-[1.45]">{note}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Action bar */}
       {!isStreaming && (onSave || canCook) && (
         <div className="flex gap-2 items-center pt-3 mt-4.5 border-t border-dashed border-border">

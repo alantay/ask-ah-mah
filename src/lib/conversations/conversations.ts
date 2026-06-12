@@ -147,7 +147,7 @@ export async function autoTitleConversation(id: string): Promise<void> {
   }
 
   const { object } = await generateObject({
-    model: openai("gpt-4.1-mini"),
+    model: openai("gpt-5-mini"),
     schema: z.object({ title: z.string().max(40) }),
     prompt: `Give this cooking chat session a short, warm title (3-6 words, no quotes, no punctuation at end).
 User: "${firstUserMessage.content}"

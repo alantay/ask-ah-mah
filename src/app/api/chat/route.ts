@@ -1,9 +1,18 @@
+import { captureMentionedInventory } from "@/lib/chat/captureInventory";
 import { loadConversationContext } from "@/lib/chat/context";
 import { chatErrorResponse } from "@/lib/chat/errors";
+import { latestUserText } from "@/lib/chat/messageText";
 import { buildChatTools } from "@/lib/chat/tools";
 import { missingUserId } from "@/lib/http";
 import { openai } from "@ai-sdk/openai";
-import { convertToModelMessages, stepCountIs, streamText, UIMessage } from "ai";
+import {
+  convertToModelMessages,
+  createUIMessageStream,
+  createUIMessageStreamResponse,
+  stepCountIs,
+  streamText,
+  UIMessage,
+} from "ai";
 import { NextRequest, NextResponse } from "next/server";
 import { CHAT_SYSTEM_PROMPT } from "./constants";
 
@@ -18,17 +27,49 @@ export async function POST(req: NextRequest) {
     if (!userId) return missingUserId();
     if (!conversationId) return NextResponse.json({ error: "conversationId is required" }, { status: 400 });
 
+    // Deterministically capture any pantry items the user mentions BEFORE the
+    // chat model runs, so a subsequent getInventory call reflects them. Gated
+    // by a keyword heuristic; the model's addInventoryItem tool is the fallback
+    // for phrasings the gate misses. Failures here are swallowed (non-fatal).
+    const captured = await captureMentionedInventory(latestUserText(messages), userId);
+
     const validatedMessages = await loadConversationContext(conversationId, messages);
 
-    const result = streamText({
-      model: openai("gpt-4.1-mini"),
-      messages: convertToModelMessages(validatedMessages),
-      system: CHAT_SYSTEM_PROMPT,
-      stopWhen: [stepCountIs(5)],
-      tools: buildChatTools(userId),
+    const stream = createUIMessageStream({
+      execute: ({ writer }) => {
+        // Tell the client what we captured server-side so it can toast and
+        // refresh the pantry — the model never fired a tool for these, so the
+        // client's tool-call handler would otherwise miss them.
+        if (captured.length > 0) {
+          writer.write({
+            type: "data-capturedInventory",
+            data: { items: captured.map((item) => item.name) },
+          });
+        }
+
+        // Tell the model what we already captured this turn so it doesn't
+        // redundantly call addInventoryItem for the same items (the client
+        // also dedupes, but this avoids a wasted tool step + upsert).
+        const captureNote =
+          captured.length > 0
+            ? `\n\n# Already added this turn\nThese items are ALREADY in the pantry (just added for you): ${captured
+                .map((item) => item.name)
+                .join(", ")}. Do NOT call addInventoryItem for them again — acknowledge naturally and continue.`
+            : "";
+
+        const result = streamText({
+          model: openai("gpt-5-mini"),
+          messages: convertToModelMessages(validatedMessages),
+          system: CHAT_SYSTEM_PROMPT + captureNote,
+          stopWhen: [stepCountIs(5)],
+          tools: buildChatTools(userId),
+        });
+
+        writer.merge(result.toUIMessageStream());
+      },
     });
 
-    return result.toUIMessageStreamResponse();
+    return createUIMessageStreamResponse({ stream });
   } catch (error) {
     return chatErrorResponse(error);
   }

@@ -60,6 +60,7 @@ model Recipe {
   ingredients      Json     @default("[]")
   prep             String[] @default([])
   steps            Json?
+  notes            String[] @default([])
   description      String?
   totalTimeMinutes Int?
   createdAt        DateTime?

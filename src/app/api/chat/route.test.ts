@@ -34,6 +34,15 @@ jest.mock("ai", () => ({
   stepCountIs: jest.fn(),
   streamText: jest.fn(),
   validateUIMessages: jest.fn(),
+  // Run the execute callback immediately with a no-op writer so streamText
+  // still gets called, then hand back a sentinel the route response uses.
+  createUIMessageStream: jest.fn(
+    ({ execute }: { execute: (arg: { writer: unknown }) => void }) => {
+      execute({ writer: { write: jest.fn(), merge: jest.fn() } });
+      return "mock-ui-stream";
+    }
+  ),
+  createUIMessageStreamResponse: jest.fn(() => "mock-stream-response"),
 }));
 
 jest.mock("./constants", () => ({
@@ -86,9 +95,7 @@ describe("Chat API Route", () => {
       >
     );
     mockedStreamText.mockReturnValue({
-      toUIMessageStreamResponse: jest
-        .fn()
-        .mockReturnValue("mock-stream-response"),
+      toUIMessageStream: jest.fn().mockReturnValue("mock-model-stream"),
     } as unknown as ReturnType<typeof streamText>);
   });
 
@@ -133,7 +140,7 @@ describe("Chat API Route", () => {
       const response = await POST(request);
 
       expect(response).toBe("mock-stream-response");
-      expect(mockedOpenai).toHaveBeenCalledWith("gpt-4.1-mini");
+      expect(mockedOpenai).toHaveBeenCalledWith("gpt-5-mini");
       expect(mockedGetMessages).toHaveBeenCalledWith("conv-123");
       expect(mockedValidateUIMessages).toHaveBeenCalled();
       expect(mockedStreamText).toHaveBeenCalled();
