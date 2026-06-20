@@ -1,0 +1,20 @@
+{
+  "projectId": "568a7eb2-48a6-432c-b9c3-5a07da4b2df1",
+  "shape": "package",
+  "pkg": "ask-ah-mah",
+  "globalName": "AskAhMah",
+  "srcDir": "src",
+  "tsconfig": "tsconfig.json",
+  "entry": "ds-entry.ts",
+  "cssEntry": ".design-sync/.cache/ds-compiled.css",
+  "buildCmd": "node .ds-sync/node_modules/.bin/tailwindcss -i .design-sync/ds-tailwind-input.css -o .design-sync/.cache/ds-compiled.css",
+  "guidelinesGlob": ["docs/design-system.md"],
+  "componentSrcMap": {
+    "Eyebrow": "src/features/shared/components/recipe/Eyebrow.tsx",
+    "SectionHeading": "src/features/shared/components/recipe/SectionHeading.tsx",
+    "DottedList": "src/features/shared/components/recipe/DottedList.tsx",
+    "StepTip": "src/features/shared/components/recipe/StepTip.tsx",
+    "StepItem": "src/features/shared/components/recipe/StepItem.tsx",
+    "StepList": "src/features/shared/components/recipe/StepList.tsx"
+  }
+}

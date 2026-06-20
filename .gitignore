@@ -66,3 +66,8 @@ temp/
 test-results/
 .agentindex
 .agentindexignore
+.ds-sync/
+ds-bundle/
+.design-sync/.cache/
+.design-sync/learnings/
+ds-entry.ts
