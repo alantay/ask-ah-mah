@@ -42,6 +42,9 @@
   --color-chat: var(--chat);
   --color-ink-faint: var(--ink-faint);
   --color-callout: var(--callout);
+  --color-danger: var(--danger);
+  --color-danger-border: var(--danger-border);
+  --color-danger-tint: var(--danger-tint);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -103,6 +106,13 @@
 
   /* Warm ochre — tip / aside accent bar (StepTip, callouts) */
   --callout: oklch(0.65 0.10 60);
+
+  /* Danger — error states (form validation, the "couldn't read" banner).
+     `danger` is the strong status ink (badge); `danger-border` the active edge
+     + ring; `danger-tint` the pale fill behind an error message. */
+  --danger: oklch(0.52 0.16 27);
+  --danger-border: oklch(0.78 0.10 27);
+  --danger-tint: oklch(0.97 0.04 27);
 
   /* Terracotta primary */
   --primary: oklch(0.56 0.135 35);
@@ -171,6 +181,9 @@
   --ink-faint: oklch(0.55 0.025 55);
   --jade: oklch(0.6 0.1 168);
   --jade-foreground: oklch(0.95 0.025 78);
+  --danger: oklch(0.66 0.18 27);
+  --danger-border: oklch(0.5 0.12 27);
+  --danger-tint: oklch(0.32 0.06 27);
   --accent: oklch(0.34 0.025 50);
   --accent-foreground: oklch(0.95 0.025 78);
   --destructive: oklch(0.66 0.18 25);
