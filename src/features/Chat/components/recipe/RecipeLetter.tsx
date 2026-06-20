@@ -15,6 +15,7 @@ import { fetcher } from "@/lib/utils";
 import { ShoppingCart, TimerIcon } from "lucide-react";
 import { useState } from "react";
 import { CookingMode, ServingsStepper } from "@/features/Recipe";
+import { DottedList, Eyebrow, StepList } from "@/features/shared/components/recipe";
 import { toast } from "sonner";
 import useSWR, { useSWRConfig } from "swr";
 import { ScaledNum, scaleAmount, formatRecipeAsText } from "@/features/Recipe";
@@ -198,8 +199,6 @@ export function RecipeLetter({
   const timeLabel = recipe.totalTimeMinutes
     ? `${recipe.totalTimeMinutes} min`
     : null;
-  const EYEBROW_BASE =
-    "font-sans text-eyebrow font-bold tracking-widest uppercase";
 
   const showPantryPill = !!userId && !isStreaming;
   const canCook = !isStreaming && steps.length > 0;
@@ -306,12 +305,10 @@ export function RecipeLetter({
       {ingredients.length > 0 && (
         <div className="mb-5.5">
           <div className="flex items-center justify-between mb-2">
-            <span className={cn(EYEBROW_BASE, "text-muted-foreground")}>What to gather</span>
+            <Eyebrow className="text-muted-foreground">What to gather</Eyebrow>
             {!isStreaming && (
               <div className="flex items-center gap-1.5">
-                <span className="font-sans text-eyebrow font-bold tracking-[0.16em] uppercase text-ink-faint">
-                  Servings
-                </span>
+                <Eyebrow>Servings</Eyebrow>
                 <ServingsStepper
                   servings={servings}
                   onDecrement={() => setServings((s) => Math.max(1, s - 1))}
@@ -366,56 +363,19 @@ export function RecipeLetter({
       {/* Before you start — mise en place */}
       {prep && prep.length > 0 && (
         <div className="mb-5">
-          <span className={cn(EYEBROW_BASE, "text-muted-foreground block mb-2")}>Before you start</span>
-          <ul className="list-none p-0 m-0 flex flex-col">
-            {prep.map((item, i) => (
-              <li key={i} className="flex gap-2.5 items-baseline py-2 border-b border-dashed border-border last:border-none">
-                <span className="font-mono text-[11px] font-bold text-ink-faint shrink-0">·</span>
-                <span className="font-display text-sm text-foreground leading-[1.45]">{item}</span>
-              </li>
-            ))}
-          </ul>
+          <Eyebrow className="text-muted-foreground block mb-2">Before you start</Eyebrow>
+          <DottedList items={prep} />
         </div>
       )}
 
       {/* Steps — each step a conversational bubble with a numbered ink-stamp */}
-      {steps.length > 0 && (
-        <div className="flex flex-col gap-4.5">
-          {steps.map((step, i) => (
-            <div key={i} className="flex gap-3 items-start">
-              <div className="shrink-0 size-9 bg-primary text-white flex items-center justify-center font-display font-bold text-lg rounded-[50%_50%_50%_8px] -rotate-3 shadow-[inset_0_-2px_0_var(--primary-deep),0_1px_0_var(--primary-deep)]">
-                {i + 1}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-display font-semibold text-base text-foreground mb-1 tracking-tight">
-                  {step.title}
-                </div>
-                <div className="font-display text-base text-foreground leading-relaxed">
-                  {step.body}
-                </div>
-                {step.tip && (
-                  <div className="mt-2 pl-3 border-l-[3px] border-[oklch(0.65_0.10_60)] font-display italic text-sm text-muted-foreground leading-relaxed">
-                    — {step.tip}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      {steps.length > 0 && <StepList steps={steps} marker="stamp" />}
 
       {/* Notes — whole-dish asides (make-ahead, storage, serving) */}
       {recipe.notes && recipe.notes.length > 0 && (
         <div className="mt-5">
-          <span className={cn(EYEBROW_BASE, "text-muted-foreground block mb-2")}>Notes</span>
-          <ul className="list-none p-0 m-0 flex flex-col">
-            {recipe.notes.map((note, i) => (
-              <li key={i} className="flex gap-2.5 items-baseline py-2 border-b border-dashed border-border last:border-none">
-                <span className="font-mono text-[11px] font-bold text-ink-faint shrink-0">·</span>
-                <span className="font-display text-sm text-foreground leading-[1.45]">{note}</span>
-              </li>
-            ))}
-          </ul>
+          <Eyebrow className="text-muted-foreground block mb-2">Notes</Eyebrow>
+          <DottedList items={recipe.notes} />
         </div>
       )}
 

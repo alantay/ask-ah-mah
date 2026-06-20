@@ -80,7 +80,7 @@ describe("RecipeDisplay", () => {
       } as never);
       expect(screen.getByText("Heat the pan")).toBeInTheDocument();
       expect(screen.getByText("Put butter in a pan on medium heat.")).toBeInTheDocument();
-      expect(screen.getByText("Don't let it brown.")).toBeInTheDocument();
+      expect(screen.getByText(/Don't let it brown\./)).toBeInTheDocument();
       expect(screen.getByText("Add eggs")).toBeInTheDocument();
       expect(screen.queryByTestId("streamdown")).not.toBeInTheDocument();
     });
