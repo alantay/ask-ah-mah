@@ -239,7 +239,7 @@ export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
         {step === "extracting" ? (
           <div className="px-5 sm:px-6 pt-5 pb-4 border-b border-border shrink-0 flex items-center gap-3">
             <div className="w-4 h-4 rounded-full border-2 border-border border-t-primary shrink-0 [animation:modalSpin_0.9s_linear_infinite]" />
-            <span className="font-display italic text-[15px] text-foreground">
+            <span className="font-display italic text-emphasis text-foreground">
               Ah Mah is reading your recipe…
             </span>
           </div>
@@ -253,10 +253,10 @@ export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
                 </svg>
               </div>
               <div>
-                <h2 className="font-display font-semibold text-[20px] sm:text-[22px] text-foreground tracking-tight leading-tight">
+                <h2 className="font-display font-semibold text-heading text-foreground tracking-tight leading-tight">
                   Add a recipe
                 </h2>
-                <p className="hidden sm:block font-display italic text-[13px] text-muted-foreground mt-1 leading-snug">
+                <p className="hidden sm:block font-display italic text-dense text-muted-foreground mt-1 leading-snug">
                   Paste any recipe text — Ah Mah will read it and tidy it up for you.
                 </p>
               </div>
@@ -297,7 +297,7 @@ export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
                     "font-sans text-dense text-foreground placeholder:text-muted-foreground leading-relaxed",
                     "outline-none transition-all",
                     error
-                      ? "border-[oklch(0.78_0.10_27)] ring-[3px] ring-[oklch(0.78_0.10_27)/0.12]"
+                      ? "border-danger-border ring-[3px] ring-danger-border/12"
                       : text
                       ? "border-primary ring-[3px] ring-primary/10"
                       : "border-border focus:border-primary focus:ring-[3px] focus:ring-primary/10",
@@ -305,11 +305,11 @@ export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
                 />
 
                 {error && (
-                  <div className="flex gap-2.5 items-start px-3 py-2.5 rounded-lg bg-[oklch(0.97_0.04_27)] border border-[oklch(0.85_0.08_27)] shrink-0">
-                    <div className="w-[18px] h-[18px] rounded-full bg-[oklch(0.52_0.16_27)] text-white text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                  <div className="flex gap-2.5 items-start px-3 py-2.5 rounded-lg bg-danger-tint border border-danger-border shrink-0">
+                    <div className="w-[18px] h-[18px] rounded-full bg-danger text-white text-micro font-bold flex items-center justify-center shrink-0 mt-0.5">
                       !
                     </div>
-                    <div className="font-sans text-[12px] text-foreground leading-[1.5]">
+                    <div className="font-sans text-dense text-foreground leading-[1.5]">
                       <span className="font-semibold">Ah Mah couldn&rsquo;t find a recipe in this.</span>{" "}
                       <span className="text-muted-foreground">
                         Try pasting just the recipe portion — usually the ingredients and steps.

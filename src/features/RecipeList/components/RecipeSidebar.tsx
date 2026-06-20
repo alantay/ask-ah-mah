@@ -1,6 +1,7 @@
 "use client";
 
 import { TAG_SETS, TagCategory, getTagCategory } from "@/lib/recipes/tagColors";
+import { Eyebrow } from "@/features/shared/components/recipe";
 import { useState } from "react";
 
 const VISIBLE_LIMIT = 5;
@@ -82,7 +83,7 @@ export function RecipeSidebar({
               {activeTags.size > 0 && (
                 <button
                   onClick={onClear}
-                  className="text-[11px] text-primary hover:opacity-70 transition-opacity cursor-pointer"
+                  className="text-micro text-primary hover:opacity-70 transition-opacity cursor-pointer"
                 >
                   Clear all
                 </button>
@@ -130,7 +131,7 @@ function SidebarHeader({
     <div className="flex items-center justify-end px-4 py-3 shrink-0">
       <button
         onClick={onClear}
-        className="text-[11px] text-primary hover:opacity-70 transition-opacity cursor-pointer"
+        className="text-micro text-primary hover:opacity-70 transition-opacity cursor-pointer"
       >
         Clear all
       </button>
@@ -195,9 +196,7 @@ function CollapsibleTagGroup({
 
   return (
     <section>
-      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground/60 mb-1.5 px-1">
-        {label}
-      </p>
+      <Eyebrow className="block mb-1.5 px-1">{label}</Eyebrow>
       <div className="flex flex-col">
         {visible.map((tag) => (
           <CheckboxRow
@@ -211,7 +210,7 @@ function CollapsibleTagGroup({
         {hidden > 0 && (
           <button
             onClick={() => setExpanded(true)}
-            className="self-start px-1 py-[5px] text-[12px] font-semibold text-primary hover:text-primary/70 transition-colors cursor-pointer"
+            className="self-start px-1 py-[5px] text-dense font-semibold text-primary hover:text-primary/70 transition-colors cursor-pointer"
           >
             + {hidden} more
           </button>
@@ -219,7 +218,7 @@ function CollapsibleTagGroup({
         {expanded && tags.length > VISIBLE_LIMIT && (
           <button
             onClick={() => setExpanded(false)}
-            className="self-start px-1 py-[5px] text-[12px] font-semibold text-ink-faint hover:text-muted-foreground transition-colors cursor-pointer"
+            className="self-start px-1 py-[5px] text-dense font-semibold text-ink-faint hover:text-muted-foreground transition-colors cursor-pointer"
           >
             Show less
           </button>
@@ -266,7 +265,7 @@ function CheckboxRow({
         )}
       </span>
       <span
-        className={`flex-1 text-[12px] leading-snug truncate transition-colors ${
+        className={`flex-1 text-dense leading-snug truncate transition-colors ${
           checked ? "text-foreground font-medium" : "text-muted-foreground"
         }`}
       >

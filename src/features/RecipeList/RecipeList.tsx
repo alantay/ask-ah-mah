@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useSessionContext } from "@/contexts/SessionContext";
+import { Eyebrow } from "@/features/shared/components/recipe";
 import { RecipeWithId } from "@/lib/recipes/schemas";
 import { fetcher } from "@/lib/utils";
 import { useRouter } from "next/navigation";
@@ -85,13 +86,11 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
           already labels this surface and the chip rail carries `All · N`. */}
       <div className="px-4 sm:px-9 pt-3 sm:pt-6 pb-[18px] sm:border-b sm:border-border flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-6 shrink-0">
         <div className="hidden sm:block">
-          <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground mb-1.5">
-            Worth cooking again
-          </div>
-          <h1 className="font-display font-semibold text-[40px] text-foreground leading-none tracking-tight">
+          <Eyebrow className="block mb-1.5">Worth cooking again</Eyebrow>
+          <h1 className="font-display font-semibold text-display text-foreground leading-none tracking-tight">
             Your kept recipes
           </h1>
-          <p className="font-display italic text-[15px] text-muted-foreground mt-2">
+          <p className="font-display italic text-emphasis text-muted-foreground mt-2">
             {isEmpty
               ? "Empty for now. Cook something with Ah Mah, then save the ones you'd cook again."
               : (() => {
@@ -111,7 +110,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
             <>
               {tagEntries.length > 0 && <button
                 onClick={() => setMobileFilterOpen(true)}
-                className="sm:hidden shrink-0 flex items-center gap-1.5 px-3 py-[7px] font-sans text-[13px] font-medium text-muted-foreground bg-card border border-border rounded-full cursor-pointer hover:text-foreground transition-colors"
+                className="sm:hidden shrink-0 flex items-center gap-1.5 px-3 py-[7px] font-sans text-dense font-medium text-muted-foreground bg-card border border-border rounded-full cursor-pointer hover:text-foreground transition-colors"
               >
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                   <path d="M1 3h10M3 6h6M5 9h2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
@@ -132,7 +131,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search your cookbook…"
-                  className="flex-1 bg-transparent border-none outline-none text-[13px] placeholder:text-muted-foreground text-foreground min-w-0"
+                  className="flex-1 bg-transparent border-none outline-none text-dense placeholder:text-muted-foreground text-foreground min-w-0"
                 />
               </label>
             </>
@@ -140,7 +139,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
           <Button
             variant="cta"
             onClick={() => setShowAdd(true)}
-            className="shrink-0 gap-1.5 px-3 py-[7px] font-sans text-[13px] font-semibold rounded-full"
+            className="shrink-0 gap-1.5 px-3 py-[7px] font-sans text-dense font-semibold rounded-full"
           >
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="size-[12px]">
               <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
@@ -171,7 +170,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
           ) : isEmpty ? (
             <CookbookEmpty onChatClick={onChatClick} onPasteClick={() => setShowAdd(true)} />
           ) : filtered.length === 0 ? (
-            <p className="font-display italic text-[14px] text-muted-foreground">
+            <p className="font-display italic text-emphasis text-muted-foreground">
               {activeTags.size > 0
                 ? "Nothing matches those filters. Try removing one?"
                 : "Nothing matches. Try a different word?"}
@@ -207,7 +206,7 @@ function CookbookEmpty({ onChatClick, onPasteClick }: { onChatClick?: () => void
           </svg>
         </div>
         <div>
-          <div className="font-display font-semibold text-[22px] text-foreground leading-tight tracking-tight mb-1.5">
+          <div className="font-display font-semibold text-heading text-foreground leading-tight tracking-tight mb-1.5">
             Cookbook&rsquo;s empty for now.
           </div>
           <div className="font-display italic text-sm text-muted-foreground leading-relaxed">
@@ -218,13 +217,13 @@ function CookbookEmpty({ onChatClick, onPasteClick }: { onChatClick?: () => void
           <Button
             variant="cta"
             onClick={onChatClick}
-            className="self-start px-3.5 py-2 text-[13px] font-semibold"
+            className="self-start px-3.5 py-2 text-dense font-semibold"
           >
             Ask Ah Mah for a recipe →
           </Button>
           <button
             onClick={onPasteClick}
-            className="self-start font-sans text-[12px] text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            className="self-start font-sans text-dense text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
             or paste one you&rsquo;ve found
           </button>
