@@ -373,12 +373,12 @@ function RecipeBody({
                           {step.title}
                         </div>
                       )}
-                      <div className="font-sans text-[14px] text-foreground leading-[1.6]">
+                      <div className="font-display text-[15px] text-foreground leading-[1.6]">
                         {step.body}
                       </div>
                       {step.tip && (
-                        <div className="mt-1.5 text-xs text-ink-faint italic">
-                          {step.tip}
+                        <div className="mt-2 pl-3 border-l-[3px] border-[oklch(0.65_0.10_60)] font-display italic text-sm text-muted-foreground leading-relaxed">
+                          — {step.tip}
                         </div>
                       )}
                     </div>
@@ -404,7 +404,7 @@ function RecipeBody({
                             {step.title}
                           </div>
                         )}
-                        <div className="font-sans text-[14px] text-foreground leading-[1.6]">
+                        <div className="font-display text-[15px] text-foreground leading-[1.6]">
                           {step.body}
                         </div>
                       </div>
