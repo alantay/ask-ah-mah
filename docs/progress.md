@@ -107,6 +107,9 @@ The two recipe surfaces — `RecipeLetter` (chat) and `RecipeDisplay` (cookbook)
   - `StepList` — vertical run of `StepItem`s for the simple (chat) case.
   - New `--callout` token (`oklch(0.65 0.10 60)`, warm ochre) backs `StepTip`'s accent bar, replacing the inline `oklch(...)` literal both surfaces duplicated.
 
+- **Per-surface alignment (#280–#284)**: each surface tweaked until it "belongs" — raw `text-[Npx]` swapped for named scale tokens, inline eyebrows for the `Eyebrow` atom.
+  - `Inventory` (#282): page eyebrow → `Eyebrow` atom; title → `text-display`; bodies/empty states → `text-emphasis`; buttons + selection banner → `text-dense`; category counts + item quantities → `text-micro`; pantry item names → `text-emphasis`.
+
 ## Next up
 
 ### Shopping list from shortfalls
