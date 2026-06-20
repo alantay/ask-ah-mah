@@ -15,6 +15,18 @@
     "DottedList": "src/features/shared/components/recipe/DottedList.tsx",
     "StepTip": "src/features/shared/components/recipe/StepTip.tsx",
     "StepItem": "src/features/shared/components/recipe/StepItem.tsx",
-    "StepList": "src/features/shared/components/recipe/StepList.tsx"
+    "StepList": "src/features/shared/components/recipe/StepList.tsx",
+    "ColorTokens": "src/features/shared/components/design-system/ColorTokens.tsx",
+    "TypeScale": "src/features/shared/components/design-system/TypeScale.tsx",
+    "Typefaces": "src/features/shared/components/design-system/Typefaces.tsx",
+    "RadiusScale": "src/features/shared/components/design-system/RadiusScale.tsx",
+    "Button": "src/components/ui/button.tsx",
+    "Badge": "src/components/ui/badge.tsx",
+    "Input": "src/components/ui/input.tsx",
+    "Label": "src/components/ui/label.tsx",
+    "Card": "src/components/ui/card.tsx",
+    "Dialog": "src/components/ui/dialog.tsx",
+    "Select": "src/components/ui/select.tsx",
+    "Tabs": "src/components/ui/tabs.tsx"
   }
 }

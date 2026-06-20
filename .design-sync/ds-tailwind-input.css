@@ -14,6 +14,8 @@
   --font-var-logo: "Nunito", ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Generate utilities for the atoms and their authored previews. */
+/* Generate utilities for the atoms, foundation specimens, primitives, and previews. */
 @source "../src/features/shared/components/recipe/*.tsx";
+@source "../src/features/shared/components/design-system/*.tsx";
+@source "../src/components/ui/*.tsx";
 @source "../.design-sync/previews/*.tsx";
