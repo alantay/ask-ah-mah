@@ -65,7 +65,7 @@ export function InventoryItemRow({
             </svg>
           )}
         </span>
-        <span className="font-display text-[14px] leading-snug flex items-baseline gap-1.5 min-w-0 flex-1">
+        <span className="font-display text-emphasis leading-snug flex items-baseline gap-1.5 min-w-0 flex-1">
           <span className="truncate">{item.name}</span>
         </span>
         {qty && (
@@ -79,7 +79,7 @@ export function InventoryItemRow({
 
   return (
     <li className="group flex items-baseline gap-2 py-1.5 border-b border-dotted border-border last:border-0">
-      <span className="font-display text-[14px] text-foreground leading-snug flex items-baseline gap-1.5 min-w-0">
+      <span className="font-display text-emphasis text-foreground leading-snug flex items-baseline gap-1.5 min-w-0">
         <span className="truncate">{item.name}</span>
       </span>
       <span className="flex-1" />
