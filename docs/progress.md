@@ -107,6 +107,9 @@ The two recipe surfaces — `RecipeLetter` (chat) and `RecipeDisplay` (cookbook)
   - `StepList` — vertical run of `StepItem`s for the simple (chat) case.
   - New `--callout` token (`oklch(0.65 0.10 60)`, warm ochre) backs `StepTip`'s accent bar, replacing the inline `oklch(...)` literal both surfaces duplicated.
 
+- **Per-surface alignment (#280–#284)**: each surface tweaked until it "belongs" — raw `text-[Npx]` / inline `oklch(...)` swapped for named scale + semantic-color tokens.
+  - `Recipe` / `CookingMode` (#283): step counter → `text-micro`; step body → `text-xl`; tip bar → `border-callout`; servings stepper readout → `text-emphasis`. New `--jade-deep` token (light + dark) replaces the inline `oklch(0.35 0.10 168)` border + hard-shadow on the cooking-mode "Done" button.
+
 ## Next up
 
 ### Shopping list from shortfalls

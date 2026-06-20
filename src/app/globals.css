@@ -50,6 +50,7 @@
   --color-tertiary: var(--tertiary);
   --color-jade: var(--jade);
   --color-jade-foreground: var(--jade-foreground);
+  --color-jade-deep: var(--jade-deep);
   --color-primary-deep: var(--primary-deep);
   --color-primary-tint: var(--primary-tint);
   --color-secondary-deep: var(--secondary-deep);
@@ -121,6 +122,8 @@
   /* Jade — decorative accent ink (chips, pills, dots) */
   --jade: oklch(0.5 0.095 168);
   --jade-foreground: oklch(0.97 0.02 80);
+  /* Deeper jade — hard-shadow underbite / border on jade surfaces (the cooking-mode "Done" button) */
+  --jade-deep: oklch(0.35 0.10 168);
 
   /* Accent — neutral interactive hover surface (kraft, paper-toned) */
   --accent: oklch(0.89 0.028 70);
@@ -171,6 +174,7 @@
   --ink-faint: oklch(0.55 0.025 55);
   --jade: oklch(0.6 0.1 168);
   --jade-foreground: oklch(0.95 0.025 78);
+  --jade-deep: oklch(0.42 0.1 168);
   --accent: oklch(0.34 0.025 50);
   --accent-foreground: oklch(0.95 0.025 78);
   --destructive: oklch(0.66 0.18 25);

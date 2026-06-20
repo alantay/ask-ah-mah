@@ -80,7 +80,7 @@ export function CookingMode({ title, steps, prep, onExit }: CookingModeProps) {
           <div className="font-display font-semibold text-base text-foreground leading-tight tracking-tight truncate max-w-[240px] sm:max-w-none">
             {title}
           </div>
-          <div className="font-sans text-[11px] text-ink-faint mt-0.5 tabular-nums">
+          <div className="font-sans text-micro text-ink-faint mt-0.5 tabular-nums">
             Step {current + 1} of {total}
           </div>
         </div>
@@ -112,12 +112,12 @@ export function CookingMode({ title, steps, prep, onExit }: CookingModeProps) {
           </div>
         </div>
 
-        <div className="font-display text-[1.25rem] leading-relaxed text-foreground">
+        <div className="font-display text-xl leading-relaxed text-foreground">
           {step.body}
         </div>
 
         {step.tip && (
-          <div className="mt-5 pl-4 border-l-[3px] border-[oklch(0.65_0.10_60)] font-display italic text-base text-muted-foreground leading-relaxed">
+          <div className="mt-5 pl-4 border-l-[3px] border-callout font-display italic text-base text-muted-foreground leading-relaxed">
             — {step.tip}
           </div>
         )}
@@ -149,7 +149,7 @@ export function CookingMode({ title, steps, prep, onExit }: CookingModeProps) {
         ) : (
           <button
             onClick={onExit}
-            className="flex-[2] py-3 font-sans text-sm font-semibold text-white bg-jade border border-[oklch(0.35_0.10_168)] rounded-xl shadow-[0_2px_0_oklch(0.35_0.10_168)] hover:opacity-90 transition-opacity cursor-pointer"
+            className="flex-[2] py-3 font-sans text-sm font-semibold text-white bg-jade border border-jade-deep rounded-xl shadow-[0_2px_0_var(--jade-deep)] hover:opacity-90 transition-opacity cursor-pointer"
           >
             Done — all finished!
           </button>
