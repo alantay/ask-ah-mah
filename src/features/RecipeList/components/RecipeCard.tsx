@@ -61,7 +61,7 @@ export default function RecipeCard({ recipe, onSelect, onDelete }: RecipeCardPro
           }}
         >
           {isOptimistic && (
-            <span className="font-mono text-eyebrow tracking-widest text-foreground/40 uppercase">
+            <span className="font-mono text-eyebrow tracking-[0.16em] text-foreground/40 uppercase">
               Saving…
             </span>
           )}
@@ -91,7 +91,7 @@ export default function RecipeCard({ recipe, onSelect, onDelete }: RecipeCardPro
           style={{ maskImage: "linear-gradient(to right, black calc(100% - 28px), transparent 100%)" }}
         >
           {recipe.totalTimeMinutes && (
-            <span className="flex items-center gap-1 font-mono text-[11px] text-ink-faint shrink-0">
+            <span className="flex items-center gap-1 font-mono text-micro text-ink-faint shrink-0">
               <svg width="11" height="11" viewBox="0 0 16 16" fill="none" className="shrink-0">
                 <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.4" />
                 <path d="M8 4.5V8l2.5 2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
@@ -102,7 +102,7 @@ export default function RecipeCard({ recipe, onSelect, onDelete }: RecipeCardPro
           {recipe.tags?.map((tag, i) => (
             <span
               key={`${tag}-${i}`}
-              className="shrink-0 text-[11px] font-medium px-2 py-0.5 border border-border rounded-full text-muted-foreground"
+              className="shrink-0 text-micro font-medium px-2 py-0.5 border border-border rounded-full text-muted-foreground"
             >
               {tag}
             </span>
