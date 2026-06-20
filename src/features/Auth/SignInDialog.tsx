@@ -28,14 +28,16 @@ export function SignInDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-foreground bg-card border border-border rounded-lg shadow-[0_1px_0_oklch(0.82_0.04_70)] hover:bg-background transition-colors cursor-pointer">
+        <button className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-foreground bg-card border border-border rounded-lg shadow-[0_1px_0_var(--border-soft)] hover:bg-background transition-colors cursor-pointer">
           Sign in
         </button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Welcome to Ah Mah&rsquo;s kitchen</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="font-display tracking-tight">
+            Welcome to Ah Mah&rsquo;s kitchen
+          </DialogTitle>
+          <DialogDescription className="font-display italic">
             Your kitchen stays with you across devices.
           </DialogDescription>
         </DialogHeader>
