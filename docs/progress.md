@@ -113,6 +113,7 @@ The two recipe surfaces — `RecipeLetter` (chat) and `RecipeDisplay` (cookbook)
   - `RecipeList` (#281): page header, cards, sidebar, and Add-recipe modal mapped to the scale; sidebar category labels now use the `Eyebrow` atom. New `--danger` / `--danger-border` / `--danger-tint` tokens (hue 27, light + dark) replace the modal's inline error-state `oklch(...)` literals.
   - `Inventory` (#282): page eyebrow → `Eyebrow` atom; title → `text-display`; bodies/empty states → `text-emphasis`; buttons + selection banner → `text-dense`; category counts + item quantities → `text-micro`; pantry item names → `text-emphasis`.
   - `Recipe` / `CookingMode` (#283): step counter → `text-micro`; step body → `text-xl`; tip bar → `border-callout`; servings stepper readout → `text-emphasis`. New `--jade-deep` token (light + dark) replaces the inline `oklch(0.35 0.10 168)` border + hard-shadow on the cooking-mode "Done" button.
+  - `Auth` / `SignInDialog` (#284): trigger 1px hard-shadow → `var(--border-soft)` token (was an inline `oklch(...)` literal); dialog title + description switched to `font-display` (serif brand voice) from the shadcn default sans. `AuthButton` was already clean.
 
 ## Next up
 
