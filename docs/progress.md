@@ -111,6 +111,7 @@ The two recipe surfaces — `RecipeLetter` (chat) and `RecipeDisplay` (cookbook)
 - **Per-surface alignment (#280–#284)**: each surface tweaked until it "belongs" — swap raw `text-[Npx]` for named scale tokens, raw `oklch(...)` for semantic tokens, and inline eyebrows for the `Eyebrow` atom.
   - `Conversations` (#280): header → `text-heading`, empty state → `font-display`.
   - `RecipeList` (#281): page header, cards, sidebar, and Add-recipe modal mapped to the scale; sidebar category labels now use the `Eyebrow` atom. New `--danger` / `--danger-border` / `--danger-tint` tokens (hue 27, light + dark) replace the modal's inline error-state `oklch(...)` literals.
+  - `Inventory` (#282): page eyebrow → `Eyebrow` atom; title → `text-display`; bodies/empty states → `text-emphasis`; buttons + selection banner → `text-dense`; category counts + item quantities → `text-micro`; pantry item names → `text-emphasis`.
 
 ## Next up
 

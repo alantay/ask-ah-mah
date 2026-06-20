@@ -15,6 +15,7 @@ type GetInventoryResponse = {
 };
 import { cn } from "@/lib/utils";
 import { fetcher } from "@/lib/utils";
+import { Eyebrow } from "@/features/shared/components/recipe";
 import { Check, CookingPot, Plus, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -51,7 +52,7 @@ const CategoryCard = ({
       <span className="font-display italic text-dense text-muted-foreground">
         {label}
       </span>
-      <span className="font-mono text-[11px] text-ink-faint tabular-nums">
+      <span className="font-mono text-micro text-ink-faint tabular-nums">
         · {items.length}
       </span>
     </div>
@@ -268,13 +269,11 @@ const Inventory = () => {
         {/* Header — hidden on mobile (tab strip already labels this surface) */}
         <div className="hidden sm:flex sm:items-end sm:justify-between sm:gap-6 mb-5">
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground mb-1.5">
-              What Ah Mah sees
-            </div>
-            <h1 className="font-display font-semibold text-[40px] text-foreground leading-none tracking-tight">
+            <Eyebrow className="block mb-1.5">What Ah Mah sees</Eyebrow>
+            <h1 className="font-display font-semibold text-display text-foreground leading-none tracking-tight">
               Your kitchen, today
             </h1>
-            <p className="font-display italic text-[15px] text-muted-foreground mt-2">
+            <p className="font-display italic text-emphasis text-muted-foreground mt-2">
               {totalCount} thing{totalCount !== 1 ? "s" : ""}. She jots them
               down as you chat.
             </p>
@@ -286,7 +285,7 @@ const Inventory = () => {
                   <Button
                     variant="cta"
                     onClick={enterSelectionMode}
-                    className="gap-1.5 px-3.5 py-2 text-[13px] font-semibold shrink-0"
+                    className="gap-1.5 px-3.5 py-2 text-dense font-semibold shrink-0"
                   >
                     <CookingPot className="size-[15px]" />
                     Cook with what you have
@@ -296,7 +295,7 @@ const Inventory = () => {
                   <Button
                     variant={totalCount > 0 ? "outline" : "cta"}
                     onClick={() => setIsAdding(true)}
-                    className="gap-1.5 px-3.5 py-2 text-[13px] font-semibold shrink-0"
+                    className="gap-1.5 px-3.5 py-2 text-dense font-semibold shrink-0"
                   >
                     <Plus className="size-[15px]" />
                     Add to pantry
@@ -307,7 +306,7 @@ const Inventory = () => {
               <Button
                 variant="outline"
                 onClick={exitSelectionMode}
-                className="gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-muted-foreground shrink-0"
+                className="gap-1.5 px-3.5 py-2 text-dense font-semibold text-muted-foreground shrink-0"
               >
                 <X className="size-[15px]" />
                 Cancel
@@ -343,7 +342,7 @@ const Inventory = () => {
             </>
           ) : (
             <div className="flex items-center justify-between w-full">
-              <span className="font-display italic text-[14px] text-muted-foreground">
+              <span className="font-display italic text-emphasis text-muted-foreground">
                 {totalSelected > 0 ? `${totalSelected} selected` : "Tap items to select"}
               </span>
               <Button
@@ -363,7 +362,7 @@ const Inventory = () => {
           <div className="hidden sm:flex items-center justify-between gap-2 mb-4 px-3 py-2.5 bg-primary/5 border border-dashed border-primary/30 rounded-lg">
             <div className="flex items-center gap-2">
               <Check className="size-[13px] text-primary shrink-0" />
-              <span className="font-display italic text-[13px] text-muted-foreground">
+              <span className="font-display italic text-dense text-muted-foreground">
                 {totalSelected === 0
                   ? "Tap items to feature them — Ah Mah will build recipes around your picks."
                   : `${totalSelected} item${totalSelected !== 1 ? "s" : ""} selected`}
@@ -411,19 +410,19 @@ const Inventory = () => {
         )}
 
         {isLoading && (
-          <p className="font-display italic text-[14px] text-muted-foreground">
+          <p className="font-display italic text-emphasis text-muted-foreground">
             Looking in the pantry…
           </p>
         )}
 
         {!isLoading && totalCount === 0 && !isAdding && !selectionMode && (
-          <p className="font-display italic text-[14px] text-muted-foreground">
+          <p className="font-display italic text-emphasis text-muted-foreground">
             Nothing in yet. Tell Ah Mah what you&rsquo;ve got &mdash; &ldquo;a bit of ginger, some eggs&rdquo; is enough.
           </p>
         )}
 
         {!isLoading && totalCount === 0 && selectionMode && (
-          <p className="font-display italic text-[14px] text-muted-foreground">
+          <p className="font-display italic text-emphasis text-muted-foreground">
             Pantry&rsquo;s empty for now. Add a few things first, then Ah Mah can suggest what to cook.
           </p>
         )}
@@ -464,7 +463,7 @@ const Inventory = () => {
               onClick={handleCookWithSubmit}
               disabled={totalSelected === 0}
               className={cn(
-                "w-full py-3 px-4 rounded-xl font-semibold text-[14px] transition-all",
+                "w-full py-3 px-4 rounded-xl font-semibold text-emphasis transition-all",
                 totalSelected > 0
                   ? "bg-primary text-primary-foreground shadow-cta hover:opacity-90 cursor-pointer"
                   : "bg-muted text-muted-foreground cursor-not-allowed",
