@@ -24,7 +24,7 @@ export function ServingsStepper({
       >
         −
       </button>
-      <span className="min-w-11 text-center font-display font-semibold text-[15px] text-foreground tabular-nums">
+      <span className="min-w-11 text-center font-display font-semibold text-emphasis text-foreground tabular-nums">
         {servings}
       </span>
       <button
