@@ -335,10 +335,10 @@ export function RecipeLetter({
                     isLastTwo && "border-none",
                   )}
                 >
-                  <span className="flex-[0_0_64px] font-mono text-xs font-semibold text-foreground text-right tabular-nums">
+                  <span className="flex-[0_0_64px] font-mono text-dense font-semibold text-foreground text-right tabular-nums">
                     {amountLabel ? <ScaledNum>{amountLabel}</ScaledNum> : ""}
                   </span>
-                  <span className="flex-1 font-display text-sm text-foreground leading-tight">
+                  <span className="flex-1 font-display text-emphasis text-foreground">
                     {ing.name}
                     {ing.note && (
                       <span className="text-muted-foreground italic text-xs">

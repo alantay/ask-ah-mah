@@ -273,7 +273,7 @@ function RecipeBody({
                     }`}
                   >
                     <span
-                      className={`basis-20 sm:basis-24 shrink-0 text-[13px] text-foreground text-right ${
+                      className={`basis-20 sm:basis-24 shrink-0 text-dense text-foreground text-right ${
                         scaled != null
                           ? "font-mono font-semibold tabular-nums"
                           : "font-display italic text-muted-foreground"
@@ -283,7 +283,7 @@ function RecipeBody({
                         ? `${formatAmount(scaled)}${ing.unit ? ` ${ing.unit}` : ""}`
                         : "to taste"}
                     </span>
-                    <span className="flex-1 font-display text-[15px] text-foreground leading-[1.4]">
+                    <span className="flex-1 font-display text-emphasis text-foreground">
                       {ing.name}
                     </span>
                   </li>
@@ -302,7 +302,7 @@ function RecipeBody({
                       className="flex items-baseline gap-3 py-2.5 border-b border-dashed border-border transition-colors line-through opacity-50"
                     >
                       <span
-                        className={`basis-20 sm:basis-24 shrink-0 text-[13px] text-foreground text-right ${
+                        className={`basis-20 sm:basis-24 shrink-0 text-dense text-foreground text-right ${
                           scaled != null
                             ? "font-mono font-semibold tabular-nums"
                             : "font-display italic text-muted-foreground"
@@ -312,7 +312,7 @@ function RecipeBody({
                           ? `${formatAmount(scaled)}${ing.unit ? ` ${ing.unit}` : ""}`
                           : "to taste"}
                       </span>
-                      <span className="flex-1 font-display text-[15px] text-foreground leading-[1.4]">
+                      <span className="flex-1 font-display text-emphasis text-foreground">
                         {ing.name}
                       </span>
                     </li>
