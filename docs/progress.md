@@ -94,6 +94,19 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Earned step depth (#268)**: prompt-only — `steps[].body` carries the *why*, sensory doneness cues, and failure-mode cautions only on pivotal steps, under a soft length cap; trivial steps stay short. Step bodies reference ingredients by name only — no absolute quantities (they'd fight the servings stepper).
 - **Copy recipe (#269)**: one shared `formatRecipeAsText(recipe, servings)` (`src/features/Recipe`) → plain text, CAPS headers, `•`/numbered lists, no markdown (survives WhatsApp/Notes). Amounts scale to the displayed servings via `scaleAmount`; amountless rows read "to taste"; sections render only when present; a "— from Ah Mah" footer. Surfaced as a **Copy recipe** button on `RecipeDisplay` (header — servings lifted out of `RecipeBody` so the header reads the current count) and in the `RecipeLetter` action bar. Excludes pantry state ("10/12 in your pantry"). **Copy shopping list stays separate** — two distinct copy intents, never collapsed into a bare "Copy".
 
+## Design system
+
+The two recipe surfaces — `RecipeLetter` (chat) and `RecipeDisplay` (cookbook) — were drifting because each hand-rolled the same primitives. A design system is now the north star: shared atoms stop drift, and every surface gets tweaked incrementally so it "looks like it belongs". See the spec at `docs/superpowers/specs/2026-06-20-recipe-design-system-design.md` and the issue tracker (#277–#285).
+
+- **Shared recipe atoms (#277)**: six drift-prone primitives extracted to `src/features/shared/components/recipe/` (barrel-exported) and consumed by both surfaces:
+  - `Eyebrow` — uppercase mono-spaced section label (canonical `tracking-[0.16em]`).
+  - `SectionHeading` — serif `<h2>` ("What to gather", "Method", "Notes"); margins via `className`.
+  - `DottedList` — prep / notes bullet list, canonical aligned `·` gutter.
+  - `StepTip` — Ah Mah's per-step ochre left-bar aside, prefixed with an em-dash.
+  - `StepItem` — one numbered step in two registers: `"stamp"` (chat ink-stamp badge) or `"quiet"` (cookbook mono `1.`). Wrapper is configurable via `as` and forwards extra props/`className`, so the cookbook renders diff-aware `<li>` rows (`data-tweak-row`, highlight classes) through the same atom.
+  - `StepList` — vertical run of `StepItem`s for the simple (chat) case.
+  - New `--callout` token (`oklch(0.65 0.10 60)`, warm ochre) backs `StepTip`'s accent bar, replacing the inline `oklch(...)` literal both surfaces duplicated.
+
 ## Next up
 
 ### Shopping list from shortfalls

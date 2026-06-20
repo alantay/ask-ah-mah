@@ -4,12 +4,19 @@ import { Button } from "@/components/ui/button";
 import { useSessionContext } from "@/contexts/SessionContext";
 import { CookingMode, ServingsStepper, formatRecipeAsText } from "@/features/Recipe";
 import {
+  DottedList,
+  Eyebrow,
+  SectionHeading,
+  StepItem,
+} from "@/features/shared/components/recipe";
+import {
   type ChangeEntry,
   type RecipeIngredient,
   type RecipeStep,
   type RecipeWithId,
   recipeWithIdToBlock,
 } from "@/lib/recipes/schemas";
+import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -219,9 +226,7 @@ function RecipeBody({
               />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="font-sans text-eyebrow font-bold tracking-[0.16em] uppercase text-ink-faint mb-1">
-                From Ah Mah
-              </div>
+              <Eyebrow className="block mb-1">From Ah Mah</Eyebrow>
               <div className="font-display italic text-[15px] sm:text-base text-foreground leading-[1.5] max-w-prose">
                 {selectedRecipe.description}
               </div>
@@ -233,9 +238,7 @@ function RecipeBody({
         {selectedRecipe.totalTimeMinutes && (
           <div className="flex flex-wrap items-end gap-3 mb-7">
             <div className="flex flex-col px-3.5 py-2 bg-card border border-border rounded-lg shadow-[0_1px_0_var(--color-border-soft)] min-w-[78px]">
-              <span className="font-sans text-eyebrow font-bold tracking-[0.16em] uppercase text-ink-faint">
-                Total time
-              </span>
+              <Eyebrow>Total time</Eyebrow>
               <span className="font-display font-semibold text-[18px] text-foreground tabular-nums mt-0.5">
                 {formatTime(selectedRecipe.totalTimeMinutes)}
               </span>
@@ -247,9 +250,7 @@ function RecipeBody({
         {ingredients.length > 0 && (
           <section className="mb-9">
             <div className="flex items-center justify-between mb-1 gap-3">
-              <h2 className="font-display font-semibold text-[24px] sm:text-[26px] text-foreground tracking-tight m-0">
-                What to gather
-              </h2>
+              <SectionHeading>What to gather</SectionHeading>
               <ServingsStepper
                 servings={servings}
                 onDecrement={() => onServingsChange(Math.max(1, servings - 1))}
@@ -324,91 +325,48 @@ function RecipeBody({
         {/* Before you start — mise en place */}
         {prep.length > 0 && (
           <section className="mb-9">
-            <h2 className="font-display font-semibold text-[24px] sm:text-[26px] text-foreground tracking-tight mb-4">
-              Before you start
-            </h2>
-            <ul className="list-none p-0 flex flex-col">
-              {prep.map((item, i) => (
-                <li
-                  key={i}
-                  className="flex gap-3 items-baseline py-2 border-b border-dashed border-border"
-                >
-                  <span className="font-mono text-[13px] font-bold text-ink-faint tabular-nums shrink-0 w-5 text-right">
-                    ·
-                  </span>
-                  <span className="flex-1 font-display text-[15px] text-foreground leading-[1.45]">
-                    {item}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <SectionHeading className="mb-4">Before you start</SectionHeading>
+            <DottedList items={prep} />
           </section>
         )}
 
         {/* Method */}
         <section>
-          <h2 className="font-display font-semibold text-[24px] sm:text-[26px] text-foreground tracking-tight mb-4">
-            Method
-          </h2>
+          <SectionHeading className="mb-4">Method</SectionHeading>
           {steps.length > 0 ? (
             <ol className="list-none p-0 flex flex-col gap-5">
               {steps.map((step, i) => {
                 const isChanged = showHighlights && changedSteps.has(i);
                 return (
-                  <li
+                  <StepItem
                     key={i}
+                    as="li"
+                    marker="quiet"
+                    n={i + 1}
+                    step={step}
                     data-tweak-row={`step-${i}`}
-                    className={`flex gap-4 transition-colors ${
-                      isChanged
-                        ? "bg-amber-200/70 dark:bg-amber-900/30 ring-1 ring-inset ring-amber-400/60 dark:ring-amber-700/50 -mx-1 px-1 rounded-lg py-1"
-                        : ""
-                    }`}
-                  >
-                    <span className="font-mono text-[13px] font-bold text-ink-faint tabular-nums pt-0.5 shrink-0 w-5 text-right">
-                      {i + 1}.
-                    </span>
-                    <div className="flex-1">
-                      {step.title && (
-                        <div className="font-display font-semibold text-[15px] text-foreground mb-0.5">
-                          {step.title}
-                        </div>
-                      )}
-                      <div className="font-display text-[15px] text-foreground leading-[1.6]">
-                        {step.body}
-                      </div>
-                      {step.tip && (
-                        <div className="mt-2 pl-3 border-l-[3px] border-[oklch(0.65_0.10_60)] font-display italic text-sm text-muted-foreground leading-relaxed">
-                          — {step.tip}
-                        </div>
-                      )}
-                    </div>
-                  </li>
+                    className={cn(
+                      "transition-colors",
+                      isChanged &&
+                        "bg-amber-200/70 dark:bg-amber-900/30 ring-1 ring-inset ring-amber-400/60 dark:ring-amber-700/50 -mx-1 px-1 rounded-lg py-1",
+                    )}
+                  />
                 );
               })}
-              {/* Deleted steps */}
+              {/* Deleted steps — diff overlay, tip suppressed */}
               {showHighlights &&
                 Array.from(deletedSteps).map((i) => {
                   const step = origSteps[i];
                   if (!step) return null;
                   return (
-                    <li
+                    <StepItem
                       key={`deleted-step-${i}`}
-                      className="flex gap-4 transition-colors line-through opacity-50"
-                    >
-                      <span className="font-mono text-[13px] font-bold text-ink-faint tabular-nums pt-0.5 shrink-0 w-5 text-right">
-                        {i + 1}.
-                      </span>
-                      <div className="flex-1">
-                        {step.title && (
-                          <div className="font-display font-semibold text-[15px] text-foreground mb-0.5">
-                            {step.title}
-                          </div>
-                        )}
-                        <div className="font-display text-[15px] text-foreground leading-[1.6]">
-                          {step.body}
-                        </div>
-                      </div>
-                    </li>
+                      as="li"
+                      marker="quiet"
+                      n={i + 1}
+                      step={{ title: step.title, body: step.body }}
+                      className="transition-colors line-through opacity-50"
+                    />
                   );
                 })}
             </ol>
@@ -424,24 +382,8 @@ function RecipeBody({
         {/* Notes — whole-dish asides (make-ahead, storage, serving) */}
         {notes.length > 0 && (
           <section className="mt-9">
-            <h2 className="font-display font-semibold text-[24px] sm:text-[26px] text-foreground tracking-tight mb-4">
-              Notes
-            </h2>
-            <ul className="list-none p-0 flex flex-col">
-              {notes.map((note, i) => (
-                <li
-                  key={i}
-                  className="flex gap-3 items-baseline py-2 border-b border-dashed border-border"
-                >
-                  <span className="font-mono text-[13px] font-bold text-ink-faint tabular-nums shrink-0 w-5 text-right">
-                    ·
-                  </span>
-                  <span className="flex-1 font-display text-[15px] text-foreground leading-[1.45]">
-                    {note}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <SectionHeading className="mb-4">Notes</SectionHeading>
+            <DottedList items={notes} />
           </section>
         )}
       </div>
