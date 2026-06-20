@@ -207,3 +207,62 @@ cookbook's diff overlay — should map `StepItem` directly instead.
   Auth) is exactly this: tweak each page until it belongs.
 - **Source of truth is code.** When this doc and `globals.css` / the atoms
   disagree, the code wins — fix the doc.
+
+---
+
+## Surface audit
+
+A read-only audit (issue #279) of the five non-recipe surfaces against §1–6.
+Each gap below is a concrete deviation with a file reference; each becomes a
+follow-up alignment issue (#280–#284). No code changed here.
+
+Legend: **px** = arbitrary `text-[Npx]` that maps to a scale role (§2); **color**
+= off-token / inline `oklch()` (§3); **rhythm** = off-pattern spacing or
+ad-hoc card/border (§4); **atom** = hand-rolled where a shared atom exists (§6);
+**voice** = wrong typeface for the role (§1).
+
+### Conversations (#280) — history sidebar
+
+Closest to aligned already; rows are serif and use sibling card tokens.
+
+- **px** — `Conversations.tsx:37` rail heading `text-[22px]` → `text-heading` (exact 22px).
+- **scale** — `ConversationItem.tsx:66,80` row titles use Tailwind `text-sm` (14px), which has no named role; `dense` (13) / `emphasis` (15) bracket it. Decide a role for sidebar rows and apply it consistently.
+- ✓ Good: active row `bg-secondary border-secondary-deep shadow-[0_1px_0_var(--secondary-deep)]` is a clean token sibling of the house card lift; `font-display` titles honour the voice.
+
+### RecipeList (#281) — cards + add-recipe modal
+
+- **atom + px + color** — page eyebrow `RecipeList.tsx:88` `text-[11px] … tracking-[0.18em] text-muted-foreground` deviates three ways from `Eyebrow` (10px, `tracking-[0.16em]`, `text-ink-faint`) → replace with `<Eyebrow>`.
+- **px** — page title `:91` `text-[40px]` → `text-display`; `:210` `text-[22px]` → `text-heading`; bodies `:94` `text-[15px]` → `text-emphasis`, `:174` `text-[14px]` (off-scale), `:221` `text-[13px]` → `text-dense`, `:227` `text-[12px]` (off-scale); controls `:114,135,143` `text-[13px]` → `text-dense`; badge `:121` `text-[9px]` (below scale); `:114,143` `py-[7px]` ad-hoc padding.
+- **RecipeSidebar.tsx** — chrome on `text-xs` / `text-[11px]` / `text-[12px]` (`:85,133,214,222,269`) off-scale; `text-muted-foreground/60` opacity-modified token (`:198`). ✓ `tracking-[0.16em]` (`:198`) is canonical.
+- **RecipeCard.tsx** — already a good partial model (`text-eyebrow`, `text-dense`, `text-ink-faint`). Remaining: `:94,105` `text-[11px]` → `text-micro`; `:64` eyebrow uses `tracking-widest` not canonical `tracking-[0.16em]`; `:30` card layers an inline elevation `oklch(0.3_0.05_50/0.5)` shadow on top of the house lift — consider a tokenised `--shadow-card` elevation.
+- **AddRecipeModal.tsx** — heading `:256` `text-[20px] sm:text-[22px]` → `text-heading`; bodies `:242` `text-[15px]`, `:259` `text-[13px]`, `:312` `text-[12px]`; **color**: error state hard-codes a danger hue inline — `:300` `border-[oklch(0.78_0.10_27)] ring-[oklch(0.78_0.10_27)/0.12]`, `:308` `bg-[oklch(0.97_0.04_27)] border-[oklch(0.85_0.08_27)]`, `:309` `bg-[oklch(0.52_0.16_27)]`. There is **no danger token** — add a `--danger` / `--danger-tint` family to `globals.css`.
+
+### Inventory (#282) — pantry UI
+
+Duplicates RecipeList's page-header pattern, so it inherits the same gaps.
+
+- **atom + px + color** — `Inventory.tsx:271` eyebrow `text-[11px] tracking-[0.18em] text-muted-foreground` → `<Eyebrow>` (same three-way deviation as RecipeList).
+- **px** — title `:274` `text-[40px]` → `text-display`; body `:277` `text-[15px]` → `text-emphasis`; buttons `:289,299,310` `text-[13px]` → `text-dense`; qty `:54` `text-[11px]` (mono) → `text-micro`; italic notes `:346,414,420,426,467` `text-[14px]` (off-scale) and `:366` `text-[13px]` → `text-dense`.
+- **cross-surface** — the `Inventory` and `RecipeList` page headers (eyebrow → 40px display title → italic subtitle + action row) are the same composition built twice. Candidate for a shared `PageHeader` atom once both adopt the tokens.
+
+### Recipe — cooking mode + servings stepper (#283)
+
+- **color** — `CookingMode.tsx:120` step tip `border-[oklch(0.65_0.10_60)]` → `border-callout` (this is a larger-register `StepTip`; extend the atom or at least use the token).
+- **color** — `:152` "done" button `bg-jade border-[oklch(0.35_0.10_168)] shadow-[0_2px_0_oklch(0.35_0.10_168)]` hard-codes a *jade-deep* that doesn't exist as a token. Add `--jade-deep` (sibling to `--primary-deep`).
+- **px** — `:115` body `text-[1.25rem]` (20px) off-scale; `:83` `text-[11px]` → `text-micro`. `ServingsStepper.tsx:27` `text-[15px]` → `text-emphasis`.
+
+### Auth — login (#284)
+
+- **color** — `SignInDialog.tsx:31` trigger `shadow-[0_1px_0_oklch(0.82_0.04_70)]` hard-codes the card lift → use `shadow-[0_1px_0_var(--border-soft)]` (the canonical lift both recipe surfaces share). Also `text-xs` off-scale.
+- **voice** — `DialogTitle` ("Welcome to Ah Mah's kitchen") and `DialogDescription` render through shadcn defaults (sans). Ah Mah's headings are serif (§1) — apply `font-display` to the title so the login speaks in her voice.
+- ✓ `AuthButton.tsx` carries no arbitrary px / color.
+
+### Cross-cutting follow-ups (tokens to add)
+
+These recur across surfaces and should land as token additions when the
+relevant alignment issue is picked up:
+
+- `--danger` / `--danger-tint` — error/validation hue (AddRecipeModal).
+- `--jade-deep` — the "success" deep edge/shadow (CookingMode done button).
+- A named `--shadow-card` elevation for raised cards (RecipeCard layers it inline).
+- A shared `PageHeader` atom for the Inventory/RecipeList header composition.
