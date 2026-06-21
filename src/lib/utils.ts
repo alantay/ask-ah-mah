@@ -1,5 +1,22 @@
 import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { extendTailwindMerge } from "tailwind-merge";
+
+// Teach tailwind-merge about our custom named font-size tokens (see the
+// `@theme` scale in globals.css). Without this, tailwind-merge treats e.g.
+// `text-dense` as an unknown `text-*` class and lets it collide with text
+// COLOR classes like `text-white` — silently dropping the colour when both
+// appear in one `cn()` call (e.g. a `cta` Button given a `text-dense`
+// className). Registering them as font-size classes keeps colour and size
+// independent while still letting two sizes override each other.
+const twMerge = extendTailwindMerge({
+  extend: {
+    classGroups: {
+      "font-size": [
+        { text: ["eyebrow", "micro", "dense", "emphasis", "heading", "display"] },
+      ],
+    },
+  },
+});
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

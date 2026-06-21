@@ -81,9 +81,10 @@
   --text-display--line-height: 1;
 
   /* CTA hard shadows — the "stamped paper" depth under the terracotta primary button.
-     Always use these tokens for the hard-shadow pattern; never reinvent inline. */
-  --shadow-cta: 0 1px 0 var(--primary-deep);
-  --shadow-cta-deep: 0 2px 0 var(--primary-deep);
+     Always use these tokens for the hard-shadow pattern; never reinvent inline.
+     Uses --primary-deeper so the depth stays visible now that CTAs sit on --primary-deep. */
+  --shadow-cta: 0 1px 0 var(--primary-deeper);
+  --shadow-cta-deep: 0 2px 0 var(--primary-deeper);
 }
 
 :root {
@@ -129,9 +130,13 @@
 
   /* Terracotta primary */
   --primary: oklch(0.56 0.135 35);
-  --primary-foreground: oklch(0.97 0.02 80);
-  /* Deeper terracotta — used for the hard-shadow underbite on primary CTAs */
+  /* Crisp near-white — sits on terracotta; de-warmed so CTA text reads cleanly
+     (warm cream on warm terracotta was the low-contrast culprit, ADR-0012) */
+  --primary-foreground: oklch(0.99 0.008 80);
+  /* Deeper terracotta — the CTA button surface (white text hits ~7.4:1 here) */
   --primary-deep: oklch(0.46 0.135 35);
+  /* Deepest terracotta — hard-shadow underbite beneath CTAs on --primary-deep */
+  --primary-deeper: oklch(0.36 0.13 35);
   /* Pale terracotta — picked-state card background ("I want this" pill) */
   --primary-tint: oklch(0.94 0.06 35);
 
@@ -192,6 +197,7 @@
   --primary: oklch(0.66 0.14 35);
   --primary-foreground: oklch(0.22 0.028 50);
   --primary-deep: oklch(0.54 0.14 35);
+  --primary-deeper: oklch(0.42 0.13 35);
   --primary-tint: oklch(0.38 0.05 35);
   --secondary: oklch(0.5 0.075 88);
   --secondary-foreground: oklch(0.95 0.025 78);
