@@ -108,7 +108,7 @@ function SuggestionCard({
       {/* Ah Mah note */}
       {option.note && (
         <div className="flex items-center gap-1.5 mt-0.5 font-display italic text-xs text-ink-faint">
-          <span className="font-sans not-italic text-[9px] font-bold tracking-widest uppercase text-[oklch(0.45_0.10_60)] px-1.25 py-0.25 bg-[oklch(0.96_0.05_88)] border border-dashed border-[oklch(0.75_0.08_88)] rounded">
+          <span className="font-sans not-italic text-[9px] font-bold tracking-widest uppercase text-callout-strong px-1.25 py-0.25 bg-secondary-tint border border-dashed border-secondary-deep rounded">
             Ah Mah
           </span>
           <span className="flex-1">{option.note}</span>

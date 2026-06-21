@@ -42,6 +42,9 @@
   --color-chat: var(--chat);
   --color-ink-faint: var(--ink-faint);
   --color-callout: var(--callout);
+  --color-callout-tint: var(--callout-tint);
+  --color-callout-border: var(--callout-border);
+  --color-callout-strong: var(--callout-strong);
   --color-danger: var(--danger);
   --color-danger-border: var(--danger-border);
   --color-danger-tint: var(--danger-tint);
@@ -54,9 +57,12 @@
   --color-jade: var(--jade);
   --color-jade-foreground: var(--jade-foreground);
   --color-jade-deep: var(--jade-deep);
+  --color-jade-tint: var(--jade-tint);
+  --color-jade-border: var(--jade-border);
   --color-primary-deep: var(--primary-deep);
   --color-primary-tint: var(--primary-tint);
   --color-secondary-deep: var(--secondary-deep);
+  --color-secondary-tint: var(--secondary-tint);
 
   /* Kopitiam type scale — only sizes that don't map cleanly to Tailwind defaults.
      Use Tailwind text-xs (12) / text-sm (14) / text-lg (18) / text-xl (20) for everything else.
@@ -105,8 +111,14 @@
   /* Faint ink */
   --ink-faint: oklch(0.605 0.03 60);
 
-  /* Warm ochre — tip / aside accent bar (StepTip, callouts) */
+  /* Warm ochre — tip / aside accent bar (StepTip, callouts).
+     `callout` is the accent (bar, dot); `callout-border` the soft dashed edge;
+     `callout-tint` the pale fill behind a callout box; `callout-strong` the
+     dark ochre label ink (shortfall "almost there", suggestion "Ah Mah" tag). */
   --callout: oklch(0.65 0.10 60);
+  --callout-tint: oklch(0.97 0.03 60);
+  --callout-border: oklch(0.78 0.07 60);
+  --callout-strong: oklch(0.45 0.10 60);
 
   /* Danger — error states (form validation, the "couldn't read" banner).
      `danger` is the strong status ink (badge); `danger-border` the active edge
@@ -128,12 +140,17 @@
   --secondary-foreground: oklch(0.265 0.04 48);
   /* Deeper butter — borders/edges on butter surfaces (user bubbles, active conversation row) */
   --secondary-deep: oklch(0.78 0.10 88);
+  /* Pale butter — fill behind a butter tag (the suggestion "Ah Mah" chip) */
+  --secondary-tint: oklch(0.96 0.05 88);
 
   /* Jade — decorative accent ink (chips, pills, dots) */
   --jade: oklch(0.5 0.095 168);
   --jade-foreground: oklch(0.97 0.02 80);
   /* Deeper jade — hard-shadow underbite / border on jade surfaces (the cooking-mode "Done" button) */
   --jade-deep: oklch(0.35 0.10 168);
+  /* Pale jade fill + soft jade edge — the "N/M in your pantry" success pill */
+  --jade-tint: oklch(0.94 0.04 168);
+  --jade-border: oklch(0.78 0.07 168);
 
   /* Accent — neutral interactive hover surface (kraft, paper-toned) */
   --accent: oklch(0.89 0.028 70);
@@ -179,12 +196,19 @@
   --secondary: oklch(0.5 0.075 88);
   --secondary-foreground: oklch(0.95 0.025 78);
   --secondary-deep: oklch(0.42 0.075 88);
+  --secondary-tint: oklch(0.34 0.045 88);
   --muted: oklch(0.3 0.025 50);
   --muted-foreground: oklch(0.7 0.03 60);
   --ink-faint: oklch(0.55 0.025 55);
   --jade: oklch(0.6 0.1 168);
   --jade-foreground: oklch(0.95 0.025 78);
   --jade-deep: oklch(0.42 0.1 168);
+  --jade-tint: oklch(0.30 0.04 168);
+  --jade-border: oklch(0.48 0.07 168);
+  /* callout base is inherited from :root; only the box tints/ink invert for dark */
+  --callout-tint: oklch(0.30 0.035 60);
+  --callout-border: oklch(0.48 0.06 60);
+  --callout-strong: oklch(0.80 0.09 60);
   --danger: oklch(0.66 0.18 27);
   --danger-border: oklch(0.5 0.12 27);
   --danger-tint: oklch(0.32 0.06 27);

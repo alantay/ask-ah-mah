@@ -256,7 +256,7 @@ export function RecipeLetter({
             <span className="text-border">·</span>
           )}
           {showPantryPill && (
-            <span className="font-sans text-eyebrow font-semibold text-jade px-1.5 py-0.5 bg-[oklch(0.94_0.04_168)] border border-[oklch(0.78_0.07_168)] rounded-full tracking-normal normal-case">
+            <span className="font-sans text-eyebrow font-semibold text-jade px-1.5 py-0.5 bg-jade-tint border border-jade-border rounded-full tracking-normal normal-case">
               {haveCount}/{ingredients.length} in your pantry
             </span>
           )}
@@ -265,10 +265,10 @@ export function RecipeLetter({
 
       {/* Shortfall card — shown when ≥50% in pantry but some missing */}
       {showShortfall && (
-        <div className="mb-4 bg-[oklch(0.97_0.03_60)] border border-dashed border-[oklch(0.78_0.07_60)] rounded-xl p-3.5">
+        <div className="mb-4 bg-callout-tint border border-dashed border-callout-border rounded-xl p-3.5">
           <div className="flex items-center gap-1.5 mb-2">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[oklch(0.6_0.14_50)]" />
-            <span className="font-sans text-eyebrow font-bold tracking-[0.16em] uppercase text-[oklch(0.45_0.10_50)]">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-callout" />
+            <span className="font-sans text-eyebrow font-bold tracking-[0.16em] uppercase text-callout-strong">
               You&rsquo;re almost there
             </span>
           </div>
