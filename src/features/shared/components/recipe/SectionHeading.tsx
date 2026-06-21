@@ -14,7 +14,7 @@ export function SectionHeading({
   return (
     <h2
       className={cn(
-        "font-display font-semibold text-[24px] sm:text-[26px] text-foreground tracking-tight m-0",
+        "font-display font-semibold text-heading text-foreground tracking-tight m-0",
         className,
       )}
     >
