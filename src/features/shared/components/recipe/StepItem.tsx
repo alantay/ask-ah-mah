@@ -36,8 +36,8 @@ const REGISTER = {
   quiet: {
     row: "gap-4",
     content: "flex-1",
-    title: "text-[15px] mb-0.5",
-    body: "text-[15px] leading-[1.6]",
+    title: "text-emphasis mb-0.5",
+    body: "text-emphasis leading-[1.6]",
   },
 } as const;
 
@@ -59,7 +59,7 @@ export function StepItem<T extends ElementType = "div">({
           {n}
         </div>
       ) : (
-        <span className="font-mono text-[13px] font-bold text-ink-faint tabular-nums pt-0.5 shrink-0 w-5 text-right">
+        <span className="font-mono text-dense font-bold text-ink-faint tabular-nums pt-0.5 shrink-0 w-5 text-right">
           {n}.
         </span>
       )}
