@@ -17,7 +17,6 @@ const GROUPS: Group[] = [
       { name: "primary-tint", token: "--color-primary-tint" },
       { name: "secondary", token: "--color-secondary" },
       { name: "secondary-deep", token: "--color-secondary-deep" },
-      { name: "tertiary", token: "--color-tertiary" },
       { name: "jade", token: "--color-jade" },
       { name: "jade-deep", token: "--color-jade-deep" },
     ],
