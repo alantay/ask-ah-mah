@@ -6,9 +6,10 @@ import { useChatSession } from "./hooks/useChatSession";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import ConversationItemMenu from "@/features/Conversations/components/ConversationItemMenu";
+import { ChatEmptyState } from "./components/ChatEmptyState";
 import { MessageInput } from "./components/MessageInput";
 import { MessageList } from "./components/MessageList";
-import { LOADING_MESSAGES, SUGGESTIONS } from "./constants";
+import { LOADING_MESSAGES } from "./constants";
 
 const Chat = () => {
   const {
@@ -102,36 +103,21 @@ const Chat = () => {
           </>
         )}
       </div>
-      <MessageList
-        messages={allMessages}
-        status={status}
-        submittedAt={submittedAt}
-        isSending={isSending}
-        userId={userId}
-        onSend={handleSendMessage}
-        onRecipeDetected={handleRecipeDetected}
-      />
-      {status === "ready" && !isSending && messageCount === 0 && (
-        <div className="px-4 pb-1">
-          <div className="flex gap-2 flex-wrap max-w-5xl mx-auto">
-            {/* Cook-with chip — routes to Pantry selection mode */}
-            <button
-              onClick={() => router.replace("/?tab=pantry&selectionMode=1")}
-              className="inline-flex items-center gap-1.5 min-h-11 px-3.5 text-xs text-muted-foreground border border-border rounded-full hover:border-border-soft hover:text-foreground transition-colors cursor-pointer"
-            >
-              🥬 Cook with what I have →
-            </button>
-            {SUGGESTIONS.map((s) => (
-              <button
-                key={s}
-                onClick={() => handleSendMessage(s)}
-                className="inline-flex items-center min-h-11 px-3.5 text-xs text-muted-foreground border border-border rounded-full hover:border-border-soft hover:text-foreground transition-colors cursor-pointer"
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        </div>
+      {messageCount === 0 && status === "ready" && !isSending ? (
+        <ChatEmptyState
+          onSend={handleSendMessage}
+          onCookWith={() => router.replace("/?tab=pantry&selectionMode=1")}
+        />
+      ) : (
+        <MessageList
+          messages={allMessages}
+          status={status}
+          submittedAt={submittedAt}
+          isSending={isSending}
+          userId={userId}
+          onSend={handleSendMessage}
+          onRecipeDetected={handleRecipeDetected}
+        />
       )}
       <MessageInput
         onSendMessage={handleSendMessage}
