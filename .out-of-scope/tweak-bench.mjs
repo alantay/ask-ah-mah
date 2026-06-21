@@ -77,7 +77,7 @@ const instruction = "less spicy — cut the doubanjiang and Sichuan pepper down"
 async function run(label, system) {
   const t = Date.now();
   const { text, usage, finishReason } = await generateText({
-    model: openai("gpt-4.1-mini"),
+    model: openai("gpt-5-mini"),
     system,
     messages: [{ role: "user", content: instruction }],
     maxOutputTokens: 8000,
