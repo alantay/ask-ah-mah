@@ -23,11 +23,12 @@ const buttonVariants = cva(
         // Kopitiam Modern terracotta CTAs — paper-stamp hard shadow.
         // `cta` is the page-level action shape (rounded-lg, 1px depth).
         // `ctaDeep` is the modal/commit shape (rounded-xl, 2px depth).
-        // Both use --primary-deep for the shadow; size/padding/text can
-        // still be overridden via className.
-        cta: "bg-primary text-primary-foreground border border-primary rounded-lg shadow-cta hover:opacity-90 transition-opacity",
+        // Both sit on --primary-deep with white text (~7.4:1) and a
+        // --primary-deeper hard shadow; size/padding/text can still be
+        // overridden via className.
+        cta: "bg-primary-deep text-white border border-primary-deep rounded-lg shadow-cta hover:opacity-90 transition-opacity",
         ctaDeep:
-          "bg-primary text-primary-foreground border border-primary rounded-xl shadow-cta-deep hover:opacity-90 transition-opacity disabled:opacity-40 disabled:shadow-none",
+          "bg-primary-deep text-white border border-primary-deep rounded-xl shadow-cta-deep hover:opacity-90 transition-opacity disabled:opacity-40 disabled:shadow-none",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
