@@ -4,8 +4,6 @@ import Image from "next/image";
 
 import { Stamp } from "@/features/shared/components/Stamp";
 
-import { SUGGESTIONS } from "../constants";
-
 // The three example openers, echoing the initial greeting bullets. Tapping one
 // sends it straight to Ah Mah as a quick start.
 const PROMPTS = [
@@ -13,9 +11,6 @@ const PROMPTS = [
   { label: "Your tools", example: "I have a wok" },
   { label: "Or just ask", example: "What can I make for dinner?" },
 ] as const;
-
-const chip =
-  "inline-flex items-center min-h-11 px-3.5 text-xs text-muted-foreground border border-border rounded-full hover:border-border-soft hover:text-foreground transition-colors cursor-pointer";
 
 interface ChatEmptyStateProps {
   onSend: (text: string) => void;
@@ -73,17 +68,13 @@ export function ChatEmptyState({ onSend, onCookWith }: ChatEmptyStateProps) {
           ))}
         </div>
 
-        {/* Quick-start chips */}
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
-          <button onClick={onCookWith} className={chip}>
-            🥬 Cook with what I have →
-          </button>
-          {SUGGESTIONS.map((s) => (
-            <button key={s} onClick={() => onSend(s)} className={chip}>
-              {s}
-            </button>
-          ))}
-        </div>
+        {/* Secondary path — browse the pantry instead of typing an opener */}
+        <button
+          onClick={onCookWith}
+          className="mt-6 inline-flex min-h-11 items-center gap-1.5 text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline cursor-pointer"
+        >
+          🥬 Or pick from your pantry →
+        </button>
       </div>
     </div>
   );
