@@ -1,5 +1,5 @@
 "use client";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import ChatWrapper from "@/features/Chat/components/ChatWrapper";
 import InventoryWrapper from "@/features/Inventory/components/InventoryWrapper";
 import RecipeList from "@/features/RecipeList/RecipeList";
@@ -30,12 +30,8 @@ function HomeContent() {
     <div className="bg-background paper h-full lg:h-full flex flex-col">
       <main className="w-full xl:container 2xl:max-w-screen-xl mx-auto h-[calc(100dvh-3.25rem)] sm:h-[calc(100dvh-3.75rem)] md:h-[calc(100dvh-4.5rem)] lg:flex-1 lg:min-h-0">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col pt-2 lg:pt-0">
-          {/* Tab strip — hidden on desktop (sidebar handles nav) */}
-          <TabsList className="lg:hidden">
-            <TabsTrigger value="chat">Chat</TabsTrigger>
-            <TabsTrigger value="pantry">Pantry</TabsTrigger>
-            <TabsTrigger value="cookbook">Cookbook</TabsTrigger>
-          </TabsList>
+          {/* Nav is driven by the AppSidebar (desktop) and MobileTopBar drawer (mobile);
+              the Tabs container only switches the content panels below. */}
 
           {/* ── Chat tab ── */}
           <TabsContent
