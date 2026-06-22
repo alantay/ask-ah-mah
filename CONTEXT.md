@@ -14,9 +14,15 @@ Related: [ADR-0002](docs/adr/0002-conversation-requires-at-least-one-message.md)
 
 ---
 
+## Section
+
+One of the three primary destinations — **Chat**, **Pantry**, **Cookbook**. Selected from the `AppSidebar` on desktop and from the nav drawer on mobile. The Radix `Tabs` container that switches the content panels underneath is an implementation detail, not a user-facing surface — there is no visible tab strip.
+
+---
+
 ## Staging State
 
-The UI state where the user is on the Chat tab but has not yet sent a message. Indicated by `activeConversationId === null`. The greeting and suggestions are shown; no `Conversation` row exists yet.
+The UI state where the user is on the Chat section but has not yet sent a message. Indicated by `activeConversationId === null`. The greeting and suggestions are shown; no `Conversation` row exists yet.
 
 When the user sends the first message, the staging path in `useChatSession` creates the `Conversation` row via `POST /api/conversation`, then transitions to **Pending State**.
 
@@ -32,7 +38,7 @@ When the stream finishes (`onFinish`), `commitConversation(id)` flips `pendingCo
 
 ## Nav Selection
 
-"You are in this tab." Shown on the primary navigation items in `AppSidebar` (Chat / Pantry / Cookbook). Visual treatment: `bg-card` background, `text-foreground` label, terracotta (`text-primary`) icon outline (stroke color only — no fill swap).
+"You are in this **Section**." Shown on the primary navigation items in `AppSidebar` and the mobile nav drawer (Chat / Pantry / Cookbook). Visual treatment: `bg-card` background, `text-foreground` label, terracotta (`text-primary`) icon outline (stroke color only — no fill swap).
 
 The Chat nav item is highlighted only in **Staging State** (`activeConversationId === null && pendingConversationId === null`). Once a conversation becomes pending or committed, the Chat nav unhighlights and **Thread Selection** takes over.
 

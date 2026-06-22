@@ -1,0 +1,103 @@
+"use client";
+
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import ConversationItemMenu from "@/features/Conversations/components/ConversationItemMenu";
+import { useConversationContext } from "@/contexts/ConversationContext";
+import { useActiveTab } from "@/hooks/useActiveTab";
+import { useState } from "react";
+import { SidebarContent } from "./SidebarContent";
+
+const SECTION_LABELS: Record<"pantry" | "cookbook", string> = {
+  pantry: "Pantry",
+  cookbook: "Cookbook",
+};
+
+/**
+ * Mobile-only top bar (`<lg`). Owns the nav drawer (a full mirror of the
+ * desktop `AppSidebar` via `SidebarContent`) and renders a section-aware
+ * title: the active conversation title on the Chat section, the section name
+ * elsewhere. The rename/delete menu appears only on Chat.
+ */
+export function MobileTopBar() {
+  const activeTab = useActiveTab();
+  const {
+    activeConversation,
+    activeConversationId,
+    renameConversation,
+    deleteConversation,
+  } = useConversationContext();
+
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [renaming, setRenaming] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
+
+  const isChat = activeTab === "chat";
+  const conversationTitle = activeConversation?.title ?? "New chat";
+  const canDelete = (activeConversation?._count?.messages ?? 0) > 0;
+
+  const commitRename = async () => {
+    setRenaming(false);
+    const trimmed = renameValue.trim();
+    if (trimmed && trimmed !== conversationTitle && activeConversationId) {
+      await renameConversation(activeConversationId, trimmed);
+    }
+  };
+
+  return (
+    <>
+      <div className="lg:hidden flex items-center gap-1 px-3 py-2 border-b border-border shrink-0">
+        <button
+          onClick={() => setDrawerOpen(true)}
+          className="flex items-center justify-center w-11 h-11 -ml-2 rounded-lg text-ink-faint hover:text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
+          aria-label="Open navigation"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </button>
+
+        {isChat ? (
+          renaming ? (
+            <input
+              autoFocus
+              className="flex-1 mx-1 font-display italic font-medium text-base text-foreground bg-transparent border-b border-primary outline-none"
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              onBlur={commitRename}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") { e.preventDefault(); commitRename(); }
+                if (e.key === "Escape") setRenaming(false);
+              }}
+            />
+          ) : (
+            <>
+              <span className="flex-1 mx-1 font-display italic font-medium text-base text-foreground leading-tight tracking-tight truncate">
+                {conversationTitle}
+              </span>
+              <ConversationItemMenu
+                conversationTitle={conversationTitle}
+                onStartRename={() => {
+                  setRenameValue(conversationTitle);
+                  setRenaming(true);
+                }}
+                onDelete={() => activeConversationId ? deleteConversation(activeConversationId) : Promise.resolve()}
+                canDelete={canDelete}
+              />
+            </>
+          )
+        ) : (
+          <span className="flex-1 mx-1 font-display italic font-medium text-base text-foreground leading-tight tracking-tight truncate">
+            {SECTION_LABELS[activeTab]}
+          </span>
+        )}
+      </div>
+
+      <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
+        <SheetContent side="left" className="w-[280px] p-0 bg-muted paper" showCloseButton={false}>
+          <SheetTitle className="sr-only">Navigation</SheetTitle>
+          <SidebarContent onNavigate={() => setDrawerOpen(false)} />
+        </SheetContent>
+      </Sheet>
+    </>
+  );
+}

@@ -1,1 +1,1 @@
-export { ConversationsMobileSheet } from "./components/ConversationsMobileSheet";
+export { Conversations } from "./Conversations";
