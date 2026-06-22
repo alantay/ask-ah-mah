@@ -17,5 +17,6 @@
 /* Generate utilities for the atoms, foundation specimens, primitives, and previews. */
 @source "../src/features/shared/components/recipe/*.tsx";
 @source "../src/features/shared/components/design-system/*.tsx";
+@source "../src/features/shared/components/Stamp.tsx";
 @source "../src/components/ui/*.tsx";
 @source "../.design-sync/previews/*.tsx";

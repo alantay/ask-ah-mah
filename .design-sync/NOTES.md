@@ -26,6 +26,8 @@ self-installed package) does not apply. The working path is:
   export {
     Eyebrow, SectionHeading, DottedList, StepTip, StepItem, StepList,
   } from "@/features/shared/components/recipe";
+  // shared brand motif
+  export { Stamp } from "@/features/shared/components/Stamp";
   // foundation specimens
   export {
     ColorTokens, TypeScale, Typefaces, RadiusScale,
@@ -51,14 +53,15 @@ self-installed package) does not apply. The working path is:
   } from "@/components/ui/tabs";
   ```
 - **Component set comes from `cfg.componentSrcMap`**, not from `export *`. Exporting all
-  app src would pull in server/Prisma/Next code that can't be bundled. The map has **18
-  entries** (6 recipe + 4 design-system + 8 ui); compound primitives map only their root
-  (see the compound-component note under Scope).
+  app src would pull in server/Prisma/Next code that can't be bundled. The map has **19
+  entries** (1 shared + 6 recipe + 4 design-system + 8 ui); compound primitives map only their
+  root (see the compound-component note under Scope).
 - **CSS is compiled, not shipped.** Components are styled by Tailwind utilities; the repo
   ships no static stylesheet. `cfg.buildCmd` runs `@tailwindcss/cli` against
   `ds-tailwind-input.css` (which `@import`s `src/app/globals.css` + the component/preview
-  sources via `@source` — globs now cover `recipe/*.tsx`, `design-system/*.tsx`,
-  `src/components/ui/*.tsx`, and `.design-sync/previews/*.tsx`) to produce `cfg.cssEntry` →
+  sources via `@source` — globs now cover `recipe/*.tsx`, `design-system/*.tsx`, the single
+  `shared/components/Stamp.tsx`, `src/components/ui/*.tsx`, and `.design-sync/previews/*.tsx`)
+  to produce `cfg.cssEntry` →
   `.design-sync/.cache/ds-compiled.css`. That file is **gitignored** (lives under `.cache/`),
   so a fresh clone must re-run `buildCmd` before validating — it is not committed.
 
@@ -80,9 +83,13 @@ Re-run `node .ds-sync/package-build.mjs` / `resync.mjs` from there.
 
 ## Scope
 
-**18 components across three groups** (was six recipe atoms — expanded into a full
+**19 components across four groups** (was six recipe atoms — expanded into a full
 design system in #285's follow-up so the design agent can compose whole new pages):
 
+- **`shared` (1)** — Stamp. The kopitiam ink-stamp "chop" frame, factored out of StepItem
+  so the first-run chat hero and the step badges share one motif. Source:
+  `src/features/shared/components/Stamp.tsx` (note: a bare `.tsx` directly under
+  `components/`, not in a sub-group dir — see the group-derivation note below).
 - **`recipe` (6)** — Eyebrow, SectionHeading, DottedList, StepTip, StepItem, StepList.
   The original drift-prone atoms. Source: `src/features/shared/components/recipe/`.
 - **`design-system` (4)** — ColorTokens, TypeScale, Typefaces, RadiusScale. **Foundation
@@ -96,11 +103,12 @@ design system in #285's follow-up so the design agent can compose whole new page
   shadcn primitives. Source: `src/components/ui/<name>.tsx`.
 
 All preview cells graded `good` on the absolute rubric (no Storybook reference). Previews
-are hand-authored under `.design-sync/previews/*.tsx` from real usage. Verified 18/18 render
+are hand-authored under `.design-sync/previews/*.tsx` from real usage. Verified 19/19 render
 correctly: Dialog renders as a centred modal over the dimmed overlay (portal works headless),
-Select shows its resting trigger (`defaultValue`), Tabs/Card/Badge/Input/Label all inline.
+Select shows its resting trigger (`defaultValue`), Tabs/Card/Badge/Input/Label all inline,
+Stamp renders both tones (terracotta chop + cream tile) tilted with the inner mark upright.
 
-### Why the primitives land in group "general" (not "ui")
+### Why the primitives land in group "general", and Stamp in "shared"
 
 Group is derived from the source path: the last `src/`-relative segment that isn't the
 component's own dir or a member of `GENERIC_DIR` (`components, component, src, lib, ui,
@@ -110,6 +118,13 @@ only path-derivation or a JSDoc `@category` tag on the component. We deliberatel
 rename the group (would mean adding `@category` to 8 app files, coupling app code to the
 sync tool and forcing re-verification). To rename later: add `/** @category primitives */`
 above each primitive's exported function, or move them to a non-generic dir.
+
+**Stamp lands in group `shared`** for the same reason, but note the precedence: `@category`
+is only a *fallback* used when path-derivation yields nothing. For
+`src/features/shared/components/Stamp.tsx` the segment `shared` is non-generic and wins, so
+a `@category` tag on Stamp would NOT move it — path beats JSDoc. To reach a different group
+you'd move the file into a sub-group dir (e.g. `…/components/recipe/`) or a generic-only
+path. `shared` (a one-member group) is a sensible, zero-coupling home, so it was left as-is.
 
 ### Compound components: card the root, export the parts
 
@@ -124,7 +139,7 @@ flat exports don't trigger it. So the pattern is:
   primitive, not one per subcomponent. componentSrcMap is authoritative for the card list;
   the extra part exports get bundled but aren't carded.
 
-Net: **18 cards, ~40 window exports.**
+Net: **19 cards, ~41 window exports.**
 
 ## Re-sync risks
 
@@ -132,6 +147,11 @@ Net: **18 cards, ~40 window exports.**
   scale or `--ink-faint`/`--callout`/`--primary-deep`), recompile and re-verify — the
   atoms reference them directly.
 - New atoms must be added to BOTH `ds-entry.ts` and `cfg.componentSrcMap`, plus a preview
-  under `.design-sync/previews/` and the `@source` glob already covers that dir.
+  under `.design-sync/previews/` (the `@source` glob already covers that dir). **Also confirm
+  the component's own source is covered by an `@source` line in `ds-tailwind-input.css`** —
+  the preview glob only scans the preview file, not the component, so a component outside the
+  `recipe/*.tsx` / `design-system/*.tsx` / `ui/*.tsx` globs (as Stamp was) needs its own
+  `@source` entry or its utility classes are dropped from the compiled CSS and it renders
+  unstyled.
 - `_ds_sync.json` is the anchor; an unchanged component is skipped on re-sync. If the
   Tailwind compile output drifts, the styleSha changes and everything re-verifies — correct.

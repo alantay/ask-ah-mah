@@ -10,6 +10,7 @@
   "buildCmd": "node .ds-sync/node_modules/.bin/tailwindcss -i .design-sync/ds-tailwind-input.css -o .design-sync/.cache/ds-compiled.css",
   "guidelinesGlob": ["docs/design-system.md"],
   "componentSrcMap": {
+    "Stamp": "src/features/shared/components/Stamp.tsx",
     "Eyebrow": "src/features/shared/components/recipe/Eyebrow.tsx",
     "SectionHeading": "src/features/shared/components/recipe/SectionHeading.tsx",
     "DottedList": "src/features/shared/components/recipe/DottedList.tsx",
