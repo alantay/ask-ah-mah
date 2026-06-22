@@ -62,6 +62,7 @@ skills-lock.json
 .worktrees/
 
 # AI scratch + local test output (never committed)
+.scratch/
 temp/
 test-results/
 .agentindex
