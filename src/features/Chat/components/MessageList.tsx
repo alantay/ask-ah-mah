@@ -305,7 +305,7 @@ export const MessageList = ({
 
   return (
     <Conversation>
-      <ConversationContent>
+      <ConversationContent className="px-2 sm:p-4">
         <div
           ref={containerRef}
           className="space-y-4 overscroll-contain max-w-5xl mx-auto w-full"
