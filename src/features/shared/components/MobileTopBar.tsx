@@ -4,7 +4,7 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import ConversationItemMenu from "@/features/Conversations/components/ConversationItemMenu";
 import { useConversationContext } from "@/contexts/ConversationContext";
 import { useActiveTab } from "@/hooks/useActiveTab";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { SidebarContent } from "./SidebarContent";
 
 const SECTION_LABELS: Record<"pantry" | "cookbook", string> = {
@@ -30,6 +30,8 @@ export function MobileTopBar() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState("");
+  // Set when Escape cancels the rename, so the resulting blur doesn't commit.
+  const cancelRenameOnBlurRef = useRef(false);
 
   const isChat = activeTab === "chat";
   const conversationTitle = activeConversation?.title ?? "New chat";
@@ -37,6 +39,10 @@ export function MobileTopBar() {
 
   const commitRename = async () => {
     setRenaming(false);
+    if (cancelRenameOnBlurRef.current) {
+      cancelRenameOnBlurRef.current = false;
+      return;
+    }
     const trimmed = renameValue.trim();
     if (trimmed && trimmed !== conversationTitle && activeConversationId) {
       await renameConversation(activeConversationId, trimmed);
@@ -65,8 +71,15 @@ export function MobileTopBar() {
               onChange={(e) => setRenameValue(e.target.value)}
               onBlur={commitRename}
               onKeyDown={(e) => {
-                if (e.key === "Enter") { e.preventDefault(); commitRename(); }
-                if (e.key === "Escape") setRenaming(false);
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  e.currentTarget.blur();
+                }
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  cancelRenameOnBlurRef.current = true;
+                  setRenaming(false);
+                }
               }}
             />
           ) : (

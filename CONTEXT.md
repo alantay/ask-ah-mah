@@ -22,7 +22,7 @@ One of the three primary destinations — **Chat**, **Pantry**, **Cookbook**. Se
 
 ## Staging State
 
-The UI state where the user is on the Chat section but has not yet sent a message. Indicated by `activeConversationId === null`. The greeting and suggestions are shown; no `Conversation` row exists yet.
+The UI state where the user is on the Chat section but has not yet sent a message and has no pending conversation. Indicated by `activeConversationId === null && pendingConversationId === null`. The greeting and suggestions are shown; no `Conversation` row exists yet.
 
 When the user sends the first message, the staging path in `useChatSession` creates the `Conversation` row via `POST /api/conversation`, then transitions to **Pending State**.
 
