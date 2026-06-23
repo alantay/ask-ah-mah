@@ -288,11 +288,11 @@ export function RecipeLetter({
           <p className="font-sans text-xs text-muted-foreground mb-1.5 leading-snug">
             Still need —
           </p>
-          <ul className="space-y-1.5">
+          <div className="space-y-1.5">
             {missingIngredients.map((ing) => {
               const tip = tips[canonicalTipKey(ing.name)];
               return (
-                <li key={ing.name} className="leading-snug">
+                <div key={ing.name} className="leading-snug">
                   <span className="font-display text-sm font-semibold text-foreground">
                     {ing.name}
                   </span>
@@ -301,10 +301,10 @@ export function RecipeLetter({
                       — {tip}
                     </span>
                   )}
-                </li>
+                </div>
               );
             })}
-          </ul>
+          </div>
           <div className="flex items-center gap-2 mt-2.5">
             <button
               onClick={copyShoppingList}
