@@ -134,6 +134,18 @@ An ingredient a generated recipe calls for that is not present in the user's pan
 
 ---
 
+## Market Tip
+
+Ah Mah's point-of-purchase wisdom for choosing a fresh item well — e.g. *"firm, deep-red tomato, no bruises"* or *"a dark avocado that gives slightly is ripe enough to use today."* Attached to the missing items (**Additions**) on a recipe's shopping list: revealed inline per item, and folded into the copied shopping-list text so it travels to wherever the user actually shops.
+
+A Market Tip speaks only to **selection quality at the moment of buying** — not to how long something keeps once home. Only *fresh / pickable* items (produce, fruit, seafood, meat) carry one; staples (salt, sauces, dry goods) have none and show no tip affordance. Tips are **universal, not user-specific**: the same advice serves every user, so they live in a single shared corpus keyed by canonical item name, never per account.
+
+**Why this matters:** this is freshness-*adjacent* but deliberately distinct from the shelf-life idea rejected in [ADR-0008](docs/adr/0008-no-shelf-life-ui.md). Shelf-life asks "is *my* tomato still good?" — unknowable from app state. A Market Tip asks "how do I pick a good tomato?" — general knowledge the model already holds. The first is per-user and unreliable; the second is shared and sound.
+
+Related: [ADR-0013](docs/adr/0013-market-tips-are-llm-generated-and-shared.md)
+
+---
+
 ## Recipe Notes
 
 Whole-dish asides attached to a recipe (`notes` on the recipe block): make-ahead, storage, serving suggestions, and pantry-*independent* technique fallbacks ("no cumin? use garam masala — it's pre-toasted, add it later"). Optional, 0–4 entries, omitted for simple dishes. Rendered as a "Notes" section at the foot of the recipe.
