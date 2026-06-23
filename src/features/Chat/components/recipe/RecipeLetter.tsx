@@ -154,7 +154,6 @@ export function RecipeLetter({
   const tips = useMarketTips(
     missingIngredients.map((ing) => ({ name: ing.name, category: ing.category })),
   );
-  const [revealedKey, setRevealedKey] = useState<string | null>(null);
   // The shopping list + picking tips are a *tool* — useful whenever the user
   // owns some of the recipe and is missing some, regardless of how close they
   // are. The ≥50% ratio only switches the *framing* (encouragement vs neutral).
@@ -286,38 +285,26 @@ export function RecipeLetter({
               {almostThere ? "You’re almost there" : "Shopping list"}
             </span>
           </div>
-          <p className="font-display text-sm text-foreground mb-0.5 leading-snug">
-            Still need:{" "}
-            {missingIngredients.map((ing, i) => {
-              const key = canonicalTipKey(ing.name);
-              const tip = tips[key];
-              const isLast = i === missingIngredients.length - 1;
+          <p className="font-sans text-xs text-muted-foreground mb-1.5 leading-snug">
+            Still need —
+          </p>
+          <ul className="space-y-1.5">
+            {missingIngredients.map((ing) => {
+              const tip = tips[canonicalTipKey(ing.name)];
               return (
-                <span key={key}>
-                  {tip ? (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setRevealedKey(revealedKey === key ? null : key)
-                      }
-                      aria-expanded={revealedKey === key}
-                      className="font-semibold underline decoration-dotted underline-offset-2 hover:text-primary transition-colors cursor-pointer"
-                    >
-                      {ing.name}
-                    </button>
-                  ) : (
-                    <span className="font-semibold">{ing.name}</span>
+                <li key={ing.name} className="leading-snug">
+                  <span className="font-display text-sm font-semibold text-foreground">
+                    {ing.name}
+                  </span>
+                  {tip && (
+                    <span className="block pl-3.5 font-display italic text-xs text-muted-foreground leading-snug">
+                      — {tip}
+                    </span>
                   )}
-                  {!isLast ? ", " : ""}
-                </span>
+                </li>
               );
             })}
-          </p>
-          {revealedKey && tips[revealedKey] && (
-            <p className="font-display italic text-xs text-muted-foreground mt-1.5 leading-snug">
-              Ah Mah says: {tips[revealedKey]}
-            </p>
-          )}
+          </ul>
           <div className="flex items-center gap-2 mt-2.5">
             <button
               onClick={copyShoppingList}
