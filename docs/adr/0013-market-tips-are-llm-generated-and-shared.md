@@ -44,5 +44,5 @@ A Market Tip asks a *different* question. Shelf-life: "is *my* tomato still good
 - New shared model (e.g. `MarketTip { key @id, tip, createdAt }`) with **no `userId`**.
 - Generation must normalize ingredient strings to a canonical key, or the cache will not hit.
 - The model contract must support returning "no tip" for staples, so the cache and UI stay free of filler.
-- The shortfall card's ≥50%-in-pantry gate is narrow; tips should attach wherever missing ingredients already render (verify render paths during planning).
+- ~~The shortfall card's ≥50%-in-pantry gate is narrow; tips should attach wherever missing ingredients already render (verify render paths during planning).~~ **Resolved (Jun 2026):** the shortfall card was conflating two jobs — encouragement ("You're almost there") and utility (shopping list + tips). The ≥50% ratio now only switches the *heading copy*; the card itself (and its tips) renders whenever the user owns ≥1 ingredient and is missing ≥1. See the "Shortfall card" glossary entry in `CONTEXT.md`.
 - A standalone, persisted shopping list remains deferred — this iteration proves the tip value on the existing recipe-bound list first.

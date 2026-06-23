@@ -155,12 +155,16 @@ export function RecipeLetter({
     missingIngredients.map((ing) => ({ name: ing.name, category: ing.category })),
   );
   const [revealedKey, setRevealedKey] = useState<string | null>(null);
+  // The shopping list + picking tips are a *tool* — useful whenever the user
+  // owns some of the recipe and is missing some, regardless of how close they
+  // are. The ≥50% ratio only switches the *framing* (encouragement vs neutral).
+  const almostThere = total > 0 && haveCount >= Math.ceil(total / 2);
   const showShortfall =
     !isStreaming &&
     userId &&
     inventoryItems.length > 0 &&
     total > 0 &&
-    haveCount >= Math.ceil(total / 2) &&
+    haveCount >= 1 &&
     missingIngredients.length > 0;
 
   const copyShoppingList = () => {
@@ -271,13 +275,15 @@ export function RecipeLetter({
         </div>
       )}
 
-      {/* Shortfall card — shown when ≥50% in pantry but some missing */}
+      {/* Shortfall card — shown whenever the user owns ≥1 ingredient and is
+          missing ≥1. Heading adapts: encouragement near completion, neutral
+          "Shopping list" framing when there's still a fair bit to get. */}
       {showShortfall && (
         <div className="mb-4 bg-callout-tint border border-dashed border-callout-border rounded-xl p-3.5">
           <div className="flex items-center gap-1.5 mb-2">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-callout" />
             <span className="font-sans text-eyebrow font-bold tracking-[0.16em] uppercase text-callout-strong">
-              You&rsquo;re almost there
+              {almostThere ? "You’re almost there" : "Shopping list"}
             </span>
           </div>
           <p className="font-display text-sm text-foreground mb-0.5 leading-snug">
