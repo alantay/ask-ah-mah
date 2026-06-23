@@ -151,9 +151,6 @@ export function RecipeLetter({
   const missingIngredients = ingredients.filter(
     (ing) => !ingredientHave(ing.name, inventoryNames),
   );
-  const tips = useMarketTips(
-    missingIngredients.map((ing) => ({ name: ing.name, category: ing.category })),
-  );
   // The shopping list + picking tips are a *tool* — useful whenever the user
   // owns some of the recipe and is missing some, regardless of how close they
   // are. The ≥50% ratio only switches the *framing* (encouragement vs neutral).
@@ -165,6 +162,16 @@ export function RecipeLetter({
     total > 0 &&
     haveCount >= 1 &&
     missingIngredients.length > 0;
+  // Only fetch picking tips when the shortfall card will actually render —
+  // otherwise we'd hit /api/market-tip (and the model) for nothing.
+  const tips = useMarketTips(
+    showShortfall
+      ? missingIngredients.map((ing) => ({
+          name: ing.name,
+          category: ing.category,
+        }))
+      : [],
+  );
 
   const copyShoppingList = () => {
     const text = formatShoppingList(
@@ -289,10 +296,10 @@ export function RecipeLetter({
             Still need —
           </p>
           <div className="space-y-1.5">
-            {missingIngredients.map((ing) => {
+            {missingIngredients.map((ing, i) => {
               const tip = tips[canonicalTipKey(ing.name)];
               return (
-                <div key={ing.name} className="leading-snug">
+                <div key={`${ing.name}-${i}`} className="leading-snug">
                   <span className="font-display text-sm font-semibold text-foreground">
                     {ing.name}
                   </span>

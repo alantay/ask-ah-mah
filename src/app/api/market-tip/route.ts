@@ -24,9 +24,16 @@ const TipGenSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const parsed = RequestSchema.safeParse(await req.json());
+    let payload: unknown;
+    try {
+      payload = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+
+    const parsed = RequestSchema.safeParse(payload);
     if (!parsed.success) {
-      return NextResponse.json({ error: "items is required" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid items payload" }, { status: 400 });
     }
 
     // Canonicalize + dedupe; track a display name + pickability per key.
@@ -42,10 +49,12 @@ export async function POST(req: NextRequest) {
 
     const keys = [...wanted.keys()];
     const cached = await prisma.marketTip.findMany({ where: { key: { in: keys } } });
-    const result: Record<string, string> = {};
+    const result: Record<string, string> = Object.create(null);
     for (const row of cached) result[row.key] = row.tip;
 
-    const misses = keys.filter((k) => !(k in result));
+    const misses = keys.filter(
+      (k) => !Object.prototype.hasOwnProperty.call(result, k),
+    );
     const toGenerate = misses.filter((k) => wanted.get(k)!.pickable);
     const staples = misses.filter((k) => !wanted.get(k)!.pickable);
 
