@@ -19,6 +19,9 @@ import { DottedList, Eyebrow, StepList } from "@/features/shared/components/reci
 import { toast } from "sonner";
 import useSWR, { useSWRConfig } from "swr";
 import { ScaledNum, scaleAmount, formatRecipeAsText } from "@/features/Recipe";
+import { useMarketTips } from "./useMarketTips";
+import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
+import { formatShoppingList } from "@/lib/marketTips/formatShoppingList";
 
 export interface RecipeLetterProps {
   // Partial during progressive reveal — fields fill in as the JSON streams.
@@ -148,6 +151,10 @@ export function RecipeLetter({
   const missingIngredients = ingredients.filter(
     (ing) => !ingredientHave(ing.name, inventoryNames),
   );
+  const tips = useMarketTips(
+    missingIngredients.map((ing) => ({ name: ing.name, category: ing.category })),
+  );
+  const [revealedKey, setRevealedKey] = useState<string | null>(null);
   const showShortfall =
     !isStreaming &&
     userId &&
@@ -157,14 +164,15 @@ export function RecipeLetter({
     missingIngredients.length > 0;
 
   const copyShoppingList = () => {
-    const lines = missingIngredients
-      .map((ing) => {
-        const parts = [ing.name];
-        if (ing.amount) parts.unshift(ing.amount + (ing.unit ? ` ${ing.unit}` : ""));
-        return parts.join(" ");
-      })
-      .join("\n");
-    navigator.clipboard.writeText(lines).then(
+    const text = formatShoppingList(
+      missingIngredients.map((ing) => ({
+        name: ing.name,
+        amount: ing.amount,
+        unit: ing.unit,
+      })),
+      tips,
+    );
+    navigator.clipboard.writeText(text).then(
       () => toast.success("Shopping list copied — go get them!"),
       () => toast.error("Aiyah, couldn't copy — select and copy by hand?"),
     );
@@ -274,10 +282,36 @@ export function RecipeLetter({
           </div>
           <p className="font-display text-sm text-foreground mb-0.5 leading-snug">
             Still need:{" "}
-            <span className="font-semibold">
-              {missingIngredients.map((i) => i.name).join(", ")}
-            </span>
+            {missingIngredients.map((ing, i) => {
+              const key = canonicalTipKey(ing.name);
+              const tip = tips[key];
+              const isLast = i === missingIngredients.length - 1;
+              return (
+                <span key={key}>
+                  {tip ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setRevealedKey(revealedKey === key ? null : key)
+                      }
+                      aria-expanded={revealedKey === key}
+                      className="font-semibold underline decoration-dotted underline-offset-2 hover:text-primary transition-colors cursor-pointer"
+                    >
+                      {ing.name}
+                    </button>
+                  ) : (
+                    <span className="font-semibold">{ing.name}</span>
+                  )}
+                  {!isLast ? ", " : ""}
+                </span>
+              );
+            })}
           </p>
+          {revealedKey && tips[revealedKey] && (
+            <p className="font-display italic text-xs text-muted-foreground mt-1.5 leading-snug">
+              Ah Mah says: {tips[revealedKey]}
+            </p>
+          )}
           <div className="flex items-center gap-2 mt-2.5">
             <button
               onClick={copyShoppingList}
