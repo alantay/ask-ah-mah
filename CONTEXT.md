@@ -134,6 +134,21 @@ An ingredient a generated recipe calls for that is not present in the user's pan
 
 ---
 
+## Shortfall card
+
+The block on an in-chat recipe that lists what the user is still missing (the **Additions**) and lets them act on it — copy a shopping list, ask Ah Mah for substitutions, and reveal **Market Tips**. It is the *tool* surface for going shopping.
+
+It carries **two framings** that depend on how close the user is, but the tool itself shows the same way in both:
+
+- **Encouragement** — heading "You're almost there", used when the user already owns **at least half** the recipe's ingredients. A motivational nudge to grab the last few things.
+- **Shopping list** — neutral heading, used when the user owns fewer than half. The same shopping list and tips, without pretending the user is nearly done.
+
+The card appears whenever the user owns **at least one** ingredient and is missing **at least one**. It is suppressed when the user owns *none* of the ingredients — at that point "still need" would just restate the whole recipe, which the ingredient list already is.
+
+Related: [ADR-0013](docs/adr/0013-market-tips-are-llm-generated-and-shared.md)
+
+---
+
 ## Market Tip
 
 Ah Mah's point-of-purchase wisdom for choosing a fresh item well — e.g. *"firm, deep-red tomato, no bruises"* or *"a dark avocado that gives slightly is ripe enough to use today."* Attached to the missing items (**Additions**) on a recipe's shopping list: revealed inline per item, and folded into the copied shopping-list text so it travels to wherever the user actually shops.

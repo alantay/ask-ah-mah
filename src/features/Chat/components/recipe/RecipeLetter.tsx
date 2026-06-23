@@ -19,6 +19,9 @@ import { DottedList, Eyebrow, StepList } from "@/features/shared/components/reci
 import { toast } from "sonner";
 import useSWR, { useSWRConfig } from "swr";
 import { ScaledNum, scaleAmount, formatRecipeAsText } from "@/features/Recipe";
+import { useMarketTips } from "./useMarketTips";
+import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
+import { formatShoppingList } from "@/lib/marketTips/formatShoppingList";
 
 export interface RecipeLetterProps {
   // Partial during progressive reveal — fields fill in as the JSON streams.
@@ -148,23 +151,38 @@ export function RecipeLetter({
   const missingIngredients = ingredients.filter(
     (ing) => !ingredientHave(ing.name, inventoryNames),
   );
+  // The shopping list + picking tips are a *tool* — useful whenever the user
+  // owns some of the recipe and is missing some, regardless of how close they
+  // are. The ≥50% ratio only switches the *framing* (encouragement vs neutral).
+  const almostThere = total > 0 && haveCount >= Math.ceil(total / 2);
   const showShortfall =
     !isStreaming &&
     userId &&
     inventoryItems.length > 0 &&
     total > 0 &&
-    haveCount >= Math.ceil(total / 2) &&
+    haveCount >= 1 &&
     missingIngredients.length > 0;
+  // Only fetch picking tips when the shortfall card will actually render —
+  // otherwise we'd hit /api/market-tip (and the model) for nothing.
+  const tips = useMarketTips(
+    showShortfall
+      ? missingIngredients.map((ing) => ({
+          name: ing.name,
+          category: ing.category,
+        }))
+      : [],
+  );
 
   const copyShoppingList = () => {
-    const lines = missingIngredients
-      .map((ing) => {
-        const parts = [ing.name];
-        if (ing.amount) parts.unshift(ing.amount + (ing.unit ? ` ${ing.unit}` : ""));
-        return parts.join(" ");
-      })
-      .join("\n");
-    navigator.clipboard.writeText(lines).then(
+    const text = formatShoppingList(
+      missingIngredients.map((ing) => ({
+        name: ing.name,
+        amount: ing.amount,
+        unit: ing.unit,
+      })),
+      tips,
+    );
+    navigator.clipboard.writeText(text).then(
       () => toast.success("Shopping list copied — go get them!"),
       () => toast.error("Aiyah, couldn't copy — select and copy by hand?"),
     );
@@ -263,21 +281,37 @@ export function RecipeLetter({
         </div>
       )}
 
-      {/* Shortfall card — shown when ≥50% in pantry but some missing */}
+      {/* Shortfall card — shown whenever the user owns ≥1 ingredient and is
+          missing ≥1. Heading adapts: encouragement near completion, neutral
+          "Shopping list" framing when there's still a fair bit to get. */}
       {showShortfall && (
         <div className="mb-4 bg-callout-tint border border-dashed border-callout-border rounded-xl p-3.5">
           <div className="flex items-center gap-1.5 mb-2">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-callout" />
             <span className="font-sans text-eyebrow font-bold tracking-[0.16em] uppercase text-callout-strong">
-              You&rsquo;re almost there
+              {almostThere ? "You’re almost there" : "Shopping list"}
             </span>
           </div>
-          <p className="font-display text-sm text-foreground mb-0.5 leading-snug">
-            Still need:{" "}
-            <span className="font-semibold">
-              {missingIngredients.map((i) => i.name).join(", ")}
-            </span>
+          <p className="font-sans text-xs text-muted-foreground mb-1.5 leading-snug">
+            Still need —
           </p>
+          <div className="space-y-1.5">
+            {missingIngredients.map((ing, i) => {
+              const tip = tips[canonicalTipKey(ing.name)];
+              return (
+                <div key={`${ing.name}-${i}`} className="leading-snug">
+                  <span className="font-display text-sm font-semibold text-foreground">
+                    {ing.name}
+                  </span>
+                  {tip && (
+                    <span className="block pl-3.5 font-display italic text-xs text-muted-foreground leading-snug">
+                      — {tip}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
           <div className="flex items-center gap-2 mt-2.5">
             <button
               onClick={copyShoppingList}

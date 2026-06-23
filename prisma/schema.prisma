@@ -23,6 +23,17 @@ model InventoryItem {
   @@map("inventory_items")
 }
 
+// Shared corpus of "how to pick a good one" tips, keyed by canonical
+// (lowercased, trimmed) item name. No userId — tips are universal.
+// An empty `tip` is a negative-cache marker: "no meaningful picking tip".
+model MarketTip {
+  key       String   @id
+  tip       String
+  createdAt DateTime @default(now())
+
+  @@map("market_tips")
+}
+
 model Conversation {
   id        String    @id @default(cuid())
   userId    String

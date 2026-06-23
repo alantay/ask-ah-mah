@@ -139,6 +139,82 @@ describe('RecipeLetter ingredient grid', () => {
   });
 });
 
+describe('Shortfall card gate + framing', () => {
+  // chicken thigh owned, bok choy + ginger missing → 1 of 3 (below 50%)
+  const RECIPE_3: RecipeLetterProps['recipe'] = {
+    ...RECIPE,
+    ingredients: [
+      ...RECIPE.ingredients,
+      { name: 'ginger', category: 'Vegetable', amount: '1', unit: 'thumb', note: undefined },
+    ],
+  };
+
+  beforeEach(() => {
+    mockUseSessionContext.mockReturnValue({ userId: 'user-123' });
+  });
+
+  it('shows the shortfall card when far from complete (1 of 3 owned)', () => {
+    mockUseSWR.mockReturnValue({ data: INVENTORY_WITH_CHICKEN });
+    render(<RecipeLetter recipe={RECIPE_3} />);
+    expect(screen.getByText('Shopping list')).toBeInTheDocument();
+    expect(screen.getByText(/Still need/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Copy shopping list/ })).toBeInTheDocument();
+  });
+
+  it('shows a picking tip inline under its item, with no click needed', () => {
+    // Inventory SWR vs market-tip SWR are told apart by their key.
+    mockUseSWR.mockImplementation((key: unknown) =>
+      typeof key === 'string' && key.startsWith('market-tip')
+        ? { data: { tips: { 'bok choy': 'crisp stalks, no yellowing' } } }
+        : { data: INVENTORY_WITH_CHICKEN },
+    );
+    render(<RecipeLetter recipe={RECIPE} />);
+    // Tip is visible immediately (no toggle), tied to its item.
+    expect(screen.getByText('— crisp stalks, no yellowing')).toBeInTheDocument();
+    // The item name is plain text, not an expandable button.
+    expect(
+      screen.queryByRole('button', { name: 'bok choy' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('uses the encouraging heading once at least half are owned (1 of 2)', () => {
+    mockUseSWR.mockReturnValue({ data: INVENTORY_WITH_CHICKEN });
+    render(<RecipeLetter recipe={RECIPE} />);
+    expect(screen.getByText(/You.?re almost there/)).toBeInTheDocument();
+    expect(screen.queryByText('Shopping list')).not.toBeInTheDocument();
+  });
+
+  it('hides the card when the user owns none of the ingredients', () => {
+    mockUseSWR.mockReturnValue({
+      data: {
+        ingredientInventory: [
+          {
+            id: '9',
+            name: 'tofu',
+            type: 'ingredient' as const,
+            category: 'Protein' as const,
+            dateAdded: new Date().toISOString(),
+            lastUpdated: new Date().toISOString(),
+          },
+        ],
+        kitchenwareInventory: [],
+      },
+    });
+    render(<RecipeLetter recipe={RECIPE} />);
+    expect(screen.queryByText('Shopping list')).not.toBeInTheDocument();
+    expect(screen.queryByText(/You.?re almost there/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Still need/)).not.toBeInTheDocument();
+  });
+
+  it('hides the card for a signed-out user even when some are missing', () => {
+    mockUseSessionContext.mockReturnValue({ userId: null });
+    mockUseSWR.mockReturnValue({ data: INVENTORY_WITH_CHICKEN });
+    render(<RecipeLetter recipe={RECIPE_3} />);
+    expect(screen.queryByText('Shopping list')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Still need/)).not.toBeInTheDocument();
+  });
+});
+
 describe('NEED pill click-to-add', () => {
   beforeEach(() => {
     mockUseSessionContext.mockReturnValue({ userId: 'user-123' });
