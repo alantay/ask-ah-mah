@@ -18,6 +18,8 @@ Related: [ADR-0002](docs/adr/0002-conversation-requires-at-least-one-message.md)
 
 One of the three primary destinations — **Chat**, **Pantry**, **Cookbook**. Selected from the `AppSidebar` on desktop and from the nav drawer on mobile. The Radix `Tabs` container that switches the content panels underneath is an implementation detail, not a user-facing surface — there is no visible tab strip.
 
+The **Pantry** Section has two faces: **Have** (current stock) and **Need** (the **Shopping List**). See [ADR-0014](docs/adr/0014-shopping-list-is-standing-and-quantityless.md).
+
 ---
 
 ## Staging State
@@ -136,28 +138,33 @@ An ingredient a generated recipe calls for that is not present in the user's pan
 
 ## Shortfall card
 
-The block on an in-chat recipe that lists what the user is still missing (the **Additions**) and lets them act on it — copy a shopping list, ask Ah Mah for substitutions, and reveal **Market Tips**. It is the *tool* surface for going shopping.
+**Retired — superseded by the [Shopping List](#shopping-list). See [ADR-0014](docs/adr/0014-shopping-list-is-standing-and-quantityless.md).**
 
-It carries **two framings** that depend on how close the user is, but the tool itself shows the same way in both:
-
-- **Encouragement** — heading "You're almost there", used when the user already owns **at least half** the recipe's ingredients. A motivational nudge to grab the last few things.
-- **Shopping list** — neutral heading, used when the user owns fewer than half. The same shopping list and tips, without pretending the user is nearly done.
-
-The card appears whenever the user owns **at least one** ingredient and is missing **at least one**. It is suppressed when the user owns *none* of the ingredients — at that point "still need" would just restate the whole recipe, which the ingredient list already is.
-
-Related: [ADR-0013](docs/adr/0013-market-tips-are-llm-generated-and-shared.md)
+Formerly: the in-chat block that listed a recipe's missing items (the **Additions**) with **Market Tips** inline. It duplicated **What to gather** and stapled a pick-tip beside the ingredient's substitution `note`, so two advice voices clashed on one item. The in-chat recipe now keeps a single ingredient list in a single voice; shopping and tips moved to the standing **Shopping List**.
 
 ---
 
 ## Market Tip
 
-Ah Mah's point-of-purchase wisdom for choosing a fresh item well — e.g. *"firm, deep-red tomato, no bruises"* or *"a dark avocado that gives slightly is ripe enough to use today."* Attached to the missing items (**Additions**) on a recipe's shopping list: revealed inline per item, and folded into the copied shopping-list text so it travels to wherever the user actually shops.
+Ah Mah's point-of-purchase wisdom for choosing a fresh item well — e.g. *"firm, deep-red tomato, no bruises"* or *"a dark avocado that gives slightly is ripe enough to use today."* Surfaced on the **[Shopping List](#shopping-list)** (the Pantry's **Need** tab), one tip per item, and folded into the copied shopping-list text so it travels to wherever the user actually shops. Market Tips deliberately do **not** appear on the recipe card — co-locating a pick-tip with an ingredient's substitution `note` clashed (see [ADR-0014](docs/adr/0014-shopping-list-is-standing-and-quantityless.md)).
 
 A Market Tip speaks only to **selection quality at the moment of buying** — not to how long something keeps once home. Only *fresh / pickable* items (produce, fruit, seafood, meat) carry one; staples (salt, sauces, dry goods) have none and show no tip affordance. Tips are **universal, not user-specific**: the same advice serves every user, so they live in a single shared corpus keyed by canonical item name, never per account.
 
 **Why this matters:** this is freshness-*adjacent* but deliberately distinct from the shelf-life idea rejected in [ADR-0008](docs/adr/0008-no-shelf-life-ui.md). Shelf-life asks "is *my* tomato still good?" — unknowable from app state. A Market Tip asks "how do I pick a good tomato?" — general knowledge the model already holds. The first is per-user and unreliable; the second is shared and sound.
 
-Related: [ADR-0013](docs/adr/0013-market-tips-are-llm-generated-and-shared.md)
+Related: [ADR-0013](docs/adr/0013-market-tips-are-llm-generated-and-shared.md), [ADR-0014](docs/adr/0014-shopping-list-is-standing-and-quantityless.md)
+
+---
+
+## Shopping List
+
+A standing, **per-user**, persisted list of items the user intends to buy — the **Need** face of the Pantry (whose **Have** face is the current stock). Items are **identities, not quantities**: a row is `shallot`, never `4 shallots`, so the same item from different recipes and from direct entry collapse to one row (canonical name). Each item carries its **Market Tip**.
+
+Items arrive two ways: the **cart button** on a recipe's ingredient row (adds the missing item), or **typed in directly** (e.g. "apples", unrelated to any recipe). Lifecycle is todo-list-style — checking an item (**bought**) strikes it through for the trip; crossing it out (**✕**, changed mind) deletes it. Moving a bought item into the **Pantry** is a separate, opt-in step, never a side effect of checking it.
+
+**Why this matters:** the Shopping List is where **Market Tips** live — the point-of-purchase surface — deliberately separated from the recipe card so a pick-tip ("choose pale pink pork") never sits beside a recipe's substitution `note` ("use the chicken you have"). The two voices answer different questions and clashed when co-located. It also serves wants no recipe-bound list could: buying things unrelated to any recipe.
+
+Related: [ADR-0014](docs/adr/0014-shopping-list-is-standing-and-quantityless.md), [ADR-0013](docs/adr/0013-market-tips-are-llm-generated-and-shared.md)
 
 ---
 
