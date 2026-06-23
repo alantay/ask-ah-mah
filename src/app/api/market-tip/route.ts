@@ -14,7 +14,8 @@ const RequestSchema = z.object({
         category: z.string().nullish(),
       }),
     )
-    .min(1),
+    .min(1)
+    .max(30),
 });
 
 const TipGenSchema = z.object({
@@ -51,7 +52,9 @@ export async function POST(req: NextRequest) {
     // Negative-cache staples: no model call, never a tip.
     for (const k of staples) {
       result[k] = "";
-      await prisma.marketTip.create({ data: { key: k, tip: "" } }).catch(() => {});
+      await prisma.marketTip
+        .create({ data: { key: k, tip: "" } })
+        .catch((e) => console.warn("market-tip cache write failed", k, e));
     }
 
     if (toGenerate.length > 0) {
@@ -76,9 +79,17 @@ ${list}`,
         object.tips.map((t) => [canonicalTipKey(t.key), t.tip.trim()]),
       );
       for (const k of toGenerate) {
-        const tip = generated.get(k) ?? "";
-        result[k] = tip;
-        await prisma.marketTip.create({ data: { key: k, tip } }).catch(() => {});
+        if (generated.has(k)) {
+          const tip = generated.get(k)!;
+          result[k] = tip;
+          await prisma.marketTip
+            .create({ data: { key: k, tip } })
+            .catch((e) => console.warn("market-tip cache write failed", k, e));
+        } else {
+          // Model omitted this key — return no tip for this request but
+          // don't negative-cache it, so it stays retryable on a later call.
+          result[k] = "";
+        }
       }
     }
 

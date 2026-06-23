@@ -1,5 +1,6 @@
 "use client";
 
+import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
 import { isPickableCategory } from "@/lib/marketTips/pickable";
 import useSWR from "swr";
 
@@ -18,7 +19,7 @@ export function useMarketTips(items: TipItem[]): Record<string, string> {
   const pickable = items.filter((i) => isPickableCategory(i.category));
   const swrKey = pickable.length
     ? `market-tip:${pickable
-        .map((i) => i.name.trim().toLowerCase())
+        .map((i) => canonicalTipKey(i.name))
         .sort()
         .join("|")}`
     : null;

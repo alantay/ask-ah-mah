@@ -81,4 +81,20 @@ describe("POST /api/market-tip", () => {
     const res = await POST(reqWith({}));
     expect(res.status).toBe(400);
   });
+
+  it("does not cache a model omission, but still returns an empty tip", async () => {
+    mockedFindMany.mockResolvedValue([] as never);
+    mockedGenerate.mockResolvedValue({
+      object: { tips: [] },
+    } as never);
+
+    const res = await POST(reqWith({ items: [{ name: "Avocado", category: "Misc" }] }));
+    const body = await res.json();
+
+    expect(body.tips.avocado).toBe("");
+    expect(mockedGenerate).toHaveBeenCalledTimes(1);
+    expect(mockedCreate).not.toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ key: "avocado" }) }),
+    );
+  });
 });
