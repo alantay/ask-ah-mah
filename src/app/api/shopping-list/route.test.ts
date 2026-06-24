@@ -97,6 +97,29 @@ describe("POST /api/shopping-list", () => {
     expect(mockedAdd).not.toHaveBeenCalled();
   });
 
+  it("400s when items is an empty array", async () => {
+    const res = await POST(
+      createMockRequest(base, {
+        body: JSON.stringify({ userId: "u1", items: [] }),
+      }),
+    );
+    expect(res.status).toBe(400);
+    expect(mockedAdd).not.toHaveBeenCalled();
+  });
+
+  it("400s when the body is malformed JSON", async () => {
+    const req = {
+      nextUrl: { searchParams: new URL(base).searchParams },
+      json: async () => {
+        throw new SyntaxError("Unexpected token");
+      },
+    } as unknown as NextRequest;
+
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    expect(mockedAdd).not.toHaveBeenCalled();
+  });
+
   it("400s when an item has no name", async () => {
     const res = await POST(
       createMockRequest(base, {

@@ -23,7 +23,9 @@ const ShoppingList = () => {
   const [draft, setDraft] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const key = userId ? `/api/shopping-list?userId=${userId}` : null;
+  const key = userId
+    ? `/api/shopping-list?userId=${encodeURIComponent(userId)}`
+    : null;
   const { data, isLoading, error } = useSWR<GetShoppingListResponse>(
     key,
     fetcher,
@@ -42,7 +44,7 @@ const ShoppingList = () => {
       });
       if (res.ok) {
         setDraft("");
-        mutate(`/api/shopping-list?userId=${userId}`);
+        mutate(`/api/shopping-list?userId=${encodeURIComponent(userId)}`);
         toast.success(`${name} — on the list.`);
       } else {
         toast.error("Aiyah, couldn't add that. Try again?");

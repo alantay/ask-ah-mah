@@ -13,3 +13,6 @@ CREATE TABLE "shopping_list_items" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "shopping_list_items_userId_key_key" ON "shopping_list_items"("userId", "key");
+
+-- CreateIndex
+CREATE INDEX "shopping_list_items_userId_createdAt_idx" ON "shopping_list_items"("userId", "createdAt");

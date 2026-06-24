@@ -48,6 +48,7 @@ model ShoppingListItem {
   createdAt DateTime @default(now())
 
   @@unique([userId, key])
+  @@index([userId, createdAt])
   @@map("shopping_list_items")
 }
 

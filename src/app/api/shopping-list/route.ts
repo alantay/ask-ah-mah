@@ -30,8 +30,18 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId, ...rest } = await req.json();
-    if (!userId) return missingUserId();
+    let payload: unknown;
+    try {
+      payload = await req.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid shopping list payload" },
+        { status: 400 },
+      );
+    }
+
+    const { userId, ...rest } = payload as Record<string, unknown>;
+    if (!userId || typeof userId !== "string") return missingUserId();
 
     const parsed = AddShoppingListItemsSchema.safeParse(rest);
     if (!parsed.success) {
