@@ -103,6 +103,14 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Earned step depth (#268)**: prompt-only — `steps[].body` carries the *why*, sensory doneness cues, and failure-mode cautions only on pivotal steps, under a soft length cap; trivial steps stay short. Step bodies reference ingredients by name only — no absolute quantities (they'd fight the servings stepper).
 - **Copy recipe (#269)**: one shared `formatRecipeAsText(recipe, servings)` (`src/features/Recipe`) → plain text, CAPS headers, `•`/numbered lists, no markdown (survives WhatsApp/Notes). Amounts scale to the displayed servings via `scaleAmount`; amountless rows read "to taste"; sections render only when present; a "— from Ah Mah" footer. Surfaced as a **Copy recipe** button on `RecipeDisplay` (header — servings lifted out of `RecipeBody` so the header reads the current count) and in the `RecipeLetter` action bar. Excludes pantry state ("10/12 in your pantry"). **Copy shopping list stays separate** — two distinct copy intents, never collapsed into a bare "Copy".
 
+### Shopping List spine — the Pantry "Need" tab — Shipped Jun 2026 (#314)
+
+- **Standing, quantity-less Shopping List** introduced as the Pantry **Need** tab (Have/Need faces), per [ADR-0014](./adr/0014-shopping-list-is-standing-and-quantityless.md) and [PRD #313](https://github.com/alantay/ask-ah-mah/issues/313). This slice is the spine — type-in, persist, view; lifecycle (✓/✕/clear), Need-tab Market Tips, and the recipe-card on-ramp + Shortfall-card retirement are the follow-up slices (#315–#318).
+- **Schema**: new `ShoppingListItem` (`id`, `userId`, `key`, `name`, `category?`, `bought`, `createdAt`), unique on `(userId, key)`, no recipe FK (recipe-independent). Migration `20260624000000_add_shopping_list_items`.
+- **Identity is a canonical shopping key** (`src/lib/shoppingList/canonicalKey.ts`): strips leading quantities/units, drops prep adjectives, lowercases, and singularizes, so a recipe's "2 apples, sliced" and a typed-in "apple"/"Apples" all collapse onto one row. Richer than `canonicalTipKey` (which only lowercases/trims) — required by ADR-0014 §3's merge example.
+- **Deep module** `src/lib/shoppingList/` (`add` with dedupe/merge + no-op-on-existing, `get` oldest-first) behind a thin `/api/shopping-list` route (GET `?userId=` / POST items; 400 on malformed payload, 500 on failure). Mirrors the inventory service + route.
+- **UI**: self-contained `src/features/ShoppingList/` Need-tab component (SWR add-box + name list + empty-state guidance), mounted inside `InventoryWrapper` via a Have/Need `Tabs` switch so it can be promoted to its own Section later with no data change.
+
 ## Design system
 
 The two recipe surfaces — `RecipeLetter` (chat) and `RecipeDisplay` (cookbook) — were drifting because each hand-rolled the same primitives. A design system is now the north star: shared atoms stop drift, and every surface gets tweaked incrementally so it "looks like it belongs". See the spec at `docs/superpowers/specs/2026-06-20-recipe-design-system-design.md` and the issue tracker (#277–#285).
@@ -135,11 +143,12 @@ The two recipe surfaces — `RecipeLetter` (chat) and `RecipeDisplay` (cookbook)
 
 ## Next up
 
-### Shopping list from shortfalls
-- [ ] Add one-click `Add missing to shopping list` from `RecipeDisplay`.
-- [ ] Add `ShoppingList` Prisma model (`id`, `userId`, `name`, `quantity?`, `unit?`, `addedAt`, `recipeId?`).
-- [ ] Add shopping-list UI surface.
-- [ ] Add "mark done → route into inventory" flow.
+### Shopping List — remaining slices (ADR-0014, PRD #313)
+The spine (#314) shipped above (standing, quantity-less, Need tab). Remaining vertical slices:
+- [ ] **#315 Lifecycle**: ✓ bought (strike-through-and-keep) / ✕ changed-mind (hard delete) / bulk "clear bought". Add-to-pantry stays a separate opt-in.
+- [ ] **#316 Market Tips on the Need tab**: reuse `useMarketTips` (no engine change); typed items get tips, staples get none.
+- [ ] **#317 Recipe on-ramp + retire Shortfall card**: recipe cart button `addToPantry` → `addToShoppingList`; delete the Shortfall block; relocate "Ask Ah Mah for substitutions" to the action bar.
+- [ ] **#318 HITL design review**: Need tab + post-removal recipe card; Playwright screenshots; human sign-off.
 
 ## V3+ — Ideas (KIV)
 - [ ] Aging / "going bad soon" alerts (deferred — app cannot reliably know freshness; see ADR-0008).
