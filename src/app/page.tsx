@@ -3,6 +3,7 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import ChatWrapper from "@/features/Chat/components/ChatWrapper";
 import InventoryWrapper from "@/features/Inventory/components/InventoryWrapper";
 import RecipeList from "@/features/RecipeList/RecipeList";
+import ShoppingList from "@/features/ShoppingList";
 import { useActiveTab } from "@/hooks/useActiveTab";
 import { useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -54,6 +55,15 @@ function HomeContent() {
             className="flex-1 min-h-0 mt-0 overflow-hidden border border-border rounded-lg bg-muted paper data-[state=inactive]:hidden"
           >
             <InventoryWrapper />
+          </TabsContent>
+
+          {/* ── Shopping List tab ── */}
+          <TabsContent
+            value="shopping"
+            forceMount
+            className="flex-1 min-h-0 mt-0 overflow-hidden border border-border rounded-lg bg-muted paper data-[state=inactive]:hidden"
+          >
+            <ShoppingList />
           </TabsContent>
 
           {/* ── Cookbook tab ── */}

@@ -29,10 +29,22 @@ const CookbookIcon = () => (
   </svg>
 );
 
+const ShoppingListIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="m5 11 4-7" />
+    <path d="m19 11-4-7" />
+    <path d="M2 11h20" />
+    <path d="m3.5 11 1.6 7.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6l1.7-7.4" />
+    <path d="m9 11 1 9" />
+    <path d="m15 11-1 9" />
+  </svg>
+);
+
 const NAV_ITEMS = [
-  { id: "chat",     label: "New Chat",  Icon: ChatIcon     },
-  { id: "pantry",   label: "Pantry",    Icon: PantryIcon   },
-  { id: "cookbook", label: "Cookbook",  Icon: CookbookIcon },
+  { id: "chat",     label: "New Chat",      Icon: ChatIcon         },
+  { id: "pantry",   label: "Pantry",        Icon: PantryIcon       },
+  { id: "shopping", label: "Shopping List", Icon: ShoppingListIcon },
+  { id: "cookbook", label: "Cookbook",      Icon: CookbookIcon     },
 ] as const;
 
 interface SidebarContentProps {

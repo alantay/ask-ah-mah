@@ -16,9 +16,9 @@ Related: [ADR-0002](docs/adr/0002-conversation-requires-at-least-one-message.md)
 
 ## Section
 
-One of the three primary destinations — **Chat**, **Pantry**, **Cookbook**. Selected from the `AppSidebar` on desktop and from the nav drawer on mobile. The Radix `Tabs` container that switches the content panels underneath is an implementation detail, not a user-facing surface — there is no visible tab strip.
+One of the four primary destinations — **Chat**, **Pantry**, **Shopping List**, **Cookbook**. Selected from the `AppSidebar` on desktop and from the nav drawer on mobile. The Radix `Tabs` container that switches the content panels underneath is an implementation detail, not a user-facing surface — there is no visible tab strip.
 
-The **Pantry** Section has two faces: **Have** (current stock) and **Need** (the **Shopping List**). See [ADR-0014](docs/adr/0014-shopping-list-is-standing-and-quantityless.md).
+The **Pantry** (current stock) and the **Shopping List** (what to buy) are conceptual inverses, kept **adjacent in the nav** rather than nested under one surface. They were briefly co-located as a Have/Need tab strip inside the Pantry; that strip was the app's only visible tabs and read as foreign to the "destinations come from the nav" rule, so the Shopping List was promoted to its own Section. See [ADR-0015](docs/adr/0015-shopping-list-is-its-own-section.md) (amends [ADR-0014](docs/adr/0014-shopping-list-is-standing-and-quantityless.md)).
 
 ---
 
@@ -40,7 +40,7 @@ When the stream finishes (`onFinish`), `commitConversation(id)` flips `pendingCo
 
 ## Nav Selection
 
-"You are in this **Section**." Shown on the primary navigation items in `AppSidebar` and the mobile nav drawer (Chat / Pantry / Cookbook). Visual treatment: `bg-card` background, `text-foreground` label, terracotta (`text-primary`) icon outline (stroke color only — no fill swap).
+"You are in this **Section**." Shown on the primary navigation items in `AppSidebar` and the mobile nav drawer (Chat / Pantry / Shopping List / Cookbook). Visual treatment: `bg-card` background, `text-foreground` label, terracotta (`text-primary`) icon outline (stroke color only — no fill swap).
 
 The Chat nav item is highlighted only in **Staging State** (`activeConversationId === null && pendingConversationId === null`). Once a conversation becomes pending or committed, the Chat nav unhighlights and **Thread Selection** takes over.
 
@@ -146,7 +146,7 @@ Formerly: the in-chat block that listed a recipe's missing items (the **Addition
 
 ## Market Tip
 
-Ah Mah's point-of-purchase wisdom for choosing a fresh item well — e.g. *"firm, deep-red tomato, no bruises"* or *"a dark avocado that gives slightly is ripe enough to use today."* Surfaced on the **[Shopping List](#shopping-list)** (the Pantry's **Need** tab), one tip per item, and folded into the copied shopping-list text so it travels to wherever the user actually shops. Market Tips deliberately do **not** appear on the recipe card — co-locating a pick-tip with an ingredient's substitution `note` clashed (see [ADR-0014](docs/adr/0014-shopping-list-is-standing-and-quantityless.md)).
+Ah Mah's point-of-purchase wisdom for choosing a fresh item well — e.g. *"firm, deep-red tomato, no bruises"* or *"a dark avocado that gives slightly is ripe enough to use today."* Surfaced on the **[Shopping List](#shopping-list)** Section, one tip per item, and folded into the copied shopping-list text so it travels to wherever the user actually shops. Market Tips deliberately do **not** appear on the recipe card — co-locating a pick-tip with an ingredient's substitution `note` clashed (see [ADR-0014](docs/adr/0014-shopping-list-is-standing-and-quantityless.md)).
 
 A Market Tip speaks only to **selection quality at the moment of buying** — not to how long something keeps once home. Only *fresh / pickable* items (produce, fruit, seafood, meat) carry one; staples (salt, sauces, dry goods) have none and show no tip affordance. Tips are **universal, not user-specific**: the same advice serves every user, so they live in a single shared corpus keyed by canonical item name, never per account.
 
@@ -158,7 +158,7 @@ Related: [ADR-0013](docs/adr/0013-market-tips-are-llm-generated-and-shared.md), 
 
 ## Shopping List
 
-A standing, **per-user**, persisted list of items the user intends to buy — the **Need** face of the Pantry (whose **Have** face is the current stock). Items are **identities, not quantities**: a row is `shallot`, never `4 shallots`, so the same item from different recipes and from direct entry collapse to one row (canonical name). Each item carries its **Market Tip**.
+A standing, **per-user**, persisted list of items the user intends to buy — its own top-level **Section**, the conceptual inverse of the **Pantry** (current stock) and kept adjacent to it in the nav. Items are **identities, not quantities**: a row is `shallot`, never `4 shallots`, so the same item from different recipes and from direct entry collapse to one row (canonical name). Each item carries its **Market Tip**.
 
 Items arrive two ways: the **cart button** on a recipe's ingredient row (adds the missing item), or **typed in directly** (e.g. "apples", unrelated to any recipe). Lifecycle is todo-list-style — checking an item (**bought**) strikes it through for the trip; crossing it out (**✕**, changed mind) deletes it. Moving a bought item into the **Pantry** is a separate, opt-in step, never a side effect of checking it.
 
