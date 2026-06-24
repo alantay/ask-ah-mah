@@ -71,4 +71,101 @@ describe("ShoppingList (Need tab)", () => {
 
     expect(mutate).toHaveBeenCalledWith("/api/shopping-list?userId=user-1");
   });
+
+  it("marks an item bought via PATCH when its checkbox is toggled", async () => {
+    mockData = { items: [{ id: "row-1", name: "Apples", bought: false }] };
+
+    render(<ShoppingList />);
+
+    fireEvent.click(screen.getByRole("checkbox", { name: /apples/i }));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/shopping-list",
+        expect.objectContaining({
+          method: "PATCH",
+          body: JSON.stringify({ userId: "user-1", id: "row-1", bought: true }),
+        }),
+      );
+    });
+
+    expect(mutate).toHaveBeenCalledWith("/api/shopping-list?userId=user-1");
+  });
+
+  it("un-marks a bought item via PATCH when toggled back", async () => {
+    mockData = { items: [{ id: "row-1", name: "Apples", bought: true }] };
+
+    render(<ShoppingList />);
+
+    fireEvent.click(screen.getByRole("checkbox", { name: /apples/i }));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/shopping-list",
+        expect.objectContaining({
+          method: "PATCH",
+          body: JSON.stringify({
+            userId: "user-1",
+            id: "row-1",
+            bought: false,
+          }),
+        }),
+      );
+    });
+  });
+
+  it("removes an item via DELETE when its remove control is clicked", async () => {
+    mockData = { items: [{ id: "row-1", name: "Apples", bought: false }] };
+
+    render(<ShoppingList />);
+
+    fireEvent.click(screen.getByRole("button", { name: /remove apples/i }));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/shopping-list",
+        expect.objectContaining({
+          method: "DELETE",
+          body: JSON.stringify({ userId: "user-1", id: "row-1" }),
+        }),
+      );
+    });
+
+    expect(mutate).toHaveBeenCalledWith("/api/shopping-list?userId=user-1");
+  });
+
+  it("clears bought items via DELETE when 'clear bought' is clicked", async () => {
+    mockData = {
+      items: [
+        { id: "row-1", name: "Apples", bought: true },
+        { id: "row-2", name: "Oranges", bought: false },
+      ],
+    };
+
+    render(<ShoppingList />);
+
+    fireEvent.click(screen.getByRole("button", { name: /clear bought/i }));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/shopping-list",
+        expect.objectContaining({
+          method: "DELETE",
+          body: JSON.stringify({ userId: "user-1", clearBought: true }),
+        }),
+      );
+    });
+
+    expect(mutate).toHaveBeenCalledWith("/api/shopping-list?userId=user-1");
+  });
+
+  it("does not offer 'clear bought' when nothing is bought", () => {
+    mockData = { items: [{ id: "row-1", name: "Apples", bought: false }] };
+
+    render(<ShoppingList />);
+
+    expect(
+      screen.queryByRole("button", { name: /clear bought/i }),
+    ).not.toBeInTheDocument();
+  });
 });

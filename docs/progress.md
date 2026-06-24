@@ -111,6 +111,12 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Deep module** `src/lib/shoppingList/` (`add` with dedupe/merge + no-op-on-existing, `get` oldest-first) behind a thin `/api/shopping-list` route (GET `?userId=` / POST items; 400 on malformed payload, 500 on failure). Mirrors the inventory service + route.
 - **UI**: self-contained `src/features/ShoppingList/` Need-tab component (SWR add-box + name list + empty-state guidance), mounted inside `InventoryWrapper` via a Have/Need `Tabs` switch so it can be promoted to its own Section later with no data change.
 
+### Shopping List lifecycle — ✓ / ✕ / clear bought — Shipped Jun 2026 (#315)
+
+- **Three lifecycle actions** on each Need-tab row, per ADR-0014: **✓ bought** (toggle — strike-through-and-keep, never removed), **✕ changed-mind** (hard delete), and a bulk **Clear bought** button that appears only while at least one row is bought.
+- **Service** (`src/lib/shoppingList/`): `setBought` / `removeShoppingListItem` / `clearBoughtItems`, all `userId`-scoped via `updateMany`/`deleteMany` so a row can only be touched by its owner. **Route** grows `PATCH` (`{id, bought}` → setBought) and `DELETE` (`{id}` → remove, or `{clearBought:true}` → clear), both 400 on a missing `userId` or an absent target.
+- **Bought is not add-to-pantry** — checking a row only flips its `bought` flag; moving an item into the pantry stays a separate, explicit opt-in (no inventory write on the bought path).
+
 ## Design system
 
 The two recipe surfaces — `RecipeLetter` (chat) and `RecipeDisplay` (cookbook) — were drifting because each hand-rolled the same primitives. A design system is now the north star: shared atoms stop drift, and every surface gets tweaked incrementally so it "looks like it belongs". See the spec at `docs/superpowers/specs/2026-06-20-recipe-design-system-design.md` and the issue tracker (#277–#285).
@@ -144,8 +150,7 @@ The two recipe surfaces — `RecipeLetter` (chat) and `RecipeDisplay` (cookbook)
 ## Next up
 
 ### Shopping List — remaining slices (ADR-0014, PRD #313)
-The spine (#314) shipped above (standing, quantity-less, Need tab). Remaining vertical slices:
-- [ ] **#315 Lifecycle**: ✓ bought (strike-through-and-keep) / ✕ changed-mind (hard delete) / bulk "clear bought". Add-to-pantry stays a separate opt-in.
+The spine (#314) and lifecycle (#315) shipped above. Remaining vertical slices:
 - [ ] **#316 Market Tips on the Need tab**: reuse `useMarketTips` (no engine change); typed items get tips, staples get none.
 - [ ] **#317 Recipe on-ramp + retire Shortfall card**: recipe cart button `addToPantry` → `addToShoppingList`; delete the Shortfall block; relocate "Ask Ah Mah for substitutions" to the action bar.
 - [ ] **#318 HITL design review**: Need tab + post-removal recipe card; Playwright screenshots; human sign-off.

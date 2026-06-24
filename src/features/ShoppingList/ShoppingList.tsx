@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSessionContext } from "@/contexts/SessionContext";
 import { Eyebrow } from "@/features/shared/components/recipe";
-import { fetcher } from "@/lib/utils";
-import { Plus } from "lucide-react";
+import { cn, fetcher } from "@/lib/utils";
+import { Check, Plus, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
@@ -57,7 +57,44 @@ const ShoppingList = () => {
     }
   };
 
+  const revalidate = () => {
+    if (userId) {
+      mutate(`/api/shopping-list?userId=${encodeURIComponent(userId)}`);
+    }
+  };
+
+  const mutateList = async (
+    method: "PATCH" | "DELETE",
+    body: Record<string, unknown>,
+  ) => {
+    if (!userId) return;
+    try {
+      const res = await fetch("/api/shopping-list", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, ...body }),
+      });
+      if (res.ok) {
+        revalidate();
+      } else {
+        toast.error("Aiyah, that didn't work. Try again?");
+      }
+    } catch (e) {
+      console.error("Failed to update shopping list:", e);
+      toast.error("Aiyah, that didn't work. Try again?");
+    }
+  };
+
+  const toggleBought = (item: ShoppingListRow) =>
+    mutateList("PATCH", { id: item.id, bought: !item.bought });
+
+  const removeItem = (item: ShoppingListRow) =>
+    mutateList("DELETE", { id: item.id });
+
+  const clearBought = () => mutateList("DELETE", { clearBought: true });
+
   const items = data?.items ?? [];
+  const hasBought = items.some((item) => item.bought);
 
   if (error) return <div>Error: {error.message}</div>;
 
@@ -116,12 +153,57 @@ const ShoppingList = () => {
             {items.map((item) => (
               <li
                 key={item.id}
-                className="px-4 py-3 font-display text-emphasis text-foreground"
+                className="flex items-center gap-3 px-4 py-3 font-display text-emphasis"
               >
-                {item.name}
+                <button
+                  type="button"
+                  role="checkbox"
+                  aria-checked={item.bought}
+                  aria-label={item.name}
+                  onClick={() => toggleBought(item)}
+                  className={cn(
+                    "flex size-5 shrink-0 items-center justify-center rounded-full border transition-colors",
+                    item.bought
+                      ? "bg-primary border-primary text-primary-foreground"
+                      : "border-border text-transparent hover:border-primary",
+                  )}
+                >
+                  <Check className="size-3" strokeWidth={3} />
+                </button>
+                <span
+                  className={cn(
+                    "flex-1",
+                    item.bought
+                      ? "line-through text-muted-foreground"
+                      : "text-foreground",
+                  )}
+                >
+                  {item.name}
+                </span>
+                <button
+                  type="button"
+                  aria-label={`Remove ${item.name}`}
+                  onClick={() => removeItem(item)}
+                  className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="size-4" />
+                </button>
               </li>
             ))}
           </ul>
+        )}
+
+        {hasBought && (
+          <div className="mt-4 flex justify-end">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={clearBought}
+              className="font-display text-muted-foreground hover:text-foreground"
+            >
+              Clear bought
+            </Button>
+          </div>
         )}
       </div>
     </div>

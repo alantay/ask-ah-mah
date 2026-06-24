@@ -1,4 +1,10 @@
-export { getShoppingList, addShoppingListItems } from "./shoppingList";
+export {
+  getShoppingList,
+  addShoppingListItems,
+  setBought,
+  removeShoppingListItem,
+  clearBoughtItems,
+} from "./shoppingList";
 export { canonicalShoppingKey } from "./canonicalKey";
 export {
   AddShoppingListItemSchema,

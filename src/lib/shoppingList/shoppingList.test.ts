@@ -1,5 +1,11 @@
 import { prisma } from "@/lib/db";
-import { addShoppingListItems, getShoppingList } from "./shoppingList";
+import {
+  addShoppingListItems,
+  clearBoughtItems,
+  getShoppingList,
+  removeShoppingListItem,
+  setBought,
+} from "./shoppingList";
 import { canonicalShoppingKey } from "./canonicalKey";
 
 jest.mock("@/lib/db", () => ({
@@ -7,16 +13,22 @@ jest.mock("@/lib/db", () => ({
     shoppingListItem: {
       findMany: jest.fn(),
       upsert: jest.fn(),
+      updateMany: jest.fn(),
+      deleteMany: jest.fn(),
     },
   },
 }));
 
 const mockedFindMany = jest.mocked(prisma.shoppingListItem.findMany);
 const mockedUpsert = jest.mocked(prisma.shoppingListItem.upsert);
+const mockedUpdateMany = jest.mocked(prisma.shoppingListItem.updateMany);
+const mockedDeleteMany = jest.mocked(prisma.shoppingListItem.deleteMany);
 
 beforeEach(() => {
   jest.clearAllMocks();
   mockedUpsert.mockResolvedValue({} as never);
+  mockedUpdateMany.mockResolvedValue({ count: 1 } as never);
+  mockedDeleteMany.mockResolvedValue({ count: 1 } as never);
 });
 
 describe("addShoppingListItems", () => {
@@ -65,6 +77,47 @@ describe("addShoppingListItems", () => {
         },
       }),
     );
+  });
+});
+
+describe("setBought", () => {
+  it("sets the bought flag on the user's row", async () => {
+    await setBought("u1", "row-1", true);
+
+    expect(mockedUpdateMany).toHaveBeenCalledWith({
+      where: { id: "row-1", userId: "u1" },
+      data: { bought: true },
+    });
+  });
+
+  it("scopes the update by userId so another user's row is untouched", async () => {
+    await setBought("u1", "row-1", false);
+
+    expect(mockedUpdateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ userId: "u1" }),
+      }),
+    );
+  });
+});
+
+describe("removeShoppingListItem", () => {
+  it("deletes exactly the one user-scoped row", async () => {
+    await removeShoppingListItem("u1", "row-1");
+
+    expect(mockedDeleteMany).toHaveBeenCalledWith({
+      where: { id: "row-1", userId: "u1" },
+    });
+  });
+});
+
+describe("clearBoughtItems", () => {
+  it("deletes only the user's bought rows", async () => {
+    await clearBoughtItems("u1");
+
+    expect(mockedDeleteMany).toHaveBeenCalledWith({
+      where: { userId: "u1", bought: true },
+    });
   });
 });
 

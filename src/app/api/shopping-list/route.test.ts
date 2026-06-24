@@ -1,6 +1,12 @@
 import { NextRequest } from "next/server";
-import { GET, POST } from "./route";
-import { addShoppingListItems, getShoppingList } from "@/lib/shoppingList";
+import { DELETE, GET, PATCH, POST } from "./route";
+import {
+  addShoppingListItems,
+  clearBoughtItems,
+  getShoppingList,
+  removeShoppingListItem,
+  setBought,
+} from "@/lib/shoppingList";
 
 jest.mock("next/server", () => ({
   NextRequest: jest.fn(),
@@ -16,10 +22,16 @@ jest.mock("next/server", () => ({
 jest.mock("@/lib/shoppingList", () => ({
   addShoppingListItems: jest.fn(),
   getShoppingList: jest.fn(),
+  setBought: jest.fn(),
+  removeShoppingListItem: jest.fn(),
+  clearBoughtItems: jest.fn(),
 }));
 
 const mockedGet = jest.mocked(getShoppingList);
 const mockedAdd = jest.mocked(addShoppingListItems);
+const mockedSetBought = jest.mocked(setBought);
+const mockedRemove = jest.mocked(removeShoppingListItem);
+const mockedClearBought = jest.mocked(clearBoughtItems);
 
 const createMockRequest = (url: string, options: RequestInit = {}) => {
   const parsedUrl = new URL(url);
@@ -135,6 +147,135 @@ describe("POST /api/shopping-list", () => {
     const res = await POST(
       createMockRequest(base, {
         body: JSON.stringify({ userId: "u1", items: [{ name: "Apples" }] }),
+      }),
+    );
+    expect(res.status).toBe(500);
+  });
+});
+
+describe("PATCH /api/shopping-list", () => {
+  it("sets an item bought for a valid payload", async () => {
+    mockedSetBought.mockResolvedValue(undefined);
+
+    const res = await PATCH(
+      createMockRequest(base, {
+        body: JSON.stringify({ userId: "u1", id: "row-1", bought: true }),
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockedSetBought).toHaveBeenCalledWith("u1", "row-1", true);
+  });
+
+  it("400s when userId is missing", async () => {
+    const res = await PATCH(
+      createMockRequest(base, {
+        body: JSON.stringify({ id: "row-1", bought: true }),
+      }),
+    );
+    expect(res.status).toBe(400);
+    expect(mockedSetBought).not.toHaveBeenCalled();
+  });
+
+  it("400s when id is missing or bought is not a boolean", async () => {
+    const res = await PATCH(
+      createMockRequest(base, {
+        body: JSON.stringify({ userId: "u1", bought: "yes" }),
+      }),
+    );
+    expect(res.status).toBe(400);
+    expect(mockedSetBought).not.toHaveBeenCalled();
+  });
+
+  it("400s when the body is malformed JSON", async () => {
+    const req = {
+      nextUrl: { searchParams: new URL(base).searchParams },
+      json: async () => {
+        throw new SyntaxError("Unexpected token");
+      },
+    } as unknown as NextRequest;
+
+    const res = await PATCH(req);
+    expect(res.status).toBe(400);
+    expect(mockedSetBought).not.toHaveBeenCalled();
+  });
+
+  it("500s when the service throws", async () => {
+    mockedSetBought.mockRejectedValue(new Error("db down"));
+    const res = await PATCH(
+      createMockRequest(base, {
+        body: JSON.stringify({ userId: "u1", id: "row-1", bought: true }),
+      }),
+    );
+    expect(res.status).toBe(500);
+  });
+});
+
+describe("DELETE /api/shopping-list", () => {
+  it("removes one item when given an id", async () => {
+    mockedRemove.mockResolvedValue(undefined);
+
+    const res = await DELETE(
+      createMockRequest(base, {
+        body: JSON.stringify({ userId: "u1", id: "row-1" }),
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockedRemove).toHaveBeenCalledWith("u1", "row-1");
+    expect(mockedClearBought).not.toHaveBeenCalled();
+  });
+
+  it("clears bought items when clearBought is true", async () => {
+    mockedClearBought.mockResolvedValue(undefined);
+
+    const res = await DELETE(
+      createMockRequest(base, {
+        body: JSON.stringify({ userId: "u1", clearBought: true }),
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockedClearBought).toHaveBeenCalledWith("u1");
+    expect(mockedRemove).not.toHaveBeenCalled();
+  });
+
+  it("400s when userId is missing", async () => {
+    const res = await DELETE(
+      createMockRequest(base, { body: JSON.stringify({ id: "row-1" }) }),
+    );
+    expect(res.status).toBe(400);
+    expect(mockedRemove).not.toHaveBeenCalled();
+  });
+
+  it("400s when neither id nor clearBought is provided", async () => {
+    const res = await DELETE(
+      createMockRequest(base, { body: JSON.stringify({ userId: "u1" }) }),
+    );
+    expect(res.status).toBe(400);
+    expect(mockedRemove).not.toHaveBeenCalled();
+    expect(mockedClearBought).not.toHaveBeenCalled();
+  });
+
+  it("400s when the body is malformed JSON", async () => {
+    const req = {
+      nextUrl: { searchParams: new URL(base).searchParams },
+      json: async () => {
+        throw new SyntaxError("Unexpected token");
+      },
+    } as unknown as NextRequest;
+
+    const res = await DELETE(req);
+    expect(res.status).toBe(400);
+    expect(mockedRemove).not.toHaveBeenCalled();
+    expect(mockedClearBought).not.toHaveBeenCalled();
+  });
+
+  it("500s when the service throws", async () => {
+    mockedRemove.mockRejectedValue(new Error("db down"));
+    const res = await DELETE(
+      createMockRequest(base, {
+        body: JSON.stringify({ userId: "u1", id: "row-1" }),
       }),
     );
     expect(res.status).toBe(500);
