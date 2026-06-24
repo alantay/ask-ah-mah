@@ -34,3 +34,24 @@ export async function addShoppingListItems(
     });
   }
 }
+
+/**
+ * Mark a row bought (✓ strike-through) or unbought. Scoped by `userId` via
+ * `updateMany` so a row can only be toggled by its owner.
+ */
+export async function setBought(userId: string, id: string, bought: boolean) {
+  await prisma.shoppingListItem.updateMany({
+    where: { id, userId },
+    data: { bought },
+  });
+}
+
+/** Hard-delete a single row (✕ changed mind). Scoped by `userId`. */
+export async function removeShoppingListItem(userId: string, id: string) {
+  await prisma.shoppingListItem.deleteMany({ where: { id, userId } });
+}
+
+/** Bulk "clear bought" — remove only the user's bought rows, keep the rest. */
+export async function clearBoughtItems(userId: string) {
+  await prisma.shoppingListItem.deleteMany({ where: { userId, bought: true } });
+}
