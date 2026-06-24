@@ -34,6 +34,23 @@ model MarketTip {
   @@map("market_tips")
 }
 
+// A standing, per-user, quantity-less shopping list (the Pantry "Need" tab).
+// One row per item identity: `key` is the canonical shopping key, so a recipe's
+// "2 apples, sliced" and a typed-in "apple" merge onto the same row.
+// No recipe foreign key — the list is recipe-independent (ADR-0014).
+model ShoppingListItem {
+  id        String   @id @default(cuid())
+  userId    String
+  key       String // canonical shopping key — dedupe/merge identity
+  name      String // display name
+  category  String?
+  bought    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, key])
+  @@map("shopping_list_items")
+}
+
 model Conversation {
   id        String    @id @default(cuid())
   userId    String
