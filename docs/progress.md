@@ -123,6 +123,13 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Pure reuse, no engine change** — the existing `useMarketTips` hook + `src/lib/marketTips/` (`pickable.ts`, `canonicalKey.ts`) and `/api/market-tip` are reused as-is. Items map to `{ name, category? }`; because category is optional the model decides pickability, so typed-in items (apples, tomatoes) get tips and staples (salt, sugar, flour) get none.
 - **`useMarketTips` promoted to `src/hooks/`** (from `src/features/Chat/components/recipe/`): it's a pure data hook with no Chat-specific logic and is now shared by both the shortfall card and the Need tab, so it lives alongside `useSession`/`useActiveTab` — killing the cross-feature import.
 
+### Recipe on-ramp + Shortfall card retired — Shipped Jun 2026 (#317)
+
+- **Recipe cart now feeds the Shopping List, not the pantry.** The ingredient row's cart button (`addToPantry` → `addToShoppingList`) POSTs the missing item to `/api/shopping-list` and confirms ("X — on the list."); the upsert makes re-adding an already-listed item a no-op. It revalidates the Need-tab SWR key so the list updates live.
+- **Shortfall card deleted.** The in-chat block that re-listed missing items with inline Market Tips + copy-shopping-list is gone, per [ADR-0014](./adr/0014-shopping-list-is-standing-and-quantityless.md) / CONTEXT's "Shortfall card (Formerly)". The recipe now shows one clean ingredient list in one voice — the substitution `note` — and Market Tips no longer appear in chat (they live only on the Need tab).
+- **Substitutions on-ramp relocated to the action bar.** "Ask Ah Mah for substitutions →" survives the card's removal: it now sits in the recipe action bar, shown when the user is tracking a pantry and is short an ingredient.
+- **Dead code removed:** `src/lib/marketTips/formatShoppingList.ts` (+ test) — it formatted amounts/units for the shortfall's clipboard copy, obsolete under the quantity-less standing list and orphaned once the card was deleted.
+
 ## Design system
 
 The two recipe surfaces — `RecipeLetter` (chat) and `RecipeDisplay` (cookbook) — were drifting because each hand-rolled the same primitives. A design system is now the north star: shared atoms stop drift, and every surface gets tweaked incrementally so it "looks like it belongs". See the spec at `docs/superpowers/specs/2026-06-20-recipe-design-system-design.md` and the issue tracker (#277–#285).
@@ -156,8 +163,7 @@ The two recipe surfaces — `RecipeLetter` (chat) and `RecipeDisplay` (cookbook)
 ## Next up
 
 ### Shopping List — remaining slices (ADR-0014, PRD #313)
-The spine (#314), lifecycle (#315), and Market Tips (#316) shipped above. Remaining vertical slices:
-- [ ] **#317 Recipe on-ramp + retire Shortfall card**: recipe cart button `addToPantry` → `addToShoppingList`; delete the Shortfall block; relocate "Ask Ah Mah for substitutions" to the action bar.
+The spine (#314), lifecycle (#315), Market Tips (#316), and the recipe on-ramp + Shortfall retirement (#317) shipped above. Remaining vertical slice:
 - [ ] **#318 HITL design review**: Need tab + post-removal recipe card; Playwright screenshots; human sign-off.
 
 ## V3+ — Ideas (KIV)
