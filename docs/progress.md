@@ -103,6 +103,12 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Earned step depth (#268)**: prompt-only — `steps[].body` carries the *why*, sensory doneness cues, and failure-mode cautions only on pivotal steps, under a soft length cap; trivial steps stay short. Step bodies reference ingredients by name only — no absolute quantities (they'd fight the servings stepper).
 - **Copy recipe (#269)**: one shared `formatRecipeAsText(recipe, servings)` (`src/features/Recipe`) → plain text, CAPS headers, `•`/numbered lists, no markdown (survives WhatsApp/Notes). Amounts scale to the displayed servings via `scaleAmount`; amountless rows read "to taste"; sections render only when present; a "— from Ah Mah" footer. Surfaced as a **Copy recipe** button on `RecipeDisplay` (header — servings lifted out of `RecipeBody` so the header reads the current count) and in the `RecipeLetter` action bar. Excludes pantry state ("10/12 in your pantry"). **Copy shopping list stays separate** — two distinct copy intents, never collapsed into a bare "Copy".
 
+### Shopping List promoted to its own Section — Shipped Jun 2026
+
+- **The Have/Need tab strip is gone.** The standing Shopping List, briefly the Pantry's **Need** tab, is now its own top-level **Section** in the nav: **Chat · Pantry · Shopping List · Cookbook** (basket icon, sat next to Pantry so the inverse-pair stays adjacent). Pantry reverts to meaning **stock only**. See [ADR-0015](./adr/0015-shopping-list-is-its-own-section.md) (amends ADR-0014 §2/§6).
+- **Why**: the Have/Need strip was the app's *only* visible tab strip, contradicting the "destinations come from the nav, never from tabs" rule (`CONTEXT.md` → Section), and its folder-tab styling (`bg-chat`) never matched the Pantry surface (`bg-muted`) — so it read as orphaned. The fix was conceptual, not cosmetic: promote, don't restyle.
+- **Changes**: 4th `NAV_ITEMS` entry + `ShoppingListIcon` in `SidebarContent`; `SECTION_LABELS.shopping` in `MobileTopBar`; `"shopping"` added to `useActiveTab`; 4th `TabsContent` (`?tab=shopping`) renders `<ShoppingList />` in `page.tsx`; `InventoryWrapper` strips its `Tabs` and renders `<Inventory />` directly. **Zero data change** — exactly as ADR-0014 §6 predicted. `Have`/`Need` retired as user-facing terms.
+
 ### Shopping List spine — the Pantry "Need" tab — Shipped Jun 2026 (#314)
 
 - **Standing, quantity-less Shopping List** introduced as the Pantry **Need** tab (Have/Need faces), per [ADR-0014](./adr/0014-shopping-list-is-standing-and-quantityless.md) and [PRD #313](https://github.com/alantay/ask-ah-mah/issues/313). This slice is the spine — type-in, persist, view; lifecycle (✓/✕/clear), Need-tab Market Tips, and the recipe-card on-ramp + Shortfall-card retirement are the follow-up slices (#315–#318).
@@ -163,8 +169,8 @@ The two recipe surfaces — `RecipeLetter` (chat) and `RecipeDisplay` (cookbook)
 ## Next up
 
 ### Shopping List — remaining slices (ADR-0014, PRD #313)
-The spine (#314), lifecycle (#315), Market Tips (#316), and the recipe on-ramp + Shortfall retirement (#317) shipped above. Remaining vertical slice:
-- [ ] **#318 HITL design review**: Need tab + post-removal recipe card; Playwright screenshots; human sign-off.
+The spine (#314), lifecycle (#315), Market Tips (#316), and the recipe on-ramp + Shortfall retirement (#317) shipped above.
+- [x] **#318 HITL design review**: Playwright screenshots of the list states + post-removal recipe card surfaced that the **Have/Need tab strip itself** was the wrong pattern (the app's only visible tab strip). Resolved by promoting the Shopping List to its own Section — [ADR-0015](./adr/0015-shopping-list-is-its-own-section.md), shipped above.
 
 ## V3+ — Ideas (KIV)
 - [ ] Aging / "going bad soon" alerts (deferred — app cannot reliably know freshness; see ADR-0008).

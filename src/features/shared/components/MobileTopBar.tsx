@@ -7,8 +7,9 @@ import { useActiveTab } from "@/hooks/useActiveTab";
 import { useRef, useState } from "react";
 import { SidebarContent } from "./SidebarContent";
 
-const SECTION_LABELS: Record<"pantry" | "cookbook", string> = {
+const SECTION_LABELS: Record<"pantry" | "shopping" | "cookbook", string> = {
   pantry: "Pantry",
+  shopping: "Shopping List",
   cookbook: "Cookbook",
 };
 

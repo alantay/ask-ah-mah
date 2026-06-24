@@ -2,9 +2,9 @@
 
 import { usePathname, useSearchParams } from "next/navigation";
 
-export type ActiveTab = "chat" | "pantry" | "cookbook";
+export type ActiveTab = "chat" | "pantry" | "shopping" | "cookbook";
 
-const VALID_TABS = ["chat", "pantry", "cookbook"] as const satisfies readonly ActiveTab[];
+const VALID_TABS = ["chat", "pantry", "shopping", "cookbook"] as const satisfies readonly ActiveTab[];
 
 /**
  * Single source of truth for which top-level tab is currently active.
