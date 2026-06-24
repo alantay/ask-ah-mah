@@ -19,7 +19,7 @@ import { DottedList, Eyebrow, StepList } from "@/features/shared/components/reci
 import { toast } from "sonner";
 import useSWR, { useSWRConfig } from "swr";
 import { ScaledNum, scaleAmount, formatRecipeAsText } from "@/features/Recipe";
-import { useMarketTips } from "./useMarketTips";
+import { useMarketTips } from "@/hooks/useMarketTips";
 import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
 import { formatShoppingList } from "@/lib/marketTips/formatShoppingList";
 

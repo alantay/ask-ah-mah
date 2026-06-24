@@ -117,6 +117,12 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Service** (`src/lib/shoppingList/`): `setBought` / `removeShoppingListItem` / `clearBoughtItems`, all `userId`-scoped via `updateMany`/`deleteMany` so a row can only be touched by its owner. **Route** grows `PATCH` (`{id, bought}` → setBought) and `DELETE` (`{id}` → remove, or `{clearBought:true}` → clear), both 400 on a missing `userId` or an absent target.
 - **Bought is not add-to-pantry** — checking a row only flips its `bought` flag; moving an item into the pantry stays a separate, explicit opt-in (no inventory write on the bought path).
 
+### Shopping List Market Tips — picking wisdom on the Need tab — Shipped Jun 2026 (#316)
+
+- **Each Need-tab row carries Ah Mah's picking tip** at the moment of buying, rendered as an italic em-dash sub-line under the item name (hidden once the row is bought). Same presentation as the shortfall card's tips.
+- **Pure reuse, no engine change** — the existing `useMarketTips` hook + `src/lib/marketTips/` (`pickable.ts`, `canonicalKey.ts`) and `/api/market-tip` are reused as-is. Items map to `{ name, category? }`; because category is optional the model decides pickability, so typed-in items (apples, tomatoes) get tips and staples (salt, sugar, flour) get none.
+- **`useMarketTips` promoted to `src/hooks/`** (from `src/features/Chat/components/recipe/`): it's a pure data hook with no Chat-specific logic and is now shared by both the shortfall card and the Need tab, so it lives alongside `useSession`/`useActiveTab` — killing the cross-feature import.
+
 ## Design system
 
 The two recipe surfaces — `RecipeLetter` (chat) and `RecipeDisplay` (cookbook) — were drifting because each hand-rolled the same primitives. A design system is now the north star: shared atoms stop drift, and every surface gets tweaked incrementally so it "looks like it belongs". See the spec at `docs/superpowers/specs/2026-06-20-recipe-design-system-design.md` and the issue tracker (#277–#285).
@@ -150,8 +156,7 @@ The two recipe surfaces — `RecipeLetter` (chat) and `RecipeDisplay` (cookbook)
 ## Next up
 
 ### Shopping List — remaining slices (ADR-0014, PRD #313)
-The spine (#314) and lifecycle (#315) shipped above. Remaining vertical slices:
-- [ ] **#316 Market Tips on the Need tab**: reuse `useMarketTips` (no engine change); typed items get tips, staples get none.
+The spine (#314), lifecycle (#315), and Market Tips (#316) shipped above. Remaining vertical slices:
 - [ ] **#317 Recipe on-ramp + retire Shortfall card**: recipe cart button `addToPantry` → `addToShoppingList`; delete the Shortfall block; relocate "Ask Ah Mah for substitutions" to the action bar.
 - [ ] **#318 HITL design review**: Need tab + post-removal recipe card; Playwright screenshots; human sign-off.
 

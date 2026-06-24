@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSessionContext } from "@/contexts/SessionContext";
 import { Eyebrow } from "@/features/shared/components/recipe";
+import { useMarketTips } from "@/hooks/useMarketTips";
+import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
 import { cn, fetcher } from "@/lib/utils";
 import { Check, Plus, X } from "lucide-react";
 import { useState } from "react";
@@ -14,6 +16,7 @@ type ShoppingListRow = {
   id: string;
   name: string;
   bought: boolean;
+  category?: string | null;
 };
 
 type GetShoppingListResponse = { items: ShoppingListRow[] };
@@ -95,6 +98,12 @@ const ShoppingList = () => {
 
   const items = data?.items ?? [];
   const hasBought = items.some((item) => item.bought);
+
+  // Ah Mah's picking tips at the moment of buying. The hook only asks the model
+  // about pickable items, so staples (salt, sugar, flour) return no tip.
+  const tips = useMarketTips(
+    items.map((item) => ({ name: item.name, category: item.category })),
+  );
 
   if (error) return <div>Error: {error.message}</div>;
 
@@ -179,6 +188,11 @@ const ShoppingList = () => {
                   )}
                 >
                   {item.name}
+                  {!item.bought && tips[canonicalTipKey(item.name)] && (
+                    <span className="block font-display italic text-dense text-muted-foreground leading-snug">
+                      — {tips[canonicalTipKey(item.name)]}
+                    </span>
+                  )}
                 </span>
                 <button
                   type="button"
