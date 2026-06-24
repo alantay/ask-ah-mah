@@ -19,9 +19,6 @@ import { DottedList, Eyebrow, StepList } from "@/features/shared/components/reci
 import { toast } from "sonner";
 import useSWR, { useSWRConfig } from "swr";
 import { ScaledNum, scaleAmount, formatRecipeAsText } from "@/features/Recipe";
-import { useMarketTips } from "@/hooks/useMarketTips";
-import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
-import { formatShoppingList } from "@/lib/marketTips/formatShoppingList";
 
 export interface RecipeLetterProps {
   // Partial during progressive reveal — fields fill in as the JSON streams.
@@ -30,7 +27,7 @@ export interface RecipeLetterProps {
   isSaved?: boolean;
   onSend?: (text: string) => void;
   // While true the recipe is still streaming: arrays may be incomplete and all
-  // interactivity (stepper, add-to-pantry, save, cook, shortfall) is suppressed.
+  // interactivity (stepper, add-to-list, save, cook, substitutions) is suppressed.
   isStreaming?: boolean;
 }
 
@@ -49,8 +46,8 @@ function NeedCartButton({
       type="button"
       onClick={onAdd}
       disabled={pending}
-      aria-label={`Add ${ingredientName} to pantry`}
-      title={`Add ${ingredientName} to pantry`}
+      aria-label={`Add ${ingredientName} to shopping list`}
+      title={`Add ${ingredientName} to shopping list`}
       className={cn(
         "shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-full text-muted-foreground bg-transparent border border-border transition-colors",
         pending
@@ -96,18 +93,20 @@ export function RecipeLetter({
     fetcher,
   );
 
-  const addToPantry = async (ing: RecipeIngredientModel) => {
+  // Tapping the cart adds the missing ingredient to the standing Shopping List
+  // (Need tab), not the pantry. The service upserts on a canonical key, so
+  // re-adding an item already on the list is a server-side no-op.
+  const addToShoppingList = async (ing: RecipeIngredientModel) => {
     if (!userId || inFlight.has(ing.name)) return;
     setInFlight((prev) => new Set(prev).add(ing.name));
     try {
-      const res = await fetch("/api/inventory", {
+      const res = await fetch("/api/shopping-list", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items: [
             {
               name: ing.name,
-              type: "ingredient",
               ...(ing.category && { category: ing.category }),
             },
           ],
@@ -120,8 +119,8 @@ export function RecipeLetter({
           payload?.error ?? `Failed to add ${ing.name} (${res.status})`;
         throw new Error(msg);
       }
-      toast.success(`${ing.name} — in the pantry now.`);
-      mutate(inventoryKey);
+      toast.success(`${ing.name} — on the list.`);
+      mutate(`/api/shopping-list?userId=${encodeURIComponent(userId)}`);
     } catch (err) {
       toast.error(
         err instanceof Error
@@ -147,46 +146,17 @@ export function RecipeLetter({
     ingredientHave(ing.name, inventoryNames),
   ).length;
 
-  const total = ingredients.length;
   const missingIngredients = ingredients.filter(
     (ing) => !ingredientHave(ing.name, inventoryNames),
   );
-  // The shopping list + picking tips are a *tool* — useful whenever the user
-  // owns some of the recipe and is missing some, regardless of how close they
-  // are. The ≥50% ratio only switches the *framing* (encouragement vs neutral).
-  const almostThere = total > 0 && haveCount >= Math.ceil(total / 2);
-  const showShortfall =
+  // The substitutions on-ramp is useful whenever the user is tracking a pantry
+  // and is short an ingredient — Ah Mah can suggest a swap for what's missing.
+  const showSubstitutions =
     !isStreaming &&
-    userId &&
+    !!onSend &&
+    !!userId &&
     inventoryItems.length > 0 &&
-    total > 0 &&
-    haveCount >= 1 &&
     missingIngredients.length > 0;
-  // Only fetch picking tips when the shortfall card will actually render —
-  // otherwise we'd hit /api/market-tip (and the model) for nothing.
-  const tips = useMarketTips(
-    showShortfall
-      ? missingIngredients.map((ing) => ({
-          name: ing.name,
-          category: ing.category,
-        }))
-      : [],
-  );
-
-  const copyShoppingList = () => {
-    const text = formatShoppingList(
-      missingIngredients.map((ing) => ({
-        name: ing.name,
-        amount: ing.amount,
-        unit: ing.unit,
-      })),
-      tips,
-    );
-    navigator.clipboard.writeText(text).then(
-      () => toast.success("Shopping list copied — go get them!"),
-      () => toast.error("Aiyah, couldn't copy — select and copy by hand?"),
-    );
-  };
 
   const copyRecipe = () => {
     const text = formatRecipeAsText(
@@ -281,60 +251,6 @@ export function RecipeLetter({
         </div>
       )}
 
-      {/* Shortfall card — shown whenever the user owns ≥1 ingredient and is
-          missing ≥1. Heading adapts: encouragement near completion, neutral
-          "Shopping list" framing when there's still a fair bit to get. */}
-      {showShortfall && (
-        <div className="mb-4 bg-callout-tint border border-dashed border-callout-border rounded-xl p-3.5">
-          <div className="flex items-center gap-1.5 mb-2">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-callout" />
-            <span className="font-sans text-eyebrow font-bold tracking-[0.16em] uppercase text-callout-strong">
-              {almostThere ? "You’re almost there" : "Shopping list"}
-            </span>
-          </div>
-          <p className="font-sans text-xs text-muted-foreground mb-1.5 leading-snug">
-            Still need —
-          </p>
-          <div className="space-y-1.5">
-            {missingIngredients.map((ing, i) => {
-              const tip = tips[canonicalTipKey(ing.name)];
-              return (
-                <div key={`${ing.name}-${i}`} className="leading-snug">
-                  <span className="font-display text-sm font-semibold text-foreground">
-                    {ing.name}
-                  </span>
-                  {tip && (
-                    <span className="block pl-3.5 font-display italic text-xs text-muted-foreground leading-snug">
-                      — {tip}
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          <div className="flex items-center gap-2 mt-2.5">
-            <button
-              onClick={copyShoppingList}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 font-sans text-xs font-semibold text-foreground bg-card border border-border rounded-lg shadow-[0_1px_0_var(--border-soft)] hover:bg-muted/50 transition-colors cursor-pointer"
-            >
-              <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                <rect x="5" y="2" width="9" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
-                <path d="M5 4H3.5A1.5 1.5 0 0 0 2 5.5v9A1.5 1.5 0 0 0 3.5 16h7A1.5 1.5 0 0 0 12 14.5V13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-              </svg>
-              Copy shopping list
-            </button>
-            {onSend && (
-              <button
-                onClick={askForSubstitutions}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 font-sans text-xs font-semibold text-primary-deep bg-primary-tint border border-primary-deep rounded-lg shadow-cta hover:bg-primary-tint/70 transition-colors cursor-pointer"
-              >
-                Ask Ah Mah for substitutions →
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Ingredients — neat 2-column grid card */}
       {ingredients.length > 0 && (
         <div className="mb-5.5">
@@ -383,7 +299,7 @@ export function RecipeLetter({
                   {!isStreaming && userId && inventoryItems.length > 0 && !have && (
                     <NeedCartButton
                       ingredientName={ing.name}
-                      onAdd={() => addToPantry(ing)}
+                      onAdd={() => addToShoppingList(ing)}
                       pending={inFlight.has(ing.name)}
                     />
                   )}
@@ -414,8 +330,8 @@ export function RecipeLetter({
       )}
 
       {/* Action bar */}
-      {!isStreaming && (onSave || canCook) && (
-        <div className="flex gap-2 items-center pt-3 mt-4.5 border-t border-dashed border-border">
+      {!isStreaming && (onSave || canCook || showSubstitutions) && (
+        <div className="flex flex-wrap gap-2 items-center pt-3 mt-4.5 border-t border-dashed border-border">
           <button
             onClick={copyRecipe}
             aria-label="Copy recipe"
@@ -449,6 +365,14 @@ export function RecipeLetter({
                 Save to cookbook
               </button>
             )
+          )}
+          {showSubstitutions && (
+            <button
+              onClick={askForSubstitutions}
+              className="px-2.5 py-1.5 font-sans text-xs font-semibold text-primary-deep bg-primary-tint border border-primary-deep rounded-lg shadow-cta hover:bg-primary-tint/70 transition-colors cursor-pointer inline-flex items-center gap-1.5"
+            >
+              Ask Ah Mah for substitutions →
+            </button>
           )}
           {canCook && (
             <Button

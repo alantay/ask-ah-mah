@@ -139,7 +139,7 @@ describe('RecipeLetter ingredient grid', () => {
   });
 });
 
-describe('Shortfall card gate + framing', () => {
+describe('Shortfall card retired', () => {
   // chicken thigh owned, bok choy + ginger missing → 1 of 3 (below 50%)
   const RECIPE_3: RecipeLetterProps['recipe'] = {
     ...RECIPE,
@@ -153,132 +153,151 @@ describe('Shortfall card gate + framing', () => {
     mockUseSessionContext.mockReturnValue({ userId: 'user-123' });
   });
 
-  it('shows the shortfall card when far from complete (1 of 3 owned)', () => {
+  it('no longer renders the shortfall card or its copy-shopping-list', () => {
     mockUseSWR.mockReturnValue({ data: INVENTORY_WITH_CHICKEN });
     render(<RecipeLetter recipe={RECIPE_3} />);
-    expect(screen.getByText('Shopping list')).toBeInTheDocument();
-    expect(screen.getByText(/Still need/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Copy shopping list/ })).toBeInTheDocument();
+    expect(screen.queryByText('Shopping list')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Still need/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/You.?re almost there/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Copy shopping list/ }),
+    ).not.toBeInTheDocument();
   });
 
-  it('shows a picking tip inline under its item, with no click needed', () => {
-    // Inventory SWR vs market-tip SWR are told apart by their key.
+  it('no longer shows inline picking tips in chat', () => {
     mockUseSWR.mockImplementation((key: unknown) =>
       typeof key === 'string' && key.startsWith('market-tip')
         ? { data: { tips: { 'bok choy': 'crisp stalks, no yellowing' } } }
         : { data: INVENTORY_WITH_CHICKEN },
     );
     render(<RecipeLetter recipe={RECIPE} />);
-    // Tip is visible immediately (no toggle), tied to its item.
-    expect(screen.getByText('— crisp stalks, no yellowing')).toBeInTheDocument();
-    // The item name is plain text, not an expandable button.
     expect(
-      screen.queryByRole('button', { name: 'bok choy' }),
+      screen.queryByText('— crisp stalks, no yellowing'),
     ).not.toBeInTheDocument();
   });
 
-  it('uses the encouraging heading once at least half are owned (1 of 2)', () => {
+  it('keeps the substitution note on an ingredient row', () => {
     mockUseSWR.mockReturnValue({ data: INVENTORY_WITH_CHICKEN });
-    render(<RecipeLetter recipe={RECIPE} />);
-    expect(screen.getByText(/You.?re almost there/)).toBeInTheDocument();
-    expect(screen.queryByText('Shopping list')).not.toBeInTheDocument();
+    render(
+      <RecipeLetter
+        recipe={{
+          ...RECIPE,
+          ingredients: [
+            { name: 'bok choy', category: 'Vegetable', amount: '1', unit: 'bunch', note: 'or any leafy green' },
+          ],
+        }}
+      />,
+    );
+    expect(screen.getByText(/or any leafy green/)).toBeInTheDocument();
+  });
+});
+
+describe('Substitutions relocated to the action bar', () => {
+  const mockOnSend = jest.fn();
+
+  beforeEach(() => {
+    mockOnSend.mockReset();
+    mockUseSessionContext.mockReturnValue({ userId: 'user-123' });
+    mockUseSWR.mockReturnValue({ data: INVENTORY_WITH_CHICKEN });
   });
 
-  it('hides the card when the user owns none of the ingredients', () => {
+  it('offers "Ask Ah Mah for substitutions" when ingredients are missing', () => {
+    render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
+    expect(
+      screen.getByRole('button', { name: /Ask Ah Mah for substitutions/ }),
+    ).toBeInTheDocument();
+  });
+
+  it('sends a substitutions prompt naming the missing ingredients', () => {
+    render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
+    fireEvent.click(
+      screen.getByRole('button', { name: /Ask Ah Mah for substitutions/ }),
+    );
+    expect(mockOnSend).toHaveBeenCalledWith(
+      expect.stringContaining('bok choy'),
+    );
+  });
+
+  it('does not offer substitutions when nothing is missing', () => {
     mockUseSWR.mockReturnValue({
       data: {
         ingredientInventory: [
-          {
-            id: '9',
-            name: 'tofu',
-            type: 'ingredient' as const,
-            category: 'Protein' as const,
-            dateAdded: new Date().toISOString(),
-            lastUpdated: new Date().toISOString(),
-          },
+          { id: '1', name: 'chicken thigh', type: 'ingredient' as const, category: 'Protein' as const, dateAdded: new Date().toISOString(), lastUpdated: new Date().toISOString() },
+          { id: '2', name: 'bok choy', type: 'ingredient' as const, category: 'Vegetable' as const, dateAdded: new Date().toISOString(), lastUpdated: new Date().toISOString() },
         ],
         kitchenwareInventory: [],
       },
     });
-    render(<RecipeLetter recipe={RECIPE} />);
-    expect(screen.queryByText('Shopping list')).not.toBeInTheDocument();
-    expect(screen.queryByText(/You.?re almost there/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Still need/)).not.toBeInTheDocument();
-  });
-
-  it('hides the card for a signed-out user even when some are missing', () => {
-    mockUseSessionContext.mockReturnValue({ userId: null });
-    mockUseSWR.mockReturnValue({ data: INVENTORY_WITH_CHICKEN });
-    render(<RecipeLetter recipe={RECIPE_3} />);
-    expect(screen.queryByText('Shopping list')).not.toBeInTheDocument();
-    expect(screen.queryByText(/Still need/)).not.toBeInTheDocument();
+    render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
+    expect(
+      screen.queryByRole('button', { name: /Ask Ah Mah for substitutions/ }),
+    ).not.toBeInTheDocument();
   });
 });
 
-describe('NEED pill click-to-add', () => {
+describe('Recipe cart adds to the shopping list', () => {
   beforeEach(() => {
     mockUseSessionContext.mockReturnValue({ userId: 'user-123' });
     mockUseSWR.mockReturnValue({ data: INVENTORY_WITH_CHICKEN });
   });
 
-  it('renders NEED pill for ingredient not in pantry', () => {
+  it('renders the cart button for an ingredient not on hand', () => {
     render(<RecipeLetter recipe={RECIPE} />);
-    expect(screen.getByLabelText('Add bok choy to pantry')).toBeInTheDocument();
+    expect(screen.getByLabelText('Add bok choy to shopping list')).toBeInTheDocument();
   });
 
-  it('renders a cart icon (not text) inside the add-to-pantry button', () => {
+  it('renders a cart icon (not text) inside the button', () => {
     render(<RecipeLetter recipe={RECIPE} />);
-    const button = screen.getByLabelText('Add bok choy to pantry');
+    const button = screen.getByLabelText('Add bok choy to shopping list');
     expect(button.textContent).toBe('');
     expect(button.querySelector('svg.lucide-shopping-cart')).toBeInTheDocument();
   });
 
-  it('renders no badge for ingredient already in pantry (HAVE removed)', () => {
+  it('renders no cart for an ingredient already on hand', () => {
     render(<RecipeLetter recipe={RECIPE} />);
-    expect(screen.queryByLabelText('Add chicken thigh to pantry')).not.toBeInTheDocument();
-    expect(screen.queryByText('HAVE')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Add chicken thigh to shopping list')).not.toBeInTheDocument();
   });
 
-  it('posts correct body and shows success toast on NEED click', async () => {
+  it('posts to /api/shopping-list and confirms on click', async () => {
     global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
     render(<RecipeLetter recipe={RECIPE} />);
-    fireEvent.click(screen.getByLabelText('Add bok choy to pantry'));
+    fireEvent.click(screen.getByLabelText('Add bok choy to shopping list'));
     await waitFor(() =>
-      expect(mockToastSuccess).toHaveBeenCalledWith('bok choy — in the pantry now.'),
+      expect(mockToastSuccess).toHaveBeenCalledWith('bok choy — on the list.'),
     );
     expect(global.fetch).toHaveBeenCalledWith(
-      '/api/inventory',
+      '/api/shopping-list',
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({
-          items: [{ name: 'bok choy', type: 'ingredient', category: 'Vegetable' }],
+          items: [{ name: 'bok choy', category: 'Vegetable' }],
           userId: 'user-123',
         }),
       }),
     );
-    expect(mockMutate).toHaveBeenCalledWith('/api/inventory?userId=user-123');
+    expect(mockMutate).toHaveBeenCalledWith('/api/shopping-list?userId=user-123');
   });
 
-  it('shows error toast and leaves pill as NEED on fetch failure', async () => {
+  it('shows an error toast and keeps the cart on failure', async () => {
     global.fetch = jest
       .fn()
       .mockResolvedValue({ ok: false, status: 500, json: async () => ({ error: 'Server error' }) });
     render(<RecipeLetter recipe={RECIPE} />);
-    fireEvent.click(screen.getByLabelText('Add bok choy to pantry'));
+    fireEvent.click(screen.getByLabelText('Add bok choy to shopping list'));
     await waitFor(() => expect(mockToastError).toHaveBeenCalledWith('Server error'));
     expect(mockMutate).not.toHaveBeenCalled();
-    expect(screen.getByLabelText('Add bok choy to pantry')).toBeInTheDocument();
+    expect(screen.getByLabelText('Add bok choy to shopping list')).toBeInTheDocument();
   });
 
-  it('NEED pill is disabled while request is in flight', async () => {
+  it('disables the cart while the request is in flight', async () => {
     let resolveRequest!: (v: unknown) => void;
     global.fetch = jest.fn().mockReturnValue(
       new Promise((r) => { resolveRequest = r; }),
     );
     render(<RecipeLetter recipe={RECIPE} />);
-    const pill = screen.getByLabelText('Add bok choy to pantry');
-    fireEvent.click(pill);
-    expect(pill).toBeDisabled();
+    const cart = screen.getByLabelText('Add bok choy to shopping list');
+    fireEvent.click(cart);
+    expect(cart).toBeDisabled();
     resolveRequest({ ok: true, json: async () => ({}) });
     await waitFor(() => expect(mockToastSuccess).toHaveBeenCalled());
   });
