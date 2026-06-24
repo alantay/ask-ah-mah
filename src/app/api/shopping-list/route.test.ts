@@ -186,6 +186,29 @@ describe("PATCH /api/shopping-list", () => {
     expect(res.status).toBe(400);
     expect(mockedSetBought).not.toHaveBeenCalled();
   });
+
+  it("400s when the body is malformed JSON", async () => {
+    const req = {
+      nextUrl: { searchParams: new URL(base).searchParams },
+      json: async () => {
+        throw new SyntaxError("Unexpected token");
+      },
+    } as unknown as NextRequest;
+
+    const res = await PATCH(req);
+    expect(res.status).toBe(400);
+    expect(mockedSetBought).not.toHaveBeenCalled();
+  });
+
+  it("500s when the service throws", async () => {
+    mockedSetBought.mockRejectedValue(new Error("db down"));
+    const res = await PATCH(
+      createMockRequest(base, {
+        body: JSON.stringify({ userId: "u1", id: "row-1", bought: true }),
+      }),
+    );
+    expect(res.status).toBe(500);
+  });
 });
 
 describe("DELETE /api/shopping-list", () => {
@@ -232,5 +255,29 @@ describe("DELETE /api/shopping-list", () => {
     expect(res.status).toBe(400);
     expect(mockedRemove).not.toHaveBeenCalled();
     expect(mockedClearBought).not.toHaveBeenCalled();
+  });
+
+  it("400s when the body is malformed JSON", async () => {
+    const req = {
+      nextUrl: { searchParams: new URL(base).searchParams },
+      json: async () => {
+        throw new SyntaxError("Unexpected token");
+      },
+    } as unknown as NextRequest;
+
+    const res = await DELETE(req);
+    expect(res.status).toBe(400);
+    expect(mockedRemove).not.toHaveBeenCalled();
+    expect(mockedClearBought).not.toHaveBeenCalled();
+  });
+
+  it("500s when the service throws", async () => {
+    mockedRemove.mockRejectedValue(new Error("db down"));
+    const res = await DELETE(
+      createMockRequest(base, {
+        body: JSON.stringify({ userId: "u1", id: "row-1" }),
+      }),
+    );
+    expect(res.status).toBe(500);
   });
 });

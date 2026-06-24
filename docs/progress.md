@@ -151,7 +151,6 @@ The two recipe surfaces — `RecipeLetter` (chat) and `RecipeDisplay` (cookbook)
 
 ### Shopping List — remaining slices (ADR-0014, PRD #313)
 The spine (#314) and lifecycle (#315) shipped above. Remaining vertical slices:
-- [x] **#315 Lifecycle**: ✓ bought (strike-through-and-keep) / ✕ changed-mind (hard delete) / bulk "clear bought". Add-to-pantry stays a separate opt-in.
 - [ ] **#316 Market Tips on the Need tab**: reuse `useMarketTips` (no engine change); typed items get tips, staples get none.
 - [ ] **#317 Recipe on-ramp + retire Shortfall card**: recipe cart button `addToPantry` → `addToShoppingList`; delete the Shortfall block; relocate "Ask Ah Mah for substitutions" to the action bar.
 - [ ] **#318 HITL design review**: Need tab + post-removal recipe card; Playwright screenshots; human sign-off.

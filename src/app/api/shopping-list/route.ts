@@ -68,6 +68,14 @@ export async function POST(req: NextRequest) {
   }
 }
 
+/**
+ * Toggle a Need-tab row's bought flag.
+ *
+ * Body: `{ userId: string, id: string, bought: boolean }`. Returns
+ * `{ success: true, message }` on success. 400s on malformed JSON, a missing
+ * `userId`, a non-string `id`, or a non-boolean `bought`; 500s if the service
+ * throws. Flips the flag only — never adds the item to the pantry.
+ */
 export async function PATCH(req: NextRequest) {
   try {
     const payload = await readJson(req);
@@ -90,6 +98,15 @@ export async function PATCH(req: NextRequest) {
   }
 }
 
+/**
+ * Remove from the Need tab — one row, or all bought rows.
+ *
+ * Body: `{ userId: string, id: string }` deletes a single row;
+ * `{ userId: string, clearBought: true }` bulk-deletes the user's bought rows.
+ * Returns `{ success: true, message }` on success. 400s on malformed JSON, a
+ * missing `userId`, or when neither `id` nor `clearBought: true` is given;
+ * 500s if the service throws.
+ */
 export async function DELETE(req: NextRequest) {
   try {
     const payload = await readJson(req);
