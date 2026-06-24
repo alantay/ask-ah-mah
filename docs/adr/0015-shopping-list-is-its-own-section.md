@@ -30,7 +30,7 @@ No data changes — exactly as ADR-0014 §6 predicted. The `ShoppingListItem` mo
 ## Consequences
 
 - One visible "Have/Need" affordance disappears; the Shopping List gains nav-level discoverability it lacked behind a tab (it no longer hides one click deep inside the Pantry).
-- `SidebarContent` and `MobileTopBar` each gain a fourth nav item (`ShoppingBasket` icon); `page.tsx` gains a fourth content panel; `useActiveTab` accepts `shopping`.
+- `SidebarContent` gains a fourth nav item with a hand-drawn basket `ShoppingListIcon`; `MobileTopBar` (which reuses `SidebarContent` for its drawer) gains the `Shopping List` section label; `page.tsx` gains a fourth content panel; `useActiveTab` accepts `shopping`.
 - The glossary's `Section` entry now lists four destinations; `Have`/`Need` are removed as named faces.
 - Cross-references that described the Shopping List as "the Pantry's Need tab" are reworded to "its own Section, the inverse of the Pantry."
 - Reversibility is unchanged: collapsing it back into the Pantry (or elsewhere) remains pure UI/nav work with zero migration.
