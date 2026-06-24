@@ -1,5 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { mutate } from "swr";
+import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
+import { useMarketTips } from "@/hooks/useMarketTips";
 import ShoppingList from "./ShoppingList";
 
 jest.mock("@/contexts/SessionContext", () => ({
@@ -8,7 +10,12 @@ jest.mock("@/contexts/SessionContext", () => ({
 
 jest.mock("sonner", () => ({ toast: { success: jest.fn(), error: jest.fn() } }));
 
-let mockData: { items: { id: string; name: string; bought: boolean }[] };
+jest.mock("@/hooks/useMarketTips", () => ({ useMarketTips: jest.fn(() => ({})) }));
+const mockedUseMarketTips = jest.mocked(useMarketTips);
+
+let mockData: {
+  items: { id: string; name: string; bought: boolean; category?: string }[];
+};
 jest.mock("swr", () => {
   const actual = jest.requireActual("swr");
   return {
@@ -22,6 +29,7 @@ jest.mock("swr", () => {
 beforeEach(() => {
   jest.clearAllMocks();
   mockData = { items: [] };
+  mockedUseMarketTips.mockReturnValue({});
   global.fetch = jest
     .fn()
     .mockResolvedValue({ ok: true, json: async () => ({}) });
@@ -167,5 +175,40 @@ describe("ShoppingList (Need tab)", () => {
     expect(
       screen.queryByRole("button", { name: /clear bought/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it("shows Ah Mah's picking tip under a pickable item", () => {
+    mockData = {
+      items: [{ id: "row-1", name: "Tomatoes", bought: false }],
+    };
+    mockedUseMarketTips.mockReturnValue({
+      [canonicalTipKey("Tomatoes")]: "Pick firm, deep-red ones.",
+    });
+
+    render(<ShoppingList />);
+
+    expect(screen.getByText(/pick firm, deep-red ones/i)).toBeInTheDocument();
+  });
+
+  it("feeds item name and category to useMarketTips", () => {
+    mockData = {
+      items: [{ id: "row-1", name: "Tomatoes", bought: false, category: "Vegetable" }],
+    };
+
+    render(<ShoppingList />);
+
+    expect(mockedUseMarketTips).toHaveBeenCalledWith([
+      { name: "Tomatoes", category: "Vegetable" },
+    ]);
+  });
+
+  it("shows no tip for a staple the engine returns nothing for", () => {
+    mockData = { items: [{ id: "row-1", name: "Salt", bought: false }] };
+    mockedUseMarketTips.mockReturnValue({});
+
+    render(<ShoppingList />);
+
+    expect(screen.getByText("Salt")).toBeInTheDocument();
+    expect(screen.queryByText(/—/)).not.toBeInTheDocument();
   });
 });
