@@ -191,6 +191,11 @@ export function RecipeLetter({
   const showPantryPill = !!userId && !isStreaming;
   const canCook = !isStreaming && steps.length > 0;
 
+  // Shared shape for the lightweight secondary actions so copy/save/substitutions
+  // line up at one height and padding instead of three mismatched treatments.
+  const secondaryAction =
+    "inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg font-sans text-xs font-semibold transition-colors cursor-pointer";
+
   if (cooking) {
     return (
       <CookingMode
@@ -231,22 +236,44 @@ export function RecipeLetter({
         </div>
       )}
 
-      {/* Meta row — time · pantry pill */}
+      {/* Meta row — time · pantry pill, with the substitutions nudge tucked
+          beneath the pantry count it answers (you're short → ask for a swap). */}
       {(timeLabel || showPantryPill) && (
-        <div className="flex items-center gap-2.5 text-muted-foreground mb-4 pb-3 border-b border-dashed border-border">
-          {timeLabel && (
-            <span className="font-mono text-xs flex items-center gap-1">
-              <TimerIcon className="w-3.5 h-3.5" />
-              {timeLabel}
-            </span>
-          )}
-          {timeLabel && showPantryPill && (
-            <span className="text-border">·</span>
-          )}
-          {showPantryPill && (
-            <span className="font-sans text-eyebrow font-semibold text-jade px-1.5 py-0.5 bg-jade-tint border border-jade-border rounded-full tracking-normal normal-case">
-              {haveCount}/{ingredients.length} in your pantry
-            </span>
+        <div className="mb-4 pb-3 border-b border-dashed border-border">
+          <div className="flex items-center gap-2.5 text-muted-foreground">
+            {timeLabel && (
+              <span className="font-mono text-xs flex items-center gap-1">
+                <TimerIcon className="w-3.5 h-3.5" />
+                {timeLabel}
+              </span>
+            )}
+            {timeLabel && showPantryPill && (
+              <span className="text-border">·</span>
+            )}
+            {showPantryPill && (
+              <span className="font-sans text-eyebrow font-semibold text-jade px-1.5 py-0.5 bg-jade-tint border border-jade-border rounded-full tracking-normal normal-case">
+                {haveCount}/{ingredients.length} in your pantry
+              </span>
+            )}
+          </div>
+          {/* Conversational nudge — a suggestion to continue the chat, styled as
+              a quiet link rather than a button so it doesn't read as an action. */}
+          {showSubstitutions && (
+            <button
+              onClick={askForSubstitutions}
+              className="group mt-2 inline-flex items-center gap-1.5 font-sans text-xs cursor-pointer"
+            >
+              <span className="text-muted-foreground">Short an ingredient?</span>
+              <span className="font-medium text-primary-deep underline decoration-dashed decoration-primary-deep/40 underline-offset-2 transition-colors group-hover:decoration-primary-deep">
+                Ask Ah Mah for substitutions
+              </span>
+              <span
+                aria-hidden
+                className="text-primary-deep transition-transform group-hover:translate-x-0.5"
+              >
+                →
+              </span>
+            </button>
           )}
         </div>
       )}
@@ -285,7 +312,7 @@ export function RecipeLetter({
                     isLastTwo && "border-none",
                   )}
                 >
-                  <span className="flex-[0_0_64px] font-mono text-dense font-semibold text-foreground text-right tabular-nums">
+                  <span className="flex-[0_0_72px] font-mono text-dense font-semibold text-foreground text-right tabular-nums whitespace-nowrap">
                     {amountLabel ? <ScaledNum>{amountLabel}</ScaledNum> : ""}
                   </span>
                   <span className="flex-1 font-display text-emphasis text-foreground">
@@ -329,14 +356,17 @@ export function RecipeLetter({
         </div>
       )}
 
-      {/* Action bar */}
-      {!isStreaming && (onSave || canCook || showSubstitutions) && (
-        <div className="flex flex-wrap gap-2 items-center pt-3 mt-4.5 border-t border-dashed border-border">
+      {/* Action bar — utility + save on the left, the primary action on the right. */}
+      {!isStreaming && (onSave || canCook) && (
+        <div className="flex items-center gap-2 pt-3.5 mt-4.5 border-t border-dashed border-border">
           <button
             onClick={copyRecipe}
             aria-label="Copy recipe"
             title="Copy recipe"
-            className="p-1.5 -ml-1.5 text-muted-foreground hover:text-foreground transition-colors cursor-pointer inline-flex items-center rounded-md"
+            className={cn(
+              secondaryAction,
+              "w-9 px-0 text-muted-foreground border border-border bg-card shadow-[0_1px_0_var(--border-soft)] hover:bg-muted/50 hover:text-foreground",
+            )}
           >
             <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
               <rect x="5" y="2" width="9" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
@@ -345,19 +375,24 @@ export function RecipeLetter({
           </button>
           {onSave && (
             isSaved ? (
-              <button
-                disabled
-                className="px-3 py-1.5 font-sans text-xs font-semibold text-jade bg-transparent border border-border rounded-lg cursor-not-allowed inline-flex items-center gap-1 opacity-80"
+              <span
+                className={cn(
+                  secondaryAction,
+                  "text-jade border border-border bg-card opacity-80 cursor-default",
+                )}
               >
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2">
                   <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16l-7-3-7 3z" />
                 </svg>
                 Saved
-              </button>
+              </span>
             ) : (
               <button
                 onClick={() => onSave(recipe as RecipeBlock)}
-                className="px-3 py-1.5 font-sans text-xs font-semibold text-foreground bg-card border border-border rounded-lg cursor-pointer shadow-[0_1px_0_var(--border-soft)] hover:bg-muted/50 transition-colors inline-flex items-center gap-1"
+                className={cn(
+                  secondaryAction,
+                  "text-foreground border border-border bg-card shadow-[0_1px_0_var(--border-soft)] hover:bg-muted/50",
+                )}
               >
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16l-7-3-7 3z" />
@@ -366,19 +401,11 @@ export function RecipeLetter({
               </button>
             )
           )}
-          {showSubstitutions && (
-            <button
-              onClick={askForSubstitutions}
-              className="px-2.5 py-1.5 font-sans text-xs font-semibold text-primary-deep bg-primary-tint border border-primary-deep rounded-lg shadow-cta hover:bg-primary-tint/70 transition-colors cursor-pointer inline-flex items-center gap-1.5"
-            >
-              Ask Ah Mah for substitutions →
-            </button>
-          )}
           {canCook && (
             <Button
               variant="cta"
               onClick={() => setCooking(true)}
-              className="ml-auto px-3 py-1.5 font-sans text-xs font-semibold gap-1.5"
+              className="ml-auto h-9 px-4 font-sans text-xs font-semibold gap-1.5"
             >
               <svg width="11" height="11" viewBox="0 0 16 16" fill="none" className="size-[11px]">
                 <path d="M5 3l8 5-8 5V3z" fill="currentColor"/>
