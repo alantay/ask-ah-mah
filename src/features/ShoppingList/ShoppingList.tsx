@@ -122,8 +122,14 @@ const ShoppingList = () => {
     })
       .then((res) => {
         if (res.ok) revalidate();
+        // Clear the guard on failure so the next revalidation can retry,
+        // instead of parking these items in "Other" until a reload.
+        else classifyRequestedRef.current = "";
       })
-      .catch((e) => console.error("Failed to classify shopping list:", e));
+      .catch((e) => {
+        classifyRequestedRef.current = "";
+        console.error("Failed to classify shopping list:", e);
+      });
     // revalidate is stable enough; key the effect on the pending set + user.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingSig, userId]);

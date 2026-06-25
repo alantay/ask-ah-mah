@@ -42,7 +42,7 @@ export async function classifyAisles(
   const { object } = await generateObject({
     model: openai("gpt-5-mini"),
     schema: AssignmentSchema,
-    temperature: 0,
+    // gpt-5-mini only supports the default temperature; setting it errors.
     prompt: `You sort grocery items into the aisle where a shopper finds them at a market. For each item, pick exactly ONE aisle from this list:
 
 ${AISLE_ORDER.map((a) => `- ${a}`).join("\n")}

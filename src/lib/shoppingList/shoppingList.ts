@@ -74,10 +74,18 @@ export async function classifyPendingAisles(userId: string) {
 
   const aisles = await classifyAisles(pending.map((row) => row.name));
 
+  // Bucket rows by aisle so we issue at most one updateMany per aisle
+  // (five possible) instead of one awaited round-trip per pending row.
+  const idsByAisle = new Map<Aisle, string[]>();
   for (const row of pending) {
     const aisle: Aisle = aisles[canonicalShoppingKey(row.name)] ?? "Other";
+    const ids = idsByAisle.get(aisle) ?? [];
+    ids.push(row.id);
+    idsByAisle.set(aisle, ids);
+  }
+  for (const [aisle, ids] of idsByAisle) {
     await prisma.shoppingListItem.updateMany({
-      where: { id: row.id, userId },
+      where: { id: { in: ids }, userId },
       data: { category: aisle },
     });
   }
