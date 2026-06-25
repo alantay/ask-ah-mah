@@ -166,11 +166,37 @@ describe("classifyPendingAisles", () => {
 
     expect(mockedClassify).toHaveBeenCalledWith(["Apples", "pork belly"]);
     expect(mockedUpdateMany).toHaveBeenCalledWith({
-      where: { id: "a", userId: "u1" },
+      where: { id: { in: ["a"] }, userId: "u1" },
       data: { category: "Produce" },
     });
     expect(mockedUpdateMany).toHaveBeenCalledWith({
-      where: { id: "b", userId: "u1" },
+      where: { id: { in: ["b"] }, userId: "u1" },
+      data: { category: "Meat & Seafood" },
+    });
+  });
+
+  it("batches rows sharing an aisle into a single updateMany call", async () => {
+    mockedFindMany.mockResolvedValue([
+      { id: "a", name: "Apples" },
+      { id: "b", name: "Bananas" },
+      { id: "c", name: "pork belly" },
+    ] as never);
+    mockedClassify.mockResolvedValue({
+      [canonicalShoppingKey("Apples")]: "Produce",
+      [canonicalShoppingKey("Bananas")]: "Produce",
+      [canonicalShoppingKey("pork belly")]: "Meat & Seafood",
+    } as never);
+
+    await classifyPendingAisles("u1");
+
+    // Two aisles → two calls, not one per row.
+    expect(mockedUpdateMany).toHaveBeenCalledTimes(2);
+    expect(mockedUpdateMany).toHaveBeenCalledWith({
+      where: { id: { in: ["a", "b"] }, userId: "u1" },
+      data: { category: "Produce" },
+    });
+    expect(mockedUpdateMany).toHaveBeenCalledWith({
+      where: { id: { in: ["c"] }, userId: "u1" },
       data: { category: "Meat & Seafood" },
     });
   });
