@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/db";
+import { type Aisle } from "./aisle";
 import { canonicalShoppingKey } from "./canonicalKey";
+import { classifyAisles } from "./classify";
 import { AddShoppingListItem } from "./schemas";
 
 /** Rows for a user's Shopping List, oldest-first (build order). */
@@ -54,4 +56,29 @@ export async function removeShoppingListItem(userId: string, id: string) {
 /** Bulk "clear bought" — remove only the user's bought rows, keep the rest. */
 export async function clearBoughtItems(userId: string) {
   await prisma.shoppingListItem.deleteMany({ where: { userId, bought: true } });
+}
+
+/**
+ * Assign a shopping [Aisle](CONTEXT.md#aisle) to the user's not-yet-categorised
+ * rows. Typed-in items arrive with `category: null` (the add path never blocks
+ * on the model); this fills them in via {@link classifyAisles} and persists the
+ * aisle onto the existing `category` column, scoped by `userId`. Recipe items —
+ * which already carry a Pantry-enum category — are left untouched. A no-op when
+ * nothing is pending, so the client can call it freely after every load.
+ */
+export async function classifyPendingAisles(userId: string) {
+  const pending = await prisma.shoppingListItem.findMany({
+    where: { userId, category: null },
+  });
+  if (pending.length === 0) return;
+
+  const aisles = await classifyAisles(pending.map((row) => row.name));
+
+  for (const row of pending) {
+    const aisle: Aisle = aisles[canonicalShoppingKey(row.name)] ?? "Other";
+    await prisma.shoppingListItem.updateMany({
+      where: { id: row.id, userId },
+      data: { category: aisle },
+    });
+  }
 }

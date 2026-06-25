@@ -1,12 +1,14 @@
 import { prisma } from "@/lib/db";
 import {
   addShoppingListItems,
+  classifyPendingAisles,
   clearBoughtItems,
   getShoppingList,
   removeShoppingListItem,
   setBought,
 } from "./shoppingList";
 import { canonicalShoppingKey } from "./canonicalKey";
+import { classifyAisles } from "./classify";
 
 jest.mock("@/lib/db", () => ({
   prisma: {
@@ -19,10 +21,13 @@ jest.mock("@/lib/db", () => ({
   },
 }));
 
+jest.mock("./classify", () => ({ classifyAisles: jest.fn() }));
+
 const mockedFindMany = jest.mocked(prisma.shoppingListItem.findMany);
 const mockedUpsert = jest.mocked(prisma.shoppingListItem.upsert);
 const mockedUpdateMany = jest.mocked(prisma.shoppingListItem.updateMany);
 const mockedDeleteMany = jest.mocked(prisma.shoppingListItem.deleteMany);
+const mockedClassify = jest.mocked(classifyAisles);
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -133,5 +138,49 @@ describe("getShoppingList", () => {
       orderBy: { createdAt: "asc" },
     });
     expect(result).toBe(rows);
+  });
+});
+
+describe("classifyPendingAisles", () => {
+  it("classifies only the user's uncategorised rows", async () => {
+    mockedFindMany.mockResolvedValue([] as never);
+
+    await classifyPendingAisles("u1");
+
+    expect(mockedFindMany).toHaveBeenCalledWith({
+      where: { userId: "u1", category: null },
+    });
+  });
+
+  it("persists the model's aisle onto each pending row, scoped by userId", async () => {
+    mockedFindMany.mockResolvedValue([
+      { id: "a", name: "Apples" },
+      { id: "b", name: "pork belly" },
+    ] as never);
+    mockedClassify.mockResolvedValue({
+      [canonicalShoppingKey("Apples")]: "Produce",
+      [canonicalShoppingKey("pork belly")]: "Meat & Seafood",
+    } as never);
+
+    await classifyPendingAisles("u1");
+
+    expect(mockedClassify).toHaveBeenCalledWith(["Apples", "pork belly"]);
+    expect(mockedUpdateMany).toHaveBeenCalledWith({
+      where: { id: "a", userId: "u1" },
+      data: { category: "Produce" },
+    });
+    expect(mockedUpdateMany).toHaveBeenCalledWith({
+      where: { id: "b", userId: "u1" },
+      data: { category: "Meat & Seafood" },
+    });
+  });
+
+  it("does not call the model when nothing is pending", async () => {
+    mockedFindMany.mockResolvedValue([] as never);
+
+    await classifyPendingAisles("u1");
+
+    expect(mockedClassify).not.toHaveBeenCalled();
+    expect(mockedUpdateMany).not.toHaveBeenCalled();
   });
 });

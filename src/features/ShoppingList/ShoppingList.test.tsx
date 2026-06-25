@@ -35,7 +35,75 @@ beforeEach(() => {
     .mockResolvedValue({ ok: true, json: async () => ({}) });
 });
 
-describe("ShoppingList (Need tab)", () => {
+describe("ShoppingList aisles", () => {
+  it("groups items under their aisle subheadings", () => {
+    mockData = {
+      items: [
+        { id: "1", name: "Kailan", bought: false, category: "Vegetable" },
+        { id: "2", name: "Pork", bought: false, category: "Protein" },
+      ],
+    };
+
+    render(<ShoppingList />);
+
+    expect(screen.getByText("Produce")).toBeInTheDocument();
+    expect(screen.getByText("Meat & Seafood")).toBeInTheDocument();
+    expect(screen.getByText("Kailan")).toBeInTheDocument();
+    expect(screen.getByText("Pork")).toBeInTheDocument();
+  });
+
+  it("rests an uncategorised item under Other", () => {
+    mockData = { items: [{ id: "1", name: "Glitter", bought: false }] };
+
+    render(<ShoppingList />);
+
+    expect(screen.getByText("Other")).toBeInTheDocument();
+    expect(screen.getByText("Glitter")).toBeInTheDocument();
+  });
+
+  it("does not render an aisle heading that has no items", () => {
+    mockData = {
+      items: [{ id: "1", name: "Kailan", bought: false, category: "Vegetable" }],
+    };
+
+    render(<ShoppingList />);
+
+    expect(screen.getByText("Produce")).toBeInTheDocument();
+    expect(screen.queryByText("Meat & Seafood")).not.toBeInTheDocument();
+    expect(screen.queryByText("Other")).not.toBeInTheDocument();
+  });
+
+  it("asks the API to classify pending rows after load", async () => {
+    mockData = { items: [{ id: "1", name: "Glitter", bought: false }] };
+
+    render(<ShoppingList />);
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/shopping-list/classify",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ userId: "user-1" }),
+        }),
+      );
+    });
+  });
+
+  it("does not call classify when every item already has an aisle", () => {
+    mockData = {
+      items: [{ id: "1", name: "Kailan", bought: false, category: "Produce" }],
+    };
+
+    render(<ShoppingList />);
+
+    expect(global.fetch).not.toHaveBeenCalledWith(
+      "/api/shopping-list/classify",
+      expect.anything(),
+    );
+  });
+});
+
+describe("ShoppingList", () => {
   it("shows each item on the list", () => {
     mockData = {
       items: [
