@@ -55,7 +55,7 @@ export function ConversationItem({
         "group rounded-lg py-1 px-3 cursor-pointer border transition-colors flex items-center gap-2",
         isActive
           ? "bg-secondary border-secondary-deep shadow-[0_1px_0_var(--secondary-deep)]"
-          : "bg-transparent border-transparent hover:border-secondary-deep/40",
+          : "bg-transparent border-transparent hover:bg-secondary/50 hover:border-secondary-deep/60",
       )}
     >
       {/* Title area */}
