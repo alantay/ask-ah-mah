@@ -6,9 +6,10 @@ import { useSessionContext } from "@/contexts/SessionContext";
 import { Eyebrow } from "@/features/shared/components/recipe";
 import { useMarketTips } from "@/hooks/useMarketTips";
 import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
+import { groupByAisle } from "@/lib/shoppingList";
 import { cn, fetcher } from "@/lib/utils";
 import { Check, Plus, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
 
@@ -25,6 +26,9 @@ const ShoppingList = () => {
   const { userId } = useSessionContext();
   const [draft, setDraft] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  // Pending-row signature we've already asked the API to classify, so the
+  // effect fires once per distinct set of uncategorised rows (no loop).
+  const classifyRequestedRef = useRef("");
 
   const key = userId
     ? `/api/shopping-list?userId=${encodeURIComponent(userId)}`
@@ -99,6 +103,39 @@ const ShoppingList = () => {
   const items = data?.items ?? [];
   const hasBought = items.some((item) => item.bought);
 
+  // A typed-in item lands with no category and rests in "Other"; once the list
+  // is loaded, ask the API to assign it an aisle, then revalidate so it shifts.
+  // Mirrors the Market Tip fetch — the add never blocks on classification.
+  const pendingSig = items
+    .filter((item) => !item.category)
+    .map((item) => item.id)
+    .sort()
+    .join(",");
+  useEffect(() => {
+    if (!userId || !pendingSig) return;
+    if (classifyRequestedRef.current === pendingSig) return;
+    classifyRequestedRef.current = pendingSig;
+    fetch("/api/shopping-list/classify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId }),
+    })
+      .then((res) => {
+        if (res.ok) revalidate();
+        // Clear the guard on failure so the next revalidation can retry,
+        // instead of parking these items in "Other" until a reload.
+        else classifyRequestedRef.current = "";
+      })
+      .catch((e) => {
+        classifyRequestedRef.current = "";
+        console.error("Failed to classify shopping list:", e);
+      });
+    // revalidate is stable enough; key the effect on the pending set + user.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingSig, userId]);
+
+  const aisleGroups = groupByAisle(items);
+
   // Ah Mah's picking tips at the moment of buying. The hook only asks the model
   // about pickable items, so staples (salt, sugar, flour) return no tip.
   const tips = useMarketTips(
@@ -158,53 +195,60 @@ const ShoppingList = () => {
         )}
 
         {items.length > 0 && (
-          <ul className="list-none p-0 m-0 bg-card border border-border rounded-lg divide-y divide-dashed divide-border">
-            {items.map((item) => (
-              <li
-                key={item.id}
-                className="flex items-center gap-3 px-4 py-3 font-display text-emphasis"
-              >
-                <button
-                  type="button"
-                  role="checkbox"
-                  aria-checked={item.bought}
-                  aria-label={item.name}
-                  onClick={() => toggleBought(item)}
-                  className={cn(
-                    "flex size-5 shrink-0 items-center justify-center rounded-full border transition-colors",
-                    item.bought
-                      ? "bg-primary border-primary text-primary-foreground"
-                      : "border-border text-transparent hover:border-primary",
-                  )}
-                >
-                  <Check className="size-3" strokeWidth={3} />
-                </button>
-                <span
-                  className={cn(
-                    "flex-1",
-                    item.bought
-                      ? "line-through text-muted-foreground"
-                      : "text-foreground",
-                  )}
-                >
-                  {item.name}
-                  {!item.bought && tips[canonicalTipKey(item.name)] && (
-                    <span className="block font-display italic text-dense text-muted-foreground leading-snug">
-                      — {tips[canonicalTipKey(item.name)]}
-                    </span>
-                  )}
-                </span>
-                <button
-                  type="button"
-                  aria-label={`Remove ${item.name}`}
-                  onClick={() => removeItem(item)}
-                  className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <X className="size-4" />
-                </button>
-              </li>
+          <div className="flex flex-col gap-6">
+            {aisleGroups.map((group) => (
+              <section key={group.aisle}>
+                <Eyebrow className="block mb-2 px-1">{group.aisle}</Eyebrow>
+                <ul className="list-none p-0 m-0 bg-card border border-border rounded-lg divide-y divide-dashed divide-border">
+                  {group.items.map((item) => (
+                    <li
+                      key={item.id}
+                      className="flex items-center gap-3 px-4 py-3 font-display text-emphasis"
+                    >
+                      <button
+                        type="button"
+                        role="checkbox"
+                        aria-checked={item.bought}
+                        aria-label={item.name}
+                        onClick={() => toggleBought(item)}
+                        className={cn(
+                          "flex size-5 shrink-0 items-center justify-center rounded-full border transition-colors",
+                          item.bought
+                            ? "bg-primary border-primary text-primary-foreground"
+                            : "border-border text-transparent hover:border-primary",
+                        )}
+                      >
+                        <Check className="size-3" strokeWidth={3} />
+                      </button>
+                      <span
+                        className={cn(
+                          "flex-1",
+                          item.bought
+                            ? "line-through text-muted-foreground"
+                            : "text-foreground",
+                        )}
+                      >
+                        {item.name}
+                        {!item.bought && tips[canonicalTipKey(item.name)] && (
+                          <span className="block font-display italic text-dense text-muted-foreground leading-snug">
+                            — {tips[canonicalTipKey(item.name)]}
+                          </span>
+                        )}
+                      </span>
+                      <button
+                        type="button"
+                        aria-label={`Remove ${item.name}`}
+                        onClick={() => removeItem(item)}
+                        className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <X className="size-4" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
             ))}
-          </ul>
+          </div>
         )}
 
         {hasBought && (

@@ -162,9 +162,21 @@ A standing, **per-user**, persisted list of items the user intends to buy — it
 
 Items arrive two ways: the **cart button** on a recipe's ingredient row (adds the missing item), or **typed in directly** (e.g. "apples", unrelated to any recipe). Lifecycle is todo-list-style — checking an item (**bought**) strikes it through for the trip; crossing it out (**✕**, changed mind) deletes it. Moving a bought item into the **Pantry** is a separate, opt-in step, never a side effect of checking it.
 
+Items are grouped by **[Aisle](#aisle)** so the list reads as a market walk rather than a flat pile.
+
 **Why this matters:** the Shopping List is where **Market Tips** live — the point-of-purchase surface — deliberately separated from the recipe card so a pick-tip ("choose pale pink pork") never sits beside a recipe's substitution `note` ("use the chicken you have"). The two voices answer different questions and clashed when co-located. It also serves wants no recipe-bound list could: buying things unrelated to any recipe.
 
-Related: [ADR-0014](docs/adr/0014-shopping-list-is-standing-and-quantityless.md), [ADR-0013](docs/adr/0013-market-tips-are-llm-generated-and-shared.md)
+Related: [ADR-0014](docs/adr/0014-shopping-list-is-standing-and-quantityless.md), [ADR-0013](docs/adr/0013-market-tips-are-llm-generated-and-shared.md), [ADR-0016](docs/adr/0016-shopping-list-groups-by-aisle.md)
+
+---
+
+## Aisle
+
+The **store-location** bucket a **[Shopping List](#shopping-list)** item is grouped under, so the list reads as a single trip through a market rather than a flat pile. A fixed, small vocabulary — **Produce · Meat & Seafood · Rice & Noodles · Sauces & Seasoning · Other** — ordered as a sensible walk, with **Other** always last and **empty aisles hidden**.
+
+An Aisle is deliberately **not** the Pantry's storage category enum (`Protein / Carbs / Vegetable / Condiments / Spice / Misc`). That enum is a *storage* taxonomy ("where does this live at home"); an Aisle is a *shopping* taxonomy ("where do I find this at the shop"). The two are kept distinct but **bridged by a deterministic map** (Vegetable→Produce, Protein→Meat & Seafood, Carbs→Rice & Noodles, Condiments/Spice→Sauces & Seasoning, Misc→Other), so a recipe item that already knows its Category needs no extra work to find its Aisle.
+
+A typed-in item has no Category, so its Aisle is **assigned by the model** (the same LLM-and-shared spirit as a [Market Tip](#market-tip)). Until that returns, the item rests in **Other**, then shifts to its real Aisle — the list never blocks on the classification. See [ADR-0016](docs/adr/0016-shopping-list-groups-by-aisle.md).
 
 ---
 
