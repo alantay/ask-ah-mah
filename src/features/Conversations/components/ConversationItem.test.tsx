@@ -40,7 +40,8 @@ describe("ConversationItem", () => {
       <ConversationItem {...defaultProps} isActive={false} />
     );
     const card = container.firstChild as HTMLElement;
-    expect(card.className).not.toContain("bg-secondary");
+    // No solid active fill at rest — the hover:bg-secondary/50 variant is fine.
+    expect(card.className).not.toMatch(/(?:^|\s)bg-secondary(?=\s|$)/);
     expect(card.className).toContain("bg-transparent");
     expect(card.className).toContain("border-transparent");
   });
