@@ -269,7 +269,7 @@ const Inventory = () => {
         {/* Header — hidden on mobile (tab strip already labels this surface) */}
         <div className="hidden sm:flex sm:items-end sm:justify-between sm:gap-6 mb-5">
           <div>
-            <Eyebrow className="block mb-1.5">What Ah Mah sees</Eyebrow>
+            <Eyebrow className="block mb-1.5">What you&apos;ve got</Eyebrow>
             <h1 className="font-display font-semibold text-display text-foreground leading-none tracking-tight">
               Your kitchen, today
             </h1>
