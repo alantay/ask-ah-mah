@@ -16,7 +16,7 @@ const RequestSchema = z.object({
       }),
     )
     .min(1)
-    .max(30),
+    .max(200),
 });
 
 const TipGenSchema = z.object({

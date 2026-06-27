@@ -16,7 +16,7 @@ const RequestSchema = z.object({
       }),
     )
     .min(1)
-    .max(30),
+    .max(200),
 });
 
 const TipGenSchema = z.object({
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
       // kitchen-domain relevance gate runs at the model so non-kitchen items
       // resolve to "" and get negative-cached.
       const list = misses
-        .map((k) => `- ${k} (${wanted.get(k)!.type})`)
+        .map((k) => `${k} = ${wanted.get(k)!.type}`)
         .join("\n");
       const { object } = await generateObject({
         model: openai("gpt-5-mini"),
@@ -76,10 +76,12 @@ export async function POST(req: NextRequest) {
         temperature: 0.4,
         prompt: `You are Ah Mah, a warm Singaporean grandmother. For each kitchen item, give ONE short tip on how to KEEP it well at home — for food, how to store it so it lasts (where, how, what to avoid); for equipment, how to care for it so it lasts.
 
+Each item below is written as "name = kind".
+
 RULES:
-- Return exactly one entry per item, using the EXACT given item text as "key".
+- Return exactly one entry per item. Set "key" to the NAME only — the text to the LEFT of " = " — copied EXACTLY. Never include the kind in the key.
+- Use the kind (right of " = "): "ingredient" means food, "kitchenware" means equipment — advise accordingly.
 - "tip": max 12 words, plain imperative. NO "to store X" preamble. e.g. "cool, dark place — never the fridge".
-- The label in parentheses tells you if it is an ingredient (food) or kitchenware (equipment); advise accordingly.
 - ${KITCHEN_DOMAIN_RULE}
 - If there is no meaningful way to keep it better (it just sits in the cupboard), return tip as an empty string "".
 - Warm and practical, but keep it SHORT.
