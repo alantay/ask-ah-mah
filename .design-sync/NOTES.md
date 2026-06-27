@@ -71,6 +71,21 @@ Installed isolated under `.ds-sync/` (gitignored) with npm, NOT the app's pnpm:
 `esbuild ts-morph @types/react @tailwindcss/cli@4.2.4 playwright` (+ chromium).
 Re-run `node .ds-sync/package-build.mjs` / `resync.mjs` from there.
 
+**`--node-modules` must point at the repo-root `./node_modules`, NOT
+`.ds-sync/node_modules`.** The isolated `.ds-sync/node_modules` has only the
+converter toolchain — it has no `react`/`react-dom`, so the build dies with
+`react not found under --node-modules … vendorReact`. React lives in the app's
+own (pnpm) `node_modules`. Full re-sync invocation:
+
+```
+node .ds-sync/node_modules/.bin/tailwindcss -i .design-sync/ds-tailwind-input.css -o .design-sync/.cache/ds-compiled.css   # 1. recompile CSS first (cssEntry is gitignored)
+node .ds-sync/resync.mjs --config .design-sync/config.json --node-modules ./node_modules --out ./ds-bundle --remote <anchor.json>
+```
+
+The `--remote <anchor.json>` is the project's `_ds_sync.json` fetched via
+`DesignSync(get_file)` and written to a local file — it's what lets the diff
+skip unchanged components.
+
 ## Known warnings (non-blocking — do not chase)
 
 - **`[TOKENS_MISSING]` — a few `--radix-*` runtime custom properties** (3 missing, below
