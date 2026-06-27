@@ -228,6 +228,9 @@ const Inventory = () => {
   const exitSelectionMode = () => {
     setSelectionMode(false);
     setSelectedIds(new Set());
+    // Cancel any pending deferred seed so it can't repopulate selection after
+    // SWR data lands once we've already left selection mode.
+    setSeedAllOnLoad(false);
   };
 
   const selectAll = () => setSelectedIds(new Set(allItemIds()));
