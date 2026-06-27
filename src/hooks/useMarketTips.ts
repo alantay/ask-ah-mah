@@ -42,7 +42,13 @@ export function useMarketTips(
       if (!res.ok) throw new Error("market-tip fetch failed");
       return res.json();
     },
-    { revalidateOnFocus: false, dedupingInterval: 1000 * 60 * 60 },
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 1000 * 60 * 60,
+      // Adding/removing a list item changes the key; keep the prior tips on
+      // screen while the new request resolves instead of blanking every row.
+      keepPreviousData: true,
+    },
   );
 
   return data?.tips ?? {};
