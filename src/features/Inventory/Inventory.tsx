@@ -327,7 +327,7 @@ const Inventory = () => {
               Your kitchen, today
             </h1>
             <p className="font-display italic text-emphasis text-muted-foreground mt-2">
-              {totalCount} thing{totalCount !== 1 ? "s" : ""}. She jots them
+              {totalCount} thing{totalCount !== 1 ? "s" : ""}. Ah Mah jots them
               down as you chat.
             </p>
           </div>
