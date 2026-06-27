@@ -505,7 +505,7 @@ const Inventory = () => {
             <TipsToggle
               enabled={tipsOn}
               onChange={setTipsOn}
-              label="Keeping tips"
+              label="Storage tips"
             />
           </div>
         )}
