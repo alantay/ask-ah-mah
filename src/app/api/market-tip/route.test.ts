@@ -77,6 +77,25 @@ describe("POST /api/market-tip", () => {
     expect(mockedCreate).toHaveBeenCalledWith({ data: { key: "flour", tip: "" } });
   });
 
+  it("negative-caches an out-of-domain item the model rejects (relevance gate)", async () => {
+    // A non-kitchen item (climbing harness) passes the category pre-filter
+    // but the prompt's kitchen-domain rule makes the model return "".
+    mockedFindMany.mockResolvedValue([] as never);
+    mockedGenerate.mockResolvedValue({
+      object: { tips: [{ key: "climbing harness", tip: "" }] },
+    } as never);
+
+    const res = await POST(
+      reqWith({ items: [{ name: "Climbing harness", category: "Misc" }] }),
+    );
+    const body = await res.json();
+
+    expect(body.tips["climbing harness"]).toBe("");
+    expect(mockedCreate).toHaveBeenCalledWith({
+      data: { key: "climbing harness", tip: "" },
+    });
+  });
+
   it("400s when items is missing", async () => {
     const res = await POST(reqWith({}));
     expect(res.status).toBe(400);

@@ -4,7 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSessionContext } from "@/contexts/SessionContext";
 import { Eyebrow } from "@/features/shared/components/recipe";
+import { TipsToggle } from "@/features/shared/components/TipsToggle";
 import { useMarketTips } from "@/hooks/useMarketTips";
+import { useTipsPreference } from "@/hooks/useTipsPreference";
+import { MARKET_TIPS_PREF_KEY } from "@/lib/marketTips/preferences";
 import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
 import { groupByAisle } from "@/lib/shoppingList";
 import { cn, fetcher } from "@/lib/utils";
@@ -138,8 +141,11 @@ const ShoppingList = () => {
 
   // Ah Mah's picking tips at the moment of buying. The hook only asks the model
   // about pickable items, so staples (salt, sugar, flour) return no tip.
+  // Default ON; toggling off skips the fetch entirely.
+  const [tipsOn, setTipsOn] = useTipsPreference(MARKET_TIPS_PREF_KEY, true);
   const tips = useMarketTips(
     items.map((item) => ({ name: item.name, category: item.category })),
+    tipsOn,
   );
 
   if (error) return <div>Error: {error.message}</div>;
@@ -196,6 +202,13 @@ const ShoppingList = () => {
 
         {items.length > 0 && (
           <div className="flex flex-col gap-6">
+            <div className="flex justify-end">
+              <TipsToggle
+                enabled={tipsOn}
+                onChange={setTipsOn}
+                label="Picking tips"
+              />
+            </div>
             {aisleGroups.map((group) => (
               <section key={group.aisle}>
                 <Eyebrow className="block mb-2 px-1">{group.aisle}</Eyebrow>
@@ -229,7 +242,7 @@ const ShoppingList = () => {
                         )}
                       >
                         {item.name}
-                        {!item.bought && tips[canonicalTipKey(item.name)] && (
+                        {tipsOn && !item.bought && tips[canonicalTipKey(item.name)] && (
                           <span className="block font-display italic text-dense text-muted-foreground leading-snug">
                             — {tips[canonicalTipKey(item.name)]}
                           </span>
