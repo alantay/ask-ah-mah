@@ -110,6 +110,21 @@ describe("POST /api/storage-tip", () => {
     expect(mockedCreate).not.toHaveBeenCalled();
   });
 
+  it("passes a name-only key to the model (kind kept out of the key)", async () => {
+    // Regression: the kind label must not leak into the prompt's key, or the
+    // model echoes "potato (ingredient)" and it never matches the cache key.
+    mockedFindMany.mockResolvedValue([] as never);
+    mockedGenerate.mockResolvedValue({
+      object: { tips: [{ key: "potato", tip: "cool, dark place" }] },
+    } as never);
+
+    await POST(reqWith({ items: [{ name: "Potato", type: "ingredient" }] }));
+
+    const prompt = mockedGenerate.mock.calls[0][0].prompt as string;
+    expect(prompt).toContain("potato = ingredient");
+    expect(prompt).not.toContain("potato (ingredient)");
+  });
+
   it("400s when items is missing", async () => {
     const res = await POST(reqWith({}));
     expect(res.status).toBe(400);
