@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
 import { isPickableCategory } from "@/lib/marketTips/pickable";
+import { KITCHEN_DOMAIN_RULE } from "@/lib/marketTips/relevance";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { NextRequest, NextResponse } from "next/server";
@@ -78,6 +79,7 @@ RULES:
 - Return exactly one entry per item, using the EXACT given item text as "key".
 - "tip": max 12 words, plain imperative. NO "to pick a good X" preamble. e.g. "firm, deep red, no soft spots".
 - If quality does NOT meaningfully vary at the shop (dry goods, canned, bottled, salt, sugar, flour), return tip as an empty string "".
+- ${KITCHEN_DOMAIN_RULE}
 - Warm and practical, but keep it SHORT.
 
 ITEMS:
