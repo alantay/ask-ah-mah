@@ -206,7 +206,7 @@ const ShoppingList = () => {
               <TipsToggle
                 enabled={tipsOn}
                 onChange={setTipsOn}
-                label="Picking tips"
+                label="How to pick"
               />
             </div>
             {aisleGroups.map((group) => (
