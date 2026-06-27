@@ -252,7 +252,7 @@ const ShoppingList = () => {
                         type="button"
                         aria-label={`Remove ${item.name}`}
                         onClick={() => removeItem(item)}
-                        className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+                        className="shrink-0 -mr-1 flex size-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
                       >
                         <X className="size-4" />
                       </button>
