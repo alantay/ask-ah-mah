@@ -152,9 +152,23 @@ Ah Mah's point-of-purchase wisdom for choosing a fresh item well — e.g. *"firm
 
 A Market Tip speaks only to **selection quality at the moment of buying** — not to how long something keeps once home. Only *fresh / pickable* items (produce, fruit, seafood, meat) carry one; staples (salt, sauces, dry goods) have none and show no tip affordance. Tips are **universal, not user-specific**: the same advice serves every user, so they live in a single shared corpus keyed by canonical item name, never per account.
 
+Both tip kinds are gated by **kitchen-domain relevance**: only items used for cooking or eating — food, drink, fresh groceries, and cooking equipment — are eligible. Anything unrelated to the kitchen (sports gear, vehicles, clothing, toiletries) gets no tip and is negative-cached, never re-asked. A wok is in-domain; a climbing harness is not.
+
 **Why this matters:** this is freshness-*adjacent* but deliberately distinct from the shelf-life idea rejected in [ADR-0008](docs/adr/0008-no-shelf-life-ui.md). Shelf-life asks "is *my* tomato still good?" — unknowable from app state. A Market Tip asks "how do I pick a good tomato?" — general knowledge the model already holds. The first is per-user and unreliable; the second is shared and sound.
 
 Related: [ADR-0013](docs/adr/0013-market-tips-are-llm-generated-and-shared.md), [ADR-0014](docs/adr/0014-shopping-list-is-standing-and-quantityless.md)
+
+---
+
+## Storage Tip
+
+Ah Mah's advice on **how to keep a kitchen item well at home** — covering both food longevity (*"potatoes in a cool, dark place, never the fridge"*, *"herbs stem-down in a glass of water"*) and equipment care (*"dry the wok on the heat, wipe a little oil so it won't rust"*). Surfaced per item in the **Pantry**, toggleable on/off.
+
+Distinct from a **[Market Tip](#market-tip)**: a Market Tip is *pick it well at the shop* (point of purchase); a Storage Tip is *keep it well at home* (after purchase). Every kitchen-domain pantry item can carry one — food and cooking equipment alike — subject to the same kitchen-domain relevance gate.
+
+Like Market Tips, Storage Tips are **universal, not user-specific** (the same advice serves everyone) and live in their own shared corpus keyed by canonical item name. They clear [ADR-0008](docs/adr/0008-no-shelf-life-ui.md) by the same logic as Market Tips: *"how do I store a potato?"* is general, time-independent knowledge, not *"is **my** potato still good?"* — which depends on unknowable app state.
+
+Related: [ADR-0017](docs/adr/0017-storage-tips-clear-adr-0008.md), [ADR-0008](docs/adr/0008-no-shelf-life-ui.md), [ADR-0013](docs/adr/0013-market-tips-are-llm-generated-and-shared.md)
 
 ---
 
