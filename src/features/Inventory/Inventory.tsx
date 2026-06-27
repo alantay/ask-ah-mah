@@ -160,7 +160,8 @@ const Inventory = () => {
     ...(data?.ingredientInventory ?? []),
     ...(data?.kitchenwareInventory ?? []),
   ].map((i) => ({ name: i.name, type: i.type }));
-  const storageTips = useStorageTips(tipItems, tipsOn && !selectionMode);
+  const showTips = tipsOn && !selectionMode;
+  const storageTips = useStorageTips(tipItems, showTips);
 
   const onSubmit = async () => {
     if (!userId || !draft.trim() || submitting) return;
@@ -505,7 +506,7 @@ const Inventory = () => {
             <TipsToggle
               enabled={tipsOn}
               onChange={setTipsOn}
-              label="Make it last"
+              label="Tips"
             />
           </div>
         )}
@@ -522,7 +523,7 @@ const Inventory = () => {
                 selectionMode={selectionMode}
                 selectedIds={selectedIds}
                 onToggle={toggleItem}
-                tips={storageTips}
+                tips={showTips ? storageTips : {}}
               />
             ))}
             {equipmentItems.length > 0 && (
@@ -533,7 +534,7 @@ const Inventory = () => {
                 selectionMode={selectionMode}
                 selectedIds={selectedIds}
                 onToggle={toggleItem}
-                tips={storageTips}
+                tips={showTips ? storageTips : {}}
               />
             )}
           </div>
