@@ -110,6 +110,8 @@ Related: [ADR-0006](docs/adr/0006-cook-with-what-you-have-is-a-conversation.md),
 
 The set of pantry items the user has marked to *star* in a Cook With What You Have submission. Items can be ingredients or kitchenware. The selection is **emphasis, not constraint** — non-selected pantry items remain fair game for the model to use silently; selected items must appear or be addressed.
 
+A genuine Featured Selection is a **proper subset** of the pantry. Selecting the *entire* pantry is equivalent to selecting *nothing*: both send the relaxed whole-pantry request (*"no featured ingredients"*), never a kitchen-sink list of every item. The selection UI defaults to **all items checked** — the user *deselects* what they don't feel like cooking with — so "all checked" must collapse to the relaxed request, otherwise the common case would over-constrain the model.
+
 Related: [ADR-0007](docs/adr/0007-pantry-selection-is-feature-emphasis.md)
 
 ---

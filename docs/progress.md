@@ -60,6 +60,7 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **More ideas button**: shown below Cook-With response pairs; sends "More ideas — different from these" in same Conversation.
 - **Chat staging chip**: "🥬 Cook with what I have →" routes to Pantry and auto-enters selection mode via `?selectionMode=1` URL param.
 - Key decisions: ADR-0006 (reuses `/api/chat`, not a dedicated route), ADR-0007 (selection = emphasis not constraint).
+- **Selection defaults to all-checked** (Jun 2026): "Cook with what you have" now enters selection mode with the **whole pantry pre-checked**; the user *deselects* what they'd rather skip. A `Clear all` / `Select all` toggle sits in the selection banner (desktop) and mobile header. Submitting with everything still checked collapses to the relaxed whole-pantry request (`buildCookWithMessage([], [])`, "no featured ingredients") — a Featured Selection only forms for a proper subset, preserving ADR-0007. CTA reads "Cook with everything" when all are checked. Replaces the abandoned split-pill / tap-to-feature affordance exploration. CONTEXT.md "Featured Selection" sharpened with the all==none equivalence.
 
 ### Recipe Tweak UI (Direction C) — Shipped May 2026
 - **5-state interactive flow** inside `RecipeDisplay`: resting → open → streaming → preview → saved.

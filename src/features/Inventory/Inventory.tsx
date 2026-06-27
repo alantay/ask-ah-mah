@@ -106,21 +106,14 @@ const Inventory = () => {
 
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  // Set when we enter selection mode before inventory data is in hand (e.g.
+  // routed from the Chat chip) — seeds "all selected" once the data lands.
+  const [seedAllOnLoad, setSeedAllOnLoad] = useState(false);
 
   const { userId } = useSessionContext();
   const { queueCookWithMessage, startNewConversation } = useConversationContext();
   const router = useRouter();
   const searchParams = useSearchParams();
-
-  // Auto-enter selection mode when routed from Chat chip (?selectionMode=1)
-  useEffect(() => {
-    if (searchParams.get("selectionMode") === "1") {
-      setSelectionMode(true);
-      setSelectedIds(new Set());
-      // Clear the param without re-rendering the parent
-      router.replace("/?tab=pantry", { scroll: false });
-    }
-  }, [searchParams, router]);
 
   const { data, error, isLoading } = useSWR<GetInventoryResponse>(
     userId ? `/api/inventory?userId=${userId}` : null,
@@ -130,6 +123,27 @@ const Inventory = () => {
       revalidateOnMount: true,
     },
   );
+
+  // Auto-enter selection mode when routed from Chat chip (?selectionMode=1).
+  // Data may not be loaded yet, so defer the all-select seed to the effect below.
+  useEffect(() => {
+    if (searchParams.get("selectionMode") === "1") {
+      setSelectionMode(true);
+      setSeedAllOnLoad(true);
+      // Clear the param without re-rendering the parent
+      router.replace("/?tab=pantry", { scroll: false });
+    }
+  }, [searchParams, router]);
+
+  // Once data is available, seed the deferred "all selected" set exactly once.
+  useEffect(() => {
+    if (!seedAllOnLoad || !data) return;
+    const ids = [...data.ingredientInventory, ...data.kitchenwareInventory].map(
+      (i) => i.id,
+    );
+    setSelectedIds(new Set(ids));
+    setSeedAllOnLoad(false);
+  }, [seedAllOnLoad, data]);
 
   const onSubmit = async () => {
     if (!userId || !draft.trim() || submitting) return;
@@ -198,15 +212,29 @@ const Inventory = () => {
     });
   };
 
+  const allItemIds = () =>
+    [
+      ...(data?.ingredientInventory ?? []),
+      ...(data?.kitchenwareInventory ?? []),
+    ].map((i) => i.id);
+
+  // Selection starts with the whole pantry checked; the user deselects what
+  // they don't feel like cooking with tonight.
   const enterSelectionMode = () => {
     setSelectionMode(true);
-    setSelectedIds(new Set());
+    setSelectedIds(new Set(allItemIds()));
   };
 
   const exitSelectionMode = () => {
     setSelectionMode(false);
     setSelectedIds(new Set());
+    // Cancel any pending deferred seed so it can't repopulate selection after
+    // SWR data lands once we've already left selection mode.
+    setSeedAllOnLoad(false);
   };
+
+  const selectAll = () => setSelectedIds(new Set(allItemIds()));
+  const clearAll = () => setSelectedIds(new Set());
 
   const handleCookWithSubmit = () => {
     const allItems = [
@@ -222,7 +250,13 @@ const Inventory = () => {
 
     if (selectedIngredients.length === 0 && selectedEquipment.length === 0) return;
 
-    const message = buildCookWithMessage(selectedIngredients, selectedEquipment);
+    // The whole pantry checked == nothing featured: both send the relaxed
+    // "cook from everything" request, never a kitchen-sink list of every item.
+    // A genuine Featured Selection only exists for a proper subset. (ADR-0007)
+    const isWholePantry = selectedIds.size === allItems.length;
+    const message = isWholePantry
+      ? buildCookWithMessage([], [])
+      : buildCookWithMessage(selectedIngredients, selectedEquipment);
 
     // Reset selection — Conversation owns context from here
     exitSelectionMode();
@@ -254,8 +288,10 @@ const Inventory = () => {
   );
   const totalSelected = selectedIds.size;
 
+  const allSelected = totalCount > 0 && totalSelected === totalCount;
   const ctaLabel = (() => {
     if (totalSelected === 0) return "Select items to cook";
+    if (allSelected) return "Cook with everything";
     if (selectedIngredients.length === 0 && selectedEquipment.length > 0) {
       const names = selectedEquipment.map((i) => i.name).join(" & ");
       return `Surprise me with ${names}`;
@@ -341,33 +377,52 @@ const Inventory = () => {
               )}
             </>
           ) : (
-            <div className="flex items-center justify-between w-full">
+            <div className="flex items-center justify-between w-full gap-2">
               <span className="font-display italic text-emphasis text-muted-foreground">
-                {totalSelected > 0 ? `${totalSelected} selected` : "Tap items to select"}
+                {totalSelected > 0
+                  ? `${totalSelected} of ${totalCount} selected`
+                  : "Nothing selected"}
               </span>
-              <Button
-                variant="outline"
-                onClick={exitSelectionMode}
-                className="gap-1.5 min-h-11 px-3 py-1.5 text-xs font-semibold text-muted-foreground"
-              >
-                <X className="size-[14px]" />
-                Cancel
-              </Button>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Button
+                  variant="ghost"
+                  onClick={totalSelected > 0 ? clearAll : selectAll}
+                  className="min-h-11 px-2.5 py-1.5 text-xs font-semibold text-primary-deep"
+                >
+                  {totalSelected > 0 ? "Clear all" : "Select all"}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={exitSelectionMode}
+                  className="gap-1.5 min-h-11 px-3 py-1.5 text-xs font-semibold text-muted-foreground"
+                >
+                  <X className="size-[14px]" />
+                  Cancel
+                </Button>
+              </div>
             </div>
           )}
         </div>
 
         {/* Selection mode banner — desktop */}
-        {selectionMode && (
+        {selectionMode && totalCount > 0 && (
           <div className="hidden sm:flex items-center justify-between gap-2 mb-4 px-3 py-2.5 bg-primary/5 border border-dashed border-primary/30 rounded-lg">
             <div className="flex items-center gap-2">
               <Check className="size-[13px] text-primary shrink-0" />
               <span className="font-display italic text-dense text-muted-foreground">
                 {totalSelected === 0
-                  ? "Tap items to feature them — Ah Mah will build recipes around your picks."
-                  : `${totalSelected} item${totalSelected !== 1 ? "s" : ""} selected`}
+                  ? "Nothing selected — tick what you'd like to cook with."
+                  : allSelected
+                    ? "Cooking with everything. Untick anything you'd rather skip."
+                    : `${totalSelected} of ${totalCount} selected`}
               </span>
             </div>
+            <button
+              onClick={totalSelected > 0 ? clearAll : selectAll}
+              className="font-sans text-dense font-semibold text-primary-deep hover:text-primary cursor-pointer shrink-0"
+            >
+              {totalSelected > 0 ? "Clear all" : "Select all"}
+            </button>
           </div>
         )}
 
