@@ -51,5 +51,8 @@ export function useMarketTips(
     },
   );
 
-  return data?.tips ?? {};
+  // keepPreviousData holds the last tips even after the key goes null, so the
+  // disabled return must be gated explicitly — otherwise toggling off never
+  // clears the tips already on screen.
+  return enabled ? (data?.tips ?? {}) : {};
 }
