@@ -9,6 +9,8 @@ interface InventoryItemRowProps {
   selectionMode?: boolean;
   selected?: boolean;
   onToggle?: (itemId: string) => void;
+  /** Ah Mah's "keep it well at home" tip; shown when present and non-empty. */
+  storageTip?: string;
 }
 
 export function InventoryItemRow({
@@ -17,6 +19,7 @@ export function InventoryItemRow({
   selectionMode = false,
   selected = false,
   onToggle,
+  storageTip,
 }: InventoryItemRowProps) {
   const qty =
     item.quantity && item.unit
@@ -79,10 +82,14 @@ export function InventoryItemRow({
 
   return (
     <li className="group flex items-baseline gap-2 py-1.5 border-b border-dotted border-border last:border-0">
-      <span className="font-display text-emphasis text-foreground leading-snug flex items-baseline gap-1.5 min-w-0">
+      <span className="font-display text-emphasis text-foreground leading-snug min-w-0 flex-1">
         <span className="truncate">{item.name}</span>
+        {storageTip && (
+          <span className="block font-display italic text-dense text-muted-foreground leading-snug">
+            — {storageTip}
+          </span>
+        )}
       </span>
-      <span className="flex-1" />
       {qty && (
         <span className="font-mono text-micro text-ink-faint tabular-nums shrink-0 group-hover:opacity-30 sm:group-hover:opacity-30 transition-opacity">
           {qty}

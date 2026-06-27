@@ -34,6 +34,19 @@ model MarketTip {
   @@map("market_tips")
 }
 
+// Shared corpus of "how to keep a good one at home" tips (food longevity +
+// equipment care), keyed by canonical item name. A separate table from
+// MarketTip because the same item carries distinct pick/keep tips and the
+// single-column @id can't hold both. No userId — tips are universal. An empty
+// `tip` is a negative-cache marker. See ADR-0017.
+model StorageTip {
+  key       String   @id
+  tip       String
+  createdAt DateTime @default(now())
+
+  @@map("storage_tips")
+}
+
 // A standing, per-user, quantity-less shopping list (the Pantry "Need" tab).
 // One row per item identity: `key` is the canonical shopping key, so a recipe's
 // "2 apples, sliced" and a typed-in "apple" merge onto the same row.

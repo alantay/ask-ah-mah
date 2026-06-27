@@ -16,6 +16,11 @@ type GetInventoryResponse = {
 import { cn } from "@/lib/utils";
 import { fetcher } from "@/lib/utils";
 import { Eyebrow } from "@/features/shared/components/recipe";
+import { TipsToggle } from "@/features/shared/components/TipsToggle";
+import { useStorageTips } from "@/hooks/useStorageTips";
+import { useTipsPreference } from "@/hooks/useTipsPreference";
+import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
+import { STORAGE_TIPS_PREF_KEY } from "@/lib/marketTips/preferences";
 import { Check, CookingPot, Plus, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -39,6 +44,7 @@ const CategoryCard = ({
   selectionMode,
   selectedIds,
   onToggle,
+  tips,
 }: {
   label: string;
   items: InventoryItem[];
@@ -46,6 +52,7 @@ const CategoryCard = ({
   selectionMode?: boolean;
   selectedIds?: Set<string>;
   onToggle?: (id: string) => void;
+  tips?: Record<string, string>;
 }) => (
   <section className="bg-card border border-border rounded-lg p-4 shadow-[0_1px_0_var(--color-border-soft)]">
     <div className="flex items-baseline justify-between border-b border-dashed border-border pb-2 mb-2">
@@ -65,6 +72,7 @@ const CategoryCard = ({
           selectionMode={selectionMode}
           selected={selectedIds?.has(item.id)}
           onToggle={onToggle}
+          storageTip={tips?.[canonicalTipKey(item.name)]}
         />
       ))}
     </ul>
@@ -144,6 +152,15 @@ const Inventory = () => {
     setSelectedIds(new Set(ids));
     setSeedAllOnLoad(false);
   }, [seedAllOnLoad, data]);
+
+  // Ah Mah's "keep it well at home" tips, shown per item. Default OFF (opt-in);
+  // toggling off (or being in selection mode) nulls the fetch. See ADR-0017.
+  const [tipsOn, setTipsOn] = useTipsPreference(STORAGE_TIPS_PREF_KEY, false);
+  const tipItems = [
+    ...(data?.ingredientInventory ?? []),
+    ...(data?.kitchenwareInventory ?? []),
+  ].map((i) => ({ name: i.name, type: i.type }));
+  const storageTips = useStorageTips(tipItems, tipsOn && !selectionMode);
 
   const onSubmit = async () => {
     if (!userId || !draft.trim() || submitting) return;
@@ -482,6 +499,17 @@ const Inventory = () => {
           </p>
         )}
 
+        {/* Storage tips toggle — opt-in, hidden during selection */}
+        {totalCount > 0 && !selectionMode && (
+          <div className="flex justify-end mb-3">
+            <TipsToggle
+              enabled={tipsOn}
+              onChange={setTipsOn}
+              label="Keeping tips"
+            />
+          </div>
+        )}
+
         {/* Category masonry */}
         {totalCount > 0 && (
           <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-3 [&>*]:break-inside-avoid [&>*]:mb-3">
@@ -494,6 +522,7 @@ const Inventory = () => {
                 selectionMode={selectionMode}
                 selectedIds={selectedIds}
                 onToggle={toggleItem}
+                tips={storageTips}
               />
             ))}
             {equipmentItems.length > 0 && (
@@ -504,6 +533,7 @@ const Inventory = () => {
                 selectionMode={selectionMode}
                 selectedIds={selectedIds}
                 onToggle={toggleItem}
+                tips={storageTips}
               />
             )}
           </div>
