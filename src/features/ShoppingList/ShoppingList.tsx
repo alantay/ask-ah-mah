@@ -50,7 +50,7 @@ const ShoppingList = () => {
       const res = await fetch("/api/shopping-list", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, items: [{ name }] }),
+        body: JSON.stringify({ items: [{ name }] }),
       });
       if (res.ok) {
         setDraft("");
@@ -82,7 +82,7 @@ const ShoppingList = () => {
       const res = await fetch("/api/shopping-list", {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, ...body }),
+        body: JSON.stringify(body),
       });
       if (res.ok) {
         revalidate();
@@ -121,7 +121,6 @@ const ShoppingList = () => {
     fetch("/api/shopping-list/classify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId }),
     })
       .then((res) => {
         if (res.ok) revalidate();

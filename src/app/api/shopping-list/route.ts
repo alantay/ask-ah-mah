@@ -6,7 +6,8 @@ import {
   setBought,
 } from "@/lib/shoppingList";
 import { AddShoppingListItemsSchema } from "@/lib/shoppingList/schemas";
-import { missingUserId } from "@/lib/http";
+import { unauthorized } from "@/lib/http";
+import { getSessionUserId } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
 async function readJson(req: NextRequest): Promise<Record<string, unknown> | null> {
@@ -23,8 +24,8 @@ function badRequest(message: string) {
 
 export async function GET(req: NextRequest) {
   try {
-    const userId = req.nextUrl.searchParams.get("userId");
-    if (!userId) return missingUserId();
+    const userId = await getSessionUserId(req);
+    if (!userId) return unauthorized();
 
     const items = await getShoppingList(userId);
     return NextResponse.json(
@@ -48,13 +49,14 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const userId = await getSessionUserId(req);
+    if (!userId) return unauthorized();
+
     const payload = await readJson(req);
     if (!payload) return badRequest("Invalid shopping list payload");
 
-    const { userId, ...rest } = payload;
-    if (!userId || typeof userId !== "string") return missingUserId();
-
-    const parsed = AddShoppingListItemsSchema.safeParse(rest);
+    // `userId` in the body (if any) is ignored — z.object strips unknown keys.
+    const parsed = AddShoppingListItemsSchema.safeParse(payload);
     if (!parsed.success) return badRequest("Invalid shopping list payload");
 
     await addShoppingListItems(parsed.data.items, userId);
@@ -71,18 +73,20 @@ export async function POST(req: NextRequest) {
 /**
  * Toggle a Need-tab row's bought flag.
  *
- * Body: `{ userId: string, id: string, bought: boolean }`. Returns
- * `{ success: true, message }` on success. 400s on malformed JSON, a missing
- * `userId`, a non-string `id`, or a non-boolean `bought`; 500s if the service
- * throws. Flips the flag only — never adds the item to the pantry.
+ * Caller is taken from the session. Body: `{ id: string, bought: boolean }`.
+ * Returns `{ success: true, message }` on success. 401s when unauthenticated;
+ * 400s on malformed JSON, a non-string `id`, or a non-boolean `bought`; 500s if
+ * the service throws. Flips the flag only — never adds the item to the pantry.
  */
 export async function PATCH(req: NextRequest) {
   try {
+    const userId = await getSessionUserId(req);
+    if (!userId) return unauthorized();
+
     const payload = await readJson(req);
     if (!payload) return badRequest("Invalid shopping list payload");
 
-    const { userId, id, bought } = payload;
-    if (!userId || typeof userId !== "string") return missingUserId();
+    const { id, bought } = payload;
     if (typeof id !== "string" || typeof bought !== "boolean") {
       return badRequest("id (string) and bought (boolean) are required");
     }
@@ -101,19 +105,21 @@ export async function PATCH(req: NextRequest) {
 /**
  * Remove from the Need tab — one row, or all bought rows.
  *
- * Body: `{ userId: string, id: string }` deletes a single row;
- * `{ userId: string, clearBought: true }` bulk-deletes the user's bought rows.
- * Returns `{ success: true, message }` on success. 400s on malformed JSON, a
- * missing `userId`, or when neither `id` nor `clearBought: true` is given;
- * 500s if the service throws.
+ * Caller is taken from the session. Body: `{ id: string }` deletes a single
+ * row; `{ clearBought: true }` bulk-deletes the user's bought rows. Returns
+ * `{ success: true, message }` on success. 401s when unauthenticated; 400s on
+ * malformed JSON, or when neither `id` nor `clearBought: true` is given; 500s
+ * if the service throws.
  */
 export async function DELETE(req: NextRequest) {
   try {
+    const userId = await getSessionUserId(req);
+    if (!userId) return unauthorized();
+
     const payload = await readJson(req);
     if (!payload) return badRequest("Invalid shopping list payload");
 
-    const { userId, id, clearBought } = payload;
-    if (!userId || typeof userId !== "string") return missingUserId();
+    const { id, clearBought } = payload;
 
     if (typeof id === "string") {
       await removeShoppingListItem(userId, id);
