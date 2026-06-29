@@ -210,7 +210,7 @@ export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
       const res = await fetch("/api/recipe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, recipe: preview }),
+        body: JSON.stringify({ recipe: preview }),
       });
       if (!res.ok) throw new Error("Save failed");
       mutate(`/api/recipe?userId=${userId}`);

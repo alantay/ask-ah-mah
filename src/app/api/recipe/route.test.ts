@@ -1,4 +1,5 @@
 import { deleteRecipeForUser, getRecipes, saveRecipe, saveRecipeFromBlock } from "@/lib/recipes";
+import { getSessionUserId } from "@/lib/session";
 import { NextRequest } from "next/server";
 import { DELETE, GET, POST } from "./route";
 
@@ -12,6 +13,12 @@ jest.mock("next/server", () => ({
       headers: new Map(Object.entries(init?.headers || {})),
     })),
   },
+}));
+
+// Identity comes from the verified session, never the request — mock it so we
+// can drive "who is calling" independently of any userId in the query/body.
+jest.mock("@/lib/session", () => ({
+  getSessionUserId: jest.fn(),
 }));
 
 // Mock the recipe functions
@@ -39,6 +46,7 @@ const mockedSaveRecipe = jest.mocked(saveRecipe);
 const mockedSaveRecipeFromBlock = jest.mocked(saveRecipeFromBlock);
 const mockedProcessRecipe = jest.mocked(processRecipe);
 const mockedFetchRecipePhoto = jest.mocked(fetchRecipePhoto);
+const mockedGetSessionUserId = jest.mocked(getSessionUserId);
 
 const defaultProcessed = {
   tags: [] as string[],
@@ -75,6 +83,9 @@ const createMockRequest = (url: string, options: RequestInit = {}) => {
 describe("Recipe API Routes", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Default: an authenticated session for "user-123". Individual tests
+    // override this (e.g. resolve null to simulate an unauthenticated caller).
+    mockedGetSessionUserId.mockResolvedValue("user-123");
     // Mock console.error to avoid noise in tests
     jest.spyOn(console, "error").mockImplementation(() => {});
   });
@@ -130,9 +141,7 @@ describe("Recipe API Routes", () => {
 
       mockedGetRecipes.mockResolvedValue(mockRecipes);
 
-      const request = createMockRequest(
-        "http://localhost:3000/api/recipe?userId=user-123"
-      );
+      const request = createMockRequest("http://localhost:3000/api/recipe");
       const response = await GET(request);
       const data = await response.json();
 
@@ -145,37 +154,39 @@ describe("Recipe API Routes", () => {
     it("should return empty array when no recipes found", async () => {
       mockedGetRecipes.mockResolvedValue([]);
 
-      const request = createMockRequest(
-        "http://localhost:3000/api/recipe?userId=user-456"
-      );
+      const request = createMockRequest("http://localhost:3000/api/recipe");
       const response = await GET(request);
       const data = await response.json();
 
       expect(response.status).toBe(200);
       expect(data).toEqual([]);
-      expect(mockedGetRecipes).toHaveBeenCalledWith("user-456");
+      expect(mockedGetRecipes).toHaveBeenCalledWith("user-123");
     });
 
-    it("should return 400 when userId is missing", async () => {
+    it("should return 401 when unauthenticated", async () => {
+      mockedGetSessionUserId.mockResolvedValue(null);
+
       const request = createMockRequest("http://localhost:3000/api/recipe");
       const response = await GET(request);
       const data = await response.json();
 
-      expect(response.status).toBe(400);
-      expect(data).toEqual({ error: "userId is required" });
+      expect(response.status).toBe(401);
+      expect(data).toEqual({ error: "Unauthorized" });
       expect(mockedGetRecipes).not.toHaveBeenCalled();
     });
 
-    it("should return 400 when userId is empty string", async () => {
-      const request = createMockRequest(
-        "http://localhost:3000/api/recipe?userId="
-      );
-      const response = await GET(request);
-      const data = await response.json();
+    it("ignores a userId in the query and reads only the session user's recipes", async () => {
+      mockedGetRecipes.mockResolvedValue([]);
 
-      expect(response.status).toBe(400);
-      expect(data).toEqual({ error: "userId is required" });
-      expect(mockedGetRecipes).not.toHaveBeenCalled();
+      // Attacker tries to read someone else's cookbook by passing their id.
+      const request = createMockRequest(
+        "http://localhost:3000/api/recipe?userId=victim-999"
+      );
+      await GET(request);
+
+      // The session owner (user-123) is used, never the query-supplied id.
+      expect(mockedGetRecipes).toHaveBeenCalledWith("user-123");
+      expect(mockedGetRecipes).not.toHaveBeenCalledWith("victim-999");
     });
 
     it("should handle database errors gracefully", async () => {
@@ -440,7 +451,9 @@ describe("Recipe API Routes", () => {
       }, null);
     });
 
-    it("should return 400 when userId is missing", async () => {
+    it("should return 401 when unauthenticated", async () => {
+      mockedGetSessionUserId.mockResolvedValue(null);
+
       const requestBody = {
         name: "Test Recipe",
         instructions: "Test instructions",
@@ -455,30 +468,51 @@ describe("Recipe API Routes", () => {
       const response = await POST(request);
       const data = await response.json();
 
-      expect(response.status).toBe(400);
-      expect(data).toEqual({ error: "userId is required" });
+      expect(response.status).toBe(401);
+      expect(data).toEqual({ error: "Unauthorized" });
       expect(mockedSaveRecipe).not.toHaveBeenCalled();
     });
 
-    it("should return 400 when userId is empty string", async () => {
-      const requestBody = {
-        userId: "",
-        name: "Test Recipe",
-        instructions: "Test instructions",
-      };
+    it("saves under the session user, ignoring any userId in the body", async () => {
+      mockedSaveRecipeFromBlock.mockResolvedValue({
+        id: "recipe-new",
+        userId: "user-123",
+        name: "Test",
+        instructions: "",
+        tags: [],
+        recipeId: null,
+        baseServings: 2,
+        ingredients: [],
+        prep: [],
+        notes: [],
+        steps: null,
+        description: null,
+        totalTimeMinutes: null,
+        createdAt: null,
+        imageUrl: null,
+        photographerName: null,
+        photographerUrl: null,
+        shareToken: null,
+      });
 
+      // Attacker tries to write into someone else's cookbook via the body.
       const request = createMockRequest("http://localhost:3000/api/recipe", {
         method: "POST",
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({
+          userId: "victim-999",
+          recipe: { title: "Test", ingredients: [], steps: [], tags: [], baseServings: 2 },
+        }),
         headers: { "Content-Type": "application/json" },
       });
 
-      const response = await POST(request);
-      const data = await response.json();
+      await POST(request);
 
-      expect(response.status).toBe(400);
-      expect(data).toEqual({ error: "userId is required" });
-      expect(mockedSaveRecipe).not.toHaveBeenCalled();
+      expect(mockedSaveRecipeFromBlock).toHaveBeenCalledTimes(1);
+      expect(mockedSaveRecipeFromBlock).toHaveBeenCalledWith(
+        expect.any(Object),
+        "user-123",
+        undefined,
+      );
     });
 
     it("should handle long recipe content", async () => {
@@ -655,7 +689,9 @@ describe("Recipe API Routes", () => {
       expect(mockedDeleteRecipeForUser).toHaveBeenCalledWith("recipe-123", "user-123");
     });
 
-    it("should return 400 when userId is missing", async () => {
+    it("should return 401 when unauthenticated", async () => {
+      mockedGetSessionUserId.mockResolvedValue(null);
+
       const request = createMockRequest("http://localhost:3000/api/recipe", {
         method: "DELETE",
         body: JSON.stringify({ recipeId: "recipe-123" }),
@@ -663,7 +699,25 @@ describe("Recipe API Routes", () => {
       });
 
       const response = await DELETE(request);
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(401);
+      expect(mockedDeleteRecipeForUser).not.toHaveBeenCalled();
+    });
+
+    it("deletes against the session user, ignoring any userId in the body", async () => {
+      mockedDeleteRecipeForUser.mockResolvedValue(undefined);
+
+      // Attacker passes a victim id; the route must scope the delete to the
+      // authenticated caller so it can never touch another user's recipe.
+      const request = createMockRequest("http://localhost:3000/api/recipe", {
+        method: "DELETE",
+        body: JSON.stringify({ recipeId: "recipe-123", userId: "victim-999" }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      await DELETE(request);
+
+      expect(mockedDeleteRecipeForUser).toHaveBeenCalledTimes(1);
+      expect(mockedDeleteRecipeForUser).toHaveBeenCalledWith("recipe-123", "user-123");
     });
 
     it("should return 404 when recipe not found or not owned", async () => {

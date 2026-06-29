@@ -1,5 +1,6 @@
 import { updateRecipeForUser } from "@/lib/recipes";
-import { missingUserId } from "@/lib/http";
+import { unauthorized } from "@/lib/http";
+import { getSessionUserId } from "@/lib/session";
 import { RecipeBlockSchema } from "@/lib/recipes/schemas";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -10,10 +11,11 @@ export async function PATCH(
   const { id } = await params;
 
   try {
-    const body = await req.json();
-    const { userId, recipe } = body;
+    const userId = await getSessionUserId(req);
+    if (!userId) return unauthorized();
 
-    if (!userId) return missingUserId();
+    const body = await req.json();
+    const { recipe } = body;
 
     const parsed = RecipeBlockSchema.safeParse(recipe);
     if (!parsed.success) {

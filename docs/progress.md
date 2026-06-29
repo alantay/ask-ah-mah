@@ -168,7 +168,14 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Every visitor now has a real session.** The client-generated `localStorage["ask-ah-mah-session"]` id is gone. The better-auth `anonymous()` plugin mints an unforgeable anonymous session on first load (`useSession` calls `signIn.anonymous()` when there's no session); signed-in users still use their Google session. `userId` is always `session.user.id`, and `isAuthenticated` now means non-anonymous (`!user.isAnonymous`).
 - **Server is the source of truth for identity.** New helper `getSessionUserId(req)` (`src/lib/session.ts`) resolves the caller from the verified session cookie via `auth.api.getSession`, returning the id or `null` (routes map that to a 401 via `unauthorized()`). This is the primitive the route-lockdown slices (#341–#345) build on — routes stop trusting a `userId` from the request.
 - **Schema**: `User.isAnonymous Boolean?` (additive migration `20260629000000_add_user_is_anonymous`). New anonymous users get their starter pantry seeded.
-- **Not yet wired**: data routes still read `userId` from the request (#341–#345), and guest→Google data migration on link is #346.
+- **Not yet wired**: pantry/shopping-list/conversation routes still read `userId` from the request (#342–#344), share-token mint trust is #345, and guest→Google data migration on link is #346.
+
+### Recipe routes locked down — Shipped (#341)
+
+- **Recipe routes derive identity from the session, never the request.** `GET/POST/DELETE /api/recipe`, `PATCH /api/recipe/[id]`, and `POST /api/recipe/[id]/tweak` now call `getSessionUserId(req)` and return `unauthorized()` (401) when there's no valid session. A `userId` in the query string or body is ignored entirely — an attacker can no longer read or mutate another user's cookbook by supplying a foreign id.
+- **Clients stopped sending `userId` in request bodies** (RecipeList delete, AddRecipeModal save, MessageList save, RecipeDisplay save, TweakBench tweak). SWR GET keys keep `?userId=` purely as a client-side cache key / fetch gate; the server disregards it. The now-unused `userId` prop was dropped from `TweakBench`.
+- **Tests** cover cross-user access being denied (query/body-supplied foreign id resolves to the session user) and 401s for unauthenticated callers, mocking `getSessionUserId`.
+- **Out of scope here**: `POST /api/recipe/[id]/share` still trusts a body `userId` — hardened separately in #345.
 
 ## Design system
 

@@ -82,14 +82,14 @@ const saveRecipeCall = async (
   {
     arg,
   }: {
-    arg: { recipeStr: string; name: string; userId: string; recipeId?: string };
+    arg: { recipeStr: string; name: string; recipeId?: string };
   },
 ) => {
-  const { recipeStr, name, userId, recipeId } = arg;
+  const { recipeStr, name, recipeId } = arg;
   const res = await fetch(key, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userId, name, instructions: recipeStr, recipeId }),
+    body: JSON.stringify({ name, instructions: recipeStr, recipeId }),
   });
 
   if (!res.ok) throw new Error("Failed to save recipe");
@@ -219,7 +219,6 @@ export const MessageList = ({
       const saved = await trigger({
         recipeStr,
         name,
-        userId,
         recipeId: recipeKey,
       });
 
@@ -260,7 +259,6 @@ export const MessageList = ({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId,
           recipeId: recipeKey,
           recipe: recipeBlock,
         }),

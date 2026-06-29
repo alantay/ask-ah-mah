@@ -24,14 +24,12 @@ jest.mock("swr/mutation", () => ({
     trigger: jest.fn(async (arg: {
       recipeStr: string;
       name: string;
-      userId: string;
       recipeId?: string;
     }) => {
       const res = await fetch("/api/recipe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: arg.userId,
           name: arg.name,
           instructions: arg.recipeStr,
           recipeId: arg.recipeId,

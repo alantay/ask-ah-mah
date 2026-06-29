@@ -67,7 +67,6 @@ function renderBench(onWorkingDraftChange: jest.Mock = jest.fn()) {
     <StrictMode>
       <TweakBench
         recipe={recipe}
-        userId="user-123"
         onWorkingDraftChange={onWorkingDraftChange}
         onClose={jest.fn()}
         onSave={jest.fn()}

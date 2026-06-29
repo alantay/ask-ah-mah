@@ -2,21 +2,23 @@ import { deleteRecipeForUser, getRecipes, saveRecipe, saveRecipeFromBlock } from
 import { processRecipe } from "@/lib/recipes/recipeProcessor";
 import { normalizeTags } from "@/lib/recipes/normalizeTags";
 import { fetchRecipePhoto } from "@/lib/pexels/fetchPhoto";
-import { missingUserId } from "@/lib/http";
+import { unauthorized } from "@/lib/http";
+import { getSessionUserId } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
-  const userId = req.nextUrl.searchParams.get("userId");
-  if (!userId) return missingUserId();
+  const userId = await getSessionUserId(req);
+  if (!userId) return unauthorized();
   const recipes = await getRecipes(userId);
   return NextResponse.json(recipes);
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { userId, recipeId } = body;
+  const userId = await getSessionUserId(req);
+  if (!userId) return unauthorized();
 
-  if (!userId) return missingUserId();
+  const body = await req.json();
+  const { recipeId } = body;
 
   if (body.recipe) {
     const recipe = await saveRecipeFromBlock(body.recipe, userId, recipeId ?? undefined);
@@ -56,8 +58,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const { recipeId, userId } = await req.json();
-  if (!userId) return missingUserId();
+  const userId = await getSessionUserId(req);
+  if (!userId) return unauthorized();
+  const { recipeId } = await req.json();
   if (!recipeId) return NextResponse.json({ error: "recipeId is required" }, { status: 400 });
   try {
     await deleteRecipeForUser(recipeId, userId);
