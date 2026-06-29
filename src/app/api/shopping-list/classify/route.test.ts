@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { POST } from "./route";
 import { classifyPendingAisles } from "@/lib/shoppingList";
+import { getSessionUserId } from "@/lib/session";
 
 jest.mock("next/server", () => ({
   NextRequest: jest.fn(),
@@ -16,7 +17,10 @@ jest.mock("@/lib/shoppingList", () => ({
   classifyPendingAisles: jest.fn(),
 }));
 
+jest.mock("@/lib/session", () => ({ getSessionUserId: jest.fn() }));
+
 const mockedClassify = jest.mocked(classifyPendingAisles);
+const mockedGetSessionUserId = jest.mocked(getSessionUserId);
 
 const reqWith = (body: unknown) =>
   ({ json: async () => body } as unknown as NextRequest);
@@ -24,30 +28,39 @@ const reqWith = (body: unknown) =>
 beforeEach(() => {
   jest.clearAllMocks();
   jest.spyOn(console, "error").mockImplementation(() => {});
+  mockedGetSessionUserId.mockResolvedValue("user-123");
 });
 
 afterEach(() => jest.restoreAllMocks());
 
 describe("POST /api/shopping-list/classify", () => {
-  it("classifies the user's pending rows and reports success", async () => {
-    const res = await POST(reqWith({ userId: "u1" }));
+  it("classifies the session user's pending rows and reports success", async () => {
+    const res = await POST(reqWith({}));
     const body = await res.json();
 
-    expect(mockedClassify).toHaveBeenCalledWith("u1");
+    expect(mockedClassify).toHaveBeenCalledWith("user-123");
     expect(body).toEqual({ success: true });
   });
 
-  it("400s when userId is missing", async () => {
+  it("401s when unauthenticated", async () => {
+    mockedGetSessionUserId.mockResolvedValue(null);
     const res = await POST(reqWith({}));
 
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(401);
     expect(mockedClassify).not.toHaveBeenCalled();
+  });
+
+  it("ignores a userId in the body and classifies for the session user", async () => {
+    await POST(reqWith({ userId: "victim-999" }));
+
+    expect(mockedClassify).toHaveBeenCalledTimes(1);
+    expect(mockedClassify).toHaveBeenCalledWith("user-123");
   });
 
   it("500s when the service throws", async () => {
     mockedClassify.mockRejectedValue(new Error("model down"));
 
-    const res = await POST(reqWith({ userId: "u1" }));
+    const res = await POST(reqWith({}));
 
     expect(res.status).toBe(500);
   });

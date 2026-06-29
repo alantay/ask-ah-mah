@@ -110,7 +110,6 @@ export function RecipeLetter({
               ...(ing.category && { category: ing.category }),
             },
           ],
-          userId,
         }),
       });
       if (!res.ok) {

@@ -7,6 +7,7 @@ import {
   removeShoppingListItem,
   setBought,
 } from "@/lib/shoppingList";
+import { getSessionUserId } from "@/lib/session";
 
 jest.mock("next/server", () => ({
   NextRequest: jest.fn(),
@@ -27,11 +28,14 @@ jest.mock("@/lib/shoppingList", () => ({
   clearBoughtItems: jest.fn(),
 }));
 
+jest.mock("@/lib/session", () => ({ getSessionUserId: jest.fn() }));
+
 const mockedGet = jest.mocked(getShoppingList);
 const mockedAdd = jest.mocked(addShoppingListItems);
 const mockedSetBought = jest.mocked(setBought);
 const mockedRemove = jest.mocked(removeShoppingListItem);
 const mockedClearBought = jest.mocked(clearBoughtItems);
+const mockedGetSessionUserId = jest.mocked(getSessionUserId);
 
 const createMockRequest = (url: string, options: RequestInit = {}) => {
   const parsedUrl = new URL(url);
@@ -46,32 +50,41 @@ const base = "http://localhost:3000/api/shopping-list";
 beforeEach(() => {
   jest.clearAllMocks();
   jest.spyOn(console, "error").mockImplementation(() => {});
+  mockedGetSessionUserId.mockResolvedValue("user-123");
 });
 
 afterEach(() => jest.restoreAllMocks());
 
 describe("GET /api/shopping-list", () => {
-  it("returns the list for a valid userId", async () => {
+  it("returns the list for the session user", async () => {
     const rows = [{ id: "1", name: "Apples", bought: false }];
     mockedGet.mockResolvedValue(rows as never);
 
-    const res = await GET(createMockRequest(`${base}?userId=u1`));
+    const res = await GET(createMockRequest(base));
     const body = await res.json();
 
     expect(res.status).toBe(200);
     expect(body).toEqual({ items: rows });
-    expect(mockedGet).toHaveBeenCalledWith("u1");
+    expect(mockedGet).toHaveBeenCalledWith("user-123");
   });
 
-  it("400s when userId is missing", async () => {
+  it("401s when unauthenticated", async () => {
+    mockedGetSessionUserId.mockResolvedValue(null);
     const res = await GET(createMockRequest(base));
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(401);
     expect(mockedGet).not.toHaveBeenCalled();
+  });
+
+  it("ignores a userId in the query and uses the session user", async () => {
+    mockedGet.mockResolvedValue([] as never);
+    await GET(createMockRequest(`${base}?userId=victim-999`));
+    expect(mockedGet).toHaveBeenCalledTimes(1);
+    expect(mockedGet).toHaveBeenCalledWith("user-123");
   });
 
   it("500s when the service throws", async () => {
     mockedGet.mockRejectedValue(new Error("db down"));
-    const res = await GET(createMockRequest(`${base}?userId=u1`));
+    const res = await GET(createMockRequest(base));
     expect(res.status).toBe(500);
   });
 });
@@ -82,27 +95,40 @@ describe("POST /api/shopping-list", () => {
     const items = [{ name: "Apples", category: "Fruit" }];
 
     const res = await POST(
-      createMockRequest(base, { body: JSON.stringify({ userId: "u1", items }) }),
+      createMockRequest(base, { body: JSON.stringify({ items }) }),
     );
 
     expect(res.status).toBe(200);
-    expect(mockedAdd).toHaveBeenCalledWith(items, "u1");
+    expect(mockedAdd).toHaveBeenCalledWith(items, "user-123");
   });
 
-  it("400s when userId is missing", async () => {
+  it("401s when unauthenticated", async () => {
+    mockedGetSessionUserId.mockResolvedValue(null);
     const res = await POST(
       createMockRequest(base, {
         body: JSON.stringify({ items: [{ name: "Apples" }] }),
       }),
     );
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(401);
     expect(mockedAdd).not.toHaveBeenCalled();
+  });
+
+  it("ignores a userId in the body and adds for the session user", async () => {
+    mockedAdd.mockResolvedValue(undefined);
+    const items = [{ name: "Apples" }];
+    await POST(
+      createMockRequest(base, {
+        body: JSON.stringify({ userId: "victim-999", items }),
+      }),
+    );
+    expect(mockedAdd).toHaveBeenCalledTimes(1);
+    expect(mockedAdd).toHaveBeenCalledWith(items, "user-123");
   });
 
   it("400s when items is not an array", async () => {
     const res = await POST(
       createMockRequest(base, {
-        body: JSON.stringify({ userId: "u1", items: "nope" }),
+        body: JSON.stringify({ items: "nope" }),
       }),
     );
     expect(res.status).toBe(400);
@@ -112,7 +138,7 @@ describe("POST /api/shopping-list", () => {
   it("400s when items is an empty array", async () => {
     const res = await POST(
       createMockRequest(base, {
-        body: JSON.stringify({ userId: "u1", items: [] }),
+        body: JSON.stringify({ items: [] }),
       }),
     );
     expect(res.status).toBe(400);
@@ -135,7 +161,7 @@ describe("POST /api/shopping-list", () => {
   it("400s when an item has no name", async () => {
     const res = await POST(
       createMockRequest(base, {
-        body: JSON.stringify({ userId: "u1", items: [{ category: "Fruit" }] }),
+        body: JSON.stringify({ items: [{ category: "Fruit" }] }),
       }),
     );
     expect(res.status).toBe(400);
@@ -146,7 +172,7 @@ describe("POST /api/shopping-list", () => {
     mockedAdd.mockRejectedValue(new Error("db down"));
     const res = await POST(
       createMockRequest(base, {
-        body: JSON.stringify({ userId: "u1", items: [{ name: "Apples" }] }),
+        body: JSON.stringify({ items: [{ name: "Apples" }] }),
       }),
     );
     expect(res.status).toBe(500);
@@ -159,28 +185,40 @@ describe("PATCH /api/shopping-list", () => {
 
     const res = await PATCH(
       createMockRequest(base, {
-        body: JSON.stringify({ userId: "u1", id: "row-1", bought: true }),
+        body: JSON.stringify({ id: "row-1", bought: true }),
       }),
     );
 
     expect(res.status).toBe(200);
-    expect(mockedSetBought).toHaveBeenCalledWith("u1", "row-1", true);
+    expect(mockedSetBought).toHaveBeenCalledWith("user-123", "row-1", true);
   });
 
-  it("400s when userId is missing", async () => {
+  it("401s when unauthenticated", async () => {
+    mockedGetSessionUserId.mockResolvedValue(null);
     const res = await PATCH(
       createMockRequest(base, {
         body: JSON.stringify({ id: "row-1", bought: true }),
       }),
     );
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(401);
     expect(mockedSetBought).not.toHaveBeenCalled();
+  });
+
+  it("ignores a userId in the body and uses the session user", async () => {
+    mockedSetBought.mockResolvedValue(undefined);
+    await PATCH(
+      createMockRequest(base, {
+        body: JSON.stringify({ userId: "victim-999", id: "row-1", bought: true }),
+      }),
+    );
+    expect(mockedSetBought).toHaveBeenCalledTimes(1);
+    expect(mockedSetBought).toHaveBeenCalledWith("user-123", "row-1", true);
   });
 
   it("400s when id is missing or bought is not a boolean", async () => {
     const res = await PATCH(
       createMockRequest(base, {
-        body: JSON.stringify({ userId: "u1", bought: "yes" }),
+        body: JSON.stringify({ bought: "yes" }),
       }),
     );
     expect(res.status).toBe(400);
@@ -204,7 +242,7 @@ describe("PATCH /api/shopping-list", () => {
     mockedSetBought.mockRejectedValue(new Error("db down"));
     const res = await PATCH(
       createMockRequest(base, {
-        body: JSON.stringify({ userId: "u1", id: "row-1", bought: true }),
+        body: JSON.stringify({ id: "row-1", bought: true }),
       }),
     );
     expect(res.status).toBe(500);
@@ -217,12 +255,12 @@ describe("DELETE /api/shopping-list", () => {
 
     const res = await DELETE(
       createMockRequest(base, {
-        body: JSON.stringify({ userId: "u1", id: "row-1" }),
+        body: JSON.stringify({ id: "row-1" }),
       }),
     );
 
     expect(res.status).toBe(200);
-    expect(mockedRemove).toHaveBeenCalledWith("u1", "row-1");
+    expect(mockedRemove).toHaveBeenCalledWith("user-123", "row-1");
     expect(mockedClearBought).not.toHaveBeenCalled();
   });
 
@@ -231,26 +269,38 @@ describe("DELETE /api/shopping-list", () => {
 
     const res = await DELETE(
       createMockRequest(base, {
-        body: JSON.stringify({ userId: "u1", clearBought: true }),
+        body: JSON.stringify({ clearBought: true }),
       }),
     );
 
     expect(res.status).toBe(200);
-    expect(mockedClearBought).toHaveBeenCalledWith("u1");
+    expect(mockedClearBought).toHaveBeenCalledWith("user-123");
     expect(mockedRemove).not.toHaveBeenCalled();
   });
 
-  it("400s when userId is missing", async () => {
+  it("401s when unauthenticated", async () => {
+    mockedGetSessionUserId.mockResolvedValue(null);
     const res = await DELETE(
       createMockRequest(base, { body: JSON.stringify({ id: "row-1" }) }),
     );
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(401);
     expect(mockedRemove).not.toHaveBeenCalled();
+  });
+
+  it("ignores a userId in the body and uses the session user", async () => {
+    mockedRemove.mockResolvedValue(undefined);
+    await DELETE(
+      createMockRequest(base, {
+        body: JSON.stringify({ userId: "victim-999", id: "row-1" }),
+      }),
+    );
+    expect(mockedRemove).toHaveBeenCalledTimes(1);
+    expect(mockedRemove).toHaveBeenCalledWith("user-123", "row-1");
   });
 
   it("400s when neither id nor clearBought is provided", async () => {
     const res = await DELETE(
-      createMockRequest(base, { body: JSON.stringify({ userId: "u1" }) }),
+      createMockRequest(base, { body: JSON.stringify({}) }),
     );
     expect(res.status).toBe(400);
     expect(mockedRemove).not.toHaveBeenCalled();
@@ -275,7 +325,7 @@ describe("DELETE /api/shopping-list", () => {
     mockedRemove.mockRejectedValue(new Error("db down"));
     const res = await DELETE(
       createMockRequest(base, {
-        body: JSON.stringify({ userId: "u1", id: "row-1" }),
+        body: JSON.stringify({ id: "row-1" }),
       }),
     );
     expect(res.status).toBe(500);

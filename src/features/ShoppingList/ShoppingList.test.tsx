@@ -83,7 +83,6 @@ describe("ShoppingList aisles", () => {
         "/api/shopping-list/classify",
         expect.objectContaining({
           method: "POST",
-          body: JSON.stringify({ userId: "user-1" }),
         }),
       );
     });
@@ -138,7 +137,6 @@ describe("ShoppingList", () => {
         expect.objectContaining({
           method: "POST",
           body: JSON.stringify({
-            userId: "user-1",
             items: [{ name: "shallots" }],
           }),
         }),
@@ -160,7 +158,7 @@ describe("ShoppingList", () => {
         "/api/shopping-list",
         expect.objectContaining({
           method: "PATCH",
-          body: JSON.stringify({ userId: "user-1", id: "row-1", bought: true }),
+          body: JSON.stringify({ id: "row-1", bought: true }),
         }),
       );
     });
@@ -181,7 +179,6 @@ describe("ShoppingList", () => {
         expect.objectContaining({
           method: "PATCH",
           body: JSON.stringify({
-            userId: "user-1",
             id: "row-1",
             bought: false,
           }),
@@ -202,7 +199,7 @@ describe("ShoppingList", () => {
         "/api/shopping-list",
         expect.objectContaining({
           method: "DELETE",
-          body: JSON.stringify({ userId: "user-1", id: "row-1" }),
+          body: JSON.stringify({ id: "row-1" }),
         }),
       );
     });
@@ -227,7 +224,7 @@ describe("ShoppingList", () => {
         "/api/shopping-list",
         expect.objectContaining({
           method: "DELETE",
-          body: JSON.stringify({ userId: "user-1", clearBought: true }),
+          body: JSON.stringify({ clearBought: true }),
         }),
       );
     });

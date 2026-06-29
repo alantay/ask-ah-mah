@@ -168,7 +168,7 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Every visitor now has a real session.** The client-generated `localStorage["ask-ah-mah-session"]` id is gone. The better-auth `anonymous()` plugin mints an unforgeable anonymous session on first load (`useSession` calls `signIn.anonymous()` when there's no session); signed-in users still use their Google session. `userId` is always `session.user.id`, and `isAuthenticated` now means non-anonymous (`!user.isAnonymous`).
 - **Server is the source of truth for identity.** New helper `getSessionUserId(req)` (`src/lib/session.ts`) resolves the caller from the verified session cookie via `auth.api.getSession`, returning the id or `null` (routes map that to a 401 via `unauthorized()`). This is the primitive the route-lockdown slices (#341–#345) build on — routes stop trusting a `userId` from the request.
 - **Schema**: `User.isAnonymous Boolean?` (additive migration `20260629000000_add_user_is_anonymous`). New anonymous users get their starter pantry seeded.
-- **Not yet wired**: shopping-list/conversation routes still read `userId` from the request (#343–#344), share-token mint trust is #345, and guest→Google data migration on link is #346.
+- **Not yet wired**: conversation routes still read `userId` from the request (#344), share-token mint trust is #345, and guest→Google data migration on link is #346.
 
 ### Recipe routes locked down — Shipped (#341)
 
@@ -182,6 +182,12 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Inventory routes derive identity from the session.** `GET/POST/DELETE /api/inventory`, `POST /api/inventory/parse`, and `POST /api/inventory/seed` call `getSessionUserId(req)` and return `unauthorized()` (401) when there's no valid session. A `userId` in the query/body is ignored, so a caller can't read or mutate another user's pantry by supplying a foreign id.
 - **Clients stopped sending `userId` in request bodies** (Inventory add/parse + remove). SWR GET keys keep `?userId=` only as a client-side cache key. The new-anonymous-user pantry seed (`useSession`) now posts to `/api/inventory/seed` with no body — the session cookie set by `signIn.anonymous()` is the identity.
 - **Tests** cover cross-user access denial (query/body foreign id resolves to the session user) and 401s for unauthenticated callers, mocking `getSessionUserId`.
+
+### Shopping-list routes locked down — Shipped (#343)
+
+- **Shopping-list routes derive identity from the session.** `GET/POST/PATCH/DELETE /api/shopping-list` and `POST /api/shopping-list/classify` call `getSessionUserId(req)` and return `unauthorized()` (401) when there's no valid session. A `userId` in the query/body is ignored (the POST passes the full payload through `AddShoppingListItemsSchema.safeParse`, and `z.object` strips unknown keys), so a caller can't read or mutate another user's list by supplying a foreign id.
+- **Clients stopped sending `userId` in request bodies** (`ShoppingList` add/toggle/remove/clear + classify; `RecipeLetter` cart add). SWR GET/mutate keys keep `?userId=` only as a client-side cache key. The classify fetch now sends no body — the session cookie is the identity.
+- **Tests** cover cross-user access denial (body foreign id resolves to the session user) and 401s for unauthenticated callers, mocking `getSessionUserId`.
 
 ## Design system
 

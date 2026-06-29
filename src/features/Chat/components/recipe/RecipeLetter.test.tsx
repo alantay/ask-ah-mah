@@ -271,7 +271,6 @@ describe('Recipe cart adds to the shopping list', () => {
         method: 'POST',
         body: JSON.stringify({
           items: [{ name: 'bok choy', category: 'Vegetable' }],
-          userId: 'user-123',
         }),
       }),
     );
