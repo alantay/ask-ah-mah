@@ -8,6 +8,9 @@ jest.mock("@/lib/db", () => ({
       findMany: jest.fn(),
       create: jest.fn(),
     },
+    conversation: {
+      findUnique: jest.fn(),
+    },
   },
 }));
 
@@ -16,6 +19,10 @@ const mockedPrisma = jest.mocked(prisma);
 describe("Message Functions", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Default: the conversation is owned by the requesting user (or doesn't
+    // exist yet, hence connectOrCreate). Individual tests override to simulate
+    // a foreign owner.
+    mockedPrisma.conversation.findUnique.mockResolvedValue(null as never);
   });
 
   describe("getMessages", () => {
@@ -51,11 +58,11 @@ describe("Message Functions", () => {
 
       mockedPrisma.message.findMany.mockResolvedValue(mockMessages);
 
-      const result = await getMessages("conv-123");
+      const result = await getMessages("conv-123", "user-123");
 
       expect(result).toEqual(mockMessages);
       expect(mockedPrisma.message.findMany).toHaveBeenCalledWith({
-        where: { conversationId: "conv-123" },
+        where: { conversationId: "conv-123", conversation: { userId: "user-123" } },
         orderBy: { createdAt: "asc" },
       });
       expect(mockedPrisma.message.findMany).toHaveBeenCalledTimes(1);
@@ -64,11 +71,11 @@ describe("Message Functions", () => {
     it("should return empty array when no messages found", async () => {
       mockedPrisma.message.findMany.mockResolvedValue([]);
 
-      const result = await getMessages("conv-456");
+      const result = await getMessages("conv-456", "user-123");
 
       expect(result).toEqual([]);
       expect(mockedPrisma.message.findMany).toHaveBeenCalledWith({
-        where: { conversationId: "conv-456" },
+        where: { conversationId: "conv-456", conversation: { userId: "user-123" } },
         orderBy: { createdAt: "asc" },
       });
     });
@@ -77,11 +84,11 @@ describe("Message Functions", () => {
       const dbError = new Error("Database connection failed");
       mockedPrisma.message.findMany.mockRejectedValue(dbError);
 
-      await expect(getMessages("conv-123")).rejects.toThrow(
+      await expect(getMessages("conv-123", "user-123")).rejects.toThrow(
         "Database connection failed"
       );
       expect(mockedPrisma.message.findMany).toHaveBeenCalledWith({
-        where: { conversationId: "conv-123" },
+        where: { conversationId: "conv-123", conversation: { userId: "user-123" } },
         orderBy: { createdAt: "asc" },
       });
     });
@@ -105,16 +112,16 @@ describe("Message Functions", () => {
 
       mockedPrisma.message.findMany.mockResolvedValue(mockMessages);
 
-      await getMessages("conv-123");
+      await getMessages("conv-123", "user-123");
 
       expect(mockedPrisma.message.findMany).toHaveBeenCalledWith({
-        where: { conversationId: "conv-123" },
+        where: { conversationId: "conv-123", conversation: { userId: "user-123" } },
         orderBy: { createdAt: "asc" },
       });
 
       // Verify it doesn't get called with different conversationId
       expect(mockedPrisma.message.findMany).not.toHaveBeenCalledWith({
-        where: { conversationId: "conv-456" },
+        where: { conversationId: "conv-456", conversation: { userId: "user-123" } },
         orderBy: { createdAt: "asc" },
       });
     });
@@ -307,6 +314,22 @@ describe("Message Functions", () => {
       });
     });
 
+    it("rejects writing into a conversation owned by another user", async () => {
+      mockedPrisma.conversation.findUnique.mockResolvedValue({
+        userId: "victim-999",
+      } as never);
+
+      await expect(
+        createMessage("conv-123", "user-123", "Hijack", "user")
+      ).rejects.toThrow("Conversation not found");
+
+      expect(mockedPrisma.conversation.findUnique).toHaveBeenCalledWith({
+        where: { id: "conv-123" },
+        select: { userId: true },
+      });
+      expect(mockedPrisma.message.create).not.toHaveBeenCalled();
+    });
+
     it("should handle different role types", async () => {
       const systemMessage = {
         id: "msg-system",
@@ -386,7 +409,7 @@ describe("Message Functions", () => {
       const allMessages = [userMessage, assistantMessage];
       mockedPrisma.message.findMany.mockResolvedValue(allMessages);
 
-      const retrievedMessages = await getMessages("conv-123");
+      const retrievedMessages = await getMessages("conv-123", "user-123");
       expect(retrievedMessages).toEqual(allMessages);
       expect(retrievedMessages).toHaveLength(2);
     });

@@ -5,9 +5,10 @@ const CONTEXT_WINDOW = 15;
 
 export async function loadConversationContext(
   conversationId: string,
-  incoming: UIMessage[]
+  incoming: UIMessage[],
+  userId: string
 ) {
-  const previousMessages = await getMessages(conversationId);
+  const previousMessages = await getMessages(conversationId, userId);
 
   const uiMessages = previousMessages.slice(-CONTEXT_WINDOW).map((msg) => ({
     id: msg.id,

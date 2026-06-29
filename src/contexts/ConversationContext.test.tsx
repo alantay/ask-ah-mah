@@ -189,7 +189,7 @@ describe("ConversationContext", () => {
 
     expect(result.current.activeConversationId).toBe("conv-fallback");
     expect(mockFetch).toHaveBeenCalledWith(
-      `/api/conversation/conv-delete?userId=${encodeURIComponent(mockUserId)}`,
+      `/api/conversation/conv-delete`,
       { method: "DELETE" }
     );
   });
@@ -283,7 +283,7 @@ describe("ConversationContext", () => {
 
     expect(result.current.activeConversationId).toBe("conv-active");
     expect(mockFetch).toHaveBeenCalledWith(
-      `/api/conversation/conv-other?userId=${encodeURIComponent(mockUserId)}`,
+      `/api/conversation/conv-other`,
       { method: "DELETE" }
     );
   });

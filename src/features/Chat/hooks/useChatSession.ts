@@ -61,7 +61,6 @@ export function useChatSession() {
         body: {
           messages,
           ...body,
-          userId,
           conversationId: inFlightConvIdRef.current,
         },
       }),
@@ -183,7 +182,6 @@ export function useChatSession() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId,
           conversationId: targetConvId,
           role,
           content,
@@ -274,7 +272,6 @@ export function useChatSession() {
         const res = await fetch("/api/conversation", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId }),
         });
         if (!res.ok) {
           throw new Error(`Could not start conversation (${res.status})`);

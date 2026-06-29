@@ -168,7 +168,7 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Every visitor now has a real session.** The client-generated `localStorage["ask-ah-mah-session"]` id is gone. The better-auth `anonymous()` plugin mints an unforgeable anonymous session on first load (`useSession` calls `signIn.anonymous()` when there's no session); signed-in users still use their Google session. `userId` is always `session.user.id`, and `isAuthenticated` now means non-anonymous (`!user.isAnonymous`).
 - **Server is the source of truth for identity.** New helper `getSessionUserId(req)` (`src/lib/session.ts`) resolves the caller from the verified session cookie via `auth.api.getSession`, returning the id or `null` (routes map that to a 401 via `unauthorized()`). This is the primitive the route-lockdown slices (#341–#345) build on — routes stop trusting a `userId` from the request.
 - **Schema**: `User.isAnonymous Boolean?` (additive migration `20260629000000_add_user_is_anonymous`). New anonymous users get their starter pantry seeded.
-- **Not yet wired**: conversation routes still read `userId` from the request (#344), share-token mint trust is #345, and guest→Google data migration on link is #346.
+- **Not yet wired**: share-token mint trust is #345, and guest→Google data migration on link is #346.
 
 ### Recipe routes locked down — Shipped (#341)
 
@@ -188,6 +188,16 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Shopping-list routes derive identity from the session.** `GET/POST/PATCH/DELETE /api/shopping-list` and `POST /api/shopping-list/classify` call `getSessionUserId(req)` and return `unauthorized()` (401) when there's no valid session. A `userId` in the query/body is ignored (the POST passes the full payload through `AddShoppingListItemsSchema.safeParse`, and `z.object` strips unknown keys), so a caller can't read or mutate another user's list by supplying a foreign id.
 - **Clients stopped sending `userId` in request bodies** (`ShoppingList` add/toggle/remove/clear + classify; `RecipeLetter` cart add). SWR GET/mutate keys keep `?userId=` only as a client-side cache key. The classify fetch now sends no body — the session cookie is the identity.
 - **Tests** cover cross-user access denial (body foreign id resolves to the session user) and 401s for unauthenticated callers, mocking `getSessionUserId`.
+
+### Conversation/message/chat routes locked down — Shipped (#344)
+
+- **Conversation, message, and chat routes derive identity from the session.** `GET/POST /api/conversation`, `PATCH/DELETE /api/conversation/[id]`, `GET/POST /api/message`, and `POST /api/chat` call `getSessionUserId(req)` and return `unauthorized()` (401) when there's no valid session. A `userId` in the query/body is ignored, so a caller can't list, read, or mutate another user's conversations by supplying a foreign id.
+- **Ownership is enforced in the service layer, not just at the route** (the new part vs #341–#343): a valid session for user A still can't touch user B's conversation.
+  - `getMessages(conversationId, userId)` filters on the conversation relation's `userId`, so a foreign `conversationId` returns an empty history — chat-context loading (`loadConversationContext`) is scoped the same way.
+  - `createMessage` rejects (throws `Conversation not found`) when the target conversation exists but is owned by someone else, closing the `connectOrCreate` cross-user write.
+  - `renameConversation` / `autoTitleIfNull` scope their writes by `{ id, userId }` (`updateMany` / `findFirst`); a rename aimed at a foreign id matches zero rows and the route maps the thrown `Conversation not found` to a 404 (mirrors `deleteConversation`).
+- **Clients stopped sending `userId` in request bodies / query** (`useChatSession` chat transport + message POST + conversation create; `ConversationContext` deletes). SWR keys keep `?userId=` only as a client-side cache key.
+- **Tests** cover cross-user denial at both the route and service layers, plus 401s for unauthenticated callers, mocking `getSessionUserId`.
 
 ## Design system
 

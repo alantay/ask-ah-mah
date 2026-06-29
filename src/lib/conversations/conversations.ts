@@ -80,22 +80,37 @@ export async function createConversation(
 
 export async function renameConversation(
   id: string,
-  title: string
+  title: string,
+  userId: string
 ): Promise<ConversationEntity> {
-  const conversation = await prisma.conversation.update({
-    where: { id },
+  // Ownership-scope the write: updateMany lets us filter on userId. A rename
+  // aimed at another user's conversation matches zero rows and 404s.
+  const result = await prisma.conversation.updateMany({
+    where: { id, userId },
     data: { title },
+  });
+
+  if (result.count === 0) {
+    throw new Error("Conversation not found");
+  }
+
+  const conversation = await prisma.conversation.findUnique({
+    where: { id },
     include: { _count: { select: { messages: true } } },
   });
 
-  return conversation;
+  return conversation as ConversationEntity;
 }
 
 export async function autoTitleIfNull(
   id: string,
-  title: string
+  title: string,
+  userId: string
 ): Promise<ConversationEntity | null> {
-  const existing = await prisma.conversation.findUnique({ where: { id } });
+  // Scope the lookup to the owner so a foreign id never gets titled.
+  const existing = await prisma.conversation.findFirst({
+    where: { id, userId },
+  });
   if (!existing || existing.title !== null) return null;
   return prisma.conversation.update({
     where: { id },

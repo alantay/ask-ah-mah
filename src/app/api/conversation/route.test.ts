@@ -3,6 +3,7 @@ import {
   getOrCreateEmptyConversation,
   listConversations,
 } from "@/lib/conversations";
+import { getSessionUserId } from "@/lib/session";
 import { NextRequest } from "next/server";
 import type { ConversationEntity } from "@/lib/conversations";
 
@@ -22,8 +23,11 @@ jest.mock("@/lib/conversations", () => ({
   getOrCreateEmptyConversation: jest.fn(),
 }));
 
+jest.mock("@/lib/session", () => ({ getSessionUserId: jest.fn() }));
+
 const mockedListConversations = jest.mocked(listConversations);
 const mockedGetOrCreateEmptyConversation = jest.mocked(getOrCreateEmptyConversation);
+const mockedGetSessionUserId = jest.mocked(getSessionUserId);
 
 const createMockRequest = (url: string, options: RequestInit = {}) => {
   const parsedUrl = new URL(url);
@@ -64,16 +68,15 @@ function makeConversation(overrides: Partial<{
 describe("Conversation API Routes", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockedGetSessionUserId.mockResolvedValue("user-1");
   });
 
   describe("GET /api/conversation", () => {
-    it("should return flat conversations for valid userId", async () => {
+    it("should return flat conversations for the session user", async () => {
       const conv = makeConversation({ id: "conv-1" });
       mockedListConversations.mockResolvedValue([conv]);
 
-      const request = createMockRequest(
-        "http://localhost:3000/api/conversation?userId=user-1"
-      );
+      const request = createMockRequest("http://localhost:3000/api/conversation");
       const response = await GET(request);
       const data = await response.json();
 
@@ -82,24 +85,32 @@ describe("Conversation API Routes", () => {
       expect(mockedListConversations).toHaveBeenCalledWith("user-1");
     });
 
-    it("should return 400 when userId is missing", async () => {
+    it("should return 401 when unauthenticated", async () => {
+      mockedGetSessionUserId.mockResolvedValue(null);
       const request = createMockRequest(
         "http://localhost:3000/api/conversation"
       );
       const response = await GET(request);
-      const data = await response.json();
 
-      expect(response.status).toBe(400);
-      expect(data).toEqual({ error: "userId is required" });
+      expect(response.status).toBe(401);
       expect(mockedListConversations).not.toHaveBeenCalled();
+    });
+
+    it("ignores a userId in the query and uses the session user", async () => {
+      mockedListConversations.mockResolvedValue(emptyList);
+      const request = createMockRequest(
+        "http://localhost:3000/api/conversation?userId=victim-999"
+      );
+      await GET(request);
+
+      expect(mockedListConversations).toHaveBeenCalledTimes(1);
+      expect(mockedListConversations).toHaveBeenCalledWith("user-1");
     });
 
     it("should return empty list when no conversations exist", async () => {
       mockedListConversations.mockResolvedValue(emptyList);
 
-      const request = createMockRequest(
-        "http://localhost:3000/api/conversation?userId=user-empty"
-      );
+      const request = createMockRequest("http://localhost:3000/api/conversation");
       const response = await GET(request);
       const data = await response.json();
 
@@ -109,7 +120,7 @@ describe("Conversation API Routes", () => {
   });
 
   describe("POST /api/conversation", () => {
-    it("should return the reusable empty conversation for valid userId", async () => {
+    it("should return the reusable empty conversation for the session user", async () => {
       const newConv = makeConversation({ id: "conv-new", userId: "user-1" });
       mockedGetOrCreateEmptyConversation.mockResolvedValue(newConv);
 
@@ -117,7 +128,6 @@ describe("Conversation API Routes", () => {
         "http://localhost:3000/api/conversation",
         {
           method: "POST",
-          body: JSON.stringify({ userId: "user-1" }),
           headers: { "Content-Type": "application/json" },
         }
       );
@@ -130,22 +140,38 @@ describe("Conversation API Routes", () => {
       expect(mockedGetOrCreateEmptyConversation).toHaveBeenCalledWith("user-1");
     });
 
-    it("should return 400 when userId is missing", async () => {
+    it("should return 401 when unauthenticated", async () => {
+      mockedGetSessionUserId.mockResolvedValue(null);
       const request = createMockRequest(
         "http://localhost:3000/api/conversation",
         {
           method: "POST",
-          body: JSON.stringify({}),
           headers: { "Content-Type": "application/json" },
         }
       );
 
       const response = await POST(request);
-      const data = await response.json();
 
-      expect(response.status).toBe(400);
-      expect(data).toEqual({ error: "userId is required" });
+      expect(response.status).toBe(401);
       expect(mockedGetOrCreateEmptyConversation).not.toHaveBeenCalled();
+    });
+
+    it("ignores a userId in the body and uses the session user", async () => {
+      const newConv = makeConversation({ id: "conv-new", userId: "user-1" });
+      mockedGetOrCreateEmptyConversation.mockResolvedValue(newConv);
+      const request = createMockRequest(
+        "http://localhost:3000/api/conversation",
+        {
+          method: "POST",
+          body: JSON.stringify({ userId: "victim-999" }),
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+      await POST(request);
+
+      expect(mockedGetOrCreateEmptyConversation).toHaveBeenCalledTimes(1);
+      expect(mockedGetOrCreateEmptyConversation).toHaveBeenCalledWith("user-1");
     });
 
     it("should handle database errors gracefully", async () => {
@@ -155,7 +181,6 @@ describe("Conversation API Routes", () => {
         "http://localhost:3000/api/conversation",
         {
           method: "POST",
-          body: JSON.stringify({ userId: "user-1" }),
           headers: { "Content-Type": "application/json" },
         }
       );

@@ -188,7 +188,7 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
 
       try {
         const res = await fetch(
-          `/api/conversation/${previousActiveConversationId}?userId=${encodeURIComponent(userId)}`,
+          `/api/conversation/${previousActiveConversationId}`,
           { method: "DELETE" }
         );
 
@@ -219,10 +219,9 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        const res = await fetch(
-          `/api/conversation/${id}?userId=${encodeURIComponent(userId)}`,
-          { method: "DELETE" }
-        );
+        const res = await fetch(`/api/conversation/${id}`, {
+          method: "DELETE",
+        });
 
         if (!res.ok) {
           throw new Error("Failed to delete conversation");

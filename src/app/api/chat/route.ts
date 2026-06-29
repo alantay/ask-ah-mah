@@ -3,7 +3,8 @@ import { loadConversationContext } from "@/lib/chat/context";
 import { chatErrorResponse } from "@/lib/chat/errors";
 import { latestUserText } from "@/lib/chat/messageText";
 import { buildChatTools } from "@/lib/chat/tools";
-import { missingUserId } from "@/lib/http";
+import { unauthorized } from "@/lib/http";
+import { getSessionUserId } from "@/lib/session";
 import { openai } from "@ai-sdk/openai";
 import {
   convertToModelMessages,
@@ -18,13 +19,14 @@ import { CHAT_SYSTEM_PROMPT } from "./constants";
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages, userId, conversationId }: {
+    const userId = await getSessionUserId(req);
+    if (!userId) return unauthorized();
+
+    const { messages, conversationId }: {
       messages: UIMessage[];
-      userId: string;
       conversationId: string;
     } = await req.json();
 
-    if (!userId) return missingUserId();
     if (!conversationId) return NextResponse.json({ error: "conversationId is required" }, { status: 400 });
 
     // Deterministically capture any pantry items the user mentions BEFORE the
@@ -33,7 +35,11 @@ export async function POST(req: NextRequest) {
     // for phrasings the gate misses. Failures here are swallowed (non-fatal).
     const captured = await captureMentionedInventory(latestUserText(messages), userId);
 
-    const validatedMessages = await loadConversationContext(conversationId, messages);
+    const validatedMessages = await loadConversationContext(
+      conversationId,
+      messages,
+      userId
+    );
 
     const stream = createUIMessageStream({
       execute: ({ writer }) => {
