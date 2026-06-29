@@ -25,6 +25,9 @@ export async function generateMetadata({
   return {
     title,
     description,
+    // Link-only sharing: these URLs are protected solely by an unguessable
+    // token, so keep them out of search indexes.
+    robots: { index: false, follow: false },
     openGraph: { title, description, images, type: "article" },
     twitter: {
       card: images ? "summary_large_image" : "summary",
@@ -44,5 +47,11 @@ export default async function SharedRecipePage({
   const recipe = await getRecipeByShareToken(token);
   if (!recipe) notFound();
 
-  return <PublicRecipeView recipe={recipe as unknown as RecipeWithId} />;
+  // getRecipeByShareToken already omits owner-scoped fields; userId is supplied
+  // empty only to satisfy the type — readOnly mode never reads it.
+  return (
+    <PublicRecipeView
+      recipe={{ ...recipe, userId: "" } as unknown as RecipeWithId}
+    />
+  );
 }
