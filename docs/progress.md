@@ -24,7 +24,7 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **`proposeRecipe` tool**: replaces `gate` fenced-block convention; model must call `proposeRecipe` or emit ` ```recipe ` — never ask "do you have X?" in prose.
 - **Organised Pantry**: `category` enum (`Protein | Carbs | Vegetable | Condiments | Misc | Spice`) on `InventoryItem` and `RecipeIngredient`; pantry grouped under category headings; token-overlap `ingredientMatches` fixes false-NEED bugs (doubanjiang class).
 - **NEED pill → clickable add**: clicking a NEED pill POSTs to `/api/inventory`, revalidates SWR, shows toast.
-- **Better Auth**: Google OAuth + email magic link (Resend); `useSession` bridges auth session with localStorage guest fallback; guests unchanged.
+- **Better Auth**: Google OAuth + anonymous sessions (`anonymous()` plugin); `useSession` always resolves `userId` from the session — guests get an anonymous session, no localStorage id. See "Anonymous-session identity foundation" (#340).
 
 ## V2 — Polish (May 2026)
 
@@ -162,6 +162,13 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Public route `/r/[token]`** is a server component outside the app shell, resolving the recipe by **token alone — never `userId`** (`getRecipeByShareToken`), so it's readable by anyone yet only ever exposes that one recipe. Unknown token → `notFound()`. `generateMetadata` emits OG/Twitter tags (name, description, image) for rich link unfurls.
 - **Read-only reuse**: `RecipeDisplay` gained a `readOnly` prop that hides every owner action (Share, Tweak, the Tweak bench, Start cooking, Back) but keeps **Copy recipe** — useful for whoever opens the link. The public page wraps it (`PublicRecipeView`) with a slim "Ask Ah Mah" brand bar linking home.
 - **App-shell extraction**: the sidebar + mobile top bar moved from the root layout into a new `(app)` route group (`src/app/(app)/layout.tsx`); the root layout is now just fonts + providers + `Toaster`. Existing routes (`/`, `/recipe/[id]`) moved into the group — URLs unchanged. This is what lets `/r/[token]` render clean, without the app's nav leaking into a public link.
+
+### Anonymous-session identity foundation — In progress (#340)
+
+- **Every visitor now has a real session.** The client-generated `localStorage["ask-ah-mah-session"]` id is gone. The better-auth `anonymous()` plugin mints an unforgeable anonymous session on first load (`useSession` calls `signIn.anonymous()` when there's no session); signed-in users still use their Google session. `userId` is always `session.user.id`, and `isAuthenticated` now means non-anonymous (`!user.isAnonymous`).
+- **Server is the source of truth for identity.** New helper `getSessionUserId(req)` (`src/lib/session.ts`) resolves the caller from the verified session cookie via `auth.api.getSession`, returning the id or `null` (routes map that to a 401 via `unauthorized()`). This is the primitive the route-lockdown slices (#341–#345) build on — routes stop trusting a `userId` from the request.
+- **Schema**: `User.isAnonymous Boolean?` (additive migration `20260629000000_add_user_is_anonymous`). New anonymous users get their starter pantry seeded.
+- **Not yet wired**: data routes still read `userId` from the request (#341–#345), and guest→Google data migration on link is #346.
 
 ## Design system
 
