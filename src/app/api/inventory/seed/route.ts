@@ -1,11 +1,12 @@
 import { seedDefaultInventory } from "@/lib/inventory/Inventory";
-import { missingUserId } from "@/lib/http";
+import { unauthorized } from "@/lib/http";
+import { getSessionUserId } from "@/lib/session";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
-    const { userId } = await request.json();
-    if (!userId) return missingUserId();
+    const userId = await getSessionUserId(request);
+    if (!userId) return unauthorized();
 
     await seedDefaultInventory(userId);
     return NextResponse.json({ ok: true });

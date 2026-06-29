@@ -170,7 +170,7 @@ const Inventory = () => {
       const response = await fetch("/api/inventory/parse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: draft, userId }),
+        body: JSON.stringify({ text: draft }),
       });
 
       if (response.ok) {
@@ -202,7 +202,7 @@ const Inventory = () => {
       const response = await fetch("/api/inventory", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemNames: [itemName], userId }),
+        body: JSON.stringify({ itemNames: [itemName] }),
       });
       if (response.ok) {
         mutate(`/api/inventory?userId=${userId}`);

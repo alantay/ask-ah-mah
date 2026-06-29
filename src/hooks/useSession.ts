@@ -27,13 +27,10 @@ export default function useSession() {
       .anonymous()
       .then((res) => {
         // A brand-new anonymous user owns nothing yet — seed their starter pantry.
-        const newUserId = res?.data?.user?.id;
-        if (newUserId) {
-          fetch("/api/inventory/seed", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: newUserId }),
-          });
+        // The session cookie is set by signIn.anonymous(), so the seed route
+        // derives the userId from the session; no need to pass it in the body.
+        if (res?.data?.user?.id) {
+          fetch("/api/inventory/seed", { method: "POST" });
         }
       })
       .finally(() => setCreatingGuest(false));

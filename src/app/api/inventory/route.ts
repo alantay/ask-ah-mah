@@ -3,14 +3,15 @@ import {
   getInventory,
   removeInventoryItem,
 } from "@/lib/inventory/Inventory";
-import { missingUserId } from "@/lib/http";
+import { unauthorized } from "@/lib/http";
+import { getSessionUserId } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   try {
-    const userId = req.nextUrl.searchParams.get("userId");
+    const userId = await getSessionUserId(req);
 
-    if (!userId) return missingUserId();
+    if (!userId) return unauthorized();
 
     const inventory = await getInventory(userId);
     return NextResponse.json(inventory, {
@@ -31,9 +32,10 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { items, userId } = await req.json();
+    const userId = await getSessionUserId(req);
+    if (!userId) return unauthorized();
 
-    if (!userId) return missingUserId();
+    const { items } = await req.json();
 
     await addInventoryItem(items, userId);
     return NextResponse.json({ success: true, message: "Inventory updated" });
@@ -48,8 +50,9 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const { itemNames, userId } = await req.json();
-    if (!userId) return missingUserId();
+    const userId = await getSessionUserId(req);
+    if (!userId) return unauthorized();
+    const { itemNames } = await req.json();
     await removeInventoryItem(itemNames, userId);
     return NextResponse.json({ success: true, message: "Inventory updated" });
   } catch (error) {

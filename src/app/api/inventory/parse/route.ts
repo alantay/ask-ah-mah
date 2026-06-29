@@ -1,6 +1,7 @@
 import { addInventoryItem } from "@/lib/inventory/Inventory";
 import { AddInventoryItemSchema } from "@/lib/inventory/schemas";
-import { missingUserId } from "@/lib/http";
+import { unauthorized } from "@/lib/http";
+import { getSessionUserId } from "@/lib/session";
 import { PROMPT_FRAGMENTS } from "@/lib/prompts/fragments";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
@@ -13,9 +14,10 @@ const ParseSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const { text, userId } = await req.json();
+    const userId = await getSessionUserId(req);
+    if (!userId) return unauthorized();
 
-    if (!userId) return missingUserId();
+    const { text } = await req.json();
     if (!text || typeof text !== "string" || text.trim().length === 0) {
       return NextResponse.json({ error: "text is required" }, { status: 400 });
     }
