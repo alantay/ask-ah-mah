@@ -3,6 +3,7 @@ import {
   getInventory,
   removeInventoryItem,
 } from "@/lib/inventory/Inventory";
+import { getSessionUserId } from "@/lib/session";
 import { NextRequest } from "next/server";
 import { DELETE, GET, POST } from "./route";
 
@@ -18,6 +19,12 @@ jest.mock("next/server", () => ({
   },
 }));
 
+// Identity comes from the verified session, never the request — mock it so we
+// can drive "who is calling" independently of any userId in the query/body.
+jest.mock("@/lib/session", () => ({
+  getSessionUserId: jest.fn(),
+}));
+
 // Mock the inventory functions
 jest.mock("@/lib/inventory/Inventory", () => ({
   addInventoryItem: jest.fn(),
@@ -28,6 +35,7 @@ jest.mock("@/lib/inventory/Inventory", () => ({
 const mockedAddInventoryItem = jest.mocked(addInventoryItem);
 const mockedGetInventory = jest.mocked(getInventory);
 const mockedRemoveInventoryItem = jest.mocked(removeInventoryItem);
+const mockedGetSessionUserId = jest.mocked(getSessionUserId);
 
 // Helper to create mock NextRequest
 const createMockRequest = (url: string, options: RequestInit = {}) => {
@@ -48,6 +56,9 @@ const createMockRequest = (url: string, options: RequestInit = {}) => {
 describe("Inventory API Routes", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Default: an authenticated session for "user-123". Individual tests
+    // override this (e.g. resolve null to simulate an unauthenticated caller).
+    mockedGetSessionUserId.mockResolvedValue("user-123");
     // Mock console.error to avoid noise in tests
     jest.spyOn(console, "error").mockImplementation(() => {});
   });
@@ -118,26 +129,33 @@ describe("Inventory API Routes", () => {
       expect(response.headers.get("Expires")).toBe("0");
     });
 
-    it("should return 400 when userId is missing", async () => {
+    it("should return 401 when unauthenticated", async () => {
+      mockedGetSessionUserId.mockResolvedValue(null);
+
       const request = createMockRequest("http://localhost:3000/api/inventory");
       const response = await GET(request);
       const data = await response.json();
 
-      expect(response.status).toBe(400);
-      expect(data).toEqual({ error: "userId is required" });
+      expect(response.status).toBe(401);
+      expect(data).toEqual({ error: "Unauthorized" });
       expect(mockedGetInventory).not.toHaveBeenCalled();
     });
 
-    it("should return 400 when userId is empty string", async () => {
-      const request = createMockRequest(
-        "http://localhost:3000/api/inventory?userId="
-      );
-      const response = await GET(request);
-      const data = await response.json();
+    it("ignores a userId in the query and reads only the session user's pantry", async () => {
+      mockedGetInventory.mockResolvedValue({
+        kitchenwareInventory: [],
+        ingredientInventory: [],
+      });
 
-      expect(response.status).toBe(400);
-      expect(data).toEqual({ error: "userId is required" });
-      expect(mockedGetInventory).not.toHaveBeenCalled();
+      // Attacker tries to read someone else's pantry by passing their id.
+      const request = createMockRequest(
+        "http://localhost:3000/api/inventory?userId=victim-999"
+      );
+      await GET(request);
+
+      expect(mockedGetInventory).toHaveBeenCalledTimes(1);
+      expect(mockedGetInventory).toHaveBeenCalledWith("user-123");
+      expect(mockedGetInventory).not.toHaveBeenCalledWith("victim-999");
     });
 
     it("should return 500 when getInventory throws error", async () => {
@@ -213,7 +231,9 @@ describe("Inventory API Routes", () => {
       expect(mockedAddInventoryItem).toHaveBeenCalledTimes(1);
     });
 
-    it("should return 400 when userId is missing", async () => {
+    it("should return 401 when unauthenticated", async () => {
+      mockedGetSessionUserId.mockResolvedValue(null);
+
       const requestBody = {
         items: [{ name: "eggs", type: "ingredient" }],
       };
@@ -227,29 +247,26 @@ describe("Inventory API Routes", () => {
       const response = await POST(request);
       const data = await response.json();
 
-      expect(response.status).toBe(400);
-      expect(data).toEqual({ error: "userId is required" });
+      expect(response.status).toBe(401);
+      expect(data).toEqual({ error: "Unauthorized" });
       expect(mockedAddInventoryItem).not.toHaveBeenCalled();
     });
 
-    it("should return 400 when userId is empty string", async () => {
-      const requestBody = {
-        userId: "",
-        items: [{ name: "eggs", type: "ingredient" }],
-      };
+    it("adds under the session user, ignoring any userId in the body", async () => {
+      mockedAddInventoryItem.mockResolvedValue(undefined);
 
+      const items = [{ name: "eggs", type: "ingredient" }];
+      // Attacker tries to write into someone else's pantry via the body.
       const request = createMockRequest("http://localhost:3000/api/inventory", {
         method: "POST",
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({ userId: "victim-999", items }),
         headers: { "Content-Type": "application/json" },
       });
 
-      const response = await POST(request);
-      const data = await response.json();
+      await POST(request);
 
-      expect(response.status).toBe(400);
-      expect(data).toEqual({ error: "userId is required" });
-      expect(mockedAddInventoryItem).not.toHaveBeenCalled();
+      expect(mockedAddInventoryItem).toHaveBeenCalledTimes(1);
+      expect(mockedAddInventoryItem).toHaveBeenCalledWith(items, "user-123");
     });
 
     it("should handle empty items array", async () => {
@@ -342,7 +359,9 @@ describe("Inventory API Routes", () => {
       expect(mockedRemoveInventoryItem).toHaveBeenCalledTimes(1);
     });
 
-    it("should return 400 when userId is missing", async () => {
+    it("should return 401 when unauthenticated", async () => {
+      mockedGetSessionUserId.mockResolvedValue(null);
+
       const requestBody = {
         itemNames: ["eggs"],
       };
@@ -356,29 +375,26 @@ describe("Inventory API Routes", () => {
       const response = await DELETE(request);
       const data = await response.json();
 
-      expect(response.status).toBe(400);
-      expect(data).toEqual({ error: "userId is required" });
+      expect(response.status).toBe(401);
+      expect(data).toEqual({ error: "Unauthorized" });
       expect(mockedRemoveInventoryItem).not.toHaveBeenCalled();
     });
 
-    it("should return 400 when userId is empty string", async () => {
-      const requestBody = {
-        userId: "",
-        itemNames: ["eggs"],
-      };
+    it("removes against the session user, ignoring any userId in the body", async () => {
+      mockedRemoveInventoryItem.mockResolvedValue(undefined);
 
+      // Attacker passes a victim id; the route must scope the delete to the
+      // authenticated caller so it can never touch another user's pantry.
       const request = createMockRequest("http://localhost:3000/api/inventory", {
         method: "DELETE",
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({ userId: "victim-999", itemNames: ["eggs"] }),
         headers: { "Content-Type": "application/json" },
       });
 
-      const response = await DELETE(request);
-      const data = await response.json();
+      await DELETE(request);
 
-      expect(response.status).toBe(400);
-      expect(data).toEqual({ error: "userId is required" });
-      expect(mockedRemoveInventoryItem).not.toHaveBeenCalled();
+      expect(mockedRemoveInventoryItem).toHaveBeenCalledTimes(1);
+      expect(mockedRemoveInventoryItem).toHaveBeenCalledWith(["eggs"], "user-123");
     });
 
     it("should handle empty itemNames array", async () => {
