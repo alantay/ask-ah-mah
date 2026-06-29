@@ -74,6 +74,22 @@ describe("POST /api/recipe/[id]/tweak", () => {
     expect(mockedGenerateText).not.toHaveBeenCalled();
   });
 
+  it("ignores any userId supplied in the body and proceeds as the session user", async () => {
+    mockedGenerateText.mockResolvedValue({
+      text: tweakJson,
+      finishReason: "stop",
+    } as unknown as Awaited<ReturnType<typeof generateText>>);
+
+    const res = await POST(
+      makeRequest({ ...baseBody, userId: "victim-999" }),
+      { params },
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockedGetSessionUserId).toHaveBeenCalledTimes(1);
+    expect(mockedGenerateText).toHaveBeenCalledTimes(1);
+  });
+
   it("requests a generous output token ceiling (not the old 2000 cap)", async () => {
     mockedGenerateText.mockResolvedValue({
       text: tweakJson,

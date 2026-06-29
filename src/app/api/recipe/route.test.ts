@@ -507,6 +507,7 @@ describe("Recipe API Routes", () => {
 
       await POST(request);
 
+      expect(mockedSaveRecipeFromBlock).toHaveBeenCalledTimes(1);
       expect(mockedSaveRecipeFromBlock).toHaveBeenCalledWith(
         expect.any(Object),
         "user-123",
@@ -715,6 +716,7 @@ describe("Recipe API Routes", () => {
 
       await DELETE(request);
 
+      expect(mockedDeleteRecipeForUser).toHaveBeenCalledTimes(1);
       expect(mockedDeleteRecipeForUser).toHaveBeenCalledWith("recipe-123", "user-123");
     });
 
