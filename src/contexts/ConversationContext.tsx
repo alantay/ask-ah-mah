@@ -89,12 +89,18 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(LOCAL_STORAGE_KEY);
   };
 
-  const revalidateConversationKeys = () =>
-    globalMutate(
+  const revalidateConversationKeys = () => {
+    if (!userId) return Promise.resolve();
+    // Only revalidate the current user's bucket. Matching every
+    // ["/api/conversation", *] tuple would refetch a prior user's cache under
+    // the new session after an account switch.
+    return globalMutate(
       (key: unknown) =>
-        (typeof key === "string" && key.includes("/api/conversation")) ||
-        (Array.isArray(key) && key[0] === "/api/conversation"),
+        Array.isArray(key) &&
+        key[0] === "/api/conversation" &&
+        key[1] === userId,
     );
+  };
 
   // Clear active conversation and enter staging state — no API call
   const startNewConversation = () => {
