@@ -168,14 +168,14 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Every visitor now has a real session.** The client-generated `localStorage["ask-ah-mah-session"]` id is gone. The better-auth `anonymous()` plugin mints an unforgeable anonymous session on first load (`useSession` calls `signIn.anonymous()` when there's no session); signed-in users still use their Google session. `userId` is always `session.user.id`, and `isAuthenticated` now means non-anonymous (`!user.isAnonymous`).
 - **Server is the source of truth for identity.** New helper `getSessionUserId(req)` (`src/lib/session.ts`) resolves the caller from the verified session cookie via `auth.api.getSession`, returning the id or `null` (routes map that to a 401 via `unauthorized()`). This is the primitive the route-lockdown slices (#341–#345) build on — routes stop trusting a `userId` from the request.
 - **Schema**: `User.isAnonymous Boolean?` (additive migration `20260629000000_add_user_is_anonymous`). New anonymous users get their starter pantry seeded.
-- **Not yet wired**: share-token mint trust is #345, and guest→Google data migration on link is #346.
+- **Not yet wired**: guest→Google data migration on link is #346.
 
 ### Recipe routes locked down — Shipped (#341)
 
 - **Recipe routes derive identity from the session, never the request.** `GET/POST/DELETE /api/recipe`, `PATCH /api/recipe/[id]`, and `POST /api/recipe/[id]/tweak` now call `getSessionUserId(req)` and return `unauthorized()` (401) when there's no valid session. A `userId` in the query string or body is ignored entirely — an attacker can no longer read or mutate another user's cookbook by supplying a foreign id.
 - **Clients stopped sending `userId` in request bodies** (RecipeList delete, AddRecipeModal save, MessageList save, RecipeDisplay save, TweakBench tweak). SWR GET keys keep `?userId=` purely as a client-side cache key / fetch gate; the server disregards it. The now-unused `userId` prop was dropped from `TweakBench`.
 - **Tests** cover cross-user access being denied (query/body-supplied foreign id resolves to the session user) and 401s for unauthenticated callers, mocking `getSessionUserId`.
-- **Out of scope here**: `POST /api/recipe/[id]/share` still trusts a body `userId` — hardened separately in #345.
+- **Out of scope here**: `POST /api/recipe/[id]/share` was hardened separately in #345.
 
 ### Pantry (inventory) routes locked down — Shipped (#342)
 
@@ -198,6 +198,13 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
   - `renameConversation` / `autoTitleIfNull` scope their writes by `{ id, userId }` (`updateMany` / `findFirst`); a rename aimed at a foreign id matches zero rows and the route maps the thrown `Conversation not found` to a 404 (mirrors `deleteConversation`).
 - **Clients stopped sending `userId` in request bodies / query** (`useChatSession` chat transport + message POST + conversation create; `ConversationContext` deletes). SWR keys keep `?userId=` only as a client-side cache key.
 - **Tests** cover cross-user denial at both the route and service layers, plus 401s for unauthenticated callers, mocking `getSessionUserId`.
+
+### Share-token mint locked down — Shipped (#345)
+
+- **Minting a share link is owner-only, derived from the session.** `POST /api/recipe/[id]/share` calls `getSessionUserId(req)` and returns `unauthorized()` (401) when there's no session; a `userId` in the body is ignored. `mintShareToken(id, userId)` was already owner-scoped (`findFirst` + compare-and-set `updateMany` both filter on `{ id, userId }`), so a non-owner's mint resolves to "not found" → the route returns 404. The client (`RecipeDisplay` share button) stopped sending `userId` — the session cookie is the identity.
+- **The public read path stays open by design.** `/r/<token>` and `getRecipeByShareToken(token)` match on the token alone (never `userId`), require no session, and project a public shape that omits owner-scoped fields (`userId`, `shareToken`). Anyone with the link can view that one recipe.
+- **Tests** cover owner-can-mint, non-owner/unauthenticated cannot (401/404), idempotent re-mint, and the public read working token-only with owner fields never selected.
+- This completes the route-lockdown series (#341–#345); the now-unused `missingUserId()` 400 helper was removed (every route uses `unauthorized()`).
 
 ## Design system
 
