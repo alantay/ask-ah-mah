@@ -55,12 +55,14 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
   const [pendingConversationId, setPendingConversationId] = useState<string | null>(null);
   const [pendingCookWithMessage, setPendingCookWithMessage] = useState<string | null>(null);
 
-  // Fetch the conversations list
-  const listKey = userId ? `/api/conversation?userId=${userId}` : null;
+  // Fetch the conversations list. userId lives in the SWR key only to partition
+  // the cache per user — it is NOT sent to the server (the session cookie is the
+  // identity). A tuple key keeps the fetch URL clean: /api/conversation, no query.
+  const listKey = userId ? (["/api/conversation", userId] as const) : null;
 
   const { data: listData, isLoading: listLoading } = useSWR<ConversationListResponse>(
     listKey,
-    async (url: string) => {
+    async ([url]: readonly [string, string]) => {
       const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to fetch conversations");
       return res.json();
@@ -90,7 +92,8 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
   const revalidateConversationKeys = () =>
     globalMutate(
       (key: unknown) =>
-        typeof key === "string" && key.includes("/api/conversation"),
+        (typeof key === "string" && key.includes("/api/conversation")) ||
+        (Array.isArray(key) && key[0] === "/api/conversation"),
     );
 
   // Clear active conversation and enter staging state — no API call

@@ -206,44 +206,33 @@ describe("Conversation Functions", () => {
   });
 
   describe("autoTitleIfNull", () => {
-    it("titles the conversation only when owned and currently untitled", async () => {
-      mockedPrisma.conversation.findFirst.mockResolvedValue(
-        makeConversation({ id: "conv-1", title: null })
-      );
+    it("titles the conversation atomically when owned and currently untitled", async () => {
+      mockedPrisma.conversation.updateMany.mockResolvedValue({ count: 1 });
       const titled = makeConversation({ id: "conv-1", title: "Egg ideas" });
-      mockedPrisma.conversation.update.mockResolvedValue(titled);
+      mockedPrisma.conversation.findFirst.mockResolvedValue(titled);
 
       const result = await autoTitleIfNull("conv-1", "Egg ideas", "user-1");
 
       expect(result?.title).toBe("Egg ideas");
+      // The write is scoped to owner + still-null title so a concurrent rename
+      // can't be clobbered; a foreign id simply matches zero rows.
+      expect(mockedPrisma.conversation.updateMany).toHaveBeenCalledWith({
+        where: { id: "conv-1", userId: "user-1", title: null },
+        data: { title: "Egg ideas" },
+      });
       expect(mockedPrisma.conversation.findFirst).toHaveBeenCalledWith({
         where: { id: "conv-1", userId: "user-1" },
-      });
-      expect(mockedPrisma.conversation.update).toHaveBeenCalledWith({
-        where: { id: "conv-1" },
-        data: { title: "Egg ideas" },
         include: { _count: { select: { messages: true } } },
       });
     });
 
-    it("returns null without writing when the conversation is not owned", async () => {
-      mockedPrisma.conversation.findFirst.mockResolvedValue(null);
+    it("returns null without re-reading when nothing was updated (foreign id or already titled)", async () => {
+      mockedPrisma.conversation.updateMany.mockResolvedValue({ count: 0 });
 
       const result = await autoTitleIfNull("conv-1", "Hijack", "user-1");
 
       expect(result).toBeNull();
-      expect(mockedPrisma.conversation.update).not.toHaveBeenCalled();
-    });
-
-    it("returns null without writing when a title already exists", async () => {
-      mockedPrisma.conversation.findFirst.mockResolvedValue(
-        makeConversation({ id: "conv-1", title: "Existing" })
-      );
-
-      const result = await autoTitleIfNull("conv-1", "New", "user-1");
-
-      expect(result).toBeNull();
-      expect(mockedPrisma.conversation.update).not.toHaveBeenCalled();
+      expect(mockedPrisma.conversation.findFirst).not.toHaveBeenCalled();
     });
   });
 

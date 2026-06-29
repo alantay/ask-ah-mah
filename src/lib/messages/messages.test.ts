@@ -2,17 +2,22 @@ import { prisma } from "@/lib/db";
 import { createMessage, getMessages } from "./messages";
 
 // Mock Prisma
-jest.mock("@/lib/db", () => ({
-  prisma: {
+jest.mock("@/lib/db", () => {
+  const prismaMock = {
     message: {
       findMany: jest.fn(),
       create: jest.fn(),
     },
     conversation: {
       findUnique: jest.fn(),
+      create: jest.fn(),
     },
-  },
-}));
+    // Interactive transaction: run the callback against the same mock so the
+    // ownership check + writes are observable on the shared jest.fn()s.
+    $transaction: jest.fn((cb: (tx: unknown) => unknown) => cb(prismaMock)),
+  };
+  return { prisma: prismaMock };
+});
 
 const mockedPrisma = jest.mocked(prisma);
 
@@ -30,12 +35,7 @@ describe("Message Functions", () => {
       const mockMessages = [
         {
           id: "msg-1",
-          conversation: {
-            connectOrCreate: {
-              where: { id: "conv-123" },
-              create: { id: "conv-123", userId: "user-123" },
-            },
-          },
+          conversationId: "conv-123",
           userId: "user-123",
           content: "Hello",
           role: "user",
@@ -43,12 +43,7 @@ describe("Message Functions", () => {
         },
         {
           id: "msg-2",
-          conversation: {
-            connectOrCreate: {
-              where: { id: "conv-123" },
-              create: { id: "conv-123", userId: "user-123" },
-            },
-          },
+          conversationId: "conv-123",
           userId: "user-123",
           content: "Hi there!",
           role: "assistant",
@@ -97,12 +92,7 @@ describe("Message Functions", () => {
       const mockMessages = [
         {
           id: "msg-1",
-          conversation: {
-            connectOrCreate: {
-              where: { id: "conv-123" },
-              create: { id: "conv-123", userId: "user-123" },
-            },
-          },
+          conversationId: "conv-123",
           userId: "user-123",
           content: "Conv 123 message",
           role: "user",
@@ -150,12 +140,7 @@ describe("Message Functions", () => {
       expect(result).toEqual(newMessage);
       expect(mockedPrisma.message.create).toHaveBeenCalledWith({
         data: {
-          conversation: {
-            connectOrCreate: {
-              where: { id: "conv-123" },
-              create: { id: "conv-123", userId: "user-123" },
-            },
-          },
+          conversationId: "conv-123",
           userId: "user-123",
           content: "What can I cook?",
           role: "user",
@@ -186,12 +171,7 @@ describe("Message Functions", () => {
       expect(result).toEqual(assistantMessage);
       expect(mockedPrisma.message.create).toHaveBeenCalledWith({
         data: {
-          conversation: {
-            connectOrCreate: {
-              where: { id: "conv-123" },
-              create: { id: "conv-123", userId: "user-123" },
-            },
-          },
+          conversationId: "conv-123",
           userId: "user-123",
           content: "You can make scrambled eggs!",
           role: "assistant",
@@ -216,12 +196,7 @@ describe("Message Functions", () => {
       expect(result).toEqual(emptyMessage);
       expect(mockedPrisma.message.create).toHaveBeenCalledWith({
         data: {
-          conversation: {
-            connectOrCreate: {
-              where: { id: "conv-123" },
-              create: { id: "conv-123", userId: "user-123" },
-            },
-          },
+          conversationId: "conv-123",
           userId: "user-123",
           content: "",
           role: "user",
@@ -247,12 +222,7 @@ describe("Message Functions", () => {
       expect(result).toEqual(longMessage);
       expect(mockedPrisma.message.create).toHaveBeenCalledWith({
         data: {
-          conversation: {
-            connectOrCreate: {
-              where: { id: "conv-123" },
-              create: { id: "conv-123", userId: "user-123" },
-            },
-          },
+          conversationId: "conv-123",
           userId: "user-123",
           content: longContent,
           role: "user",
@@ -278,12 +248,7 @@ describe("Message Functions", () => {
       expect(result).toEqual(specialMessage);
       expect(mockedPrisma.message.create).toHaveBeenCalledWith({
         data: {
-          conversation: {
-            connectOrCreate: {
-              where: { id: "conv-123" },
-              create: { id: "conv-123", userId: "user-123" },
-            },
-          },
+          conversationId: "conv-123",
           userId: "user-123",
           content: specialContent,
           role: "user",
@@ -301,12 +266,7 @@ describe("Message Functions", () => {
 
       expect(mockedPrisma.message.create).toHaveBeenCalledWith({
         data: {
-          conversation: {
-            connectOrCreate: {
-              where: { id: "conv-123" },
-              create: { id: "conv-123", userId: "user-123" },
-            },
-          },
+          conversationId: "conv-123",
           userId: "user-123",
           content: "Test message",
           role: "user",
@@ -352,12 +312,7 @@ describe("Message Functions", () => {
       expect(result).toEqual(systemMessage);
       expect(mockedPrisma.message.create).toHaveBeenCalledWith({
         data: {
-          conversation: {
-            connectOrCreate: {
-              where: { id: "conv-123" },
-              create: { id: "conv-123", userId: "user-123" },
-            },
-          },
+          conversationId: "conv-123",
           userId: "user-123",
           content: "System initialized",
           role: "system",

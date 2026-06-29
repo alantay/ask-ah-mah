@@ -107,14 +107,17 @@ export async function autoTitleIfNull(
   title: string,
   userId: string
 ): Promise<ConversationEntity | null> {
-  // Scope the lookup to the owner so a foreign id never gets titled.
-  const existing = await prisma.conversation.findFirst({
-    where: { id, userId },
-  });
-  if (!existing || existing.title !== null) return null;
-  return prisma.conversation.update({
-    where: { id },
+  // Scope the write itself to { id, userId, title: null } so it stays atomic:
+  // a concurrent rename or auto-title can't be clobbered between a separate
+  // check and write, and a foreign id matches zero rows.
+  const result = await prisma.conversation.updateMany({
+    where: { id, userId, title: null },
     data: { title },
+  });
+  if (result.count === 0) return null;
+
+  return prisma.conversation.findFirst({
+    where: { id, userId },
     include: { _count: { select: { messages: true } } },
   });
 }

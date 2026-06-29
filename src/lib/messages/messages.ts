@@ -20,30 +20,28 @@ export async function createMessage(
   content: string,
   role: string
 ) {
-  // Guard against writing into a conversation owned by someone else. The
-  // connectOrCreate below would otherwise attach to any existing id; reject a
-  // foreign owner so a caller can't append to another user's thread.
-  const existing = await prisma.conversation.findUnique({
-    where: { id: conversationId },
-    select: { userId: true },
-  });
-  if (existing && existing.userId !== userId) {
-    throw new Error("Conversation not found");
-  }
+  // Guard against writing into a conversation owned by someone else, atomically.
+  // A separate pre-check + connectOrCreate could race: a foreign conversation
+  // created between the two would silently get our message attached. Inside a
+  // transaction we check ownership, create the conversation ourselves when it's
+  // absent (a duplicate id then fails the unique constraint rather than
+  // attaching), and write the message directly.
+  return prisma.$transaction(async (tx) => {
+    const existing = await tx.conversation.findUnique({
+      where: { id: conversationId },
+      select: { userId: true },
+    });
+    if (existing && existing.userId !== userId) {
+      throw new Error("Conversation not found");
+    }
+    if (!existing) {
+      await tx.conversation.create({
+        data: { id: conversationId, userId },
+      });
+    }
 
-  const message = await prisma.message.create({
-    data: {
-      conversation: {
-        connectOrCreate: {
-          where: { id: conversationId },
-          create: { id: conversationId, userId },
-        },
-      },
-      userId,
-      content,
-      role,
-    },
+    return tx.message.create({
+      data: { conversationId, userId, content, role },
+    });
   });
-
-  return message;
 }
