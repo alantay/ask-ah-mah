@@ -398,6 +398,9 @@ interface RecipeDisplayProps {
   onBack: () => void;
   onStartCooking?: () => void;
   hideBackButton?: boolean;
+  // Public share view: hide every owner-only action (share, tweak, bench, back)
+  // and the tweak panel. Copy stays — it's useful for whoever opens the link.
+  readOnly?: boolean;
 }
 
 export default function RecipeDisplay({
@@ -405,9 +408,11 @@ export default function RecipeDisplay({
   onBack,
   onStartCooking,
   hideBackButton,
+  readOnly = false,
 }: RecipeDisplayProps) {
   const { userId } = useSessionContext();
   const [cooking, setCooking] = useState(false);
+  const [sharing, setSharing] = useState(false);
   // Lifted out of RecipeBody so the header "Copy recipe" action can read the
   // currently displayed servings and scale the copied text to match.
   const [servings, setServings] = useState<number>(recipe.baseServings ?? 2);
@@ -528,6 +533,28 @@ export default function RecipeDisplay({
     );
   }, [workingDraft, servings]);
 
+  const handleShare = useCallback(async () => {
+    if (!userId || sharing) return;
+    setSharing(true);
+    try {
+      const res = await fetch(`/api/recipe/${recipe.id}/share`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+      if (!res.ok) throw new Error("share failed");
+      const { token } = await res.json();
+      const url = `${window.location.origin}/r/${token}`;
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copied — anyone can open it.");
+    } catch (err) {
+      console.error("[RecipeDisplay] share error:", err);
+      toast.error("Couldn't make a link. Try again?");
+    } finally {
+      setSharing(false);
+    }
+  }, [recipe.id, userId, sharing]);
+
   const handleStartCooking = () => {
     if (onStartCooking) {
       onStartCooking();
@@ -573,7 +600,7 @@ export default function RecipeDisplay({
             <div className="mx-auto max-w-4xl px-4 sm:px-6 pt-4 sm:pt-5 pb-8">
               {/* Nav bar */}
               <div className="flex items-center justify-between mb-3 sm:mb-4">
-                {!hideBackButton && (
+                {!hideBackButton && !readOnly && (
                   <button
                     onClick={onBack}
                     className="min-h-11 inline-flex items-center font-sans text-micro font-semibold tracking-[0.14em] uppercase text-ink-faint hover:text-foreground transition-colors cursor-pointer"
@@ -594,7 +621,23 @@ export default function RecipeDisplay({
                       <path d="M5 4H3.5A1.5 1.5 0 0 0 2 5.5v9A1.5 1.5 0 0 0 3.5 16h7A1.5 1.5 0 0 0 12 14.5V13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
                     </svg>
                   </button>
-                  {!benchOpen && (
+                  {!readOnly && userId && (
+                    <button
+                      onClick={handleShare}
+                      disabled={sharing}
+                      className="inline-flex items-center min-h-11 px-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
+                      aria-label="Share recipe — copy a public link"
+                      title="Share recipe"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
+                        <circle cx="12" cy="3.5" r="1.9" stroke="currentColor" strokeWidth="1.4" />
+                        <circle cx="4" cy="8" r="1.9" stroke="currentColor" strokeWidth="1.4" />
+                        <circle cx="12" cy="12.5" r="1.9" stroke="currentColor" strokeWidth="1.4" />
+                        <path d="M10.4 4.5 5.6 7M5.6 9l4.8 2.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                      </svg>
+                    </button>
+                  )}
+                  {!benchOpen && !readOnly && (
                     <button
                       onClick={() => setBenchOpen(true)}
                       className="inline-flex items-center gap-1.5 min-h-11 px-3 py-1.5 text-xs font-semibold text-primary bg-card border border-border rounded-md cursor-pointer hover:bg-muted/60 transition-colors"
@@ -604,7 +647,7 @@ export default function RecipeDisplay({
                       Tweak this recipe
                     </button>
                   )}
-                  {canCook && (
+                  {canCook && !readOnly && (
                     <Button
                       variant="cta"
                       onClick={handleStartCooking}
@@ -639,7 +682,7 @@ export default function RecipeDisplay({
         </div>
 
         {/* Tweak Bench — right panel */}
-        {benchOpen && userId && (
+        {benchOpen && userId && !readOnly && (
           <TweakBench
             recipe={originalRecipeRef.current}
             userId={userId}

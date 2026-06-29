@@ -104,6 +104,7 @@ describe("Recipe API Routes", () => {
           imageUrl: null,
           photographerName: null,
           photographerUrl: null,
+          shareToken: null,
         },
         {
           id: "recipe-2",
@@ -123,6 +124,7 @@ describe("Recipe API Routes", () => {
           imageUrl: null,
           photographerName: null,
           photographerUrl: null,
+          shareToken: null,
         },
       ];
 
@@ -208,6 +210,7 @@ describe("Recipe API Routes", () => {
           imageUrl: null,
           photographerName: null,
           photographerUrl: null,
+          shareToken: null,
         },
       ];
 
@@ -247,6 +250,7 @@ describe("Recipe API Routes", () => {
         imageUrl: null,
         photographerName: null,
         photographerUrl: null,
+        shareToken: null,
       };
       mockedSaveRecipeFromBlock.mockResolvedValue(savedRecipe);
 
@@ -297,6 +301,7 @@ describe("Recipe API Routes", () => {
         imageUrl: null,
         photographerName: null,
         photographerUrl: null,
+        shareToken: null,
       });
 
       const request = createMockRequest("http://localhost:3000/api/recipe", {
@@ -337,6 +342,7 @@ describe("Recipe API Routes", () => {
         imageUrl: null,
         photographerName: null,
         photographerUrl: null,
+        shareToken: null,
       };
 
       mockedProcessRecipe.mockResolvedValue({
@@ -398,6 +404,7 @@ describe("Recipe API Routes", () => {
         imageUrl: null,
         photographerName: null,
         photographerUrl: null,
+        shareToken: null,
       };
 
       mockedProcessRecipe.mockResolvedValue(defaultProcessed);
@@ -494,6 +501,7 @@ describe("Recipe API Routes", () => {
         imageUrl: null,
         photographerName: null,
         photographerUrl: null,
+        shareToken: null,
       };
 
       mockedProcessRecipe.mockResolvedValue(defaultProcessed);
@@ -554,6 +562,7 @@ describe("Recipe API Routes", () => {
         imageUrl: null,
         photographerName: null,
         photographerUrl: null,
+        shareToken: null,
       };
 
       mockedProcessRecipe.mockResolvedValue(defaultProcessed);
