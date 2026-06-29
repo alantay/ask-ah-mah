@@ -48,7 +48,7 @@ describe("RecipeList — delete recipe", () => {
     global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
   });
 
-  it("sends recipeId AND userId in the DELETE body", async () => {
+  it("sends only the recipeId in the DELETE body (identity comes from the session)", async () => {
     render(<RecipeList />);
 
     const deleteButton = screen.getByRole("button", { name: /Delete Test Recipe/i });
@@ -58,7 +58,7 @@ describe("RecipeList — delete recipe", () => {
       "/api/recipe",
       expect.objectContaining({
         method: "DELETE",
-        body: JSON.stringify({ recipeId: "r1", userId: "user-1" }),
+        body: JSON.stringify({ recipeId: "r1" }),
       }),
     );
   });

@@ -31,7 +31,6 @@ type TurnEntry =
 
 interface TweakBenchProps {
   recipe: RecipeWithId;
-  userId: string;
   onWorkingDraftChange: (draft: RecipeWithId, changes: ChangeEntry[]) => void;
   onClose: () => void;
   onSave: () => Promise<void>;
@@ -76,7 +75,6 @@ const EMPTY_REFUSAL_FALLBACK =
 
 export function TweakBench({
   recipe,
-  userId,
   onWorkingDraftChange,
   onClose,
   onSave,
@@ -150,7 +148,6 @@ export function TweakBench({
           headers: { "Content-Type": "application/json" },
           signal: abortController.signal,
           body: JSON.stringify({
-            userId,
             instruction: text,
             originalRecipe: recipeWithIdToBlock(recipe),
             workingDraft: recipeWithIdToBlock(currentDraft),
@@ -257,7 +254,7 @@ export function TweakBench({
         }
       }
     },
-    [instruction, isStreaming, recipe, userId, onWorkingDraftChange],
+    [instruction, isStreaming, recipe, onWorkingDraftChange],
   );
 
   const handleTryAgain = useCallback(() => {

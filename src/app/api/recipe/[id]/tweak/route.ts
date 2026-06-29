@@ -1,4 +1,5 @@
-import { missingUserId } from "@/lib/http";
+import { unauthorized } from "@/lib/http";
+import { getSessionUserId } from "@/lib/session";
 import { ChangeKindSchema, RecipeBlockSchema } from "@/lib/recipes/schemas";
 import { openai } from "@ai-sdk/openai";
 import { generateText } from "ai";
@@ -72,17 +73,18 @@ export async function POST(
   const { id } = await params;
 
   try {
+    const userId = await getSessionUserId(req);
+    if (!userId) return unauthorized();
+
     const body: {
-      userId?: string;
       instruction?: string;
       originalRecipe?: unknown;
       workingDraft?: unknown;
     } = await req.json();
 
-    const { userId, originalRecipe: originalRecipeRaw, workingDraft: workingDraftRaw } = body;
+    const { originalRecipe: originalRecipeRaw, workingDraft: workingDraftRaw } = body;
     let { instruction } = body;
 
-    if (!userId) return missingUserId();
     if (!instruction) {
       return NextResponse.json({ error: "instruction is required" }, { status: 400 });
     }

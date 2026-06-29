@@ -506,7 +506,6 @@ export default function RecipeDisplay({
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId,
           recipe: recipeWithIdToBlock(workingDraft),
         }),
       });
@@ -685,7 +684,6 @@ export default function RecipeDisplay({
         {benchOpen && userId && !readOnly && (
           <TweakBench
             recipe={originalRecipeRef.current}
-            userId={userId}
             onWorkingDraftChange={handleWorkingDraftChange}
             onClose={handleBenchClose}
             onSave={handleSave}

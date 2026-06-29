@@ -1,11 +1,15 @@
 import { openai } from "@ai-sdk/openai";
 import { generateText } from "ai";
+import { getSessionUserId } from "@/lib/session";
 import { NextRequest } from "next/server";
 import { POST } from "./route";
 
 jest.mock("@ai-sdk/openai", () => ({ openai: jest.fn() }));
 
 jest.mock("ai", () => ({ generateText: jest.fn() }));
+
+// Identity comes from the verified session, not the request body.
+jest.mock("@/lib/session", () => ({ getSessionUserId: jest.fn() }));
 
 jest.mock("next/server", () => {
   const NextResponse = jest.fn((body, init) => ({
@@ -25,6 +29,7 @@ jest.mock("next/server", () => {
 
 const mockedGenerateText = jest.mocked(generateText);
 const mockedOpenai = jest.mocked(openai);
+const mockedGetSessionUserId = jest.mocked(getSessionUserId);
 
 const validRecipeBlock = {
   id: "recipe-1",
@@ -45,7 +50,6 @@ const makeRequest = (body: unknown) => ({ json: async () => body }) as NextReque
 const params = Promise.resolve({ id: "recipe-1" });
 
 const baseBody = {
-  userId: "user-123",
   instruction: "less spicy",
   originalRecipe: validRecipeBlock,
 };
@@ -54,11 +58,22 @@ beforeEach(() => {
   jest.clearAllMocks();
   jest.spyOn(console, "error").mockImplementation(() => {});
   mockedOpenai.mockReturnValue("mock-model" as unknown as ReturnType<typeof openai>);
+  // Default: an authenticated caller. Tests override to simulate no session.
+  mockedGetSessionUserId.mockResolvedValue("user-123");
 });
 
 afterEach(() => jest.restoreAllMocks());
 
 describe("POST /api/recipe/[id]/tweak", () => {
+  it("returns 401 without ever calling the model when unauthenticated", async () => {
+    mockedGetSessionUserId.mockResolvedValue(null);
+
+    const res = await POST(makeRequest(baseBody), { params });
+
+    expect(res.status).toBe(401);
+    expect(mockedGenerateText).not.toHaveBeenCalled();
+  });
+
   it("requests a generous output token ceiling (not the old 2000 cap)", async () => {
     mockedGenerateText.mockResolvedValue({
       text: tweakJson,
