@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { anonymous } from "better-auth/plugins";
 import { prisma } from "@/lib/db";
+import { migrateGuestData } from "@/lib/auth/migrateGuestData";
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL!,
@@ -17,8 +18,14 @@ export const auth = betterAuth({
   },
   // Every visitor — signed-in or not — gets a real, unforgeable session.
   // Guests are issued an anonymous session so routes can derive identity from
-  // the session cookie instead of a client-supplied userId. Migrating an
-  // anonymous user's data to their account on sign-in (onLinkAccount) is
-  // handled separately in #346.
-  plugins: [anonymous()],
+  // the session cookie instead of a client-supplied userId. When a guest signs
+  // in, onLinkAccount carries the cookbook/pantry they built over to the
+  // account before better-auth deletes the anonymous user.
+  plugins: [
+    anonymous({
+      onLinkAccount: async ({ anonymousUser, newUser }) => {
+        await migrateGuestData(anonymousUser.user.id, newUser.user.id);
+      },
+    }),
+  ],
 });
