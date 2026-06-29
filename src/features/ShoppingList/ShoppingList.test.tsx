@@ -262,9 +262,10 @@ describe("ShoppingList", () => {
 
     render(<ShoppingList />);
 
-    expect(mockedUseMarketTips).toHaveBeenCalledWith([
-      { name: "Tomatoes", category: "Vegetable" },
-    ]);
+    expect(mockedUseMarketTips).toHaveBeenCalledWith(
+      [{ name: "Tomatoes", category: "Vegetable" }],
+      true,
+    );
   });
 
   it("shows no tip for a staple the engine returns nothing for", () => {
