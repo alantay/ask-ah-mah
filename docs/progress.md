@@ -168,7 +168,13 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Every visitor now has a real session.** The client-generated `localStorage["ask-ah-mah-session"]` id is gone. The better-auth `anonymous()` plugin mints an unforgeable anonymous session on first load (`useSession` calls `signIn.anonymous()` when there's no session); signed-in users still use their Google session. `userId` is always `session.user.id`, and `isAuthenticated` now means non-anonymous (`!user.isAnonymous`).
 - **Server is the source of truth for identity.** New helper `getSessionUserId(req)` (`src/lib/session.ts`) resolves the caller from the verified session cookie via `auth.api.getSession`, returning the id or `null` (routes map that to a 401 via `unauthorized()`). This is the primitive the route-lockdown slices (#341–#345) build on — routes stop trusting a `userId` from the request.
 - **Schema**: `User.isAnonymous Boolean?` (additive migration `20260629000000_add_user_is_anonymous`). New anonymous users get their starter pantry seeded.
-- **Not yet wired**: guest→Google data migration on link is #346.
+- **Guest→Google data migration on link is wired** — see "Guest data follows the account on sign-in" (#346).
+
+### Guest data follows the account on sign-in — Shipped (#346)
+
+- **A cookbook built as a guest is preserved on first Google sign-in.** The `anonymous()` plugin's `onLinkAccount` now calls `migrateGuestData(anonymousUser.user.id, newUser.user.id)` (`src/lib/auth/migrateGuestData.ts`), reassigning the guest's recipes, inventory, shopping-list items, conversations, and messages to the account before better-auth deletes the anonymous user row. Domain models carry a plain `userId` (no FK to `User`), so reassignment is a column update and the user deletion can't cascade the data away.
+- **Conflict-safe for the two unique-scoped tables.** `InventoryItem` (`userId,name,type`) and `ShoppingListItem` (`userId,key`) could collide when linking a guest to an already-populated account; a blind reassignment would violate the constraint and fail sign-in. We move only the non-colliding rows and drop the guest's duplicates, letting the destination account's existing row win. The whole migration runs in one `$transaction` — all-or-nothing.
+- **Tests** cover reassignment across all five models, the empty-destination path (everything moves), and the collision path (skip + drop) for both unique-scoped tables, plus the same-user no-op.
 
 ### Recipe routes locked down — Shipped (#341)
 
