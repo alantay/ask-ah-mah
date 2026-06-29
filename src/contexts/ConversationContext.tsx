@@ -55,12 +55,14 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
   const [pendingConversationId, setPendingConversationId] = useState<string | null>(null);
   const [pendingCookWithMessage, setPendingCookWithMessage] = useState<string | null>(null);
 
-  // Fetch the conversations list
-  const listKey = userId ? `/api/conversation?userId=${userId}` : null;
+  // Fetch the conversations list. userId lives in the SWR key only to partition
+  // the cache per user — it is NOT sent to the server (the session cookie is the
+  // identity). A tuple key keeps the fetch URL clean: /api/conversation, no query.
+  const listKey = userId ? (["/api/conversation", userId] as const) : null;
 
   const { data: listData, isLoading: listLoading } = useSWR<ConversationListResponse>(
     listKey,
-    async (url: string) => {
+    async ([url]: readonly [string, string]) => {
       const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to fetch conversations");
       return res.json();
@@ -87,11 +89,18 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(LOCAL_STORAGE_KEY);
   };
 
-  const revalidateConversationKeys = () =>
-    globalMutate(
+  const revalidateConversationKeys = () => {
+    if (!userId) return Promise.resolve();
+    // Only revalidate the current user's bucket. Matching every
+    // ["/api/conversation", *] tuple would refetch a prior user's cache under
+    // the new session after an account switch.
+    return globalMutate(
       (key: unknown) =>
-        typeof key === "string" && key.includes("/api/conversation"),
+        Array.isArray(key) &&
+        key[0] === "/api/conversation" &&
+        key[1] === userId,
     );
+  };
 
   // Clear active conversation and enter staging state — no API call
   const startNewConversation = () => {
@@ -188,7 +197,7 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
 
       try {
         const res = await fetch(
-          `/api/conversation/${previousActiveConversationId}?userId=${encodeURIComponent(userId)}`,
+          `/api/conversation/${previousActiveConversationId}`,
           { method: "DELETE" }
         );
 
@@ -219,10 +228,9 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        const res = await fetch(
-          `/api/conversation/${id}?userId=${encodeURIComponent(userId)}`,
-          { method: "DELETE" }
-        );
+        const res = await fetch(`/api/conversation/${id}`, {
+          method: "DELETE",
+        });
 
         if (!res.ok) {
           throw new Error("Failed to delete conversation");

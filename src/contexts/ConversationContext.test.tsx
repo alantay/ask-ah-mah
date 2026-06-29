@@ -24,14 +24,21 @@ const mockMutate = jest.fn();
 
 jest.mock("swr", () => ({
   __esModule: true,
-  default: jest.fn((key: string | null) => ({
-    data: key ? swrData.get(key) : undefined,
-    isLoading: false,
-  })),
+  default: jest.fn((key: unknown) => {
+    // The list key is now a tuple ["/api/conversation", userId]; serialize it to
+    // a string for the fixture map (userId stays out of the request URL).
+    const k = Array.isArray(key) ? key.join("|") : (key as string | null);
+    return {
+      data: k ? swrData.get(k) : undefined,
+      isLoading: false,
+    };
+  }),
   mutate: (...args: unknown[]) => mockMutate(...args),
 }));
 
 const mockUserId = "user-test-123";
+const listKeyTuple = ["/api/conversation", mockUserId] as const;
+const listKey = listKeyTuple.join("|");
 
 jest.mock("@/contexts/SessionContext", () => ({
   useSessionContext: jest.fn(() => ({ userId: mockUserId, isLoading: false })),
@@ -102,7 +109,7 @@ describe("ConversationContext", () => {
   });
 
   it("starts in staging state (null) when localStorage is empty", () => {
-    swrData.set(`/api/conversation?userId=${mockUserId}`, {
+    swrData.set(listKey, {
       conversations: [makeConversation("conv-from-api")],
     });
 
@@ -113,7 +120,7 @@ describe("ConversationContext", () => {
 
   it("uses the localStorage value instead of fetching an active conversation", () => {
     localStorageMock.getItem.mockReturnValueOnce("conv-from-storage");
-    swrData.set(`/api/conversation?userId=${mockUserId}`, {
+    swrData.set(listKey, {
       conversations: [makeConversation("conv-from-storage")],
     });
 
@@ -128,7 +135,7 @@ describe("ConversationContext", () => {
       _count: { messages: 2 },
     });
     localStorageMock.getItem.mockReturnValueOnce("conv-current");
-    swrData.set(`/api/conversation?userId=${mockUserId}`, {
+    swrData.set(listKey, {
       conversations: [current],
     });
 
@@ -145,7 +152,7 @@ describe("ConversationContext", () => {
   it("renameConversation PATCHes the given id", async () => {
     const conversation = makeConversation("conv-abc");
     localStorageMock.getItem.mockReturnValueOnce("conv-abc");
-    swrData.set(`/api/conversation?userId=${mockUserId}`, {
+    swrData.set(listKey, {
       conversations: [conversation],
     });
     mockFetch.mockResolvedValueOnce({
@@ -176,7 +183,7 @@ describe("ConversationContext", () => {
       _count: { messages: 1 },
     });
     localStorageMock.getItem.mockReturnValueOnce("conv-delete");
-    swrData.set(`/api/conversation?userId=${mockUserId}`, {
+    swrData.set(listKey, {
       conversations: [active, fallback],
     });
     mockFetch.mockResolvedValueOnce({ ok: true });
@@ -189,7 +196,7 @@ describe("ConversationContext", () => {
 
     expect(result.current.activeConversationId).toBe("conv-fallback");
     expect(mockFetch).toHaveBeenCalledWith(
-      `/api/conversation/conv-delete?userId=${encodeURIComponent(mockUserId)}`,
+      `/api/conversation/conv-delete`,
       { method: "DELETE" }
     );
   });
@@ -205,7 +212,7 @@ describe("ConversationContext", () => {
       _count: { messages: 1 },
     });
     localStorageMock.getItem.mockReturnValueOnce("conv-delete");
-    swrData.set(`/api/conversation?userId=${mockUserId}`, {
+    swrData.set(listKey, {
       conversations: [active, fallback],
     });
     mockFetch.mockResolvedValueOnce({ ok: false });
@@ -232,7 +239,7 @@ describe("ConversationContext", () => {
       _count: { messages: 2 },
     });
     localStorageMock.getItem.mockReturnValueOnce("conv-only");
-    swrData.set(`/api/conversation?userId=${mockUserId}`, {
+    swrData.set(listKey, {
       conversations: [active],
     });
 
@@ -251,7 +258,7 @@ describe("ConversationContext", () => {
     });
     // SWR cache rolled back — globalMutate called with previousConversations (the original list)
     expect(mockMutate).toHaveBeenCalledWith(
-      `/api/conversation?userId=${mockUserId}`,
+      listKeyTuple,
       { conversations: [active] },
       false
     );
@@ -270,7 +277,7 @@ describe("ConversationContext", () => {
       _count: { messages: 1 },
     });
     localStorageMock.getItem.mockReturnValueOnce("conv-active");
-    swrData.set(`/api/conversation?userId=${mockUserId}`, {
+    swrData.set(listKey, {
       conversations: [active, other],
     });
     mockFetch.mockResolvedValueOnce({ ok: true });
@@ -283,7 +290,7 @@ describe("ConversationContext", () => {
 
     expect(result.current.activeConversationId).toBe("conv-active");
     expect(mockFetch).toHaveBeenCalledWith(
-      `/api/conversation/conv-other?userId=${encodeURIComponent(mockUserId)}`,
+      `/api/conversation/conv-other`,
       { method: "DELETE" }
     );
   });

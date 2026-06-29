@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import {
   autoTitleConversation,
+  autoTitleIfNull,
   createConversation,
   deleteConversation,
   getOrCreateActiveConversation,
@@ -17,6 +18,7 @@ jest.mock("@/lib/db", () => ({
       findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
       deleteMany: jest.fn(),
     },
     message: {
@@ -174,18 +176,63 @@ describe("Conversation Functions", () => {
   });
 
   describe("renameConversation", () => {
-    it("updates title and returns updated conversation", async () => {
+    it("updates title scoped to the owner and returns the updated conversation", async () => {
       const updated = makeConversation({ id: "conv-1", title: "My New Title" });
-      mockedPrisma.conversation.update.mockResolvedValue(updated);
+      mockedPrisma.conversation.updateMany.mockResolvedValue({ count: 1 });
+      mockedPrisma.conversation.findUnique.mockResolvedValue(updated);
 
-      const result = await renameConversation("conv-1", "My New Title");
+      const result = await renameConversation("conv-1", "My New Title", "user-1");
 
       expect(result.title).toBe("My New Title");
-      expect(mockedPrisma.conversation.update).toHaveBeenCalledWith({
-        where: { id: "conv-1" },
+      expect(mockedPrisma.conversation.updateMany).toHaveBeenCalledWith({
+        where: { id: "conv-1", userId: "user-1" },
         data: { title: "My New Title" },
+      });
+      expect(mockedPrisma.conversation.findUnique).toHaveBeenCalledWith({
+        where: { id: "conv-1" },
         include: { _count: { select: { messages: true } } },
       });
+    });
+
+    it("throws when the conversation is not owned by the user", async () => {
+      mockedPrisma.conversation.updateMany.mockResolvedValue({ count: 0 });
+
+      await expect(
+        renameConversation("conv-1", "Hijack", "user-1")
+      ).rejects.toThrow("Conversation not found");
+
+      expect(mockedPrisma.conversation.findUnique).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("autoTitleIfNull", () => {
+    it("titles the conversation atomically when owned and currently untitled", async () => {
+      mockedPrisma.conversation.updateMany.mockResolvedValue({ count: 1 });
+      const titled = makeConversation({ id: "conv-1", title: "Egg ideas" });
+      mockedPrisma.conversation.findFirst.mockResolvedValue(titled);
+
+      const result = await autoTitleIfNull("conv-1", "Egg ideas", "user-1");
+
+      expect(result?.title).toBe("Egg ideas");
+      // The write is scoped to owner + still-null title so a concurrent rename
+      // can't be clobbered; a foreign id simply matches zero rows.
+      expect(mockedPrisma.conversation.updateMany).toHaveBeenCalledWith({
+        where: { id: "conv-1", userId: "user-1", title: null },
+        data: { title: "Egg ideas" },
+      });
+      expect(mockedPrisma.conversation.findFirst).toHaveBeenCalledWith({
+        where: { id: "conv-1", userId: "user-1" },
+        include: { _count: { select: { messages: true } } },
+      });
+    });
+
+    it("returns null without re-reading when nothing was updated (foreign id or already titled)", async () => {
+      mockedPrisma.conversation.updateMany.mockResolvedValue({ count: 0 });
+
+      const result = await autoTitleIfNull("conv-1", "Hijack", "user-1");
+
+      expect(result).toBeNull();
+      expect(mockedPrisma.conversation.findFirst).not.toHaveBeenCalled();
     });
   });
 

@@ -80,26 +80,44 @@ export async function createConversation(
 
 export async function renameConversation(
   id: string,
-  title: string
+  title: string,
+  userId: string
 ): Promise<ConversationEntity> {
-  const conversation = await prisma.conversation.update({
-    where: { id },
+  // Ownership-scope the write: updateMany lets us filter on userId. A rename
+  // aimed at another user's conversation matches zero rows and 404s.
+  const result = await prisma.conversation.updateMany({
+    where: { id, userId },
     data: { title },
+  });
+
+  if (result.count === 0) {
+    throw new Error("Conversation not found");
+  }
+
+  const conversation = await prisma.conversation.findUnique({
+    where: { id },
     include: { _count: { select: { messages: true } } },
   });
 
-  return conversation;
+  return conversation as ConversationEntity;
 }
 
 export async function autoTitleIfNull(
   id: string,
-  title: string
+  title: string,
+  userId: string
 ): Promise<ConversationEntity | null> {
-  const existing = await prisma.conversation.findUnique({ where: { id } });
-  if (!existing || existing.title !== null) return null;
-  return prisma.conversation.update({
-    where: { id },
+  // Scope the write itself to { id, userId, title: null } so it stays atomic:
+  // a concurrent rename or auto-title can't be clobbered between a separate
+  // check and write, and a foreign id matches zero rows.
+  const result = await prisma.conversation.updateMany({
+    where: { id, userId, title: null },
     data: { title },
+  });
+  if (result.count === 0) return null;
+
+  return prisma.conversation.findFirst({
+    where: { id, userId },
     include: { _count: { select: { messages: true } } },
   });
 }

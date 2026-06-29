@@ -3,26 +3,43 @@ import {
   deleteConversation,
   renameConversation,
 } from "@/lib/conversations";
-import { missingUserId } from "@/lib/http";
+import { unauthorized } from "@/lib/http";
+import { getSessionUserId } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const userId = await getSessionUserId(req);
+  if (!userId) return unauthorized();
+
   const { id } = await params;
   const { title, autoTitle } = await req.json();
 
   if (typeof title === "string") {
-    if (autoTitle) {
-      const conversation = await autoTitleIfNull(id, title);
-      if (!conversation) {
-        return new NextResponse(null, { status: 204 });
+    try {
+      if (autoTitle) {
+        const conversation = await autoTitleIfNull(id, title, userId);
+        if (!conversation) {
+          return new NextResponse(null, { status: 204 });
+        }
+        return NextResponse.json({ conversation });
       }
+      const conversation = await renameConversation(id, title, userId);
       return NextResponse.json({ conversation });
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === "Conversation not found"
+      ) {
+        return NextResponse.json(
+          { error: "Conversation not found" },
+          { status: 404 }
+        );
+      }
+      throw error;
     }
-    const conversation = await renameConversation(id, title);
-    return NextResponse.json({ conversation });
   }
 
   return NextResponse.json(
@@ -35,10 +52,10 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  const userId = req.nextUrl.searchParams.get("userId");
+  const userId = await getSessionUserId(req);
+  if (!userId) return unauthorized();
 
-  if (!userId) return missingUserId();
+  const { id } = await params;
 
   try {
     await deleteConversation(id, userId);

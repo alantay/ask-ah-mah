@@ -1,5 +1,6 @@
 import { GET, POST } from "./route";
 import { createMessage, getMessages } from "@/lib/messages";
+import { getSessionUserId } from "@/lib/session";
 import { NextRequest } from "next/server";
 
 // Mock Next.js server components
@@ -20,6 +21,8 @@ jest.mock("@/lib/messages", () => ({
   getMessages: jest.fn(),
 }));
 
+jest.mock("@/lib/session", () => ({ getSessionUserId: jest.fn() }));
+
 // Mock conversations lib (pulls in ai SDK which requires TransformStream)
 jest.mock("@/lib/conversations", () => ({
   autoTitleConversation: jest.fn().mockResolvedValue(undefined),
@@ -37,6 +40,7 @@ jest.mock("@/lib/db", () => ({
 
 const mockedCreateMessage = jest.mocked(createMessage);
 const mockedGetMessages = jest.mocked(getMessages);
+const mockedGetSessionUserId = jest.mocked(getSessionUserId);
 
 // Helper to create mock NextRequest
 const createMockRequest = (url: string, options: RequestInit = {}) => {
@@ -58,6 +62,7 @@ describe("Message API Routes", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.spyOn(console, "error").mockImplementation(() => {});
+    mockedGetSessionUserId.mockResolvedValue("user-123");
   });
 
   afterEach(() => {
@@ -95,7 +100,7 @@ describe("Message API Routes", () => {
 
       expect(response.status).toBe(200);
       expect(data).toEqual(mockMessages);
-      expect(mockedGetMessages).toHaveBeenCalledWith("conv-123");
+      expect(mockedGetMessages).toHaveBeenCalledWith("conv-123", "user-123");
       expect(mockedGetMessages).toHaveBeenCalledTimes(1);
     });
 
@@ -110,7 +115,18 @@ describe("Message API Routes", () => {
 
       expect(response.status).toBe(200);
       expect(data).toEqual([]);
-      expect(mockedGetMessages).toHaveBeenCalledWith("conv-456");
+      expect(mockedGetMessages).toHaveBeenCalledWith("conv-456", "user-123");
+    });
+
+    it("should return 401 when unauthenticated", async () => {
+      mockedGetSessionUserId.mockResolvedValue(null);
+      const request = createMockRequest(
+        "http://localhost:3000/api/message?conversationId=conv-123"
+      );
+      const response = await GET(request);
+
+      expect(response.status).toBe(401);
+      expect(mockedGetMessages).not.toHaveBeenCalled();
     });
 
     it("should return 400 when conversationId is missing", async () => {
@@ -143,7 +159,7 @@ describe("Message API Routes", () => {
       );
 
       await expect(GET(request)).rejects.toThrow("Database error");
-      expect(mockedGetMessages).toHaveBeenCalledWith("conv-123");
+      expect(mockedGetMessages).toHaveBeenCalledWith("conv-123", "user-123");
     });
 
     it("should handle multiple query parameters correctly", async () => {
@@ -168,7 +184,7 @@ describe("Message API Routes", () => {
 
       expect(response.status).toBe(200);
       expect(data).toEqual(mockMessages);
-      expect(mockedGetMessages).toHaveBeenCalledWith("conv-123");
+      expect(mockedGetMessages).toHaveBeenCalledWith("conv-123", "user-123");
     });
   });
 
@@ -268,12 +284,13 @@ describe("Message API Routes", () => {
 
       expect(response.status).toBe(400);
       expect(data).toEqual({
-        error: "conversationId, userId, content, and role are required",
+        error: "conversationId, content, and role are required",
       });
       expect(mockedCreateMessage).not.toHaveBeenCalled();
     });
 
-    it("should return 400 when userId is missing", async () => {
+    it("should return 401 when unauthenticated", async () => {
+      mockedGetSessionUserId.mockResolvedValue(null);
       const requestBody = {
         conversationId: "conv-123",
         content: "Test message",
@@ -287,13 +304,64 @@ describe("Message API Routes", () => {
       });
 
       const response = await POST(request);
+
+      expect(response.status).toBe(401);
+      expect(mockedCreateMessage).not.toHaveBeenCalled();
+    });
+
+    it("ignores a userId in the body and writes as the session user", async () => {
+      const newMessage = {
+        id: "msg-new",
+        conversationId: "conv-123",
+        userId: "user-123",
+        content: "Test message",
+        role: "user",
+        createdAt: new Date("2024-01-01T10:00:00.000Z"),
+      };
+      mockedCreateMessage.mockResolvedValue(newMessage);
+
+      const request = createMockRequest("http://localhost:3000/api/message", {
+        method: "POST",
+        body: JSON.stringify({
+          conversationId: "conv-123",
+          userId: "victim-999",
+          content: "Test message",
+          role: "user",
+        }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      await POST(request);
+
+      expect(mockedCreateMessage).toHaveBeenCalledTimes(1);
+      expect(mockedCreateMessage).toHaveBeenCalledWith(
+        "conv-123",
+        "user-123",
+        "Test message",
+        "user"
+      );
+    });
+
+    it("returns 404 when writing to a conversation the user does not own", async () => {
+      mockedCreateMessage.mockRejectedValue(
+        new Error("Conversation not found")
+      );
+
+      const request = createMockRequest("http://localhost:3000/api/message", {
+        method: "POST",
+        body: JSON.stringify({
+          conversationId: "conv-foreign",
+          content: "Hijack",
+          role: "user",
+        }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const response = await POST(request);
       const data = await response.json();
 
-      expect(response.status).toBe(400);
-      expect(data).toEqual({
-        error: "conversationId, userId, content, and role are required",
-      });
-      expect(mockedCreateMessage).not.toHaveBeenCalled();
+      expect(response.status).toBe(404);
+      expect(data).toEqual({ error: "Conversation not found" });
     });
 
     it("should return 400 when content is missing", async () => {
@@ -314,7 +382,7 @@ describe("Message API Routes", () => {
 
       expect(response.status).toBe(400);
       expect(data).toEqual({
-        error: "conversationId, userId, content, and role are required",
+        error: "conversationId, content, and role are required",
       });
       expect(mockedCreateMessage).not.toHaveBeenCalled();
     });
@@ -337,7 +405,7 @@ describe("Message API Routes", () => {
 
       expect(response.status).toBe(400);
       expect(data).toEqual({
-        error: "conversationId, userId, content, and role are required",
+        error: "conversationId, content, and role are required",
       });
       expect(mockedCreateMessage).not.toHaveBeenCalled();
     });
@@ -361,7 +429,7 @@ describe("Message API Routes", () => {
 
       expect(response.status).toBe(400);
       expect(data).toEqual({
-        error: "conversationId, userId, content, and role are required",
+        error: "conversationId, content, and role are required",
       });
       expect(mockedCreateMessage).not.toHaveBeenCalled();
     });

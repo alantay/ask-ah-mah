@@ -4,6 +4,7 @@ import {
   removeInventoryItem,
 } from "@/lib/inventory/Inventory";
 import { getMessages } from "@/lib/messages/messages";
+import { getSessionUserId } from "@/lib/session";
 import { openai } from "@ai-sdk/openai";
 import {
   convertToModelMessages,
@@ -24,6 +25,8 @@ jest.mock("@/lib/inventory/Inventory", () => ({
 jest.mock("@/lib/messages/messages", () => ({
   getMessages: jest.fn(),
 }));
+
+jest.mock("@/lib/session", () => ({ getSessionUserId: jest.fn() }));
 
 jest.mock("@ai-sdk/openai", () => ({
   openai: jest.fn(),
@@ -49,15 +52,24 @@ jest.mock("./constants", () => ({
   CHAT_SYSTEM_PROMPT: "Test system prompt",
 }));
 
-// Mock Next.js server components
+// Mock Next.js server components. NextResponse.json lets the auth/validation
+// guards (unauthorized, conversationId-missing) return real status objects;
+// thrown errors still fall through to chatErrorResponse's `new Response`.
 jest.mock("next/server", () => ({
   NextRequest: jest.fn(),
+  NextResponse: {
+    json: jest.fn((data, init) => ({
+      json: async () => data,
+      status: init?.status || 200,
+    })),
+  },
 }));
 
 const mockedAddInventoryItem = jest.mocked(addInventoryItem);
 const mockedGetInventory = jest.mocked(getInventory);
 const mockedRemoveInventoryItem = jest.mocked(removeInventoryItem);
 const mockedGetMessages = jest.mocked(getMessages);
+const mockedGetSessionUserId = jest.mocked(getSessionUserId);
 const mockedOpenai = jest.mocked(openai);
 const mockedConvertToModelMessages = jest.mocked(convertToModelMessages);
 const mockedStepCountIs = jest.mocked(stepCountIs);
@@ -76,6 +88,8 @@ describe("Chat API Route", () => {
     jest.clearAllMocks();
     // Mock console.error to avoid noise in tests
     jest.spyOn(console, "error").mockImplementation(() => {});
+
+    mockedGetSessionUserId.mockResolvedValue("user-123");
 
     // Setup default mocks
     mockedOpenai.mockReturnValue(
@@ -141,7 +155,7 @@ describe("Chat API Route", () => {
 
       expect(response).toBe("mock-stream-response");
       expect(mockedOpenai).toHaveBeenCalledWith("gpt-5-mini");
-      expect(mockedGetMessages).toHaveBeenCalledWith("conv-123");
+      expect(mockedGetMessages).toHaveBeenCalledWith("conv-123", "user-123");
       expect(mockedValidateUIMessages).toHaveBeenCalled();
       expect(mockedStreamText).toHaveBeenCalled();
     });
@@ -165,7 +179,7 @@ describe("Chat API Route", () => {
       const response = await POST(request);
 
       expect(response).toBe("mock-stream-response");
-      expect(mockedGetMessages).toHaveBeenCalledWith("conv-456");
+      expect(mockedGetMessages).toHaveBeenCalledWith("conv-456", "user-123");
       expect(mockedValidateUIMessages).toHaveBeenCalledWith({
         messages: requestBody.messages,
       });
@@ -325,7 +339,7 @@ describe("Chat API Route", () => {
 
       const response = await POST(request);
       expect(response.status).toBe(500);
-      expect(mockedGetMessages).toHaveBeenCalledWith("conv-123");
+      expect(mockedGetMessages).toHaveBeenCalledWith("conv-123", "user-123");
     });
 
     it("should handle validation errors", async () => {
@@ -351,10 +365,49 @@ describe("Chat API Route", () => {
     });
 
     it("should handle malformed request body", async () => {
-      const request = createMockRequest("invalid json");
+      // A body that fails to parse throws → chatErrorResponse → 500.
+      const request = {
+        json: async () => {
+          throw new SyntaxError("Unexpected token");
+        },
+      } as unknown as NextRequest;
 
       const response = await POST(request);
       expect(response.status).toBe(500);
+    });
+
+    it("should return 401 when unauthenticated", async () => {
+      mockedGetSessionUserId.mockResolvedValue(null);
+
+      const request = createMockRequest({
+        conversationId: "conv-123",
+        messages: [
+          { id: "msg-1", role: "user", parts: [{ type: "text", text: "Hi" }] },
+        ],
+      });
+
+      const response = await POST(request);
+
+      expect(response.status).toBe(401);
+      expect(mockedGetMessages).not.toHaveBeenCalled();
+      expect(mockedStreamText).not.toHaveBeenCalled();
+    });
+
+    it("loads history for the session user, ignoring any body userId", async () => {
+      mockedGetMessages.mockResolvedValue([]);
+
+      const request = createMockRequest({
+        userId: "victim-999",
+        conversationId: "conv-123",
+        messages: [
+          { id: "msg-1", role: "user", parts: [{ type: "text", text: "Hi" }] },
+        ],
+      });
+
+      await POST(request);
+
+      expect(mockedGetMessages).toHaveBeenCalledTimes(1);
+      expect(mockedGetMessages).toHaveBeenCalledWith("conv-123", "user-123");
     });
   });
 
