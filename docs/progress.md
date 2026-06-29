@@ -155,6 +155,14 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Substitutions on-ramp relocated to the action bar.** "Ask Ah Mah for substitutions →" survives the card's removal: it now sits in the recipe action bar, shown when the user is tracking a pantry and is short an ingredient.
 - **Dead code removed:** `src/lib/marketTips/formatShoppingList.ts` (+ test) — it formatted amounts/units for the shortfall's clipboard copy, obsolete under the quantity-less standing list and orphaned once the card was deleted.
 
+### Recipe magic links — public share-by-link — Shipped Jun 2026 (#325)
+
+- **Share a recipe with anyone, no account.** A new Share button in the `RecipeDisplay` action bar (owner-only) mints a public link and copies it (`https://<host>/r/<token>`). Minting is **on-demand and idempotent**: `POST /api/recipe/[id]/share` (owner-scoped) generates a short token the first time and returns the same one thereafter, so a link already shared keeps working.
+- **Token model**: `Recipe.shareToken String? @unique` (nullable, additive migration `20260627120000_add_recipe_share_token`). Token is 72 bits of `randomBytes(9).base64url` — short and unguessable. A recipe with no token has never been shared.
+- **Public route `/r/[token]`** is a server component outside the app shell, resolving the recipe by **token alone — never `userId`** (`getRecipeByShareToken`), so it's readable by anyone yet only ever exposes that one recipe. Unknown token → `notFound()`. `generateMetadata` emits OG/Twitter tags (name, description, image) for rich link unfurls.
+- **Read-only reuse**: `RecipeDisplay` gained a `readOnly` prop that hides every owner action (Share, Tweak, the Tweak bench, Start cooking, Back) but keeps **Copy recipe** — useful for whoever opens the link. The public page wraps it (`PublicRecipeView`) with a slim "Ask Ah Mah" brand bar linking home.
+- **App-shell extraction**: the sidebar + mobile top bar moved from the root layout into a new `(app)` route group (`src/app/(app)/layout.tsx`); the root layout is now just fonts + providers + `Toaster`. Existing routes (`/`, `/recipe/[id]`) moved into the group — URLs unchanged. This is what lets `/r/[token]` render clean, without the app's nav leaking into a public link.
+
 ## Design system
 
 The two recipe surfaces — `RecipeLetter` (chat) and `RecipeDisplay` (cookbook) — were drifting because each hand-rolled the same primitives. A design system is now the north star: shared atoms stop drift, and every surface gets tweaked incrementally so it "looks like it belongs". See the spec at `docs/superpowers/specs/2026-06-20-recipe-design-system-design.md` and the issue tracker (#277–#285).

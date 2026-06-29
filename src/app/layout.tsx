@@ -1,11 +1,8 @@
-import { AppSidebar } from "@/features/shared/components/AppSidebar";
-import { MobileTopBar } from "@/features/shared/components/MobileTopBar";
 import { Toaster } from "@/components/ui/sonner";
 import { ConversationProvider } from "@/contexts/ConversationContext";
 import { SessionProvider } from "@/contexts/SessionContext";
 import type { Metadata } from "next";
 import { Fraunces, Inter, Nunito } from "next/font/google";
-import { Suspense } from "react";
 import "./globals.css";
 
 const fontSans = Inter({
@@ -105,7 +102,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`mx-0 mt-0 sm:mx-2 sm:mt-2 md:mx-4 md:mt-4 lg:mx-0 lg:mt-0 ${fontSans.variable} ${fontDisplay.variable} ${fontLogo.variable} antialiased font-sans flex h-dvh overflow-hidden`}
+        className={`${fontSans.variable} ${fontDisplay.variable} ${fontLogo.variable} antialiased font-sans`}
       >
         <SessionProvider>
           <ConversationProvider>
@@ -117,15 +114,7 @@ export default function RootLayout({
                 },
               }}
             />
-            <Suspense fallback={null}>
-              <AppSidebar />
-            </Suspense>
-            <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-              <Suspense fallback={null}>
-                <MobileTopBar />
-              </Suspense>
-              {children}
-            </div>
+            {children}
           </ConversationProvider>
         </SessionProvider>
       </body>
