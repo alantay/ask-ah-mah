@@ -536,10 +536,9 @@ export default function RecipeDisplay({
     if (!userId || sharing) return;
     setSharing(true);
     try {
+      // Identity comes from the session cookie; the server ignores any body.
       const res = await fetch(`/api/recipe/${recipe.id}/share`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
       });
       if (!res.ok) throw new Error("share failed");
       const { token } = await res.json();

@@ -1,6 +1,11 @@
 import { prisma } from "@/lib/db";
 import { fetchRecipePhoto } from "@/lib/pexels/fetchPhoto";
-import { deleteRecipeForUser, saveRecipeFromBlock } from "./recipes";
+import {
+  deleteRecipeForUser,
+  getRecipeByShareToken,
+  mintShareToken,
+  saveRecipeFromBlock,
+} from "./recipes";
 import type { RecipeBlock } from "./schemas";
 
 jest.mock("@/lib/db", () => ({
@@ -8,6 +13,9 @@ jest.mock("@/lib/db", () => ({
     recipe: {
       create: jest.fn(),
       deleteMany: jest.fn(),
+      findFirst: jest.fn(),
+      findUnique: jest.fn(),
+      updateMany: jest.fn(),
     },
   },
 }));
@@ -135,5 +143,75 @@ describe("deleteRecipeForUser", () => {
     (mockPrisma.recipe.deleteMany as jest.Mock).mockResolvedValue({ count: 1 });
 
     await expect(deleteRecipeForUser("recipe-1", "user-1")).resolves.not.toThrow();
+  });
+});
+
+describe("mintShareToken", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it("mints and returns a new token for a recipe the user owns", async () => {
+    (mockPrisma.recipe.findFirst as jest.Mock).mockResolvedValueOnce({
+      shareToken: null,
+    });
+    (mockPrisma.recipe.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+
+    const token = await mintShareToken("recipe-1", "user-1");
+
+    expect(typeof token).toBe("string");
+    expect(token.length).toBeGreaterThan(0);
+    // The owner lookup AND the compare-and-set write are both scoped to userId.
+    expect(mockPrisma.recipe.findFirst).toHaveBeenCalledWith({
+      where: { id: "recipe-1", userId: "user-1" },
+      select: { shareToken: true },
+    });
+    expect(mockPrisma.recipe.updateMany).toHaveBeenCalledWith({
+      where: { id: "recipe-1", userId: "user-1", shareToken: null },
+      data: { shareToken: token },
+    });
+  });
+
+  it("is idempotent — returns the existing token without a second write", async () => {
+    (mockPrisma.recipe.findFirst as jest.Mock).mockResolvedValueOnce({
+      shareToken: "tok_existing",
+    });
+
+    const token = await mintShareToken("recipe-1", "user-1");
+
+    expect(token).toBe("tok_existing");
+    expect(mockPrisma.recipe.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("throws 'not found' when the recipe is not the user's (non-owner cannot mint)", async () => {
+    (mockPrisma.recipe.findFirst as jest.Mock).mockResolvedValueOnce(null);
+
+    await expect(mintShareToken("recipe-1", "attacker")).rejects.toThrow(
+      "not found",
+    );
+    expect(mockPrisma.recipe.updateMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("getRecipeByShareToken", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it("resolves a recipe by token alone — no userId, no session required", async () => {
+    const publicRow = { id: "recipe-1", name: "Char Kway Teow" };
+    (mockPrisma.recipe.findUnique as jest.Mock).mockResolvedValue(publicRow);
+
+    const result = await getRecipeByShareToken("tok_abc");
+
+    expect(result).toBe(publicRow);
+    const call = (mockPrisma.recipe.findUnique as jest.Mock).mock.calls[0][0];
+    // Matches on the token only — never userId — so anyone with the link reads it.
+    expect(call.where).toEqual({ shareToken: "tok_abc" });
+    // Owner-scoped fields must never be selected into the public projection.
+    expect(call.select).not.toHaveProperty("userId");
+    expect(call.select).not.toHaveProperty("shareToken");
+  });
+
+  it("returns null for an unknown token", async () => {
+    (mockPrisma.recipe.findUnique as jest.Mock).mockResolvedValue(null);
+
+    await expect(getRecipeByShareToken("nope")).resolves.toBeNull();
   });
 });
