@@ -176,6 +176,12 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Conflict-safe for the two unique-scoped tables.** `InventoryItem` (`userId,name,type`) and `ShoppingListItem` (`userId,key`) could collide when linking a guest to an already-populated account; a blind reassignment would violate the constraint and fail sign-in. We move only the non-colliding rows and drop the guest's duplicates, letting the destination account's existing row win. The whole migration runs in one `$transaction` — all-or-nothing.
 - **Tests** cover reassignment across all five models, the empty-destination path (everything moves), and the collision path (skip + drop) for both unique-scoped tables, plus the same-user no-op.
 
+### Auth origins trusted on Vercel — Shipped (hotfix)
+
+- **Symptom**: in production every session-gated route (conversations, inventory, …) returned 500. Root cause was better-auth rejecting the request — `ERROR [Better Auth]: Invalid origin: https://<deploy>.vercel.app/ for .../sign-in/anonymous`. better-auth trusts only `baseURL`'s origin by default, but Vercel serves each deployment/preview from a *unique* `*.vercel.app` origin, so anonymous sign-in failed and no session was issued. (Not a DB/migration issue — local and prod share the same `db.prisma.io` database and the schema was in sync.)
+- **Fix**: `resolveAuthOrigins(env)` (`src/lib/auth/origins.ts`) computes better-auth's `baseURL` + `trustedOrigins` from the environment. `baseURL` stays pinned to a stable origin (`BETTER_AUTH_URL` → `VERCEL_PROJECT_PRODUCTION_URL` → localhost) so the Google OAuth `redirect_uri` doesn't move between deployments; `trustedOrigins` additionally trusts the concrete deployment URL (`VERCEL_URL`) and `https://*.vercel.app` so the origin check passes on every deploy. No Vercel env changes required — both `VERCEL_URL` and `VERCEL_PROJECT_PRODUCTION_URL` are injected automatically.
+- **Tests** (`origins.test.ts`) lock baseURL pinning, deployment-origin trust, the explicit-`BETTER_AUTH_URL` override, the localhost fallback, and de-duplication.
+
 ### Recipe routes locked down — Shipped (#341)
 
 - **Recipe routes derive identity from the session, never the request.** `GET/POST/DELETE /api/recipe`, `PATCH /api/recipe/[id]`, and `POST /api/recipe/[id]/tweak` now call `getSessionUserId(req)` and return `unauthorized()` (401) when there's no valid session. A `userId` in the query string or body is ignored entirely — an attacker can no longer read or mutate another user's cookbook by supplying a foreign id.
