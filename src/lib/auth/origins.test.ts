@@ -1,16 +1,23 @@
 import { resolveAuthOrigins } from "./origins";
 
 describe("resolveAuthOrigins", () => {
-  it("uses BETTER_AUTH_URL locally and trusts only that origin plus the vercel wildcard", () => {
+  it("uses BETTER_AUTH_URL locally and trusts only that origin", () => {
     const { baseURL, trustedOrigins } = resolveAuthOrigins({
       BETTER_AUTH_URL: "http://localhost:3000",
     });
 
     expect(baseURL).toBe("http://localhost:3000");
-    expect(trustedOrigins).toEqual([
-      "http://localhost:3000",
-      "https://*.vercel.app",
-    ]);
+    expect(trustedOrigins).toEqual(["http://localhost:3000"]);
+  });
+
+  it("treats a blank BETTER_AUTH_URL as unset and falls back", () => {
+    const { baseURL } = resolveAuthOrigins({
+      BETTER_AUTH_URL: "   ",
+      VERCEL_PROJECT_PRODUCTION_URL: "ask-ah-mah.vercel.app",
+    });
+
+    // "" / whitespace must not become an invalid baseURL.
+    expect(baseURL).toBe("https://ask-ah-mah.vercel.app");
   });
 
   it("pins baseURL to the stable production domain on Vercel, not the per-deploy URL", () => {
@@ -33,7 +40,8 @@ describe("resolveAuthOrigins", () => {
       "https://ask-ah-et9oc2zji-luns-projects-a559a6a8.vercel.app",
     );
     expect(trustedOrigins).toContain("https://ask-ah-mah.vercel.app");
-    expect(trustedOrigins).toContain("https://*.vercel.app");
+    // No broad wildcard — trustedOrigins is a CSRF boundary.
+    expect(trustedOrigins).not.toContain("https://*.vercel.app");
   });
 
   it("prefers an explicit BETTER_AUTH_URL over the Vercel production domain", () => {

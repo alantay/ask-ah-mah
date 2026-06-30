@@ -13,9 +13,12 @@
  *   URL doesn't move between deployments (a changing redirect_uri breaks
  *   sign-in). Prefer an explicit `BETTER_AUTH_URL`, then the Vercel production
  *   domain, then localhost.
- * - `trustedOrigins` additionally trusts the concrete deployment URL and any
- *   `*.vercel.app` preview origin, so the origin check passes on every deploy
- *   without making OAuth redirects dynamic.
+ * - `trustedOrigins` additionally trusts the *concrete* origins this app is
+ *   served from — the current deployment URL (`VERCEL_URL`, which is exactly
+ *   the origin each deployment serves itself from) and the production domain.
+ *   We deliberately do NOT add a broad `*.vercel.app` wildcard: `trustedOrigins`
+ *   is a CSRF boundary, and that wildcard would trust every Vercel project's
+ *   origin, not just ours.
  */
 export function resolveAuthOrigins(
   env: Record<string, string | undefined> = process.env,
@@ -28,12 +31,14 @@ export function resolveAuthOrigins(
     ? `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`
     : undefined;
 
-  const baseURL =
-    env.BETTER_AUTH_URL ?? productionURL ?? "http://localhost:3000";
+  // Treat a blank/whitespace BETTER_AUTH_URL as unset — `??` alone would let an
+  // empty string through and produce an invalid `baseURL: ""`.
+  const configuredBaseURL = env.BETTER_AUTH_URL?.trim() || undefined;
+  const baseURL = configuredBaseURL ?? productionURL ?? "http://localhost:3000";
 
   const trustedOrigins = Array.from(
     new Set(
-      [baseURL, productionURL, deploymentURL, "https://*.vercel.app"].filter(
+      [baseURL, productionURL, deploymentURL].filter(
         (origin): origin is string => Boolean(origin),
       ),
     ),
