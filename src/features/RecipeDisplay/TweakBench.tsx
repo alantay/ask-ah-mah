@@ -17,7 +17,6 @@ import {
   recipeWithIdToBlock,
   TweakPatchSchema,
 } from "@/lib/recipes/schemas";
-import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -448,36 +447,26 @@ function TweakProgress() {
   const showProgress = usePhaseAfter(startedAt, TWEAK_PROGRESS_DELAY_MS);
 
   return (
-    <div className="flex gap-2.5 items-start">
-      <div className="relative w-7 h-7 shrink-0">
-        <Image src="/granny-icon.png" alt="" fill className="object-contain" />
-      </div>
-      <div className="flex-1 pt-0.5">
-        {showProgress ? (
-          <CyclingVoiceLines lines={lines} intervalMs={4000} loop />
-        ) : (
-          <div
-            aria-live="polite"
-            className="flex items-center gap-2.5 font-display italic text-dense text-foreground leading-[1.5]"
-          >
-            {lines[0]}
-            <LoadingDots />
-          </div>
-        )}
-      </div>
+    <div>
+      {showProgress ? (
+        <CyclingVoiceLines lines={lines} intervalMs={4000} loop />
+      ) : (
+        <div
+          aria-live="polite"
+          className="flex items-center gap-2.5 font-display italic text-dense text-foreground leading-[1.5]"
+        >
+          {lines[0]}
+          <LoadingDots />
+        </div>
+      )}
     </div>
   );
 }
 
 function AssistantBubble({ text }: { text: string }) {
   return (
-    <div className="flex gap-2.5 items-start">
-      <div className="relative w-7 h-7 shrink-0">
-        <Image src="/granny-icon.png" alt="" fill className="object-contain" />
-      </div>
-      <div className="flex-1 font-display italic text-dense text-foreground leading-[1.5] pt-0.5">
-        {text}
-      </div>
+    <div className="font-display italic text-dense text-foreground leading-[1.5]">
+      {text}
     </div>
   );
 }
