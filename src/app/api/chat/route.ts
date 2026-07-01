@@ -20,7 +20,7 @@ import { CHAT_SYSTEM_PROMPT } from "./constants";
 
 const PostSchema = z.object({
   conversationId: z.string().min(1).max(100),
-  messages: z.array(z.record(z.unknown())).max(100),
+  messages: z.array(z.record(z.string(), z.unknown())).max(100),
 });
 
 export async function POST(req: NextRequest) {
