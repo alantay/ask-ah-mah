@@ -3,6 +3,13 @@ import { unauthorized } from "@/lib/http";
 import { createMessage, getMessages } from "@/lib/messages";
 import { getSessionUserId } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+const PostSchema = z.object({
+  conversationId: z.string().min(1),
+  content: z.string().min(1),
+  role: z.enum(["user", "assistant"]),
+});
 
 export async function GET(req: NextRequest) {
   const userId = await getSessionUserId(req);
@@ -24,13 +31,17 @@ export async function POST(req: NextRequest) {
   const userId = await getSessionUserId(req);
   if (!userId) return unauthorized();
 
-  const { conversationId, content, role } = await req.json();
-  if (!conversationId || !content || !role) {
-    return NextResponse.json(
-      { error: "conversationId, content, and role are required" },
-      { status: 400 }
-    );
+  let rawBody: unknown;
+  try {
+    rawBody = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
+  const parsed = PostSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+  const { conversationId, content, role } = parsed.data;
 
   try {
     const message = await createMessage(conversationId, userId, content, role);

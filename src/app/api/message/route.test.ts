@@ -280,12 +280,8 @@ describe("Message API Routes", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
 
       expect(response.status).toBe(400);
-      expect(data).toEqual({
-        error: "conversationId, content, and role are required",
-      });
       expect(mockedCreateMessage).not.toHaveBeenCalled();
     });
 
@@ -365,72 +361,50 @@ describe("Message API Routes", () => {
     });
 
     it("should return 400 when content is missing", async () => {
-      const requestBody = {
-        conversationId: "conv-123",
-        userId: "user-123",
-        role: "user",
-      };
-
       const request = createMockRequest("http://localhost:3000/api/message", {
         method: "POST",
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({ conversationId: "conv-123", role: "user" }),
         headers: { "Content-Type": "application/json" },
       });
 
       const response = await POST(request);
-      const data = await response.json();
-
       expect(response.status).toBe(400);
-      expect(data).toEqual({
-        error: "conversationId, content, and role are required",
-      });
       expect(mockedCreateMessage).not.toHaveBeenCalled();
     });
 
     it("should return 400 when role is missing", async () => {
-      const requestBody = {
-        conversationId: "conv-123",
-        userId: "user-123",
-        content: "Test message",
-      };
-
       const request = createMockRequest("http://localhost:3000/api/message", {
         method: "POST",
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({ conversationId: "conv-123", content: "Test message" }),
         headers: { "Content-Type": "application/json" },
       });
 
       const response = await POST(request);
-      const data = await response.json();
-
       expect(response.status).toBe(400);
-      expect(data).toEqual({
-        error: "conversationId, content, and role are required",
-      });
       expect(mockedCreateMessage).not.toHaveBeenCalled();
     });
 
     it("should return 400 when fields are empty strings", async () => {
-      const requestBody = {
-        conversationId: "",
-        userId: "",
-        content: "",
-        role: "",
-      };
-
       const request = createMockRequest("http://localhost:3000/api/message", {
         method: "POST",
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({ conversationId: "", content: "", role: "" }),
         headers: { "Content-Type": "application/json" },
       });
 
       const response = await POST(request);
-      const data = await response.json();
-
       expect(response.status).toBe(400);
-      expect(data).toEqual({
-        error: "conversationId, content, and role are required",
+      expect(mockedCreateMessage).not.toHaveBeenCalled();
+    });
+
+    it("returns 400 for an invalid role value", async () => {
+      const request = createMockRequest("http://localhost:3000/api/message", {
+        method: "POST",
+        body: JSON.stringify({ conversationId: "conv-123", content: "hi", role: "system" }),
+        headers: { "Content-Type": "application/json" },
       });
+
+      const response = await POST(request);
+      expect(response.status).toBe(400);
       expect(mockedCreateMessage).not.toHaveBeenCalled();
     });
 
@@ -497,52 +471,26 @@ describe("Message API Routes", () => {
       );
     });
 
-    it("should handle malformed JSON", async () => {
-      const request = createMockRequest("http://localhost:3000/api/message", {
-        method: "POST",
-        body: "invalid json",
-        headers: { "Content-Type": "application/json" },
-      });
+    it("returns 400 for malformed JSON", async () => {
+      const request = {
+        json: async () => { throw new SyntaxError("Unexpected token"); },
+      } as unknown as NextRequest;
 
-      await expect(POST(request)).rejects.toThrow();
+      const response = await POST(request);
+      expect(response.status).toBe(400);
+      expect(mockedCreateMessage).not.toHaveBeenCalled();
     });
 
-    it("should handle different role types", async () => {
-      const systemMessage = {
-        id: "msg-system",
-        conversationId: "conv-123",
-        userId: "user-123",
-        content: "System initialized",
-        role: "system",
-        createdAt: new Date("2024-01-01T10:00:00.000Z"),
-      };
-
-      mockedCreateMessage.mockResolvedValue(systemMessage);
-
-      const requestBody = {
-        conversationId: "conv-123",
-        userId: "user-123",
-        content: "System initialized",
-        role: "system",
-      };
-
+    it("rejects role values outside user|assistant enum", async () => {
       const request = createMockRequest("http://localhost:3000/api/message", {
         method: "POST",
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({ conversationId: "conv-123", content: "System initialized", role: "system" }),
         headers: { "Content-Type": "application/json" },
       });
 
       const response = await POST(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data).toEqual({ message: systemMessage });
-      expect(mockedCreateMessage).toHaveBeenCalledWith(
-        "conv-123",
-        "user-123",
-        "System initialized",
-        "system"
-      );
+      expect(response.status).toBe(400);
+      expect(mockedCreateMessage).not.toHaveBeenCalled();
     });
   });
 });

@@ -218,6 +218,12 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Tests** cover owner-can-mint, non-owner/unauthenticated cannot (401/404), idempotent re-mint, and the public read working token-only with owner fields never selected.
 - This completes the route-lockdown series (#341–#345); the now-unused `missingUserId()` 400 helper was removed (every route uses `unauthorized()`).
 
+### Write-route input validation hardened — Shipped (#360)
+
+- **`POST /api/message`**: replaced the loose truthiness check with a Zod schema (`conversationId: string.min(1)`, `content: string.min(1)`, `role: enum["user","assistant"]`). An arbitrary role value (`"system"`, junk) now returns 400 rather than reaching the DB.
+- **`POST /api/chat`**: added Zod validation before the expensive LLM path — `conversationId: string.max(100)`, `messages: array.max(100)`. Prevents multi-MB payloads from ever reaching `captureMentionedInventory` / `loadConversationContext` / `streamText`.
+- Tests updated: the old "system role succeeds" case flipped to 400; new tests assert oversized messages array, oversized conversationId, and missing conversationId all 400 before any model call.
+
 ### normalizeIngredient extracted — Shipped (#362)
 
 - **Ingredient normalisation lives in one place.** `saveRecipeFromBlock` and `updateRecipeForUser` both had an identical inline map — same `category ?? "Misc"` default and the same `parseFloat` / `Number.isNaN` amount-coercion. Extracted to `src/lib/recipes/normalizeIngredient.ts` (mirrors `normalizeTags.ts`); both call sites become one-liner `.map(normalizeIngredient)` calls. A unit-test file covers the amount-parsing edge cases (valid numeric, non-numeric, undefined, decimal) and the category default.
