@@ -4,6 +4,7 @@ import { getSessionUserId } from "@/lib/session";
 import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
 import { isPickableCategory } from "@/lib/marketTips/pickable";
 import { KITCHEN_DOMAIN_RULE } from "@/lib/marketTips/relevance";
+import { PROMPT_FRAGMENTS } from "@/lib/prompts/fragments";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { NextRequest, NextResponse } from "next/server";
@@ -82,6 +83,8 @@ export async function POST(req: NextRequest) {
         schema: TipGenSchema,
         temperature: 0.4,
         prompt: `You are Ah Mah, a warm Singaporean grandmother at the wet market. For each item, give ONE short tip on how to PICK a good fresh one at the shop — what to look for, feel for, or smell.
+
+${PROMPT_FRAGMENTS.comprehensibleVoice}
 
 RULES:
 - Return exactly one entry per item, using the EXACT given item text as "key".

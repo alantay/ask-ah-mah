@@ -233,6 +233,11 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Decision: comprehension over localization.** Considered and rejected geo-detecting SG/MY users to toggle Singlish on/off — it strips the persona for exactly the non-local users drawn to it, and mislabels the SG/MY diaspora whose IP reads as elsewhere. Glossing fixes comprehension for everyone with no detection and no second voice to maintain.
 - Verified live against `gpt-4.1-mini`: region-specific terms (ikan bilis, tapau, kangkong, belacan) glossed on first mention; wok/bok choy left alone; Singlish particles and warm asides unchanged.
 
+### Comprehensible-voice fragment extended to tip surfaces — Shipped Jul 2026 (#366)
+
+- **`storage-tip` and `market-tip` now share the same `PROMPT_FRAGMENTS.comprehensibleVoice` fragment as chat** (#365) — no rule text duplicated, all three persona surfaces stay consistent from one source of truth.
+- Verified live against `gpt-5-mini` (the model these two routes use): "ikan bilis (dried anchovies)", "belacan (fermented shrimp paste)", and "kangkong (water spinach)" glossed on first mention in both a storage tip and a market tip; "wok", "bok choy", and "tofu" left alone. The gloss comfortably coexists with the existing 12-word tip cap.
+
 ## Design system
 
 The two recipe surfaces — `RecipeLetter` (chat) and `RecipeDisplay` (cookbook) — were drifting because each hand-rolled the same primitives. A design system is now the north star: shared atoms stop drift, and every surface gets tweaked incrementally so it "looks like it belongs". See the spec at `docs/superpowers/specs/2026-06-20-recipe-design-system-design.md` and the issue tracker (#277–#285).

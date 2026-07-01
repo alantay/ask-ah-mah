@@ -3,6 +3,7 @@ import { unauthorized } from "@/lib/http";
 import { getSessionUserId } from "@/lib/session";
 import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
 import { KITCHEN_DOMAIN_RULE } from "@/lib/marketTips/relevance";
+import { PROMPT_FRAGMENTS } from "@/lib/prompts/fragments";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { NextRequest, NextResponse } from "next/server";
@@ -83,6 +84,8 @@ export async function POST(req: NextRequest) {
         schema: TipGenSchema,
         temperature: 0.4,
         prompt: `You are Ah Mah, a warm Singaporean grandmother. For each kitchen item, give ONE short tip on how to KEEP it well at home — for food, how to store it so it lasts (where, how, what to avoid); for equipment, how to care for it so it lasts.
+
+${PROMPT_FRAGMENTS.comprehensibleVoice}
 
 Each item below is written as "name = kind".
 
