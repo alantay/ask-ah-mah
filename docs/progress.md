@@ -223,6 +223,12 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **The three model-calling routes that hold no user data are now session-gated too.** `POST /api/market-tip`, `POST /api/storage-tip`, and `POST /api/recipe/extract` call `getSessionUserId(req)` and return `unauthorized()` (401) before any `generateObject` / `parseRecipeText` call. The lockdown series (#341–#345) scoped the *data-owning* routes; these three were skipped because they read/write only the shared tip cache (or nothing), so there was no IDOR — but they were left **open to anonymous cost abuse** (loop them to burn OpenAI budget). This closes that gap: every model-calling route now requires a session, and anonymous visitors already carry one, so the app's own calls are unaffected.
 - **Tests** assert a 401 (with no model call) for each route when unauthenticated; `recipe/extract` gained its first test file.
 
+### Comprehensible-voice fragment — Shipped Jul 2026 (#365)
+
+- **Ah Mah stays fully in character but no longer confuses non-Singaporean users.** New `PROMPT_FRAGMENTS.comprehensibleVoice` fragment (`src/lib/prompts/fragments.ts`) instructs the model to keep particles/warmth/cadence untouched, gloss genuinely region-specific terms inline on first mention only (e.g. "ikan bilis (dried anchovies)", "kangkong (water spinach)"), and never gloss globally-known terms (wok, bok choy, tofu). Wired into `CHAT_SYSTEM_PROMPT` for this slice; `storage-tip` and `market-tip` routes follow in #366 so all three persona surfaces share the one rule.
+- **Decision: comprehension over localization.** Considered and rejected geo-detecting SG/MY users to toggle Singlish on/off — it strips the persona for exactly the non-local users drawn to it, and mislabels the SG/MY diaspora whose IP reads as elsewhere. Glossing fixes comprehension for everyone with no detection and no second voice to maintain.
+- Verified live against `gpt-4.1-mini`: region-specific terms (ikan bilis, tapau, kangkong, belacan) glossed on first mention; wok/bok choy left alone; Singlish particles and warm asides unchanged.
+
 ## Design system
 
 The two recipe surfaces — `RecipeLetter` (chat) and `RecipeDisplay` (cookbook) — were drifting because each hand-rolled the same primitives. A design system is now the north star: shared atoms stop drift, and every surface gets tweaked incrementally so it "looks like it belongs". See the spec at `docs/superpowers/specs/2026-06-20-recipe-design-system-design.md` and the issue tracker (#277–#285).

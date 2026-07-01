@@ -1,4 +1,5 @@
 import { extractRecipeBlocks } from "@/lib/recipes/parseBlocks";
+import { PROMPT_FRAGMENTS } from "@/lib/prompts/fragments";
 import { RecipeBlockSchema } from "@/lib/recipes/schemas";
 import { CHAT_SYSTEM_PROMPT } from "./constants";
 
@@ -20,5 +21,9 @@ describe("CHAT_SYSTEM_PROMPT recipe example", () => {
     // the issue requires must remain in the prompt.
     expect(CHAT_SYSTEM_PROMPT).toContain("Step depth is earned");
     expect(CHAT_SYSTEM_PROMPT).toContain("Never echo absolute quantities into step bodies");
+  });
+
+  it("carries the shared comprehensible-voice fragment", () => {
+    expect(CHAT_SYSTEM_PROMPT).toContain(PROMPT_FRAGMENTS.comprehensibleVoice);
   });
 });
