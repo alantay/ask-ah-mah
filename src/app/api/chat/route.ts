@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     if (!body.success) {
       return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     }
-    const { messages, conversationId } = body.data as { messages: UIMessage[]; conversationId: string };
+    const { messages, conversationId } = body.data as unknown as { messages: UIMessage[]; conversationId: string };
 
     // Deterministically capture any pantry items the user mentions BEFORE the
     // chat model runs, so a subsequent getInventory call reflects them. Gated
