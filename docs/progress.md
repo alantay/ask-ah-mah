@@ -293,6 +293,8 @@ The spine (#314), lifecycle (#315), Market Tips (#316), and the recipe on-ramp +
 
 ## Decisions
 
+- **Tweak ingredient swaps now propagate into step/prep text** (Jul 2026): the tweak system prompt (`src/app/api/recipe/[id]/tweak/route.ts`) told the model to return only arrays that structurally changed, with no instruction to check whether the ingredient being swapped was actually named in `steps`/`prep` text — a "swap parsley for coriander" tweak updated the ingredient list but left the method steps referencing the old ingredient. Prompt now explicitly tells the model to check `steps`/`prep` for mentions of the changed ingredient and include those arrays in the patch if their wording changed too. Prompt-only fix — no client-side text-replacement fallback, matching ADR-0010's trust in the model to keep the recipe and change-list coherent.
+- **Tweak bench drops the Ah Mah face avatar**: the `/granny-icon.png` avatar next to assistant messages in the Tweak bench (`TweakBench.tsx`) was removed — it's local to this panel only, not shared with the main Chat feature's message list.
 - **`shelfLife` removed** (May 2026) — no freshness/urgency UI; the app can't reliably know what's gone bad. Full rationale → [ADR-0008](./adr/0008-no-shelf-life-ui.md).
 - **Optional quantity = "unlimited"**: unset `quantity` means the item has no limit. Avoids forcing a count on pantry staples where "do I have enough?" is never the question.
 - **Structured-on-save over streaming extraction**: metadata (`baseServings`, `ingredients`, `description`, `totalTimeMinutes`) is extracted when the user saves a recipe, not streamed inline. Simpler streaming path; extraction failures degrade gracefully without breaking the chat.
