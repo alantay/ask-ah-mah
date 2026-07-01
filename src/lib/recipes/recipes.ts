@@ -3,7 +3,8 @@ import { fetchRecipePhoto } from "../pexels/fetchPhoto";
 import type { PexelsPhoto } from "../pexels/fetchPhoto";
 import { prisma } from "../db";
 import { normalizeTags } from "./normalizeTags";
-import { Recipe, RecipeBlock, RecipeIngredientModel } from "./schemas";
+import { normalizeIngredient } from "./normalizeIngredient";
+import { Recipe, RecipeBlock } from "./schemas";
 
 export async function getRecipes(userId: string) {
   const recipes = await prisma.recipe.findMany({
@@ -51,18 +52,7 @@ export async function updateRecipeForUser(id: string, userId: string, block: Rec
       name: block.title,
       tags: normalizeTags(block.tags ?? []),
       baseServings: block.baseServings,
-      ingredients: block.ingredients.map((ing: RecipeIngredientModel) => ({
-        name: ing.name,
-        category: ing.category ?? "Misc",
-        amount:
-          ing.amount !== undefined
-            ? Number.isNaN(parseFloat(ing.amount))
-              ? undefined
-              : parseFloat(ing.amount)
-            : undefined,
-        unit: ing.unit,
-        note: ing.note,
-      })),
+      ingredients: block.ingredients.map(normalizeIngredient),
       prep: block.prep ?? [],
       steps: block.steps ?? [],
       notes: block.notes ?? [],
@@ -160,13 +150,7 @@ export async function saveRecipeFromBlock(block: RecipeBlock, userId: string, re
       tags,
       recipeId,
       baseServings: block.baseServings,
-      ingredients: block.ingredients.map((ing: RecipeIngredientModel) => ({
-        name: ing.name,
-        category: ing.category ?? "Misc",
-        amount: ing.amount !== undefined ? (Number.isNaN(parseFloat(ing.amount)) ? undefined : parseFloat(ing.amount)) : undefined,
-        unit: ing.unit,
-        note: ing.note,
-      })),
+      ingredients: block.ingredients.map(normalizeIngredient),
       prep: block.prep ?? [],
       steps: block.steps,
       notes: block.notes ?? [],
