@@ -244,6 +244,11 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **`storage-tip` and `market-tip` now share the same `PROMPT_FRAGMENTS.comprehensibleVoice` fragment as chat** (#365) — no rule text duplicated, all three persona surfaces stay consistent from one source of truth.
 - Verified live against `gpt-5-mini` (the model these two routes use): "ikan bilis (dried anchovies)", "belacan (fermented shrimp paste)", and "kangkong (water spinach)" glossed on first mention in both a storage tip and a market tip; "wok", "bok choy", and "tofu" left alone. The gloss comfortably coexists with the existing 12-word tip cap.
 
+### Diagnostic balance check for recipe generation — Shipped Jul 2026
+
+- **Recipe generation now runs a Salt/Fat/Acid/Heat balance pass** (`PROMPT_FRAGMENTS.balanceCheck`) before emitting a full recipe, to fix dishes that came out flat/under-seasoned. It is a **diagnostic, not a mandate** — the model adds an axis only where the dish would be flat without it, and leaves deliberately-clean dishes (congee, steamed fish) alone. Axes are read for Asian home cooking (salt = savoury depth incl. soy/fish sauce; acid = brightness incl. black vinegar/calamansi/tamarind).
+- Surfaced only through the existing `steps[].tip` when the balancing move is the non-obvious save — no new recipe field. Applied to Mode 2 (named dish) + Mode 3 (Cook With What You Have) only; **excluded** from Mode 1 suggestions (no method surface) and the Tweak route (minimal-change contract). See [ADR-0018](adr/0018-recipe-generation-runs-a-diagnostic-balance-check.md).
+
 ## Design system
 
 The two recipe surfaces — `RecipeLetter` (chat) and `RecipeDisplay` (cookbook) — were drifting because each hand-rolled the same primitives. A design system is now the north star: shared atoms stop drift, and every surface gets tweaked incrementally so it "looks like it belongs". See the spec at `docs/superpowers/specs/2026-06-20-recipe-design-system-design.md` and the issue tracker (#277–#285).

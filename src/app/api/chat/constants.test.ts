@@ -26,4 +26,8 @@ describe("CHAT_SYSTEM_PROMPT recipe example", () => {
   it("carries the shared comprehensible-voice fragment", () => {
     expect(CHAT_SYSTEM_PROMPT).toContain(PROMPT_FRAGMENTS.comprehensibleVoice);
   });
+
+  it("carries the diagnostic balance-check fragment", () => {
+    expect(CHAT_SYSTEM_PROMPT).toContain(PROMPT_FRAGMENTS.balanceCheck);
+  });
 });
