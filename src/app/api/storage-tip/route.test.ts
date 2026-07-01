@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { POST } from "./route";
 import { prisma } from "@/lib/db";
+import { getSessionUserId } from "@/lib/session";
 import { generateObject } from "ai";
 
 jest.mock("next/server", () => ({
@@ -24,10 +25,12 @@ jest.mock("@/lib/db", () => ({
 
 jest.mock("ai", () => ({ generateObject: jest.fn() }));
 jest.mock("@ai-sdk/openai", () => ({ openai: jest.fn(() => "model") }));
+jest.mock("@/lib/session", () => ({ getSessionUserId: jest.fn() }));
 
 const mockedFindMany = jest.mocked(prisma.storageTip.findMany);
 const mockedCreate = jest.mocked(prisma.storageTip.create);
 const mockedGenerate = jest.mocked(generateObject);
+const mockedGetSessionUserId = jest.mocked(getSessionUserId);
 
 const reqWith = (body: unknown) =>
   ({ json: async () => body } as unknown as NextRequest);
@@ -35,9 +38,22 @@ const reqWith = (body: unknown) =>
 beforeEach(() => {
   jest.clearAllMocks();
   mockedCreate.mockResolvedValue({} as never);
+  mockedGetSessionUserId.mockResolvedValue("user-123");
 });
 
 describe("POST /api/storage-tip", () => {
+  it("401s when unauthenticated, without calling the model", async () => {
+    mockedGetSessionUserId.mockResolvedValue(null);
+
+    const res = await POST(
+      reqWith({ items: [{ name: "Potato", type: "ingredient" }] }),
+    );
+
+    expect(res.status).toBe(401);
+    expect(mockedGenerate).not.toHaveBeenCalled();
+    expect(mockedFindMany).not.toHaveBeenCalled();
+  });
+
   it("returns cached tips without calling the model", async () => {
     mockedFindMany.mockResolvedValue([
       { key: "potato", tip: "cool, dark place — never the fridge", createdAt: new Date() },

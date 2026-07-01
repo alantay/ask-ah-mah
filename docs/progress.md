@@ -218,6 +218,11 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Tests** cover owner-can-mint, non-owner/unauthenticated cannot (401/404), idempotent re-mint, and the public read working token-only with owner fields never selected.
 - This completes the route-lockdown series (#341–#345); the now-unused `missingUserId()` 400 helper was removed (every route uses `unauthorized()`).
 
+### Stateless model endpoints gated — Shipped (#358)
+
+- **The three model-calling routes that hold no user data are now session-gated too.** `POST /api/market-tip`, `POST /api/storage-tip`, and `POST /api/recipe/extract` call `getSessionUserId(req)` and return `unauthorized()` (401) before any `generateObject` / `parseRecipeText` call. The lockdown series (#341–#345) scoped the *data-owning* routes; these three were skipped because they read/write only the shared tip cache (or nothing), so there was no IDOR — but they were left **open to anonymous cost abuse** (loop them to burn OpenAI budget). This closes that gap: every model-calling route now requires a session, and anonymous visitors already carry one, so the app's own calls are unaffected.
+- **Tests** assert a 401 (with no model call) for each route when unauthenticated; `recipe/extract` gained its first test file.
+
 ## Design system
 
 The two recipe surfaces — `RecipeLetter` (chat) and `RecipeDisplay` (cookbook) — were drifting because each hand-rolled the same primitives. A design system is now the north star: shared atoms stop drift, and every surface gets tweaked incrementally so it "looks like it belongs". See the spec at `docs/superpowers/specs/2026-06-20-recipe-design-system-design.md` and the issue tracker (#277–#285).
