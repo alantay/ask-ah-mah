@@ -293,6 +293,7 @@ The spine (#314), lifecycle (#315), Market Tips (#316), and the recipe on-ramp +
 
 ## Decisions
 
+- **Every listed ingredient must be used in prep/steps** (Jul 2026): a garnish ingredient (e.g. coriander/parsley) could be added to a recipe's `ingredients` list without the method ever calling for it — the recipe-generation prompt (`CHAT_SYSTEM_PROMPT`, Mode 2 rules) had a rule tying step mentions back to `prep`, but nothing requiring the reverse: that every ingredient actually gets used somewhere in `prep`/`steps`. Fixed by adding that rule, worded to allow natural generic references ("the herbs", "the aromatics") rather than demanding the literal ingredient name appear verbatim — a step can legitimately say "sprinkle with herbs" without naming the herb. Distinct from the tweak-time propagation fix (separate PR): this covers the *original* recipe, tweaks cover edits to an existing one.
 - **`shelfLife` removed** (May 2026) — no freshness/urgency UI; the app can't reliably know what's gone bad. Full rationale → [ADR-0008](./adr/0008-no-shelf-life-ui.md).
 - **Optional quantity = "unlimited"**: unset `quantity` means the item has no limit. Avoids forcing a count on pantry staples where "do I have enough?" is never the question.
 - **Structured-on-save over streaming extraction**: metadata (`baseServings`, `ingredients`, `description`, `totalTimeMinutes`) is extracted when the user saves a recipe, not streamed inline. Simpler streaming path; extraction failures degrade gracefully without breaking the chat.
