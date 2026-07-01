@@ -471,14 +471,14 @@ describe("Message API Routes", () => {
       );
     });
 
-    it("should handle malformed JSON", async () => {
-      const request = createMockRequest("http://localhost:3000/api/message", {
-        method: "POST",
-        body: "invalid json",
-        headers: { "Content-Type": "application/json" },
-      });
+    it("returns 400 for malformed JSON", async () => {
+      const request = {
+        json: async () => { throw new SyntaxError("Unexpected token"); },
+      } as unknown as NextRequest;
 
-      await expect(POST(request)).rejects.toThrow();
+      const response = await POST(request);
+      expect(response.status).toBe(400);
+      expect(mockedCreateMessage).not.toHaveBeenCalled();
     });
 
     it("rejects role values outside user|assistant enum", async () => {

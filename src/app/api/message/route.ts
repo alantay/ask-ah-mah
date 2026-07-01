@@ -31,7 +31,13 @@ export async function POST(req: NextRequest) {
   const userId = await getSessionUserId(req);
   if (!userId) return unauthorized();
 
-  const parsed = PostSchema.safeParse(await req.json());
+  let rawBody: unknown;
+  try {
+    rawBody = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+  const parsed = PostSchema.safeParse(rawBody);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }

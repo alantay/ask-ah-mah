@@ -18,9 +18,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { CHAT_SYSTEM_PROMPT } from "./constants";
 
+const UIMessageSchema = z
+  .object({ id: z.string(), role: z.string(), parts: z.array(z.unknown()) })
+  .passthrough();
+
 const PostSchema = z.object({
   conversationId: z.string().min(1).max(100),
-  messages: z.array(z.record(z.string(), z.unknown())).max(100),
+  messages: z.array(UIMessageSchema).max(100),
 });
 
 export async function POST(req: NextRequest) {
@@ -32,7 +36,8 @@ export async function POST(req: NextRequest) {
     if (!body.success) {
       return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     }
-    const { messages, conversationId } = body.data as unknown as { messages: UIMessage[]; conversationId: string };
+    const { conversationId, messages: rawMessages } = body.data;
+    const messages = rawMessages as unknown as UIMessage[];
 
     // Deterministically capture any pantry items the user mentions BEFORE the
     // chat model runs, so a subsequent getInventory call reflects them. Gated
