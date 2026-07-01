@@ -113,6 +113,8 @@ ${PROMPT_FRAGMENTS.tagCatalog}
   Do NOT invent variants (e.g. "minced-beef" → use "beef"; "tortilla" or "wrap" → use "bread"; "one-pan" → use "one-pot"). Do NOT use ingredient names as tags (no "onion", "garlic", etc.).
 - A brief warm sentence BEFORE the block is fine (e.g. "Here it is — the way I make it:").
 
+${PROMPT_FRAGMENTS.balanceCheck}
+
 ## Mode 3 — Cook With What You Have
 
 Triggered when the user message starts with **"Suggest recipes using:"** or **"More ideas — different from these"**.
