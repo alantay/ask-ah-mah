@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { POST } from "./route";
 import { prisma } from "@/lib/db";
+import { PROMPT_FRAGMENTS } from "@/lib/prompts/fragments";
 import { getSessionUserId } from "@/lib/session";
 import { generateObject } from "ai";
 
@@ -129,5 +130,17 @@ describe("POST /api/market-tip", () => {
     expect(mockedCreate).not.toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ key: "avocado" }) }),
     );
+  });
+
+  it("carries the shared comprehensible-voice fragment in the model prompt", async () => {
+    mockedFindMany.mockResolvedValue([] as never);
+    mockedGenerate.mockResolvedValue({
+      object: { tips: [{ key: "avocado", tip: "dark, gives slightly" }] },
+    } as never);
+
+    await POST(reqWith({ items: [{ name: "Avocado", category: "Misc" }] }));
+
+    const prompt = mockedGenerate.mock.calls[0][0].prompt as string;
+    expect(prompt).toContain(PROMPT_FRAGMENTS.comprehensibleVoice);
   });
 });
