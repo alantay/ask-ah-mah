@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/db";
+import { unauthorized } from "@/lib/http";
+import { getSessionUserId } from "@/lib/session";
 import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
 import { isPickableCategory } from "@/lib/marketTips/pickable";
 import { KITCHEN_DOMAIN_RULE } from "@/lib/marketTips/relevance";
@@ -25,6 +27,12 @@ const TipGenSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    // Model-calling endpoint: gate on a verified session so anonymous callers
+    // can't loop it and burn token budget. Anonymous visitors still carry a
+    // session cookie, so the app's own calls are unaffected.
+    const userId = await getSessionUserId(req);
+    if (!userId) return unauthorized();
+
     let payload: unknown;
     try {
       payload = await req.json();

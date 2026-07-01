@@ -1,7 +1,15 @@
+import { unauthorized } from "@/lib/http";
+import { getSessionUserId } from "@/lib/session";
 import { parseRecipeText } from "@/lib/recipes/parseRecipeText";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
+  // Model-calling endpoint: gate on a verified session so anonymous callers
+  // can't loop it and burn token budget. Anonymous visitors still carry a
+  // session cookie, so the app's own calls are unaffected.
+  const userId = await getSessionUserId(req);
+  if (!userId) return unauthorized();
+
   const body = await req.json();
   const { text } = body;
 
