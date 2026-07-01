@@ -218,6 +218,10 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Tests** cover owner-can-mint, non-owner/unauthenticated cannot (401/404), idempotent re-mint, and the public read working token-only with owner fields never selected.
 - This completes the route-lockdown series (#341–#345); the now-unused `missingUserId()` 400 helper was removed (every route uses `unauthorized()`).
 
+### normalizeIngredient extracted — Shipped (#362)
+
+- **Ingredient normalisation lives in one place.** `saveRecipeFromBlock` and `updateRecipeForUser` both had an identical inline map — same `category ?? "Misc"` default and the same `parseFloat` / `Number.isNaN` amount-coercion. Extracted to `src/lib/recipes/normalizeIngredient.ts` (mirrors `normalizeTags.ts`); both call sites become one-liner `.map(normalizeIngredient)` calls. A unit-test file covers the amount-parsing edge cases (valid numeric, non-numeric, undefined, decimal) and the category default.
+
 ### Stateless model endpoints gated — Shipped (#358)
 
 - **The three model-calling routes that hold no user data are now session-gated too.** `POST /api/market-tip`, `POST /api/storage-tip`, and `POST /api/recipe/extract` call `getSessionUserId(req)` and return `unauthorized()` (401) before any `generateObject` / `parseRecipeText` call. The lockdown series (#341–#345) scoped the *data-owning* routes; these three were skipped because they read/write only the shared tip cache (or nothing), so there was no IDOR — but they were left **open to anonymous cost abuse** (loop them to burn OpenAI budget). This closes that gap: every model-calling route now requires a session, and anonymous visitors already carry one, so the app's own calls are unaffected.
