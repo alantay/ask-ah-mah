@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { authClient } from "@/lib/auth-client";
 import { useState } from "react";
+import { GoogleIcon } from "./GoogleIcon";
 
 export function SignInDialog() {
   const [open, setOpen] = useState(false);
@@ -45,8 +46,9 @@ export function SignInDialog() {
           onClick={handleGoogle}
           disabled={loading}
           variant="outline"
-          className="w-full"
+          className="w-full gap-3 font-medium"
         >
+          <GoogleIcon className="size-[18px] shrink-0" />
           {loading ? "Redirecting…" : "Continue with Google"}
         </Button>
       </DialogContent>
