@@ -23,6 +23,7 @@ describe("SignInDialog", () => {
     mockSocial.mockReset();
     mockMagicLink.mockReset();
     mockMagicLink.mockResolvedValue({ data: {}, error: null });
+    mockSocial.mockResolvedValue({ data: {}, error: null });
   });
 
   it("shows both the Google button and the email field once opened", async () => {
@@ -82,5 +83,35 @@ describe("SignInDialog", () => {
       expect(screen.getByText(/couldn.t send the link/i)).toBeInTheDocument(),
     );
     expect(screen.queryByText(/check your inbox/i)).not.toBeInTheDocument();
+  });
+
+  it("starts Google sign-in with the right provider and callback", async () => {
+    render(<SignInDialog />);
+    await openDialog();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: /continue with google/i }),
+    );
+
+    expect(mockSocial).toHaveBeenCalledWith({
+      provider: "google",
+      callbackURL: "/",
+    });
+  });
+
+  it("surfaces an inline error when Google sign-in fails", async () => {
+    mockSocial.mockResolvedValue({ data: null, error: { message: "denied" } });
+    render(<SignInDialog />);
+    await openDialog();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: /continue with google/i }),
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(/couldn.t sign in with google/i),
+      ).toBeInTheDocument(),
+    );
   });
 });

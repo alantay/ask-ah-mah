@@ -14,17 +14,23 @@ export async function sendMagicLink({
   email: string;
   url: string;
 }): Promise<void> {
-  const { error } = await resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL!,
-    to: email,
-    subject: "Your key to Ah Mah's kitchen",
-    html: magicLinkEmail(url),
-  });
+  try {
+    const { error } = await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL!,
+      to: email,
+      subject: "Your key to Ah Mah's kitchen",
+      html: magicLinkEmail(url),
+    });
 
-  // Surface delivery failures to the caller so the UI can tell the user the
-  // link didn't send, rather than silently showing "check your inbox".
-  if (error) {
-    throw new Error(`Failed to send magic link: ${error.message}`);
+    // Surface delivery failures to the caller so the UI can tell the user the
+    // link didn't send, rather than silently showing "check your inbox".
+    if (error) {
+      throw new Error(`Failed to send magic link: ${error.message}`);
+    }
+  } catch (err) {
+    throw new Error(
+      `Failed to send magic link: ${err instanceof Error ? err.message : String(err)}`
+    );
   }
 }
 

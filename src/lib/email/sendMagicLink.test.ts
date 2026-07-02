@@ -9,6 +9,8 @@ jest.mock("resend", () => ({
 }));
 
 // The module instantiates Resend at import time, so env must be set first.
+const previousApiKey = process.env.RESEND_API_KEY;
+const previousFromEmail = process.env.RESEND_FROM_EMAIL;
 process.env.RESEND_API_KEY = "test-key";
 process.env.RESEND_FROM_EMAIL = "ah-mah@example.com";
 
@@ -17,6 +19,11 @@ import { sendMagicLink } from "./sendMagicLink";
 describe("sendMagicLink", () => {
   beforeEach(() => {
     mockSend.mockReset();
+  });
+
+  afterAll(() => {
+    process.env.RESEND_API_KEY = previousApiKey;
+    process.env.RESEND_FROM_EMAIL = previousFromEmail;
   });
 
   it("sends the link to the given address with the branded subject and url", async () => {

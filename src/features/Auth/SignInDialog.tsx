@@ -17,6 +17,7 @@ import { GoogleIcon } from "./GoogleIcon";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/** Sign-in dialog offering Google OAuth or passwordless email (magic link). */
 export function SignInDialog() {
   const [open, setOpen] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -30,8 +31,17 @@ export function SignInDialog() {
 
   const handleGoogle = async () => {
     setGoogleLoading(true);
+    setError(null);
     try {
-      await authClient.signIn.social({ provider: "google", callbackURL: "/" });
+      const { error: signInError } = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/",
+      });
+      if (signInError) {
+        setError("Couldn't sign in with Google — please try again.");
+      }
+    } catch {
+      setError("Couldn't sign in with Google — please try again.");
     } finally {
       setGoogleLoading(false);
     }
@@ -116,6 +126,12 @@ export function SignInDialog() {
               {googleLoading ? "Redirecting…" : "Continue with Google"}
             </Button>
 
+            {error && (
+              <p id="signin-error" className="text-sm text-destructive">
+                {error}
+              </p>
+            )}
+
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
               <span className="h-px flex-1 bg-border" />
               or
@@ -136,8 +152,8 @@ export function SignInDialog() {
                 }}
                 disabled={sending}
                 aria-invalid={error ? true : undefined}
+                aria-describedby={error ? "signin-error" : undefined}
               />
-              {error && <p className="text-sm text-destructive">{error}</p>}
               <Button
                 type="submit"
                 disabled={!emailValid || busy}
