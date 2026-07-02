@@ -1,6 +1,5 @@
-import { unauthorized } from "@/lib/http";
-import { getSessionUserId } from "@/lib/session";
 import { ChangeKindSchema, RecipeBlockSchema } from "@/lib/recipes/schemas";
+import { withAuthDynamic } from "@/lib/withAuth";
 import { openai } from "@ai-sdk/openai";
 import { generateText } from "ai";
 import { NextRequest, NextResponse } from "next/server";
@@ -67,16 +66,10 @@ The \`changes\` array must list **every structural delta against the original re
 - \`label\`: a short narrative label in Ah Mah's voice (e.g. "Added cornstarch to velvet the chicken")`;
 }
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const POST = withAuthDynamic<{ id: string }>(async (req: NextRequest, { userId: _userId, params }) => {
   const { id } = await params;
 
   try {
-    const userId = await getSessionUserId(req);
-    if (!userId) return unauthorized();
-
     const body: {
       instruction?: string;
       originalRecipe?: unknown;
@@ -99,7 +92,6 @@ export async function POST(
       return NextResponse.json({ error: "originalRecipe is required" }, { status: 400 });
     }
 
-    // Client sends block format (recipeWithIdToBlock already applied) — validate directly
     const parsedOriginal = RecipeBlockWithIdSchema.safeParse(originalRecipeRaw);
     if (!parsedOriginal.success) {
       return NextResponse.json(
@@ -127,10 +119,6 @@ export async function POST(
       workingDraft = parsedDraft.data;
     }
 
-    // Buffer the full generation rather than streaming: the client parses the
-    // response as one JSON object (no incremental render), so streaming buys
-    // nothing here — and buffering lets us inspect finishReason before we
-    // respond, which a streamed response can't (status is already sent).
     const { text, finishReason } = await generateText({
       model: openai("gpt-5-mini"),
       system: buildSystemPrompt(parsedOriginal.data, workingDraft),
@@ -139,9 +127,6 @@ export async function POST(
     });
 
     if (finishReason === "length") {
-      // Cut off by the token cap — the partial text is unparseable JSON.
-      // Fail cleanly so the client shows a friendly message instead of
-      // receiving a successful-looking truncated body.
       return NextResponse.json(
         { error: "Tweak response was too long to complete." },
         { status: 422 }
@@ -156,4 +141,4 @@ export async function POST(
     console.error("[/api/recipe/[id]/tweak]", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-}
+});

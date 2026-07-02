@@ -1,19 +1,12 @@
 import { updateRecipeForUser } from "@/lib/recipes";
-import { unauthorized } from "@/lib/http";
-import { getSessionUserId } from "@/lib/session";
 import { RecipeBlockSchema } from "@/lib/recipes/schemas";
+import { withAuthDynamic } from "@/lib/withAuth";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export const PATCH = withAuthDynamic<{ id: string }>(async (req: NextRequest, { userId, params }) => {
   const { id } = await params;
 
   try {
-    const userId = await getSessionUserId(req);
-    if (!userId) return unauthorized();
-
     const body = await req.json();
     const { recipe } = body;
 
@@ -33,4 +26,4 @@ export async function PATCH(
     }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-}
+});
