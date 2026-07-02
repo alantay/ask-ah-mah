@@ -16,6 +16,7 @@ alwaysApply: true
 > - **What's shipped / what's next** → [`docs/progress.md`](./progress.md)
 > - **Why things are built the way they are** → [`docs/adr/`](./adr/)
 > - **Canonical domain vocabulary** → [`CONTEXT.md`](../CONTEXT.md)
+> - **Who Ah Mah is / brand & growth** → [`docs/brand-ahmah.md`](./brand-ahmah.md)
 > - **How to run it / tech stack** → [`README.md`](../README.md)
 
 ## 1. Product Vision

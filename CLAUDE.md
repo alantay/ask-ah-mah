@@ -125,6 +125,9 @@ App: **“Ask Ah Mah”** — converts pantry items into recipes via chat.
 - Let the LLM drive mutations via tools
 - Avoid cross-feature coupling
 - Optimize for readability
+- Simplicity first: minimum code that solves the problem; no speculative abstractions, configurability, or error handling for impossible cases.
+- Surgical changes: touch only what the task needs; match existing style; don't refactor or delete code you weren't asked to (mention dead code, don't remove it).
+- Think before coding: surface assumptions, tradeoffs, and simpler alternatives; ask when something is unclear rather than guessing.
 
 ---
 
