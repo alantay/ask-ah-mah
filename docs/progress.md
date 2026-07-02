@@ -182,6 +182,10 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Fix**: `resolveAuthOrigins(env)` (`src/lib/auth/origins.ts`) computes better-auth's `baseURL` + `trustedOrigins` from the environment. `baseURL` stays pinned to a stable origin (non-empty `BETTER_AUTH_URL` → `VERCEL_PROJECT_PRODUCTION_URL` → localhost) so the Google OAuth `redirect_uri` doesn't move between deployments; `trustedOrigins` additionally trusts the **concrete** origins this app serves itself from — the current deployment URL (`VERCEL_URL`, which is exactly the origin each deployment is reached on) and the production domain. No broad `*.vercel.app` wildcard: `trustedOrigins` is a CSRF boundary, and that would trust every Vercel project's origin. No Vercel env changes required — both `VERCEL_URL` and `VERCEL_PROJECT_PRODUCTION_URL` are injected automatically.
 - **Tests** (`origins.test.ts`) lock baseURL pinning, deployment-origin trust, the explicit-`BETTER_AUTH_URL` override, the localhost fallback, and de-duplication.
 
+### Auth boilerplate extraction into wrappers — Shipped (#364)
+
+- Extracted repeated auth boilerplate into `withAuth` / `withAuthDynamic` wrappers (`src/lib/withAuth.ts`). All API routes now use the wrapper — one seam to audit, no per-route auth lines.
+
 ### Recipe routes locked down — Shipped (#341)
 
 - **Recipe routes derive identity from the session, never the request.** `GET/POST/DELETE /api/recipe`, `PATCH /api/recipe/[id]`, and `POST /api/recipe/[id]/tweak` now call `getSessionUserId(req)` and return `unauthorized()` (401) when there's no valid session. A `userId` in the query string or body is ignored entirely — an attacker can no longer read or mutate another user's cookbook by supplying a foreign id.
