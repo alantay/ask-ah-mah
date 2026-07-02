@@ -1,7 +1,8 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { anonymous } from "better-auth/plugins";
+import { anonymous, magicLink } from "better-auth/plugins";
 import { prisma } from "@/lib/db";
+import { sendMagicLink } from "@/lib/email/sendMagicLink";
 import { migrateGuestData } from "@/lib/auth/migrateGuestData";
 import { resolveAuthOrigins } from "@/lib/auth/origins";
 
@@ -29,6 +30,16 @@ export const auth = betterAuth({
     anonymous({
       onLinkAccount: async ({ anonymousUser, newUser }) => {
         await migrateGuestData(anonymousUser.user.id, newUser.user.id);
+      },
+    }),
+    // Passwordless email sign-in. A first-time email auto-creates the account
+    // (the plugin default), and signing in from a guest session still routes
+    // through anonymous()'s onLinkAccount above, so a guest's cookbook follows
+    // them over just like it does for Google.
+    magicLink({
+      expiresIn: 600, // 10 minutes
+      sendMagicLink: async ({ email, url }) => {
+        await sendMagicLink({ email, url });
       },
     }),
   ],

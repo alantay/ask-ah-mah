@@ -6,6 +6,7 @@ import {
   createContext,
   ReactNode,
   useContext,
+  useEffect,
   useState,
 } from "react";
 import { toast } from "sonner";
@@ -88,6 +89,21 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     }
     localStorage.removeItem(LOCAL_STORAGE_KEY);
   };
+
+  // The active id survives in localStorage across sessions, but a session's
+  // userId can change underneath it (e.g. a new anonymous session minted
+  // after a magic-link sign-in completed in a different tab, orphaning the
+  // guest conversation it left behind). Once the current user's real
+  // conversation list has loaded, drop an active id that isn't in it instead
+  // of letting every /api/message call 404 forever.
+  useEffect(() => {
+    if (listLoading || !listData || !activeConversationId) return;
+    const stillOwned = listData.conversations.some(
+      (c) => c.id === activeConversationId
+    );
+    if (!stillOwned) persistActiveConversation(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listLoading, listData, activeConversationId]);
 
   const revalidateConversationKeys = () => {
     if (!userId) return Promise.resolve();
