@@ -5,12 +5,26 @@ import InventoryWrapper from "@/features/Inventory/components/InventoryWrapper";
 import RecipeList from "@/features/RecipeList/RecipeList";
 import ShoppingList from "@/features/ShoppingList";
 import { useActiveTab } from "@/hooks/useActiveTab";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import { toast } from "sonner";
 
 function HomeContent() {
   const router = useRouter();
   const urlTab = useActiveTab();
+  const searchParams = useSearchParams();
+
+  // A failed/expired auth callback (e.g. a stale magic link) redirects back
+  // here with an `?error=` param. Surface it once, then strip it so a refresh
+  // doesn't re-toast.
+  useEffect(() => {
+    if (!searchParams.get("error")) return;
+    toast.error(
+      "That sign-in link didn't work — it may have expired. Request a new one.",
+    );
+    const tab = searchParams.get("tab");
+    router.replace(tab ? `/?tab=${tab}` : "/", { scroll: false });
+  }, [searchParams, router]);
 
   // Drive the visible tab from local state so switching is instant; the URL is
   // synced in the background. Without this, the active tab is derived from the

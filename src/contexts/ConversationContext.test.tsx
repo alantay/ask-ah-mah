@@ -267,6 +267,35 @@ describe("ConversationContext", () => {
     );
   });
 
+  it("clears a stale activeConversationId once the list loads without it (e.g. session/userId changed underneath)", async () => {
+    // localStorage still points at a conversation from a prior session (a
+    // different anonymous/real userId) that the current session doesn't own.
+    localStorageMock.getItem.mockReturnValueOnce("conv-orphaned");
+    swrData.set(listKey, { conversations: [] });
+
+    const { result } = renderHook(() => useConversationContext(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.activeConversationId).toBe(null);
+    });
+    expect(localStorageMock.removeItem).toHaveBeenCalledWith(
+      "ask-ah-mah-active-conversation"
+    );
+  });
+
+  it("keeps activeConversationId when it's present in the loaded list", async () => {
+    const current = makeConversation("conv-current");
+    localStorageMock.getItem.mockReturnValueOnce("conv-current");
+    swrData.set(listKey, { conversations: [current] });
+
+    const { result } = renderHook(() => useConversationContext(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.conversationsLoading).toBe(false);
+    });
+    expect(result.current.activeConversationId).toBe("conv-current");
+  });
+
   it("deleteConversation leaves activeConversationId unchanged when deleting a non-active conversation", async () => {
     const active = makeConversation("conv-active", {
       title: "Active Chat",
