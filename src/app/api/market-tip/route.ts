@@ -30,7 +30,6 @@ const TipGenSchema = z.object({
 // session cookie, so the app's own calls are unaffected.
 export const POST = withAuth(async (req: NextRequest, { userId: _userId }) => {
   try {
-
     let payload: unknown;
     try {
       payload = await req.json();
