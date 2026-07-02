@@ -184,7 +184,7 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 
 ### Auth boilerplate extraction into wrappers — Shipped (#364)
 
-- Extracted repeated auth boilerplate into `withAuth` / `withAuthDynamic` wrappers (`src/lib/withAuth.ts`). All API routes now use the wrapper — one seam to audit, no per-route auth lines.
+- Extracted repeated auth boilerplate into `withAuth` / `withAuthDynamic` wrappers (`src/lib/withAuth.ts`). All authenticated API routes now use the wrapper — one seam to audit, no per-route auth lines.
 
 ### Recipe routes locked down — Shipped (#341)
 

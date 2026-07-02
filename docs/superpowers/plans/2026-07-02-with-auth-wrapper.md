@@ -1327,7 +1327,7 @@ git commit -m "refactor(auth): migrate dynamic routes to withAuthDynamic wrapper
 
 Under the "Infrastructure / Auth" section (or the nearest equivalent section), add:
 
-```
+```text
 - Extracted repeated auth boilerplate into `withAuth` / `withAuthDynamic` wrappers (`src/lib/withAuth.ts`). All API routes now use the wrapper — one seam to audit, no per-route auth lines.
 ```
 
