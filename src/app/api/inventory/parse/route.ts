@@ -1,8 +1,7 @@
 import { addInventoryItem } from "@/lib/inventory/Inventory";
 import { AddInventoryItemSchema } from "@/lib/inventory/schemas";
-import { unauthorized } from "@/lib/http";
-import { getSessionUserId } from "@/lib/session";
 import { PROMPT_FRAGMENTS } from "@/lib/prompts/fragments";
+import { withAuth } from "@/lib/withAuth";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { NextRequest, NextResponse } from "next/server";
@@ -12,11 +11,8 @@ const ParseSchema = z.object({
   items: z.array(AddInventoryItemSchema),
 });
 
-export async function POST(req: NextRequest) {
+export const POST = withAuth(async (req: NextRequest, { userId }) => {
   try {
-    const userId = await getSessionUserId(req);
-    if (!userId) return unauthorized();
-
     const { text } = await req.json();
     if (!text || typeof text !== "string" || text.trim().length === 0) {
       return NextResponse.json({ error: "text is required" }, { status: 400 });
@@ -54,4 +50,4 @@ ${text}`,
       { status: 500 },
     );
   }
-}
+});

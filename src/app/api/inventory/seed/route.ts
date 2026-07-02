@@ -1,13 +1,9 @@
 import { seedDefaultInventory } from "@/lib/inventory/Inventory";
-import { unauthorized } from "@/lib/http";
-import { getSessionUserId } from "@/lib/session";
+import { withAuth } from "@/lib/withAuth";
 import { NextResponse } from "next/server";
 
-export async function POST(request: Request) {
+export const POST = withAuth(async (_req, { userId }) => {
   try {
-    const userId = await getSessionUserId(request);
-    if (!userId) return unauthorized();
-
     await seedDefaultInventory(userId);
     return NextResponse.json({ ok: true });
   } catch (error) {
@@ -16,4 +12,4 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
-}
+});

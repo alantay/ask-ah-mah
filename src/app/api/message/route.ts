@@ -1,7 +1,6 @@
 import { maybeAutoTitleConversation } from "@/lib/conversations";
-import { unauthorized } from "@/lib/http";
 import { createMessage, getMessages } from "@/lib/messages";
-import { getSessionUserId } from "@/lib/session";
+import { withAuth } from "@/lib/withAuth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -11,10 +10,7 @@ const PostSchema = z.object({
   role: z.enum(["user", "assistant"]),
 });
 
-export async function GET(req: NextRequest) {
-  const userId = await getSessionUserId(req);
-  if (!userId) return unauthorized();
-
+export const GET = withAuth(async (req: NextRequest, { userId }) => {
   const conversationId = req.nextUrl.searchParams.get("conversationId");
   if (!conversationId) {
     return NextResponse.json(
@@ -22,15 +18,11 @@ export async function GET(req: NextRequest) {
       { status: 400 }
     );
   }
-  // getMessages is owner-scoped: a foreign conversationId returns no messages.
   const messages = await getMessages(conversationId, userId);
   return NextResponse.json(messages);
-}
+});
 
-export async function POST(req: NextRequest) {
-  const userId = await getSessionUserId(req);
-  if (!userId) return unauthorized();
-
+export const POST = withAuth(async (req: NextRequest, { userId }) => {
   let rawBody: unknown;
   try {
     rawBody = await req.json();
@@ -60,4 +52,4 @@ export async function POST(req: NextRequest) {
     }
     throw error;
   }
-}
+});

@@ -6,8 +6,7 @@ import {
   setBought,
 } from "@/lib/shoppingList";
 import { AddShoppingListItemsSchema } from "@/lib/shoppingList/schemas";
-import { unauthorized } from "@/lib/http";
-import { getSessionUserId } from "@/lib/session";
+import { withAuth } from "@/lib/withAuth";
 import { NextRequest, NextResponse } from "next/server";
 
 async function readJson(req: NextRequest): Promise<Record<string, unknown> | null> {
@@ -22,11 +21,8 @@ function badRequest(message: string) {
   return NextResponse.json({ error: message }, { status: 400 });
 }
 
-export async function GET(req: NextRequest) {
+export const GET = withAuth(async (_req, { userId }) => {
   try {
-    const userId = await getSessionUserId(req);
-    if (!userId) return unauthorized();
-
     const items = await getShoppingList(userId);
     return NextResponse.json(
       { items },
@@ -45,17 +41,13 @@ export async function GET(req: NextRequest) {
       { status: 500 },
     );
   }
-}
+});
 
-export async function POST(req: NextRequest) {
+export const POST = withAuth(async (req: NextRequest, { userId }) => {
   try {
-    const userId = await getSessionUserId(req);
-    if (!userId) return unauthorized();
-
     const payload = await readJson(req);
     if (!payload) return badRequest("Invalid shopping list payload");
 
-    // `userId` in the body (if any) is ignored — z.object strips unknown keys.
     const parsed = AddShoppingListItemsSchema.safeParse(payload);
     if (!parsed.success) return badRequest("Invalid shopping list payload");
 
@@ -68,21 +60,10 @@ export async function POST(req: NextRequest) {
       { status: 500 },
     );
   }
-}
+});
 
-/**
- * Toggle a Need-tab row's bought flag.
- *
- * Caller is taken from the session. Body: `{ id: string, bought: boolean }`.
- * Returns `{ success: true, message }` on success. 401s when unauthenticated;
- * 400s on malformed JSON, a non-string `id`, or a non-boolean `bought`; 500s if
- * the service throws. Flips the flag only — never adds the item to the pantry.
- */
-export async function PATCH(req: NextRequest) {
+export const PATCH = withAuth(async (req: NextRequest, { userId }) => {
   try {
-    const userId = await getSessionUserId(req);
-    if (!userId) return unauthorized();
-
     const payload = await readJson(req);
     if (!payload) return badRequest("Invalid shopping list payload");
 
@@ -100,22 +81,10 @@ export async function PATCH(req: NextRequest) {
       { status: 500 },
     );
   }
-}
+});
 
-/**
- * Remove from the Need tab — one row, or all bought rows.
- *
- * Caller is taken from the session. Body: `{ id: string }` deletes a single
- * row; `{ clearBought: true }` bulk-deletes the user's bought rows. Returns
- * `{ success: true, message }` on success. 401s when unauthenticated; 400s on
- * malformed JSON, or when neither `id` nor `clearBought: true` is given; 500s
- * if the service throws.
- */
-export async function DELETE(req: NextRequest) {
+export const DELETE = withAuth(async (req: NextRequest, { userId }) => {
   try {
-    const userId = await getSessionUserId(req);
-    if (!userId) return unauthorized();
-
     const payload = await readJson(req);
     if (!payload) return badRequest("Invalid shopping list payload");
 
@@ -137,4 +106,4 @@ export async function DELETE(req: NextRequest) {
       { status: 500 },
     );
   }
-}
+});
