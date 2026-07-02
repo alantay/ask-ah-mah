@@ -13,6 +13,7 @@ const RequestSchema = z.object({
     .array(
       z.object({
         name: z.string().min(1),
+        // "ingredient" | "kitchenware" — steers food-vs-equipment advice.
         type: z.string().nullish(),
       }),
     )
@@ -29,7 +30,6 @@ const TipGenSchema = z.object({
 // session cookie, so the app's own calls are unaffected.
 export const POST = withAuth(async (req: NextRequest, { userId: _userId }) => {
   try {
-
     let payload: unknown;
     try {
       payload = await req.json();

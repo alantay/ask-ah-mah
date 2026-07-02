@@ -18,6 +18,7 @@ export const GET = withAuth(async (req: NextRequest, { userId }) => {
       { status: 400 }
     );
   }
+  // getMessages is owner-scoped: a foreign conversationId returns no messages.
   const messages = await getMessages(conversationId, userId);
   return NextResponse.json(messages);
 });

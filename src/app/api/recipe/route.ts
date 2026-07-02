@@ -19,6 +19,7 @@ export const POST = withAuth(async (req: NextRequest, { userId }) => {
     return NextResponse.json(recipe);
   }
 
+  // Legacy markdown path
   const { name, instructions } = body;
   let metadata;
   try {

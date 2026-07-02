@@ -48,6 +48,7 @@ export const POST = withAuth(async (req: NextRequest, { userId }) => {
     const payload = await readJson(req);
     if (!payload) return badRequest("Invalid shopping list payload");
 
+    // `userId` in the body (if any) is ignored — z.object strips unknown keys.
     const parsed = AddShoppingListItemsSchema.safeParse(payload);
     if (!parsed.success) return badRequest("Invalid shopping list payload");
 
@@ -62,6 +63,14 @@ export const POST = withAuth(async (req: NextRequest, { userId }) => {
   }
 });
 
+/**
+ * Toggle a Need-tab row's bought flag.
+ *
+ * Caller is taken from the session. Body: `{ id: string, bought: boolean }`.
+ * Returns `{ success: true, message }` on success. 401s when unauthenticated;
+ * 400s on malformed JSON, a non-string `id`, or a non-boolean `bought`; 500s if
+ * the service throws. Flips the flag only — never adds the item to the pantry.
+ */
 export const PATCH = withAuth(async (req: NextRequest, { userId }) => {
   try {
     const payload = await readJson(req);
@@ -83,6 +92,15 @@ export const PATCH = withAuth(async (req: NextRequest, { userId }) => {
   }
 });
 
+/**
+ * Remove from the Need tab — one row, or all bought rows.
+ *
+ * Caller is taken from the session. Body: `{ id: string }` deletes a single
+ * row; `{ clearBought: true }` bulk-deletes the user's bought rows. Returns
+ * `{ success: true, message }` on success. 401s when unauthenticated; 400s on
+ * malformed JSON, or when neither `id` nor `clearBought: true` is given; 500s
+ * if the service throws.
+ */
 export const DELETE = withAuth(async (req: NextRequest, { userId }) => {
   try {
     const payload = await readJson(req);

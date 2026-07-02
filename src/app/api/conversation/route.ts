@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
 
 export const GET = withAuth(async (_req, { userId }) => {
   const conversations = await listConversations(userId);
-  return NextResponse.json({ conversations });
+  return NextResponse.json({ conversations }); // flat array, ordered by updatedAt desc
 });
 
 export const POST = withAuth(async (_req, { userId }) => {
