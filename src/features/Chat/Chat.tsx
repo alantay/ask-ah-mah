@@ -14,6 +14,7 @@ const Chat = () => {
     status,
     submittedAt,
     isSending,
+    messagesLoading,
     handleSendMessage,
     handleRecipeDetected,
   } = useChatSession();
@@ -21,7 +22,11 @@ const Chat = () => {
   const router = useRouter();
 
   const messageCount = allMessages.length - 1; // exclude initial
-  const isEmpty = messageCount === 0 && status === "ready" && !isSending;
+  // messagesLoading is true only while fetching a just-switched-to conversation's
+  // saved history — gate on it so a mid-switch data gap never renders the
+  // full-screen empty state (see #383/#384).
+  const isEmpty =
+    messageCount === 0 && status === "ready" && !isSending && !messagesLoading;
 
   const composer = (
     <MessageInput
