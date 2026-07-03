@@ -1,15 +1,20 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import { useState } from "react";
 
 interface MessageInputProps {
   onSendMessage: (message: string) => Promise<void>;
   disabled: boolean;
+  // Overrides the form's default outer padding. Used by the first-run hero to
+  // sit the composer flush with the opener cards instead of the bottom bar.
+  className?: string;
 }
 
 export const MessageInput = ({
   onSendMessage,
   disabled,
+  className,
 }: MessageInputProps) => {
   const [input, setInput] = useState("");
 
@@ -22,7 +27,7 @@ export const MessageInput = ({
           setInput("");
         }
       }}
-      className="p-4"
+      className={cn("p-4", className)}
     >
       <div className="flex gap-1 items-center bg-muted/50 rounded-xl border border-border/60 px-3 py-1 max-w-5xl mx-auto">
         <Input
