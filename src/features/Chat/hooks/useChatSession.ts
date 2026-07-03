@@ -47,6 +47,23 @@ export function useChatSession() {
   // Holds the pending conversation id during the first-message stream
   const pendingConvIdRef = useRef<string | null>(null);
 
+  // The id passed to useChat below. Normally mirrors activeConversationId, but
+  // handleSendMessage sets it directly to the freshly-created conversation's id
+  // the moment a staging send starts — before commitConversation later assigns
+  // that same id to activeConversationId. Without this, useChat would see its
+  // `id` prop flip from "staging" to the real id only once the context commits
+  // (after the stream finishes), resetting its internal message store and
+  // dropping the just-streamed assistant reply from view for a beat.
+  const [chatId, setChatId] = useState<string>(
+    () => activeConversationId ?? "staging"
+  );
+  useEffect(() => {
+    // Don't let this bounce chatId back to "staging" while a staging send has
+    // already claimed a pending id and is waiting for the context to catch up.
+    if (pendingConvIdRef.current) return;
+    setChatId(activeConversationId ?? "staging");
+  }, [activeConversationId]);
+
   // Snapshot of the conversation id at send time — used in onFinish and transport
   // so mid-stream navigation cannot redirect messages to a different conversation.
   const inFlightConvIdRef = useRef<string | null>(null);
@@ -68,7 +85,7 @@ export function useChatSession() {
   ).current;
 
   const { messages, sendMessage, status } = useChat({
-    id: activeConversationId ?? "staging",
+    id: chatId,
     transport,
     onError: (error) => {
       console.error("Chat error:", error);
@@ -282,6 +299,10 @@ export function useChatSession() {
         convIdRef.current = conversation.id;
         pendingConvIdRef.current = conversation.id;
         inFlightConvIdRef.current = conversation.id;
+        // Claim the id for useChat now, before the stream starts, so it never
+        // has to reset once commitConversation assigns this same id to
+        // activeConversationId later (see chatId comment above).
+        setChatId(conversation.id);
 
         // Optimistically show in sidebar with pending state
         setPendingConversation(conversation);
