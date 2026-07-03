@@ -3,8 +3,7 @@ import { loadConversationContext } from "@/lib/chat/context";
 import { chatErrorResponse } from "@/lib/chat/errors";
 import { latestUserText } from "@/lib/chat/messageText";
 import { buildChatTools } from "@/lib/chat/tools";
-import { unauthorized } from "@/lib/http";
-import { getSessionUserId } from "@/lib/session";
+import { withAuth } from "@/lib/withAuth";
 import { openai } from "@ai-sdk/openai";
 import {
   convertToModelMessages,
@@ -27,11 +26,8 @@ const PostSchema = z.object({
   messages: z.array(UIMessageSchema).max(100),
 });
 
-export async function POST(req: NextRequest) {
+export const POST = withAuth(async (req: NextRequest, { userId }) => {
   try {
-    const userId = await getSessionUserId(req);
-    if (!userId) return unauthorized();
-
     const body = PostSchema.safeParse(await req.json());
     if (!body.success) {
       return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
@@ -89,4 +85,4 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     return chatErrorResponse(error);
   }
-}
+});

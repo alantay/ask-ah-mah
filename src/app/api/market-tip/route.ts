@@ -1,10 +1,9 @@
 import { prisma } from "@/lib/db";
-import { unauthorized } from "@/lib/http";
-import { getSessionUserId } from "@/lib/session";
 import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
 import { isPickableCategory } from "@/lib/marketTips/pickable";
 import { KITCHEN_DOMAIN_RULE } from "@/lib/marketTips/relevance";
 import { PROMPT_FRAGMENTS } from "@/lib/prompts/fragments";
+import { withAuth } from "@/lib/withAuth";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { NextRequest, NextResponse } from "next/server";
@@ -26,14 +25,11 @@ const TipGenSchema = z.object({
   tips: z.array(z.object({ key: z.string(), tip: z.string() })),
 });
 
-export async function POST(req: NextRequest) {
+// Model-calling endpoint — gated on a verified session so anonymous callers
+// can't loop it and burn token budget. Anonymous visitors still carry a
+// session cookie, so the app's own calls are unaffected.
+export const POST = withAuth(async (req: NextRequest, { userId: _userId }) => {
   try {
-    // Model-calling endpoint: gate on a verified session so anonymous callers
-    // can't loop it and burn token budget. Anonymous visitors still carry a
-    // session cookie, so the app's own calls are unaffected.
-    const userId = await getSessionUserId(req);
-    if (!userId) return unauthorized();
-
     let payload: unknown;
     try {
       payload = await req.json();
@@ -123,4 +119,4 @@ ${list}`,
       { status: 500 },
     );
   }
-}
+});

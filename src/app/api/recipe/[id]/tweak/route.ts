@@ -1,6 +1,5 @@
-import { unauthorized } from "@/lib/http";
-import { getSessionUserId } from "@/lib/session";
 import { ChangeKindSchema, RecipeBlockSchema } from "@/lib/recipes/schemas";
+import { withAuthDynamic } from "@/lib/withAuth";
 import { openai } from "@ai-sdk/openai";
 import { generateText } from "ai";
 import { NextRequest, NextResponse } from "next/server";
@@ -67,16 +66,10 @@ The \`changes\` array must list **every structural delta against the original re
 - \`label\`: a short narrative label in Ah Mah's voice (e.g. "Added cornstarch to velvet the chicken")`;
 }
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const POST = withAuthDynamic<{ id: string }>(async (req: NextRequest, { userId: _userId, params }) => {
   const { id } = await params;
 
   try {
-    const userId = await getSessionUserId(req);
-    if (!userId) return unauthorized();
-
     const body: {
       instruction?: string;
       originalRecipe?: unknown;
@@ -156,4 +149,4 @@ export async function POST(
     console.error("[/api/recipe/[id]/tweak]", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-}
+});

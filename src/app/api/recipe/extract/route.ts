@@ -1,15 +1,11 @@
-import { unauthorized } from "@/lib/http";
-import { getSessionUserId } from "@/lib/session";
 import { parseRecipeText } from "@/lib/recipes/parseRecipeText";
+import { withAuth } from "@/lib/withAuth";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(req: NextRequest) {
-  // Model-calling endpoint: gate on a verified session so anonymous callers
-  // can't loop it and burn token budget. Anonymous visitors still carry a
-  // session cookie, so the app's own calls are unaffected.
-  const userId = await getSessionUserId(req);
-  if (!userId) return unauthorized();
-
+// Model-calling endpoint — gated on a verified session so anonymous callers
+// can't loop it and burn token budget. Anonymous visitors still carry a
+// session cookie, so the app's own calls are unaffected.
+export const POST = withAuth(async (req: NextRequest, { userId: _userId }) => {
   const body = await req.json();
   const { text } = body;
 
@@ -34,4 +30,4 @@ export async function POST(req: NextRequest) {
       { status: 422 },
     );
   }
-}
+});

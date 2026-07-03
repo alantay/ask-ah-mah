@@ -3,17 +3,10 @@ import {
   deleteConversation,
   renameConversation,
 } from "@/lib/conversations";
-import { unauthorized } from "@/lib/http";
-import { getSessionUserId } from "@/lib/session";
+import { withAuthDynamic } from "@/lib/withAuth";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const userId = await getSessionUserId(req);
-  if (!userId) return unauthorized();
-
+export const PATCH = withAuthDynamic<{ id: string }>(async (req: NextRequest, { userId, params }) => {
   const { id } = await params;
   const { title, autoTitle } = await req.json();
 
@@ -46,15 +39,9 @@ export async function PATCH(
     { error: "title is required" },
     { status: 400 }
   );
-}
+});
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const userId = await getSessionUserId(req);
-  if (!userId) return unauthorized();
-
+export const DELETE = withAuthDynamic<{ id: string }>(async (_req, { userId, params }) => {
   const { id } = await params;
 
   try {
@@ -70,4 +57,4 @@ export async function DELETE(
 
     throw error;
   }
-}
+});

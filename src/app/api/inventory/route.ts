@@ -3,16 +3,11 @@ import {
   getInventory,
   removeInventoryItem,
 } from "@/lib/inventory/Inventory";
-import { unauthorized } from "@/lib/http";
-import { getSessionUserId } from "@/lib/session";
+import { withAuth } from "@/lib/withAuth";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(req: NextRequest) {
+export const GET = withAuth(async (_req, { userId }) => {
   try {
-    const userId = await getSessionUserId(req);
-
-    if (!userId) return unauthorized();
-
     const inventory = await getInventory(userId);
     return NextResponse.json(inventory, {
       headers: {
@@ -28,15 +23,11 @@ export async function GET(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
-export async function POST(req: NextRequest) {
+export const POST = withAuth(async (req: NextRequest, { userId }) => {
   try {
-    const userId = await getSessionUserId(req);
-    if (!userId) return unauthorized();
-
     const { items } = await req.json();
-
     await addInventoryItem(items, userId);
     return NextResponse.json({ success: true, message: "Inventory updated" });
   } catch (error) {
@@ -46,12 +37,10 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
-export async function DELETE(req: NextRequest) {
+export const DELETE = withAuth(async (req: NextRequest, { userId }) => {
   try {
-    const userId = await getSessionUserId(req);
-    if (!userId) return unauthorized();
     const { itemNames } = await req.json();
     await removeInventoryItem(itemNames, userId);
     return NextResponse.json({ success: true, message: "Inventory updated" });
@@ -62,4 +51,4 @@ export async function DELETE(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
