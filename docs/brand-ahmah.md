@@ -33,6 +33,8 @@ Ah Mah is a **character** (an idealized archetype from imagination, not a docume
 
 **The test for any content or voice:** *does this make a scared person exhale, or tense up?* (Bob Ross always made you exhale.)
 
+> **In-app chatbot voice** (how Ah Mah speaks in the product — stance, targets, calibration, live-danger, the "Not X. Y." reframe): [`brand-voice-spec.md`](./brand-voice-spec.md). That spec implements this spine; keep the two in sync.
+
 **Watch-out:** keep "cooking is showing love" an **invitation / gift you get to give**, never a **duty**. The moment it becomes "you *should* cook for your loved ones," it's the guilt we've kept out everywhere else (same spirit as: no streaks — see [`progress.md`](./progress.md) and the joy-loop issues #377/#378).
 
 ### Signature pillar — "Happy Accidents"
