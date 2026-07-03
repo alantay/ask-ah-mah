@@ -1,3 +1,4 @@
+import { NotFoundError } from "@/lib/errors";
 import { updateRecipeForUser } from "@/lib/recipes";
 import { RecipeBlockSchema } from "@/lib/recipes/schemas";
 import { withAuthDynamic } from "@/lib/withAuth";
@@ -21,7 +22,7 @@ export const PATCH = withAuthDynamic<{ id: string }>(async (req: NextRequest, { 
     if (err instanceof SyntaxError) {
       return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
     }
-    if (err instanceof Error && err.message === "not found") {
+    if (err instanceof NotFoundError) {
       return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
     }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

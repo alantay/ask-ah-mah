@@ -1,4 +1,5 @@
 import { maybeAutoTitleConversation } from "@/lib/conversations";
+import { NotFoundError } from "@/lib/errors";
 import { createMessage, getMessages } from "@/lib/messages";
 import { withAuth } from "@/lib/withAuth";
 import { NextRequest, NextResponse } from "next/server";
@@ -45,7 +46,7 @@ export const POST = withAuth(async (req: NextRequest, { userId }) => {
 
     return NextResponse.json({ message });
   } catch (error) {
-    if (error instanceof Error && error.message === "Conversation not found") {
+    if (error instanceof NotFoundError) {
       return NextResponse.json(
         { error: "Conversation not found" },
         { status: 404 }

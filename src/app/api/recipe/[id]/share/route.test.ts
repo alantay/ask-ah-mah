@@ -1,3 +1,4 @@
+import { NotFoundError } from "@/lib/errors";
 import { mintShareToken } from "@/lib/recipes";
 import { getSessionUserId } from "@/lib/session";
 import { NextRequest } from "next/server";
@@ -60,8 +61,8 @@ describe("POST /api/recipe/[id]/share", () => {
     expect(mockedMint).toHaveBeenCalledWith("recipe-1", "user-123");
   });
 
-  it("returns 404 when the recipe is not the caller's (mint throws 'not found')", async () => {
-    mockedMint.mockRejectedValue(new Error("not found"));
+  it("returns 404 when the recipe is not the caller's (mint throws NotFoundError)", async () => {
+    mockedMint.mockRejectedValue(new NotFoundError("Recipe"));
 
     const res = await POST(makeRequest(), { params });
 

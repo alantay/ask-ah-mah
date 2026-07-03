@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { NotFoundError } from "@/lib/errors";
 
 /**
  * Read a conversation's messages — scoped to its owner. Filtering on the
@@ -32,7 +33,7 @@ export async function createMessage(
       select: { userId: true },
     });
     if (existing && existing.userId !== userId) {
-      throw new Error("Conversation not found");
+      throw new NotFoundError("Conversation");
     }
     if (!existing) {
       await tx.conversation.create({

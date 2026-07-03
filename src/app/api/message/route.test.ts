@@ -1,5 +1,6 @@
 import { GET, POST } from "./route";
 import { createMessage, getMessages } from "@/lib/messages";
+import { NotFoundError } from "@/lib/errors";
 import { getSessionUserId } from "@/lib/session";
 import { NextRequest } from "next/server";
 
@@ -340,7 +341,7 @@ describe("Message API Routes", () => {
 
     it("returns 404 when writing to a conversation the user does not own", async () => {
       mockedCreateMessage.mockRejectedValue(
-        new Error("Conversation not found")
+        new NotFoundError("Conversation")
       );
 
       const request = createMockRequest("http://localhost:3000/api/message", {

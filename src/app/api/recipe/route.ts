@@ -2,6 +2,7 @@ import { deleteRecipeForUser, getRecipes, saveRecipe, saveRecipeFromBlock } from
 import { processRecipe } from "@/lib/recipes/recipeProcessor";
 import { normalizeTags } from "@/lib/recipes/normalizeTags";
 import { fetchRecipePhoto } from "@/lib/pexels/fetchPhoto";
+import { NotFoundError } from "@/lib/errors";
 import { withAuth } from "@/lib/withAuth";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -58,7 +59,7 @@ export const DELETE = withAuth(async (req: NextRequest, { userId }) => {
     await deleteRecipeForUser(recipeId, userId);
     return NextResponse.json({ success: true });
   } catch (error) {
-    if (error instanceof Error && error.message.includes("not found")) {
+    if (error instanceof NotFoundError) {
       return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
     }
     throw error;
