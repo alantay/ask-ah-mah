@@ -4,6 +4,7 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import ConversationItemMenu from "@/features/Conversations/components/ConversationItemMenu";
 import { useConversationContext } from "@/contexts/ConversationContext";
 import { useActiveTab } from "@/hooks/useActiveTab";
+import { usePathname, useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { SidebarContent } from "./SidebarContent";
 
@@ -21,6 +22,12 @@ const SECTION_LABELS: Record<"pantry" | "shopping" | "cookbook", string> = {
  */
 export function MobileTopBar() {
   const activeTab = useActiveTab();
+  const pathname = usePathname();
+  const router = useRouter();
+  // Recipe detail is a pushed view under the Cookbook section — the top bar
+  // acts as its back affordance (replacing the nav drawer trigger) instead of
+  // duplicating a back button inside the recipe's own action row.
+  const isRecipeDetail = pathname.startsWith("/recipe");
   const {
     activeConversation,
     activeConversationId,
@@ -53,15 +60,27 @@ export function MobileTopBar() {
   return (
     <>
       <div className="lg:hidden flex items-center gap-1 px-3 py-2 border-b border-border shrink-0">
-        <button
-          onClick={() => setDrawerOpen(true)}
-          className="flex items-center justify-center w-11 h-11 -ml-2 rounded-lg text-ink-faint hover:text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
-          aria-label="Open navigation"
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-        </button>
+        {isRecipeDetail ? (
+          <button
+            onClick={() => router.push("/?tab=cookbook")}
+            className="flex items-center justify-center w-11 h-11 -ml-2 rounded-lg text-ink-faint hover:text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
+            aria-label="Back to cookbook"
+          >
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+              <path d="M9 3.5 4.5 8 9 12.5M4.5 8H13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        ) : (
+          <button
+            onClick={() => setDrawerOpen(true)}
+            className="flex items-center justify-center w-11 h-11 -ml-2 rounded-lg text-ink-faint hover:text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
+            aria-label="Open navigation"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </button>
+        )}
 
         {isChat ? (
           renaming ? (
