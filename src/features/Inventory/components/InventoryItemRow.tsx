@@ -11,6 +11,8 @@ interface InventoryItemRowProps {
   onToggle?: (itemId: string) => void;
   /** Ah Mah's "keep it well at home" tip; shown when present and non-empty. */
   storageTip?: string;
+  /** True while this item's tip is still being generated. */
+  storageTipLoading?: boolean;
 }
 
 export function InventoryItemRow({
@@ -20,6 +22,7 @@ export function InventoryItemRow({
   selected = false,
   onToggle,
   storageTip,
+  storageTipLoading,
 }: InventoryItemRowProps) {
   const qty =
     item.quantity && item.unit
@@ -87,6 +90,11 @@ export function InventoryItemRow({
         {storageTip && (
           <span className="block font-display italic text-dense text-muted-foreground leading-snug">
             — {storageTip}
+          </span>
+        )}
+        {!storageTip && storageTipLoading && (
+          <span className="block font-display italic text-dense text-muted-foreground/60 leading-snug animate-pulse">
+            — Ah Mah&rsquo;s thinking of a tip…
           </span>
         )}
       </span>

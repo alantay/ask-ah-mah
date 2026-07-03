@@ -11,7 +11,11 @@ interface TipItem {
 /**
  * Fetches Ah Mah's "keep it well at home" tips for a set of pantry items.
  * The SWR key is the sorted canonical names, so identical lists dedupe and
- * tips are cached for an hour. Returns a canonical-key → tip map ("" = no tip).
+ * tips are cached for an hour. Returns a canonical-key → tip map ("" = no
+ * tip) alongside `isLoading`, which stays true for the duration of any
+ * in-flight request (initial fetch or revalidation after the item list
+ * changes) — callers use it to show a placeholder instead of leaving a
+ * toggled-on tip line silently blank.
  *
  * Pass `enabled = false` (the Pantry tips toggle is off, and defaults off) to
  * skip the request entirely — the SWR key goes null, so no network call fires.
@@ -19,7 +23,7 @@ interface TipItem {
 export function useStorageTips(
   items: TipItem[],
   enabled = true,
-): Record<string, string> {
+): { tips: Record<string, string>; isLoading: boolean } {
   const swrKey =
     enabled && items.length
       ? `storage-tip:${items
@@ -28,7 +32,7 @@ export function useStorageTips(
           .join("|")}`
       : null;
 
-  const { data } = useSWR<{ tips: Record<string, string> }>(
+  const { data, isValidating } = useSWR<{ tips: Record<string, string> }>(
     swrKey,
     async () => {
       const res = await fetch("/api/storage-tip", {
@@ -51,5 +55,7 @@ export function useStorageTips(
   // keepPreviousData holds the last tips even after the key goes null, so the
   // disabled return must be gated explicitly — otherwise toggling off never
   // clears the tips already on screen.
-  return enabled ? (data?.tips ?? {}) : {};
+  return enabled
+    ? { tips: data?.tips ?? {}, isLoading: isValidating }
+    : { tips: {}, isLoading: false };
 }

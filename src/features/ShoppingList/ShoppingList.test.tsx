@@ -10,7 +10,9 @@ jest.mock("@/contexts/SessionContext", () => ({
 
 jest.mock("sonner", () => ({ toast: { success: jest.fn(), error: jest.fn() } }));
 
-jest.mock("@/hooks/useMarketTips", () => ({ useMarketTips: jest.fn(() => ({})) }));
+jest.mock("@/hooks/useMarketTips", () => ({
+  useMarketTips: jest.fn(() => ({ tips: {}, isLoading: false })),
+}));
 const mockedUseMarketTips = jest.mocked(useMarketTips);
 
 let mockData: {
@@ -29,7 +31,7 @@ jest.mock("swr", () => {
 beforeEach(() => {
   jest.clearAllMocks();
   mockData = { items: [] };
-  mockedUseMarketTips.mockReturnValue({});
+  mockedUseMarketTips.mockReturnValue({ tips: {}, isLoading: false });
   global.fetch = jest
     .fn()
     .mockResolvedValue({ ok: true, json: async () => ({}) });
@@ -247,7 +249,8 @@ describe("ShoppingList", () => {
       items: [{ id: "row-1", name: "Tomatoes", bought: false }],
     };
     mockedUseMarketTips.mockReturnValue({
-      [canonicalTipKey("Tomatoes")]: "Pick firm, deep-red ones.",
+      tips: { [canonicalTipKey("Tomatoes")]: "Pick firm, deep-red ones." },
+      isLoading: false,
     });
 
     render(<ShoppingList />);
@@ -270,11 +273,22 @@ describe("ShoppingList", () => {
 
   it("shows no tip for a staple the engine returns nothing for", () => {
     mockData = { items: [{ id: "row-1", name: "Salt", bought: false }] };
-    mockedUseMarketTips.mockReturnValue({});
+    mockedUseMarketTips.mockReturnValue({ tips: {}, isLoading: false });
 
     render(<ShoppingList />);
 
     expect(screen.getByText("Salt")).toBeInTheDocument();
     expect(screen.queryByText(/—/)).not.toBeInTheDocument();
+  });
+
+  it("shows a thinking placeholder while a pickable item's tip is generating", () => {
+    mockData = {
+      items: [{ id: "row-1", name: "Tomatoes", bought: false, category: "Vegetable" }],
+    };
+    mockedUseMarketTips.mockReturnValue({ tips: {}, isLoading: true });
+
+    render(<ShoppingList />);
+
+    expect(screen.getByText(/thinking of a tip/i)).toBeInTheDocument();
   });
 });

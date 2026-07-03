@@ -9,6 +9,7 @@ import { useMarketTips } from "@/hooks/useMarketTips";
 import { useTipsPreference } from "@/hooks/useTipsPreference";
 import { MARKET_TIPS_PREF_KEY } from "@/lib/marketTips/preferences";
 import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
+import { isPickableCategory } from "@/lib/marketTips/pickable";
 import { groupByAisle } from "@/lib/shoppingList";
 import { cn, fetcher } from "@/lib/utils";
 import { Check, Plus, X } from "lucide-react";
@@ -142,7 +143,7 @@ const ShoppingList = () => {
   // about pickable items, so staples (salt, sugar, flour) return no tip.
   // Default ON; toggling off skips the fetch entirely.
   const [tipsOn, setTipsOn] = useTipsPreference(MARKET_TIPS_PREF_KEY, true);
-  const tips = useMarketTips(
+  const { tips, isLoading: tipsLoading } = useMarketTips(
     items.map((item) => ({ name: item.name, category: item.category })),
     tipsOn,
   );
@@ -246,6 +247,15 @@ const ShoppingList = () => {
                             — {tips[canonicalTipKey(item.name)]}
                           </span>
                         )}
+                        {tipsOn &&
+                          !item.bought &&
+                          tipsLoading &&
+                          !tips[canonicalTipKey(item.name)] &&
+                          isPickableCategory(item.category) && (
+                            <span className="block font-display italic text-dense text-muted-foreground/60 leading-snug animate-pulse">
+                              — Ah Mah&rsquo;s thinking of a tip…
+                            </span>
+                          )}
                       </span>
                       <button
                         type="button"

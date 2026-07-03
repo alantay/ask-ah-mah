@@ -45,6 +45,7 @@ const CategoryCard = ({
   selectedIds,
   onToggle,
   tips,
+  tipsLoading,
 }: {
   label: string;
   items: InventoryItem[];
@@ -53,6 +54,7 @@ const CategoryCard = ({
   selectedIds?: Set<string>;
   onToggle?: (id: string) => void;
   tips?: Record<string, string>;
+  tipsLoading?: boolean;
 }) => (
   <section className="bg-card border border-border rounded-lg p-4 shadow-[0_1px_0_var(--color-border-soft)]">
     <div className="flex items-baseline justify-between border-b border-dashed border-border pb-2 mb-2">
@@ -73,6 +75,7 @@ const CategoryCard = ({
           selected={selectedIds?.has(item.id)}
           onToggle={onToggle}
           storageTip={tips?.[canonicalTipKey(item.name)]}
+          storageTipLoading={tipsLoading && !tips?.[canonicalTipKey(item.name)]}
         />
       ))}
     </ul>
@@ -161,7 +164,10 @@ const Inventory = () => {
     ...(data?.kitchenwareInventory ?? []),
   ].map((i) => ({ name: i.name, type: i.type }));
   const showTips = tipsOn && !selectionMode;
-  const storageTips = useStorageTips(tipItems, showTips);
+  const { tips: storageTips, isLoading: storageTipsLoading } = useStorageTips(
+    tipItems,
+    showTips,
+  );
 
   const onSubmit = async () => {
     if (!userId || !draft.trim() || submitting) return;
@@ -524,6 +530,7 @@ const Inventory = () => {
                 selectedIds={selectedIds}
                 onToggle={toggleItem}
                 tips={showTips ? storageTips : {}}
+                tipsLoading={showTips && storageTipsLoading}
               />
             ))}
             {equipmentItems.length > 0 && (
@@ -535,6 +542,7 @@ const Inventory = () => {
                 selectedIds={selectedIds}
                 onToggle={toggleItem}
                 tips={showTips ? storageTips : {}}
+                tipsLoading={showTips && storageTipsLoading}
               />
             )}
           </div>
