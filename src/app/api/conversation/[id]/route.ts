@@ -3,6 +3,7 @@ import {
   deleteConversation,
   renameConversation,
 } from "@/lib/conversations";
+import { NotFoundError } from "@/lib/errors";
 import { withAuthDynamic } from "@/lib/withAuth";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -22,10 +23,7 @@ export const PATCH = withAuthDynamic<{ id: string }>(async (req: NextRequest, { 
       const conversation = await renameConversation(id, title, userId);
       return NextResponse.json({ conversation });
     } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message === "Conversation not found"
-      ) {
+      if (error instanceof NotFoundError) {
         return NextResponse.json(
           { error: "Conversation not found" },
           { status: 404 }
@@ -48,7 +46,7 @@ export const DELETE = withAuthDynamic<{ id: string }>(async (_req, { userId, par
     await deleteConversation(id, userId);
     return new Response(null, { status: 204 });
   } catch (error) {
-    if (error instanceof Error && error.message === "Conversation not found") {
+    if (error instanceof NotFoundError) {
       return NextResponse.json(
         { error: "Conversation not found" },
         { status: 404 }

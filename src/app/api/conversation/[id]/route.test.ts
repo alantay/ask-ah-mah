@@ -4,6 +4,7 @@ import {
   deleteConversation,
   renameConversation,
 } from "@/lib/conversations";
+import { NotFoundError } from "@/lib/errors";
 import { getSessionUserId } from "@/lib/session";
 import { NextRequest } from "next/server";
 
@@ -116,7 +117,7 @@ describe("Conversation by-id API routes", () => {
 
     it("returns 404 when renaming a conversation the user does not own", async () => {
       mockedRenameConversation.mockRejectedValue(
-        new Error("Conversation not found")
+        new NotFoundError("Conversation")
       );
 
       const request = createMockRequest("http://localhost:3000/api/conversation/conv-1", {
@@ -188,7 +189,7 @@ describe("Conversation by-id API routes", () => {
     });
 
     it("returns 404 when the conversation does not belong to the user", async () => {
-      mockedDeleteConversation.mockRejectedValue(new Error("Conversation not found"));
+      mockedDeleteConversation.mockRejectedValue(new NotFoundError("Conversation"));
 
       const request = createMockRequest(
         "http://localhost:3000/api/conversation/conv-1",

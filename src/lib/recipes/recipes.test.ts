@@ -135,7 +135,7 @@ describe("deleteRecipeForUser", () => {
     (mockPrisma.recipe.deleteMany as jest.Mock).mockResolvedValue({ count: 0 });
 
     await expect(deleteRecipeForUser("recipe-1", "wrong-user")).rejects.toThrow(
-      "Recipe not found or not owned by user",
+      "Recipe not found",
     );
   });
 

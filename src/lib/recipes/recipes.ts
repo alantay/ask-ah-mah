@@ -2,6 +2,7 @@ import { randomBytes } from "crypto";
 import { fetchRecipePhoto } from "../pexels/fetchPhoto";
 import type { PexelsPhoto } from "../pexels/fetchPhoto";
 import { prisma } from "../db";
+import { NotFoundError } from "../errors";
 import { normalizeTags } from "./normalizeTags";
 import { normalizeIngredient } from "./normalizeIngredient";
 import { Recipe, RecipeBlock } from "./schemas";
@@ -41,7 +42,7 @@ export async function deleteRecipeForUser(recipeId: string, userId: string) {
     where: { id: recipeId, userId },
   });
   if (result.count === 0) {
-    throw new Error("Recipe not found or not owned by user");
+    throw new NotFoundError("Recipe");
   }
 }
 
@@ -62,7 +63,7 @@ export async function updateRecipeForUser(id: string, userId: string, block: Rec
     },
   });
   if (result.count === 0) {
-    throw new Error("not found");
+    throw new NotFoundError("Recipe");
   }
   return await prisma.recipe.findUnique({ where: { id } });
 }
@@ -83,7 +84,7 @@ export async function mintShareToken(id: string, userId: string) {
     where: { id, userId },
     select: { shareToken: true },
   });
-  if (!recipe) throw new Error("not found");
+  if (!recipe) throw new NotFoundError("Recipe");
   if (recipe.shareToken) return recipe.shareToken;
 
   // Compare-and-set so concurrent callers can't each mint a different token and
@@ -100,7 +101,7 @@ export async function mintShareToken(id: string, userId: string) {
     where: { id, userId },
     select: { shareToken: true },
   });
-  if (!current?.shareToken) throw new Error("not found");
+  if (!current?.shareToken) throw new NotFoundError("Recipe");
   return current.shareToken;
 }
 

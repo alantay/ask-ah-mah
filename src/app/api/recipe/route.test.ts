@@ -1,4 +1,5 @@
 import { deleteRecipeForUser, getRecipes, saveRecipe, saveRecipeFromBlock } from "@/lib/recipes";
+import { NotFoundError } from "@/lib/errors";
 import { getSessionUserId } from "@/lib/session";
 import { NextRequest } from "next/server";
 import { DELETE, GET, POST } from "./route";
@@ -721,7 +722,7 @@ describe("Recipe API Routes", () => {
     });
 
     it("should return 404 when recipe not found or not owned", async () => {
-      mockedDeleteRecipeForUser.mockRejectedValue(new Error("Recipe not found or not owned by user"));
+      mockedDeleteRecipeForUser.mockRejectedValue(new NotFoundError("Recipe"));
 
       const request = createMockRequest("http://localhost:3000/api/recipe", {
         method: "DELETE",

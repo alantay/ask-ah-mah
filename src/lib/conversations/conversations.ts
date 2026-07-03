@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { NotFoundError } from "@/lib/errors";
 import { generateObject } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
@@ -91,7 +92,7 @@ export async function renameConversation(
   });
 
   if (result.count === 0) {
-    throw new Error("Conversation not found");
+    throw new NotFoundError("Conversation");
   }
 
   const conversation = await prisma.conversation.findUnique({
@@ -131,7 +132,7 @@ export async function deleteConversation(
   });
 
   if (result.count === 0) {
-    throw new Error("Conversation not found");
+    throw new NotFoundError("Conversation");
   }
 }
 
