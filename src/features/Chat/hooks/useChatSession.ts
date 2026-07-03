@@ -47,20 +47,27 @@ export function useChatSession() {
   // Holds the pending conversation id during the first-message stream
   const pendingConvIdRef = useRef<string | null>(null);
 
-  // The id passed to useChat below. Normally mirrors activeConversationId, but
-  // handleSendMessage sets it directly to the freshly-created conversation's id
-  // the moment a staging send starts — before commitConversation later assigns
-  // that same id to activeConversationId. Without this, useChat would see its
-  // `id` prop flip from "staging" to the real id only once the context commits
-  // (after the stream finishes), resetting its internal message store and
-  // dropping the just-streamed assistant reply from view for a beat.
+  // Set for exactly one render right before we call commitConversation
+  // ourselves (see onFinish below), so the chatId-sync effect can tell "our
+  // own commit just landed" apart from "the user switched conversations" and
+  // skip that one activeConversationId change.
+  const skipNextChatIdSyncRef = useRef(false);
+
+  // The id passed to useChat below. Deliberately does NOT mirror
+  // activeConversationId while a staging send's stream is still in flight or
+  // just completing — changing useChat's `id` mid-flight resets its internal
+  // message store, wiping whatever was just sent/streamed from view for a
+  // beat (see #383/#384). It only re-syncs to activeConversationId for a
+  // genuine conversation switch (e.g. the sidebar), never for the staging
+  // conversation catching up to its own freshly-committed id.
   const [chatId, setChatId] = useState<string>(
     () => activeConversationId ?? "staging"
   );
   useEffect(() => {
-    // Don't let this bounce chatId back to "staging" while a staging send has
-    // already claimed a pending id and is waiting for the context to catch up.
-    if (pendingConvIdRef.current) return;
+    if (skipNextChatIdSyncRef.current) {
+      skipNextChatIdSyncRef.current = false;
+      return;
+    }
     setChatId(activeConversationId ?? "staging");
   }, [activeConversationId]);
 
@@ -170,10 +177,15 @@ export function useChatSession() {
         }
       });
 
-      // Commit pending conversation after stream completes
+      // Commit pending conversation after stream completes. This changes
+      // activeConversationId to the id chatId already implicitly represents
+      // (the "staging" session that was live this whole time) — skip the
+      // resulting chatId re-sync so useChat's store isn't reset right as the
+      // just-streamed reply finishes.
       const pendingId = pendingConvIdRef.current;
       if (pendingId) {
         pendingConvIdRef.current = null;
+        skipNextChatIdSyncRef.current = true;
         commitConversation(pendingId);
       }
     },
@@ -299,10 +311,6 @@ export function useChatSession() {
         convIdRef.current = conversation.id;
         pendingConvIdRef.current = conversation.id;
         inFlightConvIdRef.current = conversation.id;
-        // Claim the id for useChat now, before the stream starts, so it never
-        // has to reset once commitConversation assigns this same id to
-        // activeConversationId later (see chatId comment above).
-        setChatId(conversation.id);
 
         // Optimistically show in sidebar with pending state
         setPendingConversation(conversation);

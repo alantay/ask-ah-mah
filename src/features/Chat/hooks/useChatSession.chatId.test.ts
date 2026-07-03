@@ -1,12 +1,13 @@
 /**
  * Regression tests for #383/#384: the id passed to useChat must not reset
- * between a staging send claiming a new conversation id and
- * commitConversation later assigning that same id to activeConversationId —
- * otherwise the AI SDK drops the just-streamed assistant message from view
- * for a beat, flashing back to the empty state right as a recipe finishes.
+ * while a staging send's stream is in flight or just finishing, and must not
+ * reset when its own commitConversation call lands — otherwise the AI SDK
+ * drops the just-sent/streamed message from view for a beat. It should only
+ * reset for a genuine conversation switch (e.g. the sidebar).
  */
 
 import { act, renderHook } from "@testing-library/react";
+import type { UIMessage } from "ai";
 import { useChatSession } from "./useChatSession";
 
 // ── Mutable context mock ────────────────────────────────────────────────────
@@ -21,7 +22,11 @@ jest.mock("@/contexts/ConversationContext", () => ({
   useConversationContext: () => ({
     activeConversationId: mockActiveConversationId,
     setPendingConversation: jest.fn(),
-    commitConversation: jest.fn(),
+    // Mirrors the real commitConversation's effect on activeConversationId so
+    // these tests can exercise the actual re-render this triggers.
+    commitConversation: jest.fn((id: string) => {
+      mockActiveConversationId = id;
+    }),
     autoTitleActiveConversation: jest.fn().mockResolvedValue(true),
     pendingCookWithMessage: null,
     clearCookWithMessage: jest.fn(),
@@ -29,16 +34,21 @@ jest.mock("@/contexts/ConversationContext", () => ({
   }),
 }));
 
-// ── AI SDK mock — records every id useChat was called with ─────────────────
+// ── AI SDK mock — records every id useChat was called with, and captures the
+// most recent onFinish so tests can simulate a stream completing.
 
 const chatIdCalls: string[] = [];
 const mockSendMessage = jest.fn();
+let latestOnFinish: ((options: { message: UIMessage }) => void) | undefined;
 
 jest.mock("@ai-sdk/react", () => ({
-  useChat: jest.fn((opts: { id: string }) => {
-    chatIdCalls.push(opts.id);
-    return { messages: [], sendMessage: mockSendMessage, status: "ready" };
-  }),
+  useChat: jest.fn(
+    (opts: { id: string; onFinish?: (options: { message: UIMessage }) => void }) => {
+      chatIdCalls.push(opts.id);
+      latestOnFinish = opts.onFinish;
+      return { messages: [], sendMessage: mockSendMessage, status: "ready" };
+    }
+  ),
 }));
 
 jest.mock("ai", () => ({
@@ -67,15 +77,22 @@ const okConversation = () =>
 
 const okMessage = () => Promise.resolve({ ok: true, status: 200 });
 
+const fakeAssistantMessage: UIMessage = {
+  id: "msg-1",
+  role: "assistant",
+  parts: [{ type: "text", text: "Try laksa!" }],
+};
+
 describe("useChatSession — chat id stability across staging → commit", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     chatIdCalls.length = 0;
     mockActiveConversationId = null;
+    latestOnFinish = undefined;
     mockSendMessage.mockResolvedValue(undefined);
   });
 
-  it("claims the real conversation id for useChat as soon as it's created, before commitConversation ever runs", async () => {
+  it("keeps useChat keyed on 'staging' through a send, even after the conversation id is created", async () => {
     mockFetch.mockReturnValueOnce(okConversation());
     mockFetch.mockResolvedValue(okMessage());
 
@@ -87,13 +104,13 @@ describe("useChatSession — chat id stability across staging → commit", () =>
       await result.current.handleSendMessage("laksa");
     });
 
-    // useChat should already be keyed on the real id — never bounced back to
-    // "staging" once the conversation was created.
-    expect(chatIdCalls[chatIdCalls.length - 1]).toBe("conv-new");
-    expect(chatIdCalls).not.toContain(undefined);
+    // The conversation was created (real id exists server-side), but useChat
+    // must not have been re-keyed mid-send — that would drop the just-added
+    // user message from its store.
+    expect(chatIdCalls[chatIdCalls.length - 1]).toBe("staging");
   });
 
-  it("does not change useChat's id when activeConversationId later catches up to the same value (simulated commit)", async () => {
+  it("does not reset useChat's id when its own commitConversation call lands after the stream finishes", async () => {
     mockFetch.mockReturnValueOnce(okConversation());
     mockFetch.mockResolvedValue(okMessage());
 
@@ -103,17 +120,43 @@ describe("useChatSession — chat id stability across staging → commit", () =>
       await result.current.handleSendMessage("laksa");
     });
 
-    const callsBeforeCommit = chatIdCalls.length;
-    expect(chatIdCalls[chatIdCalls.length - 1]).toBe("conv-new");
+    const callsBeforeFinish = chatIdCalls.length;
 
-    // Simulate commitConversation resolving: context now reports the same id
-    // as activeConversationId.
-    mockActiveConversationId = "conv-new";
+    // Simulate the stream completing: onFinish commits the pending
+    // conversation, which flips activeConversationId to the real id.
+    await act(async () => {
+      await latestOnFinish?.({ message: fakeAssistantMessage });
+      rerender();
+    });
+
+    expect(mockActiveConversationId).toBe("conv-new");
+
+    // useChat's id must still be "staging" — the commit's activeConversationId
+    // change should have been skipped, not applied.
+    const callsAfterFinish = chatIdCalls.slice(callsBeforeFinish);
+    expect(callsAfterFinish.every((id) => id === "staging")).toBe(true);
+  });
+
+  it("does reset useChat's id for a genuine conversation switch unrelated to its own commit", async () => {
+    mockFetch.mockReturnValueOnce(okConversation());
+    mockFetch.mockResolvedValue(okMessage());
+
+    const { result, rerender } = renderHook(() => useChatSession());
+
+    await act(async () => {
+      await result.current.handleSendMessage("laksa");
+    });
+
+    await act(async () => {
+      await latestOnFinish?.({ message: fakeAssistantMessage });
+      rerender();
+    });
+
+    // Now simulate the user picking a different, unrelated conversation from
+    // the sidebar (not caused by our own commit).
+    mockActiveConversationId = "conv-other";
     act(() => rerender());
 
-    // Every subsequent call must still be "conv-new" — no reset to "staging"
-    // and no transient different value in between.
-    const callsAfterCommit = chatIdCalls.slice(callsBeforeCommit);
-    expect(callsAfterCommit.every((id) => id === "conv-new")).toBe(true);
+    expect(chatIdCalls[chatIdCalls.length - 1]).toBe("conv-other");
   });
 });
