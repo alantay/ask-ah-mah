@@ -9,8 +9,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
-import RecipeCard from "./components/RecipeCard";
 import { AddRecipeModal } from "./components/AddRecipeModal";
+import RecipeCard from "./components/RecipeCard";
 import { RecipeSidebar } from "./components/RecipeSidebar";
 
 const HIDE_SCROLLBAR =
@@ -31,7 +31,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
   const { data: recipes, isLoading } = useSWR<RecipeWithId[]>(
     userId ? `/api/recipe?userId=${userId}` : null,
     fetcher,
-    { shouldRetryOnError: true, revalidateOnMount: true }
+    { shouldRetryOnError: true, revalidateOnMount: true },
   );
 
   const deleteRecipe = async (recipeId: string) => {
@@ -52,10 +52,15 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
   const allRecipes = recipes ?? [];
   const isEmpty = allRecipes.length === 0 && !isLoading;
 
-  const tagCounts = allRecipes.reduce((acc, r) => {
-    (r.tags ?? []).forEach((t) => { acc[t] = (acc[t] ?? 0) + 1; });
-    return acc;
-  }, {} as Record<string, number>);
+  const tagCounts = allRecipes.reduce(
+    (acc, r) => {
+      (r.tags ?? []).forEach((t) => {
+        acc[t] = (acc[t] ?? 0) + 1;
+      });
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
   const tagEntries = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
 
   const handleTagToggle = (tag: string) => {
@@ -100,32 +105,58 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
                     return t > max ? t : max;
                   }, 0);
                   if (!latest) return `${base}.`;
-                  const day = new Date(latest).toLocaleDateString("en-US", { weekday: "long" });
+                  const day = new Date(latest).toLocaleDateString("en-US", {
+                    weekday: "long",
+                  });
                   return `${base}. Last one in: ${day}.`;
                 })()}
           </p>
         </div>
-        <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+        <div className="flex gap-2 w-full sm:w-auto shrink-0">
           {!isEmpty && (
             <>
-              {tagEntries.length > 0 && <button
-                onClick={() => setMobileFilterOpen(true)}
-                className="sm:hidden shrink-0 flex items-center gap-1.5 px-3 py-[7px] font-sans text-dense font-medium text-muted-foreground bg-card border border-border rounded-full cursor-pointer hover:text-foreground transition-colors"
-              >
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M1 3h10M3 6h6M5 9h2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                </svg>
-                Filter
-                {activeTags.size > 0 && (
-                  <span className="ml-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold">
-                    {activeTags.size}
-                  </span>
-                )}
-              </button>}
+              {tagEntries.length > 0 && (
+                <button
+                  onClick={() => setMobileFilterOpen(true)}
+                  className="sm:hidden shrink-0 flex items-center gap-1.5 px-3 py-[7px] font-sans text-dense font-medium text-muted-foreground bg-card border border-border rounded-full cursor-pointer hover:text-foreground transition-colors"
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path
+                      d="M1 3h10M3 6h6M5 9h2"
+                      stroke="currentColor"
+                      strokeWidth="1.4"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  Filter
+                  {activeTags.size > 0 && (
+                    <span className="ml-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold">
+                      {activeTags.size}
+                    </span>
+                  )}
+                </button>
+              )}
               <label className="flex items-center gap-2 px-3 py-[7px] bg-card border border-border rounded-full sm:min-w-[200px] flex-1 sm:flex-none text-muted-foreground cursor-text">
-                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" className="shrink-0">
-                  <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.4" />
-                  <path d="m10.5 10.5 3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  className="shrink-0"
+                >
+                  <circle
+                    cx="7"
+                    cy="7"
+                    r="4.5"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                  />
+                  <path
+                    d="m10.5 10.5 3 3"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                  />
                 </svg>
                 <input
                   value={search}
@@ -141,8 +172,19 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
             onClick={() => setShowAdd(true)}
             className="shrink-0 gap-1.5 px-3 py-[7px] font-sans text-dense font-semibold rounded-full"
           >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="size-[12px]">
-              <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 12 12"
+              fill="none"
+              className="size-[12px]"
+            >
+              <path
+                d="M6 1v10M1 6h10"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
             </svg>
             Add recipe
           </Button>
@@ -162,13 +204,20 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
           />
         )}
 
-        <div className={`flex-1 overflow-y-auto px-4 sm:px-6 py-5 ${HIDE_SCROLLBAR}`}>
+        <div
+          className={`flex-1 overflow-y-auto px-4 sm:px-6 py-5 ${HIDE_SCROLLBAR}`}
+        >
           {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-[18px]">
-              {[0, 1, 2].map((i) => <SkeletonCard key={i} />)}
+              {[0, 1, 2].map((i) => (
+                <SkeletonCard key={i} />
+              ))}
             </div>
           ) : isEmpty ? (
-            <CookbookEmpty onChatClick={onChatClick} onPasteClick={() => setShowAdd(true)} />
+            <CookbookEmpty
+              onChatClick={onChatClick}
+              onPasteClick={() => setShowAdd(true)}
+            />
           ) : filtered.length === 0 ? (
             <p className="font-display italic text-emphasis text-muted-foreground">
               {activeTags.size > 0
@@ -195,13 +244,26 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
   );
 }
 
-function CookbookEmpty({ onChatClick, onPasteClick }: { onChatClick?: () => void; onPasteClick?: () => void }) {
+function CookbookEmpty({
+  onChatClick,
+  onPasteClick,
+}: {
+  onChatClick?: () => void;
+  onPasteClick?: () => void;
+}) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[18px]">
       {/* Instructional card — spans 2 rows on desktop */}
       <div className="bg-card border-[1.5px] border-dashed border-border rounded-lg p-6 lg:row-span-2 flex flex-col gap-3.5 shadow-[0_1px_0_var(--color-border-soft)]">
         <div className="w-11 h-11 rounded-lg bg-primary flex items-center justify-center text-primary-foreground shrink-0">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+          >
             <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16l-7-3-7 3z" />
           </svg>
         </div>
@@ -210,7 +272,8 @@ function CookbookEmpty({ onChatClick, onPasteClick }: { onChatClick?: () => void
             Cookbook&rsquo;s empty for now.
           </div>
           <div className="font-display italic text-sm text-muted-foreground leading-relaxed">
-            When something&rsquo;s worth a second go, tap <em>Save</em>. Ah Mah keeps it tidy.
+            When something&rsquo;s worth a second go, tap <em>Save</em>. Ah Mah
+            keeps it tidy.
           </div>
         </div>
         <div className="flex flex-col gap-2">
