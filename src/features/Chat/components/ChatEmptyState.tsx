@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import Image from "next/image";
 
 import { Stamp } from "@/features/shared/components/Stamp";
@@ -15,6 +17,9 @@ const PROMPTS = [
 interface ChatEmptyStateProps {
   onSend: (text: string) => void;
   onCookWith: () => void;
+  // The message composer, rendered as the closing element of the hero so the
+  // input sits with the greeting instead of pinned to the bottom of the column.
+  composer: ReactNode;
 }
 
 /**
@@ -24,12 +29,19 @@ interface ChatEmptyStateProps {
  * quick-start chips. Once the first message is sent, the normal message thread
  * takes over and the greeting reappears as Ah Mah's opening bubble.
  */
-export function ChatEmptyState({ onSend, onCookWith }: ChatEmptyStateProps) {
+export function ChatEmptyState({
+  onSend,
+  onCookWith,
+  composer,
+}: ChatEmptyStateProps) {
   return (
-    <div className="flex-1 overflow-y-auto">
-      <div className="min-h-full mx-auto flex w-full max-w-2xl flex-col items-center justify-center px-4 py-10 text-center animate-in fade-in slide-in-from-bottom-2 duration-500">
-        {/* Stamped Ah Mah mark */}
-        <Stamp className="size-16 mb-5">
+    <div className="flex flex-1 flex-col overflow-y-auto">
+      {/* `m-auto` centers the hero when there's room but collapses to the top
+          and scrolls when the viewport is too short to fit it — unlike
+          `justify-center`, which would clip the composer out of reach. */}
+      <div className="m-auto flex w-full max-w-2xl flex-col items-center px-4 py-10 text-center animate-in fade-in slide-in-from-bottom-2 duration-500 [@media(max-height:720px)]:py-5">
+        {/* Stamped Ah Mah mark — dropped on short viewports to save height */}
+        <Stamp className="size-16 mb-5 [@media(max-height:720px)]:hidden">
           <span className="relative size-10">
             <Image
               src="/granny-icon.png"
@@ -51,7 +63,7 @@ export function ChatEmptyState({ onSend, onCookWith }: ChatEmptyStateProps) {
         </p>
 
         {/* Opener cards */}
-        <div className="mt-7 grid w-full gap-2.5 text-left sm:grid-cols-3">
+        <div className="mt-7 grid w-full gap-2.5 text-left sm:grid-cols-3 [@media(max-height:720px)]:mt-4">
           {PROMPTS.map((p) => (
             <button
               key={p.label}
@@ -71,10 +83,13 @@ export function ChatEmptyState({ onSend, onCookWith }: ChatEmptyStateProps) {
         {/* Secondary path — browse the pantry instead of typing an opener */}
         <button
           onClick={onCookWith}
-          className="mt-6 inline-flex min-h-11 items-center gap-1.5 text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline cursor-pointer"
+          className="mt-6 inline-flex min-h-11 items-center gap-1.5 text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline cursor-pointer [@media(max-height:720px)]:mt-3"
         >
           🥬 Or pick from your pantry →
         </button>
+
+        {/* Composer — sits with the hero so typing feels like the next step */}
+        <div className="mt-8 w-full [@media(max-height:720px)]:mt-4">{composer}</div>
       </div>
     </div>
   );

@@ -21,6 +21,17 @@ const Chat = () => {
   const router = useRouter();
 
   const messageCount = allMessages.length - 1; // exclude initial
+  const isEmpty = messageCount === 0 && status === "ready" && !isSending;
+
+  const composer = (
+    <MessageInput
+      onSendMessage={handleSendMessage}
+      disabled={status !== "ready" || isSending}
+      // In the first-run hero the composer is inset by the centered column, so
+      // drop the bottom-bar padding and let it align with the opener cards.
+      className={isEmpty ? "px-0 pb-0 pt-0" : undefined}
+    />
+  );
 
   if (!userId) {
     return (
@@ -36,26 +47,26 @@ const Chat = () => {
     <div
       className="flex flex-col animate-in fade-in duration-300 h-full"
     >
-      {messageCount === 0 && status === "ready" && !isSending ? (
+      {isEmpty ? (
         <ChatEmptyState
           onSend={handleSendMessage}
           onCookWith={() => router.replace("/?tab=pantry&selectionMode=1")}
+          composer={composer}
         />
       ) : (
-        <MessageList
-          messages={allMessages}
-          status={status}
-          submittedAt={submittedAt}
-          isSending={isSending}
-          userId={userId}
-          onSend={handleSendMessage}
-          onRecipeDetected={handleRecipeDetected}
-        />
+        <>
+          <MessageList
+            messages={allMessages}
+            status={status}
+            submittedAt={submittedAt}
+            isSending={isSending}
+            userId={userId}
+            onSend={handleSendMessage}
+            onRecipeDetected={handleRecipeDetected}
+          />
+          {composer}
+        </>
       )}
-      <MessageInput
-        onSendMessage={handleSendMessage}
-        disabled={status !== "ready" || isSending}
-      />
     </div>
   );
 };
