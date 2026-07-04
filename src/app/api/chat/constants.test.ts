@@ -30,4 +30,8 @@ describe("CHAT_SYSTEM_PROMPT recipe example", () => {
   it("carries the diagnostic balance-check fragment", () => {
     expect(CHAT_SYSTEM_PROMPT).toContain(PROMPT_FRAGMENTS.balanceCheck);
   });
+
+  it("carries the distilled voice-stance fragment", () => {
+    expect(CHAT_SYSTEM_PROMPT).toContain(PROMPT_FRAGMENTS.voiceStance);
+  });
 });
