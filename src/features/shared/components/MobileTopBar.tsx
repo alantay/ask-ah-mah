@@ -63,12 +63,15 @@ export function MobileTopBar() {
         {isRecipeDetail ? (
           <button
             onClick={() => router.push("/?tab=cookbook")}
-            className="flex items-center justify-center w-11 h-11 -ml-2 rounded-lg text-ink-faint hover:text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
+            className="flex items-center gap-1.5 min-h-11 -ml-2 px-2 rounded-lg text-ink-faint hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
             aria-label="Back to cookbook"
           >
-            <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="none" className="shrink-0">
               <path d="M9 3.5 4.5 8 9 12.5M4.5 8H13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
+            <span className="font-display italic font-medium text-base text-foreground leading-tight tracking-tight">
+              Cookbook
+            </span>
           </button>
         ) : (
           <button
@@ -82,7 +85,7 @@ export function MobileTopBar() {
           </button>
         )}
 
-        {isChat ? (
+        {!isRecipeDetail && (isChat ? (
           renaming ? (
             <input
               autoFocus
@@ -122,7 +125,7 @@ export function MobileTopBar() {
           <span className="flex-1 mx-1 font-display italic font-medium text-base text-foreground leading-tight tracking-tight truncate">
             {SECTION_LABELS[activeTab]}
           </span>
-        )}
+        ))}
       </div>
 
       <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
