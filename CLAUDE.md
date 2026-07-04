@@ -105,6 +105,7 @@ App: **“Ask Ah Mah”** — converts pantry items into recipes via chat.
 - **Local Resolution:** Resolve all conflicts locally (merge `main` into feature branch) before pushing. PRs must be "Clean" and "Mergeable".
 - **Commit Style:** Use `type(scope): description` (feat, fix, refactor, docs, test, chore).
 - **Process:** Suggest commits at logical checkpoints; do not auto-commit. Never push to `main`.
+- **Worktrees:** Use `scripts/new-worktree.sh <branch-name>` to spin one up under `.worktrees/`. `git worktree add` alone leaves `.env` (gitignored), `node_modules`, and the generated Prisma client missing, so `pnpm dev`/tests fail until those are set up — the script symlinks `.env` to the main tree's and runs `pnpm install` + `prisma generate`.
 
 ---
 
