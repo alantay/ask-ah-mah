@@ -37,6 +37,9 @@ interface MessageListProps {
   isSending?: boolean;
   userId: string;
   onSend?: (text: string) => void;
+  // Drops text into the composer without sending — used by the recipe card's
+  // substitutions nudge so the user can edit before sending.
+  onDraft?: (text: string) => void;
   onRecipeDetected?: (title: string) => void;
 }
 
@@ -105,6 +108,7 @@ export const MessageList = ({
   isSending = false,
   userId,
   onSend = () => {},
+  onDraft = () => {},
   onRecipeDetected,
 }: MessageListProps) => {
   const { data: recipeSaved, mutate } = useSWR<RecipeWithId[]>(
@@ -413,7 +417,7 @@ export const MessageList = ({
                             saveStructuredRecipe(block.payload, recipeKey)
                           }
                           isSaved={isSaved}
-                          onSend={onSend}
+                          onDraft={onDraft}
                         />
                       );
                     }
