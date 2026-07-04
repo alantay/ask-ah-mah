@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface MessageInputProps {
   onSendMessage: (message: string) => Promise<void>;
@@ -9,14 +9,34 @@ interface MessageInputProps {
   // Overrides the form's default outer padding. Used by the first-run hero to
   // sit the composer flush with the opener cards instead of the bottom bar.
   className?: string;
+  // Text to drop into the composer without sending — used by the recipe card's
+  // "Ask Ah Mah for substitutions" nudge so the user can edit before sending.
+  // The nonce forces a re-seed even when the same text is requested twice.
+  seed?: { text: string; nonce: number } | null;
 }
 
 export const MessageInput = ({
   onSendMessage,
   disabled,
   className,
+  seed,
 }: MessageInputProps) => {
   const [input, setInput] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Seeding replaces whatever's in the composer (a fresh, self-contained ask),
+  // then focuses with the cursor at the end so the user can trim or extend it.
+  // rAF runs after the controlled value commits, so the cursor lands correctly.
+  useEffect(() => {
+    if (!seed) return;
+    setInput(seed.text);
+    requestAnimationFrame(() => {
+      const el = inputRef.current;
+      if (!el) return;
+      el.focus();
+      el.setSelectionRange(seed.text.length, seed.text.length);
+    });
+  }, [seed]);
 
   return (
     <form
@@ -31,6 +51,7 @@ export const MessageInput = ({
     >
       <div className="flex gap-1 items-center bg-muted/50 rounded-xl border border-border/60 px-3 py-1 max-w-5xl mx-auto">
         <Input
+          ref={inputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           disabled={disabled}

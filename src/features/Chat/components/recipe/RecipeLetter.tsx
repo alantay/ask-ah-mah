@@ -25,7 +25,9 @@ export interface RecipeLetterProps {
   recipe: Partial<RecipeBlock>;
   onSave?: (recipe: RecipeBlock) => void;
   isSaved?: boolean;
-  onSend?: (text: string) => void;
+  // Drops the substitutions prompt into the composer (not sent) so the user can
+  // correct the pantry-derived missing list before asking Ah Mah.
+  onDraft?: (text: string) => void;
   // While true the recipe is still streaming: arrays may be incomplete and all
   // interactivity (stepper, add-to-list, save, cook, substitutions) is suppressed.
   isStreaming?: boolean;
@@ -68,7 +70,7 @@ export function RecipeLetter({
   recipe,
   onSave,
   isSaved,
-  onSend,
+  onDraft,
   isStreaming = false,
 }: RecipeLetterProps) {
   // Streaming partials may be missing arrays entirely; default them so the
@@ -152,7 +154,7 @@ export function RecipeLetter({
   // and is short an ingredient — Ah Mah can suggest a swap for what's missing.
   const showSubstitutions =
     !isStreaming &&
-    !!onSend &&
+    !!onDraft &&
     !!userId &&
     inventoryItems.length > 0 &&
     missingIngredients.length > 0;
@@ -178,9 +180,9 @@ export function RecipeLetter({
   };
 
   const askForSubstitutions = () => {
-    if (!onSend) return;
+    if (!onDraft) return;
     const names = missingIngredients.map((i) => i.name).join(", ");
-    onSend(`I'm missing ${names} for the ${title}. Can you suggest substitutions or alternatives?`);
+    onDraft(`I'm missing ${names} for the ${title}. Can you suggest substitutions or alternatives?`);
   };
 
   const timeLabel = recipe.totalTimeMinutes

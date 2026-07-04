@@ -511,6 +511,79 @@ describe("MessageInput", () => {
     });
   });
 
+  describe("Seed (substitutions prefill)", () => {
+    it("fills the composer with the seed text without sending", async () => {
+      render(
+        <MessageInput
+          onSendMessage={mockOnSendMessage}
+          disabled={false}
+          seed={{ text: "I'm missing bok choy", nonce: 1 }}
+        />
+      );
+
+      const input = screen.getByTestId("input") as HTMLInputElement;
+      await waitFor(() => {
+        expect(input.value).toBe("I'm missing bok choy");
+      });
+      expect(mockOnSendMessage).not.toHaveBeenCalled();
+    });
+
+    it("replaces whatever was already typed when seeded", async () => {
+      const { rerender } = render(
+        <MessageInput
+          onSendMessage={mockOnSendMessage}
+          disabled={false}
+          seed={null}
+        />
+      );
+
+      const input = screen.getByTestId("input") as HTMLInputElement;
+      await user.type(input, "half typed thought");
+      expect(input.value).toBe("half typed thought");
+
+      rerender(
+        <MessageInput
+          onSendMessage={mockOnSendMessage}
+          disabled={false}
+          seed={{ text: "I'm missing shallots", nonce: 2 }}
+        />
+      );
+
+      await waitFor(() => {
+        expect(input.value).toBe("I'm missing shallots");
+      });
+    });
+
+    it("re-seeds on a new nonce even when the text is identical", async () => {
+      const { rerender } = render(
+        <MessageInput
+          onSendMessage={mockOnSendMessage}
+          disabled={false}
+          seed={{ text: "I'm missing fish sauce", nonce: 1 }}
+        />
+      );
+
+      const input = screen.getByTestId("input") as HTMLInputElement;
+      await waitFor(() => {
+        expect(input.value).toBe("I'm missing fish sauce");
+      });
+
+      // User clears it, then the same recipe's nudge is clicked again.
+      fireEvent.change(input, { target: { value: "" } });
+      rerender(
+        <MessageInput
+          onSendMessage={mockOnSendMessage}
+          disabled={false}
+          seed={{ text: "I'm missing fish sauce", nonce: 2 }}
+        />
+      );
+
+      await waitFor(() => {
+        expect(input.value).toBe("I'm missing fish sauce");
+      });
+    });
+  });
+
   describe("Accessibility", () => {
     it("should have proper ARIA attributes", () => {
       render(
