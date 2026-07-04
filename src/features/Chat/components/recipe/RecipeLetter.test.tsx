@@ -193,27 +193,27 @@ describe('Shortfall card retired', () => {
 });
 
 describe('Substitutions relocated to the action bar', () => {
-  const mockOnSend = jest.fn();
+  const mockOnDraft = jest.fn();
 
   beforeEach(() => {
-    mockOnSend.mockReset();
+    mockOnDraft.mockReset();
     mockUseSessionContext.mockReturnValue({ userId: 'user-123' });
     mockUseSWR.mockReturnValue({ data: INVENTORY_WITH_CHICKEN });
   });
 
   it('offers "Ask Ah Mah for substitutions" when ingredients are missing', () => {
-    render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
+    render(<RecipeLetter recipe={RECIPE} onDraft={mockOnDraft} />);
     expect(
       screen.getByRole('button', { name: /Ask Ah Mah for substitutions/ }),
     ).toBeInTheDocument();
   });
 
-  it('sends a substitutions prompt naming the missing ingredients', () => {
-    render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
+  it('drafts a substitutions prompt naming the missing ingredients (not sent)', () => {
+    render(<RecipeLetter recipe={RECIPE} onDraft={mockOnDraft} />);
     fireEvent.click(
       screen.getByRole('button', { name: /Ask Ah Mah for substitutions/ }),
     );
-    expect(mockOnSend).toHaveBeenCalledWith(
+    expect(mockOnDraft).toHaveBeenCalledWith(
       expect.stringContaining('bok choy'),
     );
   });
@@ -228,7 +228,7 @@ describe('Substitutions relocated to the action bar', () => {
         kitchenwareInventory: [],
       },
     });
-    render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
+    render(<RecipeLetter recipe={RECIPE} onDraft={mockOnDraft} />);
     expect(
       screen.queryByRole('button', { name: /Ask Ah Mah for substitutions/ }),
     ).not.toBeInTheDocument();

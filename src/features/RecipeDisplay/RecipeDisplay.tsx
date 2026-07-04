@@ -601,10 +601,25 @@ export default function RecipeDisplay({
                 {!hideBackButton && !readOnly && (
                   <button
                     onClick={onBack}
-                    className="min-h-11 inline-flex items-center font-sans text-micro font-semibold tracking-[0.14em] uppercase text-ink-faint hover:text-foreground transition-colors cursor-pointer"
+                    className="hidden lg:inline-flex min-h-11 items-center gap-1.5 font-sans text-micro font-semibold tracking-[0.14em] uppercase text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                     aria-label="Back to cookbook"
                   >
-                    ← Back to cookbook
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      className="shrink-0"
+                    >
+                      <path
+                        d="M8.5 3.5 4 8l4.5 4.5M4 8h8"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    Back to cookbook
                   </button>
                 )}
                 <div className="flex items-center gap-2 ml-auto">
@@ -638,11 +653,11 @@ export default function RecipeDisplay({
                   {!benchOpen && !readOnly && (
                     <button
                       onClick={() => setBenchOpen(true)}
-                      className="inline-flex items-center gap-1.5 min-h-11 px-3 py-1.5 text-xs font-semibold text-primary bg-card border border-border rounded-md cursor-pointer hover:bg-muted/60 transition-colors"
+                      className="inline-flex items-center justify-center gap-1.5 min-h-11 px-2 sm:px-3 sm:py-1.5 text-xs font-semibold rounded-md cursor-pointer transition-colors text-muted-foreground hover:text-foreground sm:text-primary sm:hover:text-primary sm:bg-card sm:border sm:border-border sm:hover:bg-muted/60"
                       aria-label="Tweak this recipe"
                     >
-                      <TweakIcon />
-                      Tweak this recipe
+                      <TweakIcon size={16} />
+                      <span className="hidden sm:inline">Tweak this recipe</span>
                     </button>
                   )}
                   {canCook && !readOnly && (
@@ -696,11 +711,11 @@ export default function RecipeDisplay({
 
 // ─── TweakIcon (shared with TweakBench header) ───────────────────────────────
 
-function TweakIcon() {
+function TweakIcon({ size = 13 }: { size?: number }) {
   return (
     <svg
-      width="13"
-      height="13"
+      width={size}
+      height={size}
       viewBox="0 0 16 16"
       fill="none"
       className="shrink-0"
