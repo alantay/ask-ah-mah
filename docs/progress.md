@@ -260,6 +260,12 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Fix has two parts:** (1) `useChatSession` now claims the real conversation id for `useChat` the moment a staging send creates it, instead of waiting for `commitConversation` to assign it to `activeConversationId` after the stream finishes — so `useChat`'s `id` never has to reset and drop the just-streamed reply from view (fixes #384, the finish-of-generation flash). (2) `Chat.tsx`'s empty-state gate now also checks `messagesLoading`, so switching between two existing conversations no longer shows the full-screen "New Chat" state while the newly-selected conversation's history is still being fetched (fixes #383).
 - Both issues shared one root cause; #384 was closed as a duplicate trigger and tracked under #383's agent brief.
 
+### PWA installability — Shipped Jul 2026 (#397)
+
+- **The app can now be properly installed to a home screen** (first slice of #326, at ~1% of the React Native cost): `src/app/manifest.ts` serves a web manifest (`name` "Ask Ah Mah" / `short_name` "Ah Mah", `display: standalone`, Kopitiam Modern cream `#f7ebdc` as background/theme color) with 192/512 icons declared both `any` and `maskable` — the granny mark centered on cream with a safe-zone margin, so Android adaptive masks don't crop her.
+- `layout.tsx` wires the rest: `icons` (SVG favicon + existing apple-touch-icon), `appleWebApp` (title "Ah Mah", default status bar) for iOS Add to Home Screen, and a `viewport` export with light/dark `themeColor` (`#f7ebdc` / `#25170f`) so browser chrome matches the app.
+- **Out of scope for v1 (deliberate):** service worker / offline shell — separate follow-up if wanted. Real-device install check (iOS Safari + Android Chrome) still worth doing after deploy.
+
 ## Design system
 
 The two recipe surfaces — `RecipeLetter` (chat) and `RecipeDisplay` (cookbook) — were drifting because each hand-rolled the same primitives. A design system is now the north star: shared atoms stop drift, and every surface gets tweaked incrementally so it "looks like it belongs". See the spec at `docs/superpowers/specs/2026-06-20-recipe-design-system-design.md` and the issue tracker (#277–#285).
