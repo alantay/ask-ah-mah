@@ -223,6 +223,15 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Tests** cover owner-can-mint, non-owner/unauthenticated cannot (401/404), idempotent re-mint, and the public read working token-only with owner fields never selected.
 - This completes the route-lockdown series (#341–#345); the now-unused `missingUserId()` 400 helper was removed (every route uses `unauthorized()`).
 
+### Low-severity hardening sweep — Shipped Jul 2026 (#396)
+
+- Five Low findings from the July 2026 pre-launch security audit closed in one pass:
+  - **`POST`/`DELETE /api/inventory` now validate with Zod** (`AddInventoryItemSchemaObj` / `RemoveInventoryItemSchemaObj` — same schemas the AI tool path already used); malformed JSON or a bad payload returns 400 before the service is touched, mirroring the shopping-list route's `readJson`/`badRequest` pattern.
+  - **Dead unscoped `deleteRecipe(recipeId)` removed** from `src/lib/recipes/recipes.ts` — no callers; deleting it closes a latent IDOR if it were ever wired up (`deleteRecipeForUser` is the real path).
+  - **`/api/inventory/seed` no longer echoes `error.message`** to the client — generic body + `console.error`, matching every other route.
+  - **`sqlite3` removed from dependencies** — imported nowhere (Prisma Studio doesn't use it); it was a native module riding along in the production install.
+  - **Stray `package-lock.json` removed** — pnpm is the package manager; dual lockfiles invited drift (and a Next.js workspace-root warning).
+
 ### Write-route input validation hardened — Shipped (#360)
 
 - **`POST /api/message`**: replaced the loose truthiness check with a Zod schema (`conversationId: string.min(1)`, `content: string.min(1)`, `role: enum["user","assistant"]`). An arbitrary role value (`"system"`, junk) now returns 400 rather than reaching the DB.

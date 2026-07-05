@@ -316,7 +316,7 @@ describe("Inventory API Routes", () => {
       );
     });
 
-    it("should handle malformed JSON", async () => {
+    it("should return 400 on malformed JSON without touching the service", async () => {
       const request = createMockRequest("http://localhost:3000/api/inventory", {
         method: "POST",
         body: "invalid json",
@@ -326,9 +326,38 @@ describe("Inventory API Routes", () => {
       const response = await POST(request);
       const data = await response.json();
 
-      expect(response.status).toBe(500);
-      expect(data).toEqual({ error: "Failed to update inventory" });
-      expect(console.error).toHaveBeenCalled();
+      expect(response.status).toBe(400);
+      expect(data).toEqual({ error: "Invalid inventory payload" });
+      expect(mockedAddInventoryItem).not.toHaveBeenCalled();
+    });
+
+    it("should return 400 when items fail schema validation", async () => {
+      // `type` is not one of the allowed enum values.
+      const request = createMockRequest("http://localhost:3000/api/inventory", {
+        method: "POST",
+        body: JSON.stringify({ items: [{ name: "eggs", type: "weapon" }] }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data).toEqual({ error: "Invalid inventory payload" });
+      expect(mockedAddInventoryItem).not.toHaveBeenCalled();
+    });
+
+    it("should return 400 when items is not an array", async () => {
+      const request = createMockRequest("http://localhost:3000/api/inventory", {
+        method: "POST",
+        body: JSON.stringify({ items: "eggs" }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const response = await POST(request);
+
+      expect(response.status).toBe(400);
+      expect(mockedAddInventoryItem).not.toHaveBeenCalled();
     });
   });
 
@@ -444,7 +473,7 @@ describe("Inventory API Routes", () => {
       );
     });
 
-    it("should handle malformed JSON", async () => {
+    it("should return 400 on malformed JSON without touching the service", async () => {
       const request = createMockRequest("http://localhost:3000/api/inventory", {
         method: "DELETE",
         body: "invalid json",
@@ -454,9 +483,24 @@ describe("Inventory API Routes", () => {
       const response = await DELETE(request);
       const data = await response.json();
 
-      expect(response.status).toBe(500);
-      expect(data).toEqual({ error: "Failed to update inventory" });
-      expect(console.error).toHaveBeenCalled();
+      expect(response.status).toBe(400);
+      expect(data).toEqual({ error: "Invalid inventory payload" });
+      expect(mockedRemoveInventoryItem).not.toHaveBeenCalled();
+    });
+
+    it("should return 400 when itemNames fails schema validation", async () => {
+      const request = createMockRequest("http://localhost:3000/api/inventory", {
+        method: "DELETE",
+        body: JSON.stringify({ itemNames: [42, ""] }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const response = await DELETE(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data).toEqual({ error: "Invalid inventory payload" });
+      expect(mockedRemoveInventoryItem).not.toHaveBeenCalled();
     });
   });
 });
