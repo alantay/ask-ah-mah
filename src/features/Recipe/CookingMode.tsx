@@ -2,6 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Check } from "lucide-react";
+import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface Step {
@@ -15,6 +17,8 @@ interface CookingModeProps {
   steps: Step[];
   prep?: string[];
   onExit: () => void;
+  // Explicit "I made this" tap only — never inferred from reaching the last step (ADR-0020).
+  onMadeIt?: () => void;
 }
 
 function prepToStep(item: string): Step {
@@ -28,7 +32,7 @@ function prepToStep(item: string): Step {
   return { title, body };
 }
 
-export function CookingMode({ title, steps, prep, onExit }: CookingModeProps) {
+export function CookingMode({ title, steps, prep, onExit, onMadeIt }: CookingModeProps) {
   const allSteps: Step[] = [
     ...(prep ?? []).map(prepToStep),
     ...steps,
@@ -71,9 +75,27 @@ export function CookingMode({ title, steps, prep, onExit }: CookingModeProps) {
   const step = allSteps[Math.min(current, total - 1)];
   const prev = () => setCurrent((c) => Math.max(0, c - 1));
   const next = () => setCurrent((c) => Math.min(total - 1, c + 1));
+  const isFinalStep = current === total - 1;
+
+  const handleMadeIt = () => {
+    onMadeIt?.();
+    onExit();
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
+      {/* Finish-panel entrance — one-shot, respects reduced motion */}
+      <style>{`
+        @keyframes finishPanelIn {
+          from { opacity: 0; transform: translateY(4px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .finish-panel { animation: finishPanelIn 200ms ease-out; }
+        @media (prefers-reduced-motion: reduce) {
+          .finish-panel { animation: none; }
+        }
+      `}</style>
+
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-3.5 border-b border-border shrink-0">
         <div>
@@ -124,21 +146,61 @@ export function CookingMode({ title, steps, prep, onExit }: CookingModeProps) {
       </div>
 
       {/* Navigation footer */}
-      <div className="px-5 py-4 border-t border-border flex items-center gap-3 shrink-0 max-w-2xl mx-auto w-full">
-        <button
-          onClick={prev}
-          disabled={current === 0}
-          className={cn(
-            "flex-1 py-3 font-sans text-sm font-semibold rounded-xl border transition-colors cursor-pointer",
-            current === 0
-              ? "text-muted-foreground border-border bg-card opacity-40 cursor-not-allowed"
-              : "text-foreground border-border bg-card shadow-[0_1px_0_var(--border-soft)] hover:bg-muted/50"
-          )}
+      {isFinalStep ? (
+        <div
+          className="finish-panel w-full max-w-2xl mx-auto rounded-t-2xl px-6 pt-6 shrink-0 shadow-[inset_0_1px_0_oklch(1_0_0/0.16)]"
+          style={{
+            background:
+              "linear-gradient(135deg, oklch(0.55 0.13 35) 0%, oklch(0.42 0.10 30) 100%)",
+            paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))",
+          }}
         >
-          ← Prev
-        </button>
+          <div className="flex items-center gap-4 mb-5">
+            <div className="relative w-14 h-14 shrink-0 -rotate-6 rounded-full bg-card ring-1 ring-white/25 shadow-[0_2px_0_oklch(0_0_0/0.2)]">
+              <div className="absolute inset-2.5">
+                <Image src="/granny-icon.png" alt="" fill className="object-contain" />
+              </div>
+            </div>
+            <div className="min-w-0">
+              <div className="font-sans text-eyebrow uppercase tracking-[0.14em] text-white/65 mb-1">
+                From Ah Mah
+              </div>
+              <div className="font-display italic text-xl text-white leading-snug">
+                You did it — that&rsquo;s dinner, lah.
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onExit}
+              className="flex-1 py-3 font-sans text-sm font-semibold rounded-xl bg-primary-deep text-white border border-primary-deep shadow-[0_2px_0_var(--primary-deeper)] hover:opacity-90 transition-opacity cursor-pointer"
+            >
+              Back to recipe
+            </button>
+            <button
+              onClick={handleMadeIt}
+              className="flex-[2] inline-flex items-center justify-center gap-2 py-3 font-sans text-sm font-semibold rounded-xl bg-card text-jade-deep shadow-[0_2px_0_var(--border-soft)] hover:opacity-90 transition-opacity cursor-pointer"
+            >
+              <Check className="size-4" strokeWidth={2.5} aria-hidden />
+              I made this
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="px-5 py-4 border-t border-border flex items-center gap-3 shrink-0 max-w-2xl mx-auto w-full">
+          <button
+            onClick={prev}
+            disabled={current === 0}
+            className={cn(
+              "flex-1 py-3 font-sans text-sm font-semibold rounded-xl border transition-colors cursor-pointer",
+              current === 0
+                ? "text-muted-foreground border-border bg-card opacity-40 cursor-not-allowed"
+                : "text-foreground border-border bg-card shadow-[0_1px_0_var(--border-soft)] hover:bg-muted/50"
+            )}
+          >
+            ← Prev
+          </button>
 
-        {current < total - 1 ? (
           <Button
             variant="ctaDeep"
             onClick={next}
@@ -146,15 +208,8 @@ export function CookingMode({ title, steps, prep, onExit }: CookingModeProps) {
           >
             Next step →
           </Button>
-        ) : (
-          <button
-            onClick={onExit}
-            className="flex-[2] py-3 font-sans text-sm font-semibold text-white bg-jade border border-jade-deep rounded-xl shadow-[0_2px_0_var(--jade-deep)] hover:opacity-90 transition-opacity cursor-pointer"
-          >
-            Done — all finished!
-          </button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

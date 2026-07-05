@@ -209,3 +209,19 @@ Whole-dish asides attached to a recipe (`notes` on the recipe block): make-ahead
 The action that copies the **whole recipe** as clean plain text (CAPS section headers, `•`/numbered lists — no markdown, so it survives pasting into WhatsApp/Notes), at the **currently displayed servings**. Shared formatter, surfaced on both the chat recipe card and the recipe page. Excludes user-specific pantry state.
 
 **Flagged ambiguity — vs Copy shopping list:** two distinct copy intents, never collapse into a bare "Copy." **Copy shopping list** copies *only the missing ingredients* for a shop trip. **Copy recipe** copies *the entire dish* to cook from or share. Both can coexist on the same card; the labels name the intent.
+
+---
+
+## Cooked marker
+
+A single `cooked: Boolean` on a saved recipe, answering only "has this dish been cooked before?" — set **exclusively** by an explicit "I made this" tap on the [Finish moment](#finish-moment), never inferred from reaching the last cooking step. Deliberately **not** a count, timestamp, or streak — a recall marker, not a scoreboard. Surfaced as a small static jade stamp on the recipe's Cookbook card image strip; no motion, no achievement framing.
+
+Related: [ADR-0020](docs/adr/0020-cooking-is-celebrated-not-tracked.md)
+
+---
+
+## Finish moment
+
+The screen `CookingMode` shows on its final step: the step-nav footer (`← Prev` / `Next step →`) is replaced by a full-width panel painted with the recipe's own gradient hero, closing the cook on the same warmth it opened on. Ah Mah speaks a short celebratory line; two actions follow — "Back to recipe" (exits, no marking) and "I made this" (sets the [Cooked marker](#cooked-marker), then exits). Deliberately not gamified: no confetti, no streaks, no points — a one-shot entrance transition (respecting reduced motion) is the only animation.
+
+Related: [ADR-0020](docs/adr/0020-cooking-is-celebrated-not-tracked.md)

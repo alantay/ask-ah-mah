@@ -19,6 +19,7 @@ import type {
   RecipeWithId,
   SuggestionsBlockData,
 } from "@/lib/recipes/schemas";
+import { recipeWithIdToBlock } from "@/lib/recipes/schemas";
 import { fetcher } from "@/lib/utils";
 import type { UIMessage } from "ai";
 import { useEffect, useRef, useState } from "react";
@@ -241,6 +242,7 @@ export const MessageList = ({
   const saveStructuredRecipe = async (
     recipeBlock: RecipeBlock,
     recipeKey: string,
+    cooked = false,
   ) => {
     try {
       const optimisticRecipe = {
@@ -252,6 +254,7 @@ export const MessageList = ({
         baseServings: recipeBlock.baseServings,
         ingredients: [],
         steps: recipeBlock.steps,
+        cooked,
       };
 
       mutate((current = []) => [...current, optimisticRecipe], {
@@ -264,7 +267,7 @@ export const MessageList = ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           recipeId: recipeKey,
-          recipe: recipeBlock,
+          recipe: { ...recipeBlock, cooked },
         }),
       });
       if (!res.ok) throw new Error("Failed to save recipe");
@@ -280,6 +283,35 @@ export const MessageList = ({
     } catch (error) {
       console.error("Failed to save recipe:", error);
       toast.error("Aiyah, didn't save. Try again?");
+    }
+  };
+
+  const handleMadeIt = async (recipeBlock: RecipeBlock, recipeKey: string) => {
+    const existing = recipeSaved?.find((r) => r.recipeId === recipeKey);
+    if (!existing) {
+      await saveStructuredRecipe(recipeBlock, recipeKey, true);
+      return;
+    }
+    try {
+      const res = await fetch(`/api/recipe/${existing.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          recipe: { ...recipeWithIdToBlock(existing), cooked: true },
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to mark recipe as made");
+
+      mutate(
+        (current = []) =>
+          current.map((r) => (r.id === existing.id ? { ...r, cooked: true } : r)),
+        { revalidate: false, populateCache: true },
+      );
+
+      toast.success("Marked as made — nice one.");
+    } catch (error) {
+      console.error("Failed to mark recipe as made:", error);
+      toast.error("Couldn't save that. Try again?");
     }
   };
 
@@ -418,6 +450,7 @@ export const MessageList = ({
                           }
                           isSaved={isSaved}
                           onDraft={onDraft}
+                          onMadeIt={() => handleMadeIt(block.payload, recipeKey)}
                         />
                       );
                     }

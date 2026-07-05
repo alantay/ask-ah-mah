@@ -21,6 +21,7 @@ import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Streamdown } from "streamdown";
+import { useSWRConfig } from "swr";
 import { TweakBench } from "./TweakBench";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -411,6 +412,7 @@ export default function RecipeDisplay({
   readOnly = false,
 }: RecipeDisplayProps) {
   const { userId } = useSessionContext();
+  const { mutate } = useSWRConfig();
   const [cooking, setCooking] = useState(false);
   const [sharing, setSharing] = useState(false);
   // Lifted out of RecipeBody so the header "Copy recipe" action can read the
@@ -524,6 +526,30 @@ export default function RecipeDisplay({
     }
   }, [recipe.id, userId, workingDraft]);
 
+  const handleMadeIt = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const res = await fetch(`/api/recipe/${recipe.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          recipe: { ...recipeWithIdToBlock(workingDraft), cooked: true },
+        }),
+      });
+
+      if (!res.ok) throw new Error("Save failed");
+
+      const madeDraft = { ...workingDraft, cooked: true };
+      originalRecipeRef.current = madeDraft;
+      setWorkingDraft(madeDraft);
+      mutate(`/api/recipe?userId=${userId}`);
+      toast.success("Marked as made — nice one.");
+    } catch (err) {
+      console.error("[RecipeDisplay] made-it error:", err);
+      toast.error("Couldn't save that. Try again?");
+    }
+  }, [recipe.id, userId, workingDraft, mutate]);
+
   const handleCopyRecipe = useCallback(() => {
     const text = formatRecipeAsText(recipeWithIdToBlock(workingDraft), servings);
     navigator.clipboard.writeText(text).then(
@@ -568,6 +594,7 @@ export default function RecipeDisplay({
         steps={steps}
         prep={(recipe.prep ?? []) as string[]}
         onExit={() => setCooking(false)}
+        onMadeIt={handleMadeIt}
       />
     );
   }

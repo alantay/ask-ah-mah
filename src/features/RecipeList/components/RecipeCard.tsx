@@ -41,6 +41,13 @@ export default function RecipeCard({ recipe, onSelect, onDelete }: RecipeCardPro
         </svg>
       </button>
 
+      {/* "Made it" stamp — a quiet recall marker, not an achievement badge */}
+      {!isOptimistic && recipe.cooked && (
+        <span className="absolute top-2 left-2 z-20 -rotate-6 font-sans text-eyebrow font-bold tracking-[0.12em] uppercase px-2 py-0.5 rounded-[10px_10px_10px_2px] bg-jade text-white shadow-[0_1px_0_var(--jade-deep)]">
+          Made it
+        </span>
+      )}
+
       {/* Image strip */}
       {recipe.imageUrl ? (
         <div className="h-28 border-b border-border shrink-0 relative overflow-hidden">

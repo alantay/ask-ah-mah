@@ -60,6 +60,7 @@ export async function updateRecipeForUser(id: string, userId: string, block: Rec
       description: block.description,
       totalTimeMinutes: block.totalTimeMinutes,
       instructions: block.description ?? "",
+      cooked: block.cooked,
     },
   });
   if (result.count === 0) {
@@ -157,6 +158,7 @@ export async function saveRecipeFromBlock(block: RecipeBlock, userId: string, re
       notes: block.notes ?? [],
       description: block.description,
       totalTimeMinutes: block.totalTimeMinutes,
+      cooked: block.cooked ?? false,
     },
     photo,
   );
