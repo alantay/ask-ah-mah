@@ -6,47 +6,76 @@ const steps = [
   { title: "Cook", body: "Fry it up." },
 ];
 
-describe("CookingMode — finish moment", () => {
+describe("CookingMode — last-step cooked marker", () => {
   const goToLastStep = () => {
     fireEvent.click(screen.getByText("Next step →"));
   };
 
-  it("does not show 'I made this' before the final step", () => {
-    render(<CookingMode title="Fried Rice" steps={steps} onExit={jest.fn()} onMadeIt={jest.fn()} />);
-    expect(screen.queryByText("I made this")).not.toBeInTheDocument();
+  it("does not show the 'I made this' checkbox before the final step", () => {
+    render(
+      <CookingMode title="Fried Rice" steps={steps} onExit={jest.fn()} onCookedChange={jest.fn()} />,
+    );
+    expect(screen.queryByRole("checkbox", { name: "I made this" })).not.toBeInTheDocument();
   });
 
-  it("tapping 'I made this' on the final step fires onMadeIt then onExit", () => {
+  it("shows the checkbox on the final step and 'Done — all finished!' exits", () => {
     const onExit = jest.fn();
-    const onMadeIt = jest.fn();
-    render(<CookingMode title="Fried Rice" steps={steps} onExit={onExit} onMadeIt={onMadeIt} />);
+    render(
+      <CookingMode title="Fried Rice" steps={steps} onExit={onExit} onCookedChange={jest.fn()} />,
+    );
 
     goToLastStep();
-    fireEvent.click(screen.getByText("I made this"));
+    expect(screen.getByRole("checkbox", { name: "I made this" })).toBeInTheDocument();
 
-    expect(onMadeIt).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByText("Done — all finished!"));
     expect(onExit).toHaveBeenCalledTimes(1);
   });
 
-  it("tapping 'Back to recipe' on the final step fires only onExit", () => {
+  it("ticking the checkbox fires onCookedChange(true) without exiting", () => {
     const onExit = jest.fn();
-    const onMadeIt = jest.fn();
-    render(<CookingMode title="Fried Rice" steps={steps} onExit={onExit} onMadeIt={onMadeIt} />);
+    const onCookedChange = jest.fn();
+    render(
+      <CookingMode
+        title="Fried Rice"
+        steps={steps}
+        onExit={onExit}
+        cooked={false}
+        onCookedChange={onCookedChange}
+      />,
+    );
 
     goToLastStep();
-    fireEvent.click(screen.getByText("Back to recipe"));
+    fireEvent.click(screen.getByRole("checkbox", { name: "I made this" }));
 
-    expect(onMadeIt).not.toHaveBeenCalled();
-    expect(onExit).toHaveBeenCalledTimes(1);
+    expect(onCookedChange).toHaveBeenCalledWith(true);
+    expect(onExit).not.toHaveBeenCalled();
   });
 
-  it("works without an onMadeIt handler (persisted recipe consumer may omit it)", () => {
-    const onExit = jest.fn();
-    render(<CookingMode title="Fried Rice" steps={steps} onExit={onExit} />);
+  it("un-ticking an already-cooked dish fires onCookedChange(false)", () => {
+    const onCookedChange = jest.fn();
+    render(
+      <CookingMode
+        title="Fried Rice"
+        steps={steps}
+        onExit={jest.fn()}
+        cooked
+        onCookedChange={onCookedChange}
+      />,
+    );
 
     goToLastStep();
-    fireEvent.click(screen.getByText("I made this"));
+    const checkbox = screen.getByRole("checkbox", { name: "I made this" });
+    expect(checkbox).toBeChecked();
 
-    expect(onExit).toHaveBeenCalledTimes(1);
+    fireEvent.click(checkbox);
+    expect(onCookedChange).toHaveBeenCalledWith(false);
+  });
+
+  it("omits the checkbox when the consumer can't persist it (no onCookedChange)", () => {
+    render(<CookingMode title="Fried Rice" steps={steps} onExit={jest.fn()} />);
+
+    goToLastStep();
+    expect(screen.queryByRole("checkbox", { name: "I made this" })).not.toBeInTheDocument();
+    expect(screen.getByText("Done — all finished!")).toBeInTheDocument();
   });
 });

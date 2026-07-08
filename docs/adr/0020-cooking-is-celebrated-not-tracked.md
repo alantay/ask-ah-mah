@@ -14,16 +14,16 @@ system. The issue explicitly asked to stop at the first rung.
 
 ## Decision
 
-A single `cooked: Boolean` field on `Recipe`, set **only** by an explicit "I made this" tap on the
-CookingMode finish panel — never inferred from reaching the last step, never set silently. It answers
-one question only: *has this dish been cooked before?* It is not a counter, not a timestamp, not a
-streak.
+A single `cooked: Boolean` field on `Recipe`, set **only** by an explicit "I made this" tap in
+CookingMode — never inferred from reaching the last step, never set silently. It answers one question
+only: *has this dish been cooked before?* It is not a counter, not a timestamp, not a streak. The tap
+is **reversible**: un-ticking sets `cooked` back to `false`.
 
-The finish panel itself reuses the recipe's own gradient hero (the same `linear-gradient(135deg, …)`
-used behind an imageless recipe title) as a full-width panel replacing the step-nav footer on the
-last step — Ah Mah's avatar, a short celebratory line, "Back to recipe" / "I made this". The Cookbook
-badge is a small static jade stamp on the card's image strip, reusing the app's existing
-rotated-badge ("stamp") motif — informational, not a trophy.
+The finish moment itself stays quiet. The last step keeps CookingMode's ordinary `← Prev` /
+"Done — all finished!" footer (no gradient panel, no avatar, no celebratory line — we tried a warm
+celebration and pulled it back). Above that footer sits a single reversible "I made this" checkbox:
+the marker and nothing more. The Cookbook badge is a small static jade stamp on the card's image
+strip, reusing the app's existing rotated-badge ("stamp") motif — informational, not a trophy.
 
 ## Why not the alternatives
 

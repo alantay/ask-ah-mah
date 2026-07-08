@@ -25,8 +25,9 @@ export interface RecipeLetterProps {
   recipe: Partial<RecipeBlock>;
   onSave?: (recipe: RecipeBlock) => void;
   isSaved?: boolean;
-  // Explicit "I made this" tap in cooking mode (ADR-0020).
-  onMadeIt?: () => void;
+  // Cooked marker for the last-step "I made this" checkbox in cooking mode (ADR-0020).
+  cooked?: boolean;
+  onCookedChange?: (cooked: boolean) => void;
   // Drops the substitutions prompt into the composer (not sent) so the user can
   // correct the pantry-derived missing list before asking Ah Mah.
   onDraft?: (text: string) => void;
@@ -74,7 +75,8 @@ export function RecipeLetter({
   isSaved,
   onDraft,
   isStreaming = false,
-  onMadeIt,
+  cooked,
+  onCookedChange,
 }: RecipeLetterProps) {
   // Streaming partials may be missing arrays entirely; default them so the
   // same render path serves both the live and the final view (ADR-0009).
@@ -207,7 +209,8 @@ export function RecipeLetter({
         steps={steps}
         prep={prep}
         onExit={() => setCooking(false)}
-        onMadeIt={onMadeIt}
+        cooked={cooked}
+        onCookedChange={onCookedChange}
       />
     );
   }

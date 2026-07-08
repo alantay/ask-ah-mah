@@ -286,10 +286,16 @@ export const MessageList = ({
     }
   };
 
-  const handleMadeIt = async (recipeBlock: RecipeBlock, recipeKey: string) => {
+  const handleCookedChange = async (
+    recipeBlock: RecipeBlock,
+    recipeKey: string,
+    next: boolean,
+  ) => {
     const existing = recipeSaved?.find((r) => r.recipeId === recipeKey);
     if (!existing) {
-      await saveStructuredRecipe(recipeBlock, recipeKey, true);
+      // Not in the cookbook yet — ticking saves it as cooked; there's nothing
+      // to persist for an un-tick.
+      if (next) await saveStructuredRecipe(recipeBlock, recipeKey, true);
       return;
     }
     try {
@@ -297,20 +303,20 @@ export const MessageList = ({
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          recipe: { ...recipeWithIdToBlock(existing), cooked: true },
+          recipe: { ...recipeWithIdToBlock(existing), cooked: next },
         }),
       });
-      if (!res.ok) throw new Error("Failed to mark recipe as made");
+      if (!res.ok) throw new Error("Failed to update cooked marker");
 
       mutate(
         (current = []) =>
-          current.map((r) => (r.id === existing.id ? { ...r, cooked: true } : r)),
+          current.map((r) => (r.id === existing.id ? { ...r, cooked: next } : r)),
         { revalidate: false, populateCache: true },
       );
 
-      toast.success("Marked as made — nice one.");
+      if (next) toast.success("Marked as made — nice one.");
     } catch (error) {
-      console.error("Failed to mark recipe as made:", error);
+      console.error("Failed to update cooked marker:", error);
       toast.error("Couldn't save that. Try again?");
     }
   };
@@ -438,9 +444,10 @@ export const MessageList = ({
                     }
                     if (block.kind === "recipe") {
                       const recipeKey = `${message.id}-${bi}`;
-                      const isSaved =
-                        recipeSaved?.some((r) => r.recipeId === recipeKey) ??
-                        false;
+                      const savedRecipe = recipeSaved?.find(
+                        (r) => r.recipeId === recipeKey,
+                      );
+                      const isSaved = !!savedRecipe;
                       return (
                         <RecipeLetter
                           key={blockKey}
@@ -450,7 +457,10 @@ export const MessageList = ({
                           }
                           isSaved={isSaved}
                           onDraft={onDraft}
-                          onMadeIt={() => handleMadeIt(block.payload, recipeKey)}
+                          cooked={savedRecipe?.cooked ?? false}
+                          onCookedChange={(next) =>
+                            handleCookedChange(block.payload, recipeKey, next)
+                          }
                         />
                       );
                     }

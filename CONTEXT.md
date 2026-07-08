@@ -214,7 +214,7 @@ The action that copies the **whole recipe** as clean plain text (CAPS section he
 
 ## Cooked marker
 
-A single `cooked: Boolean` on a saved recipe, answering only "has this dish been cooked before?" — set **exclusively** by an explicit "I made this" tap on the [Finish moment](#finish-moment), never inferred from reaching the last cooking step. Deliberately **not** a count, timestamp, or streak — a recall marker, not a scoreboard. Surfaced as a small static jade stamp on the recipe's Cookbook card image strip; no motion, no achievement framing.
+A single `cooked: Boolean` on a saved recipe, answering only "has this dish been cooked before?" — set **exclusively** by an explicit "I made this" tap on the [Finish moment](#finish-moment) checkbox, never inferred from reaching the last cooking step. The tap is **reversible**: un-ticking sets it back to `false`. Deliberately **not** a count, timestamp, or streak — a recall marker, not a scoreboard. Surfaced as a small static jade stamp on the recipe's Cookbook card image strip; no motion, no achievement framing.
 
 Related: [ADR-0020](docs/adr/0020-cooking-is-celebrated-not-tracked.md)
 
@@ -222,6 +222,6 @@ Related: [ADR-0020](docs/adr/0020-cooking-is-celebrated-not-tracked.md)
 
 ## Finish moment
 
-The screen `CookingMode` shows on its final step: the step-nav footer (`← Prev` / `Next step →`) is replaced by a full-width panel painted with the recipe's own gradient hero, closing the cook on the same warmth it opened on. Ah Mah speaks a short celebratory line; two actions follow — "Back to recipe" (exits, no marking) and "I made this" (sets the [Cooked marker](#cooked-marker), then exits). Deliberately not gamified: no confetti, no streaks, no points — a one-shot entrance transition (respecting reduced motion) is the only animation.
+The final step of `CookingMode` stays quiet — it keeps the ordinary step-nav footer, with `← Prev` and a jade "Done — all finished!" button (which just exits). The only addition is a single reversible "I made this" checkbox sitting above that footer, which toggles the [Cooked marker](#cooked-marker). No gradient panel, no Ah Mah line, no confetti — we tried a warm celebration bookend and pulled it back to just the marker. The checkbox is omitted when the consumer can't persist the flag.
 
 Related: [ADR-0020](docs/adr/0020-cooking-is-celebrated-not-tracked.md)
