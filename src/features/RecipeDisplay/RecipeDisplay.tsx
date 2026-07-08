@@ -222,11 +222,6 @@ function RecipeBody({
 
       {/* Body */}
       <div className="px-4 sm:px-9 py-7 pb-12">
-        {/* Cooked marker — quiet, reversible (ADR-0020) */}
-        {onCookedChange && (
-          <CookedCheckbox cooked={cooked} onChange={onCookedChange} className="mb-5" />
-        )}
-
         {/* From Ah Mah */}
         {selectedRecipe.description && (
           <div className="flex gap-3.5 items-start mb-6 pb-5 border-b border-dashed border-border">
@@ -247,15 +242,20 @@ function RecipeBody({
           </div>
         )}
 
-        {/* Stat row — total time */}
-        {selectedRecipe.totalTimeMinutes && (
-          <div className="flex flex-wrap items-end gap-3 mb-7">
-            <div className="flex flex-col px-3.5 py-2 bg-card border border-border rounded-lg shadow-[0_1px_0_var(--color-border-soft)] min-w-[78px]">
-              <Eyebrow>Total time</Eyebrow>
-              <span className="font-display font-semibold text-[18px] text-foreground tabular-nums mt-0.5">
-                {formatTime(selectedRecipe.totalTimeMinutes)}
-              </span>
-            </div>
+        {/* Stat row — total time + cooked marker (quiet, reversible; ADR-0020) */}
+        {(selectedRecipe.totalTimeMinutes || onCookedChange) && (
+          <div className="flex flex-wrap items-center gap-3 mb-7">
+            {selectedRecipe.totalTimeMinutes && (
+              <div className="flex flex-col px-3.5 py-2 bg-card border border-border rounded-lg shadow-[0_1px_0_var(--color-border-soft)] min-w-[78px]">
+                <Eyebrow>Total time</Eyebrow>
+                <span className="font-display font-semibold text-[18px] text-foreground tabular-nums mt-0.5">
+                  {formatTime(selectedRecipe.totalTimeMinutes)}
+                </span>
+              </div>
+            )}
+            {onCookedChange && (
+              <CookedCheckbox cooked={cooked} onChange={onCookedChange} className="ml-auto" />
+            )}
           </div>
         )}
 
