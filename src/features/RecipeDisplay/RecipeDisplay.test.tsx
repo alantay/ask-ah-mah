@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { SessionProvider } from "@/contexts/SessionContext";
 import RecipeDisplay from "./RecipeDisplay";
 
@@ -152,6 +152,63 @@ describe("RecipeDisplay", () => {
       );
       fireEvent.click(screen.getByLabelText(/Start cooking/));
       expect(screen.getByText(/Exit cooking mode/i)).toBeInTheDocument();
+    });
+  });
+
+  describe("Cooked marker (ADR-0020)", () => {
+    const originalFetch = global.fetch;
+    let fetchMock: jest.Mock;
+
+    beforeEach(() => {
+      fetchMock = jest.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
+      global.fetch = fetchMock as never;
+    });
+
+    afterEach(() => {
+      global.fetch = originalFetch;
+    });
+
+    it("renders the 'I made this' checkbox for the owner", () => {
+      renderRecipe();
+      expect(screen.getByRole("checkbox", { name: "I made this" })).not.toBeChecked();
+    });
+
+    it("reflects an already-cooked recipe as checked", () => {
+      renderRecipe({ cooked: true } as never);
+      expect(screen.getByRole("checkbox", { name: "I made this" })).toBeChecked();
+    });
+
+    it("ticking flips the checkbox optimistically and PATCHes cooked: true", async () => {
+      renderRecipe();
+      const checkbox = screen.getByRole("checkbox", { name: "I made this" });
+
+      fireEvent.click(checkbox);
+
+      expect(checkbox).toBeChecked();
+      await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+      const [url, init] = fetchMock.mock.calls[0];
+      expect(url).toBe("/api/recipe/recipe-1");
+      expect(init.method).toBe("PATCH");
+      expect(JSON.parse(init.body).recipe.cooked).toBe(true);
+    });
+
+    it("reverts the checkbox when the PATCH fails", async () => {
+      fetchMock.mockResolvedValue({ ok: false });
+      renderRecipe();
+      const checkbox = screen.getByRole("checkbox", { name: "I made this" });
+
+      fireEvent.click(checkbox);
+
+      await waitFor(() => expect(checkbox).not.toBeChecked());
+    });
+
+    it("hides the checkbox on the read-only public share view", () => {
+      render(
+        <SessionProvider>
+          <RecipeDisplay recipe={baseRecipe as never} onBack={jest.fn()} readOnly />
+        </SessionProvider>,
+      );
+      expect(screen.queryByRole("checkbox", { name: "I made this" })).not.toBeInTheDocument();
     });
   });
 

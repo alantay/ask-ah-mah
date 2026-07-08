@@ -290,7 +290,12 @@ describe("Recipe API Routes", () => {
       expect(response.status).toBe(200);
       expect(data.ingredients[0].category).toBe("Spice");
       expect(data.ingredients[0].note).toBe("smoked");
-      expect(mockedSaveRecipeFromBlock).toHaveBeenCalledWith(recipeBlock, "user-123", "chicken-rub");
+      expect(mockedSaveRecipeFromBlock).toHaveBeenCalledWith(
+        recipeBlock,
+        "user-123",
+        "chicken-rub",
+        false,
+      );
       expect(mockedProcessRecipe).not.toHaveBeenCalled();
     });
 
@@ -332,6 +337,46 @@ describe("Recipe API Routes", () => {
         expect.any(Object),
         "user-123",
         "msg-1-block-0",
+        false,
+      );
+    });
+
+    it("takes cooked beside the block — top-level body.cooked, never recipe.cooked (ADR-0020)", async () => {
+      mockedSaveRecipeFromBlock.mockResolvedValue({ id: "recipe-new" } as never);
+
+      // A model-streamed block claiming cooked: true must not stamp the recipe…
+      await POST(
+        createMockRequest("http://localhost:3000/api/recipe", {
+          method: "POST",
+          body: JSON.stringify({
+            recipe: { title: "Test", ingredients: [], steps: [], tags: [], baseServings: 2, cooked: true },
+          }),
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+      expect(mockedSaveRecipeFromBlock).toHaveBeenLastCalledWith(
+        expect.any(Object),
+        "user-123",
+        undefined,
+        false,
+      );
+
+      // …while the explicit tick-to-save flow passes cooked beside the block.
+      await POST(
+        createMockRequest("http://localhost:3000/api/recipe", {
+          method: "POST",
+          body: JSON.stringify({
+            recipe: { title: "Test", ingredients: [], steps: [], tags: [], baseServings: 2 },
+            cooked: true,
+          }),
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+      expect(mockedSaveRecipeFromBlock).toHaveBeenLastCalledWith(
+        expect.any(Object),
+        "user-123",
+        undefined,
+        true,
       );
     });
 
@@ -513,6 +558,7 @@ describe("Recipe API Routes", () => {
         expect.any(Object),
         "user-123",
         undefined,
+        false,
       );
     });
 

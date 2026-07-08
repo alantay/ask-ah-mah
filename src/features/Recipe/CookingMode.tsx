@@ -1,8 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { CookedCheckbox } from "@/features/shared/components/recipe";
 import { cn } from "@/lib/utils";
-import { Check } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface Step {
@@ -135,28 +135,8 @@ export function CookingMode({ title, steps, prep, onExit, cooked, onCookedChange
       {/* Navigation footer */}
       <div className="px-5 py-4 border-t border-border shrink-0 max-w-2xl mx-auto w-full">
         {/* Last-step recall marker — a quiet, reversible checkbox (ADR-0020) */}
-        {canMark && (
-          <label className="mb-3 flex w-fit items-center gap-2.5 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={!!cooked}
-              onChange={(e) => onCookedChange?.(e.target.checked)}
-              className="peer sr-only"
-            />
-            <span
-              className={cn(
-                "flex size-5 items-center justify-center rounded-md border-2 transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-jade/40 peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background",
-                cooked
-                  ? "bg-jade border-jade text-white"
-                  : "border-border bg-card text-transparent"
-              )}
-            >
-              <Check className="size-3.5" strokeWidth={3} aria-hidden />
-            </span>
-            <span className="font-sans text-sm font-medium text-foreground">
-              I made this
-            </span>
-          </label>
+        {canMark && onCookedChange && (
+          <CookedCheckbox cooked={!!cooked} onChange={onCookedChange} className="mb-3" />
         )}
 
         <div className="flex items-center gap-3">

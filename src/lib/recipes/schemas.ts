@@ -47,6 +47,9 @@ export const RecipeBlockSchema = z.object({
   // "close" = 0–2 additions (UI: "Right now"); "stretch" = 3–4 additions (UI: "Worth a small trip").
   closeness: z.enum(["close", "stretch"]).optional(),
   // Explicit "I made this" marker (ADR-0020) — a recall flag, never inferred or scored.
+  // Carried here only so saved recipes round-trip through updates; the create
+  // path (saveRecipeFromBlock) ignores it, so a model-streamed block can never
+  // stamp a recipe.
   cooked: z.boolean().optional(),
 });
 export type RecipeBlock = z.infer<typeof RecipeBlockSchema>;

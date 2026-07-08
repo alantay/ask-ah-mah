@@ -14,16 +14,21 @@ system. The issue explicitly asked to stop at the first rung.
 
 ## Decision
 
-A single `cooked: Boolean` field on `Recipe`, set **only** by an explicit "I made this" tap in
-CookingMode — never inferred from reaching the last step, never set silently. It answers one question
-only: *has this dish been cooked before?* It is not a counter, not a timestamp, not a streak. The tap
+A single `cooked: Boolean` field on `Recipe`, set **only** by an explicit "I made this" tap —
+never inferred from reaching the last step, never set silently. It answers one question only:
+*has this dish been cooked before?* It is not a counter, not a timestamp, not a streak. The tap
 is **reversible**: un-ticking sets `cooked` back to `false`.
+
+The tap lives in two places, both the same quiet checkbox (`CookedCheckbox`): CookingMode's last
+step, and the recipe view itself. The second entry point exists because many people cook straight
+from the recipe view without stepping through cooking mode — if CookingMode were the only way in,
+the cookbook would systematically under-report and "no stamp" would stop meaning "never made it".
 
 The finish moment itself stays quiet. The last step keeps CookingMode's ordinary `← Prev` /
 "Done — all finished!" footer (no gradient panel, no avatar, no celebratory line — we tried a warm
-celebration and pulled it back). Above that footer sits a single reversible "I made this" checkbox:
-the marker and nothing more. The Cookbook badge is a small static jade stamp on the card's image
-strip, reusing the app's existing rotated-badge ("stamp") motif — informational, not a trophy.
+celebration and pulled it back). Above that footer sits the checkbox: the marker and nothing more.
+The Cookbook badge is a small static jade stamp on the card's image strip, reusing the app's
+existing rotated-badge ("stamp") motif — informational, not a trophy.
 
 ## Why not the alternatives
 
@@ -43,5 +48,9 @@ strip, reusing the app's existing rotated-badge ("stamp") motif — informationa
 - `cooked` flows through the existing recipe read/write paths (`RecipeBlockSchema`,
   `recipeBlockToRecipeWithId` / `recipeWithIdToBlock`, `saveRecipeFromBlock`, `updateRecipeForUser`) —
   no new endpoints.
+- "Never set silently" is structural on the create path: recipe blocks are model-streamed, so
+  `saveRecipeFromBlock` ignores `block.cooked` and takes the marker only as an explicit parameter
+  (`POST /api/recipe` sends `cooked` beside the block, not inside it). A hallucinated
+  `cooked: true` in a streamed recipe can never stamp it.
 - A future issue that wants cook counts/streaks/history is a genuinely new feature, not an extension
   of this one — it should be scoped and reviewed on its own terms, not backed into this boolean.

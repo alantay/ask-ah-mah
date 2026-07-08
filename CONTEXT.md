@@ -214,7 +214,7 @@ The action that copies the **whole recipe** as clean plain text (CAPS section he
 
 ## Cooked marker
 
-A single `cooked: Boolean` on a saved recipe, answering only "has this dish been cooked before?" — set **exclusively** by an explicit "I made this" tap on the [Finish moment](#finish-moment) checkbox, never inferred from reaching the last cooking step. The tap is **reversible**: un-ticking sets it back to `false`. Deliberately **not** a count, timestamp, or streak — a recall marker, not a scoreboard. Surfaced as a small static jade stamp on the recipe's Cookbook card image strip; no motion, no achievement framing.
+A single `cooked: Boolean` on a saved recipe, answering only "has this dish been cooked before?" — set **exclusively** by an explicit "I made this" tap on the shared `CookedCheckbox`, which lives in two places: the [Finish moment](#finish-moment) and the recipe view itself (owner-only; hidden on the public share view and for guests). Never inferred from reaching the last cooking step — and structurally so: the create API takes `cooked` beside the recipe block and ignores it inside, so a model-streamed block can never stamp a recipe. The tap is **reversible**: un-ticking sets it back to `false`. Deliberately **not** a count, timestamp, or streak — a recall marker, not a scoreboard. Surfaced as a small static jade stamp on the recipe's Cookbook card image strip; no motion, no achievement framing.
 
 Related: [ADR-0020](docs/adr/0020-cooking-is-celebrated-not-tracked.md)
 

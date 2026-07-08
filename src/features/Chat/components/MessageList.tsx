@@ -267,7 +267,10 @@ export const MessageList = ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           recipeId: recipeKey,
-          recipe: { ...recipeBlock, cooked },
+          recipe: recipeBlock,
+          // Beside the block, not inside it — the server ignores block.cooked
+          // so the model can never stamp a recipe (ADR-0020).
+          cooked,
         }),
       });
       if (!res.ok) throw new Error("Failed to save recipe");
@@ -279,7 +282,12 @@ export const MessageList = ({
         { revalidate: false, populateCache: true },
       );
 
-      toast.success(`"${recipeBlock.title}" — kept in your cookbook.`);
+      // Ticking "I made this" on an unsaved recipe saves it too — say so.
+      toast.success(
+        cooked
+          ? `"${recipeBlock.title}" — kept in your cookbook and marked as made.`
+          : `"${recipeBlock.title}" — kept in your cookbook.`,
+      );
     } catch (error) {
       console.error("Failed to save recipe:", error);
       toast.error("Aiyah, didn't save. Try again?");

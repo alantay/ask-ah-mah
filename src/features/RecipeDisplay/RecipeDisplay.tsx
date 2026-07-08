@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useSessionContext } from "@/contexts/SessionContext";
 import { CookingMode, ServingsStepper, formatRecipeAsText } from "@/features/Recipe";
 import {
+  CookedCheckbox,
   DottedList,
   Eyebrow,
   SectionHeading,
@@ -119,6 +120,10 @@ interface RecipeBodyProps {
   deletedSteps?: Set<number>;
   originalRecipe?: RecipeWithId;
   showHighlights?: boolean;
+  // Cooked marker (ADR-0020) — omitted when the viewer can't persist it
+  // (public share view, guests).
+  cooked?: boolean;
+  onCookedChange?: (cooked: boolean) => void;
 }
 
 function RecipeBody({
@@ -131,6 +136,8 @@ function RecipeBody({
   deletedSteps = new Set(),
   originalRecipe,
   showHighlights = false,
+  cooked = false,
+  onCookedChange,
 }: RecipeBodyProps) {
   const baseServings = selectedRecipe.baseServings || 2;
   const ingredients = (selectedRecipe.ingredients || []) as RecipeIngredient[];
@@ -215,6 +222,11 @@ function RecipeBody({
 
       {/* Body */}
       <div className="px-4 sm:px-9 py-7 pb-12">
+        {/* Cooked marker — quiet, reversible (ADR-0020) */}
+        {onCookedChange && (
+          <CookedCheckbox cooked={cooked} onChange={onCookedChange} className="mb-5" />
+        )}
+
         {/* From Ah Mah */}
         {selectedRecipe.description && (
           <div className="flex gap-3.5 items-start mb-6 pb-5 border-b border-dashed border-border">
@@ -723,6 +735,8 @@ export default function RecipeDisplay({
                   deletedSteps={deletedSteps}
                   originalRecipe={originalRecipeRef.current}
                   showHighlights={showHighlights}
+                  cooked={!!workingDraft.cooked}
+                  onCookedChange={!readOnly && userId ? handleCookedChange : undefined}
                 />
               </div>
             </div>

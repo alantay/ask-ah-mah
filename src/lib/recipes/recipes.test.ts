@@ -119,7 +119,7 @@ describe("saveRecipeFromBlock", () => {
     expect(callArg.data.photographerName).toBe("Jane");
   });
 
-  it("defaults cooked to false when the block omits it", async () => {
+  it("defaults cooked to false", async () => {
     (mockPrisma.recipe.create as jest.Mock).mockResolvedValue({ id: "r1" });
 
     await saveRecipeFromBlock(baseBlock, "user-1");
@@ -128,10 +128,19 @@ describe("saveRecipeFromBlock", () => {
     expect(callArg.data.cooked).toBe(false);
   });
 
-  it("persists cooked: true when set on the block (save-then-mark)", async () => {
+  it("ignores cooked on the block — a model-streamed block can never stamp a recipe (ADR-0020)", async () => {
     (mockPrisma.recipe.create as jest.Mock).mockResolvedValue({ id: "r1" });
 
     await saveRecipeFromBlock({ ...baseBlock, cooked: true }, "user-1");
+
+    const callArg = (mockPrisma.recipe.create as jest.Mock).mock.calls[0][0];
+    expect(callArg.data.cooked).toBe(false);
+  });
+
+  it("persists cooked: true only via the explicit param (tick-to-save)", async () => {
+    (mockPrisma.recipe.create as jest.Mock).mockResolvedValue({ id: "r1" });
+
+    await saveRecipeFromBlock(baseBlock, "user-1", "key-1", true);
 
     const callArg = (mockPrisma.recipe.create as jest.Mock).mock.calls[0][0];
     expect(callArg.data.cooked).toBe(true);
