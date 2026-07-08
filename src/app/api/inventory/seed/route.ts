@@ -7,8 +7,9 @@ export const POST = withAuth(async (_req, { userId }) => {
     await seedDefaultInventory(userId);
     return NextResponse.json({ ok: true });
   } catch (error) {
+    console.error("Failed to seed inventory", error);
     return NextResponse.json(
-      { error: "Failed to seed inventory", message: error instanceof Error ? error.message : "Unknown error" },
+      { error: "Failed to seed inventory" },
       { status: 500 },
     );
   }

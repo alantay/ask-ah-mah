@@ -31,12 +31,6 @@ export async function saveRecipe(
   });
 }
 
-export async function deleteRecipe(recipeId: string) {
-  await prisma.recipe.delete({
-    where: { id: recipeId },
-  });
-}
-
 export async function deleteRecipeForUser(recipeId: string, userId: string) {
   const result = await prisma.recipe.deleteMany({
     where: { id: recipeId, userId },
