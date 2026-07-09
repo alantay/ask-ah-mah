@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useSessionContext } from "@/contexts/SessionContext";
 import { CookingMode, ServingsStepper, formatRecipeAsText } from "@/features/Recipe";
 import {
-  CookedCard,
+  CookedCheckbox,
   DottedList,
   Eyebrow,
   SectionHeading,
@@ -242,20 +242,15 @@ function RecipeBody({
           </div>
         )}
 
-        {/* Stat row — total time + cooked marker (quiet, reversible; ADR-0020) */}
-        {(selectedRecipe.totalTimeMinutes || onCookedChange) && (
-          <div className="flex flex-col sm:flex-row sm:items-stretch gap-3 mb-7">
-            {selectedRecipe.totalTimeMinutes && (
-              <div className="flex flex-col justify-center px-3.5 py-2 bg-card border border-border rounded-lg shadow-[0_1px_0_var(--color-border-soft)] min-w-[78px]">
-                <Eyebrow>Total time</Eyebrow>
-                <span className="font-display font-semibold text-[18px] text-foreground tabular-nums mt-0.5">
-                  {formatTime(selectedRecipe.totalTimeMinutes)}
-                </span>
-              </div>
-            )}
-            {onCookedChange && (
-              <CookedCard cooked={cooked} onChange={onCookedChange} />
-            )}
+        {/* Stat row — total time */}
+        {selectedRecipe.totalTimeMinutes && (
+          <div className="flex flex-wrap items-end gap-3 mb-7">
+            <div className="flex flex-col px-3.5 py-2 bg-card border border-border rounded-lg shadow-[0_1px_0_var(--color-border-soft)] min-w-[78px]">
+              <Eyebrow>Total time</Eyebrow>
+              <span className="font-display font-semibold text-[18px] text-foreground tabular-nums mt-0.5">
+                {formatTime(selectedRecipe.totalTimeMinutes)}
+              </span>
+            </div>
           </div>
         )}
 
@@ -398,6 +393,13 @@ function RecipeBody({
             <SectionHeading className="mb-4">Notes</SectionHeading>
             <DottedList items={notes} />
           </section>
+        )}
+
+        {/* Cooked marker — a quiet end-cap, out of the reading path (ADR-0020) */}
+        {onCookedChange && (
+          <div className="mt-9 pt-6 border-t border-dashed border-border">
+            <CookedCheckbox cooked={cooked} onChange={onCookedChange} />
+          </div>
         )}
       </div>
     </>

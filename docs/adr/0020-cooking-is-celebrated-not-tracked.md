@@ -20,9 +20,14 @@ never inferred from reaching the last step, never set silently. It answers one q
 is **reversible**: un-ticking sets `cooked` back to `false`.
 
 The tap lives in two places, both the same quiet checkbox (`CookedCheckbox`): CookingMode's last
-step, and the recipe view itself. The second entry point exists because many people cook straight
-from the recipe view without stepping through cooking mode — if CookingMode were the only way in,
-the cookbook would systematically under-report and "no stamp" would stop meaning "never made it".
+step, and the **end** of the recipe view (a soft end-cap below Notes, out of the reading path). The
+second entry point exists because many people cook straight from the recipe view without stepping
+through cooking mode — if CookingMode were the only way in, the cookbook would systematically
+under-report and "no stamp" would stop meaning "never made it". It sits at the bottom rather than in
+the recipe meta because a recipe view is mostly a reading surface: a standing "tap when you've cooked
+it" prompt beside Total time nagged on every read. We tried it as a meta-row card and pulled it back —
+the tradeoff is lower discoverability (only readers who reach the end see it), accepted so the reading
+path stays clean.
 
 The finish moment itself stays quiet. The last step keeps CookingMode's ordinary `← Prev` /
 "Done — all finished!" footer (no gradient panel, no avatar, no celebratory line — we tried a warm
