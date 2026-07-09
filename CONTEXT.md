@@ -212,6 +212,22 @@ The action that copies the **whole recipe** as clean plain text (CAPS section he
 
 ---
 
+## Cooked marker
+
+A single `cooked: Boolean` on a saved recipe, answering only "has this dish been cooked before?" — set **exclusively** by an explicit "I made this" tap on the shared `CookedCheckbox`, which lives in two places: the [Finish moment](#finish-moment) and a quiet end-cap at the *bottom* of the recipe view, below Notes — out of the reading path (owner-only; hidden on the public share view and for guests). Never inferred from reaching the last cooking step — and structurally so: the create API takes `cooked` beside the recipe block and ignores it inside, so a model-streamed block can never stamp a recipe. The tap is **reversible**: un-ticking sets it back to `false`. Deliberately **not** a count, timestamp, or streak — a recall marker, not a scoreboard. Surfaced as a small static jade stamp on the recipe's Cookbook card image strip; no motion, no achievement framing.
+
+Related: [ADR-0020](docs/adr/0020-cooking-is-celebrated-not-tracked.md)
+
+---
+
+## Finish moment
+
+The final step of `CookingMode` stays quiet — it keeps the ordinary step-nav footer, with `← Prev` and a jade "Done — all finished!" button (which just exits). The only addition is a single reversible "I made this" checkbox sitting above that footer, which toggles the [Cooked marker](#cooked-marker). No gradient panel, no Ah Mah line, no confetti — we tried a warm celebration bookend and pulled it back to just the marker. The checkbox is omitted when the consumer can't persist the flag.
+
+Related: [ADR-0020](docs/adr/0020-cooking-is-celebrated-not-tracked.md)
+
+---
+
 ## Step Uses
 
 The per-step list of ingredients consumed *at that step*, each carrying the quantity used **in that step** — for a split-use ingredient (a slurry added partly at step 2, the rest at step 5), the partial amount at each step, never the master total. Rendered as a quiet chip row beside the step, never woven into the step prose. Quantities are numeric-and-scalable when possible; otherwise short free text ("remaining", "to taste") shown as-is, unscaled.

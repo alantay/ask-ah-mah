@@ -110,6 +110,7 @@ model Recipe {
   photographerName String?
   photographerUrl  String?
   shareToken       String?  @unique
+  cooked           Boolean  @default(false)
 
   @@map("recipes")
   @@index([userId])

@@ -54,6 +54,7 @@ export async function updateRecipeForUser(id: string, userId: string, block: Rec
       description: block.description,
       totalTimeMinutes: block.totalTimeMinutes,
       instructions: block.description ?? "",
+      cooked: block.cooked,
     },
   });
   if (result.count === 0) {
@@ -134,7 +135,14 @@ export async function getRecipeByShareToken(token: string) {
   });
 }
 
-export async function saveRecipeFromBlock(block: RecipeBlock, userId: string, recipeId?: string) {
+// `cooked` is a dedicated param, not read from the block: recipe blocks are
+// model-streamed, and the marker must never be set silently (ADR-0020).
+export async function saveRecipeFromBlock(
+  block: RecipeBlock,
+  userId: string,
+  recipeId?: string,
+  cooked = false,
+) {
   const tags = normalizeTags(block.tags ?? []);
   const photo = await fetchRecipePhoto(block.title, tags);
   return saveRecipe(
@@ -151,6 +159,7 @@ export async function saveRecipeFromBlock(block: RecipeBlock, userId: string, re
       notes: block.notes ?? [],
       description: block.description,
       totalTimeMinutes: block.totalTimeMinutes,
+      cooked,
     },
     photo,
   );

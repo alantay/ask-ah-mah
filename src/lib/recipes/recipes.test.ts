@@ -5,6 +5,7 @@ import {
   getRecipeByShareToken,
   mintShareToken,
   saveRecipeFromBlock,
+  updateRecipeForUser,
 } from "./recipes";
 import type { RecipeBlock } from "./schemas";
 
@@ -19,6 +20,7 @@ jest.mock("@/lib/db", () => ({
     },
   },
 }));
+
 
 jest.mock("@/lib/pexels/fetchPhoto", () => ({
   fetchRecipePhoto: jest.fn().mockResolvedValue(null),
@@ -115,6 +117,75 @@ describe("saveRecipeFromBlock", () => {
     const callArg = (mockPrisma.recipe.create as jest.Mock).mock.calls[0][0];
     expect(callArg.data.imageUrl).toBe("https://example.com/photo.jpg");
     expect(callArg.data.photographerName).toBe("Jane");
+  });
+
+  it("defaults cooked to false", async () => {
+    (mockPrisma.recipe.create as jest.Mock).mockResolvedValue({ id: "r1" });
+
+    await saveRecipeFromBlock(baseBlock, "user-1");
+
+    const callArg = (mockPrisma.recipe.create as jest.Mock).mock.calls[0][0];
+    expect(callArg.data.cooked).toBe(false);
+  });
+
+  it("ignores cooked on the block — a model-streamed block can never stamp a recipe (ADR-0020)", async () => {
+    (mockPrisma.recipe.create as jest.Mock).mockResolvedValue({ id: "r1" });
+
+    await saveRecipeFromBlock({ ...baseBlock, cooked: true }, "user-1");
+
+    const callArg = (mockPrisma.recipe.create as jest.Mock).mock.calls[0][0];
+    expect(callArg.data.cooked).toBe(false);
+  });
+
+  it("persists cooked: true only via the explicit param (tick-to-save)", async () => {
+    (mockPrisma.recipe.create as jest.Mock).mockResolvedValue({ id: "r1" });
+
+    await saveRecipeFromBlock(baseBlock, "user-1", "key-1", true);
+
+    const callArg = (mockPrisma.recipe.create as jest.Mock).mock.calls[0][0];
+    expect(callArg.data.cooked).toBe(true);
+  });
+});
+
+describe("updateRecipeForUser", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it("persists cooked: true when set on the block", async () => {
+    (mockPrisma.recipe.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+    (mockPrisma.recipe.findUnique as jest.Mock).mockResolvedValue({ id: "recipe-1" });
+
+    await updateRecipeForUser("recipe-1", "user-1", { ...baseBlock, cooked: true });
+
+    const callArg = (mockPrisma.recipe.updateMany as jest.Mock).mock.calls[0][0];
+    expect(callArg.data.cooked).toBe(true);
+  });
+
+  it("persists cooked: false when explicitly set on the block (uncheck)", async () => {
+    (mockPrisma.recipe.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+    (mockPrisma.recipe.findUnique as jest.Mock).mockResolvedValue({ id: "recipe-1" });
+
+    await updateRecipeForUser("recipe-1", "user-1", { ...baseBlock, cooked: false });
+
+    const callArg = (mockPrisma.recipe.updateMany as jest.Mock).mock.calls[0][0];
+    expect(callArg.data.cooked).toBe(false);
+  });
+
+  it("omits cooked from the update when the block doesn't set it, so it never clobbers the existing value", async () => {
+    (mockPrisma.recipe.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+    (mockPrisma.recipe.findUnique as jest.Mock).mockResolvedValue({ id: "recipe-1" });
+
+    await updateRecipeForUser("recipe-1", "user-1", baseBlock);
+
+    const callArg = (mockPrisma.recipe.updateMany as jest.Mock).mock.calls[0][0];
+    expect(callArg.data.cooked).toBeUndefined();
+  });
+
+  it("throws when the recipe is not found or not owned by the user", async () => {
+    (mockPrisma.recipe.updateMany as jest.Mock).mockResolvedValue({ count: 0 });
+
+    await expect(
+      updateRecipeForUser("recipe-1", "wrong-user", baseBlock),
+    ).rejects.toThrow("Recipe not found");
   });
 });
 

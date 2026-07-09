@@ -174,3 +174,52 @@ describe("recipe notes", () => {
     expect(recipeWithIdToBlock(withId).notes).toEqual(["Freezes well."]);
   });
 });
+
+describe("recipeWithIdToBlock null coercion", () => {
+  // DB columns are nullable, but RecipeBlockSchema's optional fields reject
+  // `null` (only `undefined`) — so a bare pass-through breaks re-parsing a
+  // fetched recipe (e.g. the "I made this" PATCH round-trip).
+  it("coerces null description/totalTimeMinutes to undefined so the block re-parses", () => {
+    const withId = {
+      id: "r1",
+      userId: "u1",
+      name: "Shakshuka",
+      description: null,
+      totalTimeMinutes: null,
+      baseServings: 2,
+      ingredients: [],
+      steps: [],
+    } as unknown as RecipeWithId;
+
+    const block = recipeWithIdToBlock(withId);
+    expect(block.description).toBeUndefined();
+    expect(block.totalTimeMinutes).toBeUndefined();
+    expect(RecipeBlockSchema.safeParse(block).success).toBe(true);
+  });
+});
+
+describe("cooked marker", () => {
+  const minimalBlock = {
+    title: "Shakshuka",
+    baseServings: 2,
+    ingredients: [{ name: "egg", category: "Protein" as const, amount: "4" }],
+    steps: [{ title: "Poach", body: "Crack eggs into the sauce." }],
+  };
+
+  it("accepts a recipe block without cooked", () => {
+    const parsed = RecipeBlockSchema.parse(minimalBlock);
+    expect(parsed.cooked).toBeUndefined();
+  });
+
+  it("accepts a recipe block with cooked: true", () => {
+    const parsed = RecipeBlockSchema.parse({ ...minimalBlock, cooked: true });
+    expect(parsed.cooked).toBe(true);
+  });
+
+  it("round-trips cooked through both converters", () => {
+    const base = { id: "r1", userId: "u1" } as RecipeWithId;
+    const withId = recipeBlockToRecipeWithId({ ...minimalBlock, cooked: true }, base);
+    expect(withId.cooked).toBe(true);
+    expect(recipeWithIdToBlock(withId).cooked).toBe(true);
+  });
+});

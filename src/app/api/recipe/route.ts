@@ -16,7 +16,14 @@ export const POST = withAuth(async (req: NextRequest, { userId }) => {
   const { recipeId } = body;
 
   if (body.recipe) {
-    const recipe = await saveRecipeFromBlock(body.recipe, userId, recipeId ?? undefined);
+    // `cooked` rides beside the block, never inside it — the block is
+    // model-streamed and must not be able to set the marker (ADR-0020).
+    const recipe = await saveRecipeFromBlock(
+      body.recipe,
+      userId,
+      recipeId ?? undefined,
+      body.cooked === true,
+    );
     return NextResponse.json(recipe);
   }
 

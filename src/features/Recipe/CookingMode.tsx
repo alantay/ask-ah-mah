@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { CookedCheckbox } from "@/features/shared/components/recipe";
 import { cn } from "@/lib/utils";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -15,6 +16,12 @@ interface CookingModeProps {
   steps: Step[];
   prep?: string[];
   onExit: () => void;
+  // Whether this dish is already marked cooked (ADR-0020). Reflected by the
+  // last-step "I made this" checkbox; omitted when the consumer can't persist it.
+  cooked?: boolean;
+  // Toggles the cooked marker. Explicit checkbox tap only — never inferred from
+  // reaching the last step (ADR-0020). Reversible: `false` un-marks it.
+  onCookedChange?: (cooked: boolean) => void;
 }
 
 function prepToStep(item: string): Step {
@@ -28,7 +35,7 @@ function prepToStep(item: string): Step {
   return { title, body };
 }
 
-export function CookingMode({ title, steps, prep, onExit }: CookingModeProps) {
+export function CookingMode({ title, steps, prep, onExit, cooked, onCookedChange }: CookingModeProps) {
   const allSteps: Step[] = [
     ...(prep ?? []).map(prepToStep),
     ...steps,
@@ -71,6 +78,8 @@ export function CookingMode({ title, steps, prep, onExit }: CookingModeProps) {
   const step = allSteps[Math.min(current, total - 1)];
   const prev = () => setCurrent((c) => Math.max(0, c - 1));
   const next = () => setCurrent((c) => Math.min(total - 1, c + 1));
+  const isFinalStep = current === total - 1;
+  const canMark = isFinalStep && !!onCookedChange;
 
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
@@ -124,36 +133,43 @@ export function CookingMode({ title, steps, prep, onExit }: CookingModeProps) {
       </div>
 
       {/* Navigation footer */}
-      <div className="px-5 py-4 border-t border-border flex items-center gap-3 shrink-0 max-w-2xl mx-auto w-full">
-        <button
-          onClick={prev}
-          disabled={current === 0}
-          className={cn(
-            "flex-1 py-3 font-sans text-sm font-semibold rounded-xl border transition-colors cursor-pointer",
-            current === 0
-              ? "text-muted-foreground border-border bg-card opacity-40 cursor-not-allowed"
-              : "text-foreground border-border bg-card shadow-[0_1px_0_var(--border-soft)] hover:bg-muted/50"
-          )}
-        >
-          ← Prev
-        </button>
-
-        {current < total - 1 ? (
-          <Button
-            variant="ctaDeep"
-            onClick={next}
-            className="flex-[2] py-3 font-sans text-sm font-semibold"
-          >
-            Next step →
-          </Button>
-        ) : (
-          <button
-            onClick={onExit}
-            className="flex-[2] py-3 font-sans text-sm font-semibold text-white bg-jade border border-jade-deep rounded-xl shadow-[0_2px_0_var(--jade-deep)] hover:opacity-90 transition-opacity cursor-pointer"
-          >
-            Done — all finished!
-          </button>
+      <div className="px-5 py-4 border-t border-border shrink-0 max-w-2xl mx-auto w-full">
+        {/* Last-step recall marker — a quiet, reversible checkbox (ADR-0020) */}
+        {canMark && onCookedChange && (
+          <CookedCheckbox cooked={!!cooked} onChange={onCookedChange} className="mb-3" />
         )}
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={prev}
+            disabled={current === 0}
+            className={cn(
+              "flex-1 py-3 font-sans text-sm font-semibold rounded-xl border transition-colors cursor-pointer",
+              current === 0
+                ? "text-muted-foreground border-border bg-card opacity-40 cursor-not-allowed"
+                : "text-foreground border-border bg-card shadow-[0_1px_0_var(--border-soft)] hover:bg-muted/50"
+            )}
+          >
+            ← Prev
+          </button>
+
+          {isFinalStep ? (
+            <button
+              onClick={onExit}
+              className="flex-[2] py-3 font-sans text-sm font-semibold text-white bg-jade border border-jade-deep rounded-xl shadow-[0_2px_0_var(--jade-deep)] hover:opacity-90 transition-opacity cursor-pointer"
+            >
+              Done — all finished!
+            </button>
+          ) : (
+            <Button
+              variant="ctaDeep"
+              onClick={next}
+              className="flex-[2] py-3 font-sans text-sm font-semibold"
+            >
+              Next step →
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

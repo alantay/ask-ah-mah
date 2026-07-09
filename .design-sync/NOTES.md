@@ -95,6 +95,20 @@ skip unchanged components.
 - **`[FONT_REMOTE]` — Inter / Fraunces / Nunito / Cambria.** The bundle pulls these from
   Google Fonts via an `@import` in `ds-tailwind-input.css` (the app uses `next/font/google`,
   which has no static font files to copy). The remote host serves them at runtime. Expected.
+- **Token classification — 71 component-scoped `--tw-*` properties.** These are Tailwind
+  v4's per-element reset variables (`--tw-translate-x`, `--tw-ring-*`, `--tw-blur`,
+  `--tw-duration`, `--tw-enter-*`/`--tw-exit-*`, …) declared on the base reset
+  (`*, ::before, ::after, ::backdrop { ...: initial }`) plus scoped utility/pseudo-selector
+  rules. The checker's usual remediation — move to `:root` — does NOT apply: these must stay
+  per-element, since hoisting them to `:root` turns them from per-element into
+  inherited/global state and breaks transforms, rings, shadows, filters, and enter/exit
+  animations across the whole bundle. This is inherent to any compiled Tailwind v4
+  stylesheet, not a defect in this design system. **Do not re-investigate this — do not
+  move these properties, do not spend a turn re-deriving the explanation.** The 20
+  classifiable theme tokens (`--ease-in-out`, `--animate-pulse`,
+  `--default-transition-duration`, etc.) already carry `/* @kind other */` in the live
+  bundle and are resolved; this 71-property note is the unresolved (and unresolvable)
+  remainder — leave it.
 
 ## Scope
 

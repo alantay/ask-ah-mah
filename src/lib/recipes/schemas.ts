@@ -46,6 +46,11 @@ export const RecipeBlockSchema = z.object({
   // Set by the model in Cook With What You Have (Mode 3) responses only.
   // "close" = 0–2 additions (UI: "Right now"); "stretch" = 3–4 additions (UI: "Worth a small trip").
   closeness: z.enum(["close", "stretch"]).optional(),
+  // Explicit "I made this" marker (ADR-0020) — a recall flag, never inferred or scored.
+  // Carried here only so saved recipes round-trip through updates; the create
+  // path (saveRecipeFromBlock) ignores it, so a model-streamed block can never
+  // stamp a recipe.
+  cooked: z.boolean().optional(),
 });
 export type RecipeBlock = z.infer<typeof RecipeBlockSchema>;
 
@@ -90,6 +95,7 @@ export type Recipe = {
   description?: string;
   totalTimeMinutes?: number;
   createdAt?: Date;
+  cooked?: boolean;
 };
 
 export type RecipeWithId = Recipe & {
@@ -194,6 +200,7 @@ export function recipeBlockToRecipeWithId(block: RecipeBlock, base: RecipeWithId
     steps: block.steps,
     notes: block.notes,
     tags: block.tags,
+    cooked: block.cooked,
   };
 }
 
@@ -201,8 +208,8 @@ export function recipeWithIdToBlock(r: RecipeWithId) {
   return {
     id: r.id,
     title: r.name,
-    description: r.description,
-    totalTimeMinutes: r.totalTimeMinutes,
+    description: r.description ?? undefined,
+    totalTimeMinutes: r.totalTimeMinutes ?? undefined,
     baseServings: r.baseServings,
     ingredients: r.ingredients.map((i) => ({
       name: i.name,
@@ -215,5 +222,6 @@ export function recipeWithIdToBlock(r: RecipeWithId) {
     steps: r.steps ?? [],
     notes: r.notes,
     tags: r.tags,
+    cooked: r.cooked,
   };
 }

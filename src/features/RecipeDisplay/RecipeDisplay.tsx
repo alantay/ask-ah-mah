@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useSessionContext } from "@/contexts/SessionContext";
 import { CookingMode, ServingsStepper, formatRecipeAsText } from "@/features/Recipe";
 import {
+  CookedCheckbox,
   DottedList,
   Eyebrow,
   SectionHeading,
@@ -21,6 +22,7 @@ import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Streamdown } from "streamdown";
+import { useSWRConfig } from "swr";
 import { TweakBench } from "./TweakBench";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -118,6 +120,10 @@ interface RecipeBodyProps {
   deletedSteps?: Set<number>;
   originalRecipe?: RecipeWithId;
   showHighlights?: boolean;
+  // Cooked marker (ADR-0020) — omitted when the viewer can't persist it
+  // (public share view, guests).
+  cooked?: boolean;
+  onCookedChange?: (cooked: boolean) => void;
 }
 
 function RecipeBody({
@@ -130,6 +136,8 @@ function RecipeBody({
   deletedSteps = new Set(),
   originalRecipe,
   showHighlights = false,
+  cooked = false,
+  onCookedChange,
 }: RecipeBodyProps) {
   const baseServings = selectedRecipe.baseServings || 2;
   const ingredients = (selectedRecipe.ingredients || []) as RecipeIngredient[];
@@ -386,6 +394,13 @@ function RecipeBody({
             <DottedList items={notes} />
           </section>
         )}
+
+        {/* Cooked marker — a quiet end-cap, out of the reading path (ADR-0020) */}
+        {onCookedChange && (
+          <div className="mt-9 pt-6 border-t border-dashed border-border">
+            <CookedCheckbox cooked={cooked} onChange={onCookedChange} />
+          </div>
+        )}
       </div>
     </>
   );
@@ -411,6 +426,7 @@ export default function RecipeDisplay({
   readOnly = false,
 }: RecipeDisplayProps) {
   const { userId } = useSessionContext();
+  const { mutate } = useSWRConfig();
   const [cooking, setCooking] = useState(false);
   const [sharing, setSharing] = useState(false);
   // Lifted out of RecipeBody so the header "Copy recipe" action can read the
@@ -524,6 +540,42 @@ export default function RecipeDisplay({
     }
   }, [recipe.id, userId, workingDraft]);
 
+  const handleCookedChange = useCallback(
+    async (nextCooked: boolean) => {
+      if (!userId) return;
+      const prevDraft = workingDraft;
+      // Base the PATCH on the last *confirmed* server state, not the live
+      // (possibly-unsaved) Tweak Bench draft — the cooked marker is an
+      // independent, reversible action (ADR-0020) and must not persist
+      // in-progress bench edits as a side effect.
+      const confirmedBase = originalRecipeRef.current;
+      // Optimistic — the checkbox flips instantly; revert if the save fails.
+      // Don't touch originalRecipeRef (the bench's revert/diff baseline) until
+      // the save is confirmed.
+      setWorkingDraft({ ...prevDraft, cooked: nextCooked });
+      try {
+        const res = await fetch(`/api/recipe/${recipe.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            recipe: { ...recipeWithIdToBlock(confirmedBase), cooked: nextCooked },
+          }),
+        });
+
+        if (!res.ok) throw new Error("Save failed");
+
+        originalRecipeRef.current = { ...confirmedBase, cooked: nextCooked };
+        mutate(`/api/recipe?userId=${userId}`);
+        if (nextCooked) toast.success("Marked as made — nice one.");
+      } catch (err) {
+        console.error("[RecipeDisplay] cooked-toggle error:", err);
+        setWorkingDraft(prevDraft);
+        toast.error("Couldn't save that. Try again?");
+      }
+    },
+    [recipe.id, userId, workingDraft, mutate],
+  );
+
   const handleCopyRecipe = useCallback(() => {
     const text = formatRecipeAsText(recipeWithIdToBlock(workingDraft), servings);
     navigator.clipboard.writeText(text).then(
@@ -568,6 +620,8 @@ export default function RecipeDisplay({
         steps={steps}
         prep={(recipe.prep ?? []) as string[]}
         onExit={() => setCooking(false)}
+        cooked={!!workingDraft.cooked}
+        onCookedChange={handleCookedChange}
       />
     );
   }
@@ -688,6 +742,8 @@ export default function RecipeDisplay({
                   deletedSteps={deletedSteps}
                   originalRecipe={originalRecipeRef.current}
                   showHighlights={showHighlights}
+                  cooked={!!workingDraft.cooked}
+                  onCookedChange={!readOnly && userId ? handleCookedChange : undefined}
                 />
               </div>
             </div>

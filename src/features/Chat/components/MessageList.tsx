@@ -19,6 +19,7 @@ import type {
   RecipeWithId,
   SuggestionsBlockData,
 } from "@/lib/recipes/schemas";
+import { recipeWithIdToBlock } from "@/lib/recipes/schemas";
 import { fetcher } from "@/lib/utils";
 import type { UIMessage } from "ai";
 import { useEffect, useRef, useState } from "react";
@@ -241,6 +242,7 @@ export const MessageList = ({
   const saveStructuredRecipe = async (
     recipeBlock: RecipeBlock,
     recipeKey: string,
+    cooked = false,
   ) => {
     try {
       const optimisticRecipe = {
@@ -252,6 +254,7 @@ export const MessageList = ({
         baseServings: recipeBlock.baseServings,
         ingredients: [],
         steps: recipeBlock.steps,
+        cooked,
       };
 
       mutate((current = []) => [...current, optimisticRecipe], {
@@ -265,6 +268,9 @@ export const MessageList = ({
         body: JSON.stringify({
           recipeId: recipeKey,
           recipe: recipeBlock,
+          // Beside the block, not inside it — the server ignores block.cooked
+          // so the model can never stamp a recipe (ADR-0020).
+          cooked,
         }),
       });
       if (!res.ok) throw new Error("Failed to save recipe");
@@ -276,10 +282,50 @@ export const MessageList = ({
         { revalidate: false, populateCache: true },
       );
 
-      toast.success(`"${recipeBlock.title}" — kept in your cookbook.`);
+      // Ticking "I made this" on an unsaved recipe saves it too — say so.
+      toast.success(
+        cooked
+          ? `"${recipeBlock.title}" — kept in your cookbook and marked as made.`
+          : `"${recipeBlock.title}" — kept in your cookbook.`,
+      );
     } catch (error) {
       console.error("Failed to save recipe:", error);
       toast.error("Aiyah, didn't save. Try again?");
+    }
+  };
+
+  const handleCookedChange = async (
+    recipeBlock: RecipeBlock,
+    recipeKey: string,
+    next: boolean,
+  ) => {
+    const existing = recipeSaved?.find((r) => r.recipeId === recipeKey);
+    if (!existing) {
+      // Not in the cookbook yet — ticking saves it as cooked; there's nothing
+      // to persist for an un-tick.
+      if (next) await saveStructuredRecipe(recipeBlock, recipeKey, true);
+      return;
+    }
+    try {
+      const res = await fetch(`/api/recipe/${existing.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          recipe: { ...recipeWithIdToBlock(existing), cooked: next },
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to update cooked marker");
+
+      mutate(
+        (current = []) =>
+          current.map((r) => (r.id === existing.id ? { ...r, cooked: next } : r)),
+        { revalidate: false, populateCache: true },
+      );
+
+      if (next) toast.success("Marked as made — nice one.");
+    } catch (error) {
+      console.error("Failed to update cooked marker:", error);
+      toast.error("Couldn't save that. Try again?");
     }
   };
 
@@ -406,9 +452,10 @@ export const MessageList = ({
                     }
                     if (block.kind === "recipe") {
                       const recipeKey = `${message.id}-${bi}`;
-                      const isSaved =
-                        recipeSaved?.some((r) => r.recipeId === recipeKey) ??
-                        false;
+                      const savedRecipe = recipeSaved?.find(
+                        (r) => r.recipeId === recipeKey,
+                      );
+                      const isSaved = !!savedRecipe;
                       return (
                         <RecipeLetter
                           key={blockKey}
@@ -418,6 +465,10 @@ export const MessageList = ({
                           }
                           isSaved={isSaved}
                           onDraft={onDraft}
+                          cooked={savedRecipe?.cooked ?? false}
+                          onCookedChange={(next) =>
+                            handleCookedChange(block.payload, recipeKey, next)
+                          }
                         />
                       );
                     }
