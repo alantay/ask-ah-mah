@@ -244,7 +244,7 @@ function RecipeBody({
 
         {/* Stat row — total time + cooked marker (quiet, reversible; ADR-0020) */}
         {(selectedRecipe.totalTimeMinutes || onCookedChange) && (
-          <div className="flex flex-wrap items-stretch gap-3 mb-7">
+          <div className="flex flex-col sm:flex-row sm:items-stretch gap-3 mb-7">
             {selectedRecipe.totalTimeMinutes && (
               <div className="flex flex-col justify-center px-3.5 py-2 bg-card border border-border rounded-lg shadow-[0_1px_0_var(--color-border-soft)] min-w-[78px]">
                 <Eyebrow>Total time</Eyebrow>
