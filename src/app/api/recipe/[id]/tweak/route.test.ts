@@ -74,6 +74,20 @@ describe("POST /api/recipe/[id]/tweak", () => {
     expect(mockedGenerateText).not.toHaveBeenCalled();
   });
 
+  it("returns 400 when originalRecipe has a step over 2000 characters", async () => {
+    const request = makeRequest({
+      instruction: "make it spicier",
+      originalRecipe: {
+        ...validRecipeBlock,
+        steps: [{ title: "Cook", body: "x".repeat(2001) }],
+      },
+    });
+
+    const response = await POST(request, { params });
+    expect(response.status).toBe(400);
+    expect(mockedGenerateText).not.toHaveBeenCalled();
+  });
+
   it("ignores any userId supplied in the body and proceeds as the session user", async () => {
     mockedGenerateText.mockResolvedValue({
       text: tweakJson,
