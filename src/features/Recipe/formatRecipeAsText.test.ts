@@ -86,3 +86,34 @@ describe("formatRecipeAsText", () => {
     expect(text).not.toMatch(/still need/i);
   });
 });
+
+describe("formatRecipeAsText — Step Uses", () => {
+  it("includes a scaled Uses line under a step that has uses", () => {
+    const text = formatRecipeAsText(
+      {
+        title: "Mapo Tofu",
+        baseServings: 2,
+        ingredients: [],
+        steps: [
+          {
+            body: "Stir in the slurry.",
+            uses: [
+              { name: "cornstarch slurry", amount: "2", unit: "tbsp" },
+              { name: "spring onion", text: "to taste" },
+            ],
+          },
+        ],
+      },
+      4, // servings — 2x baseServings
+    );
+    expect(text).toContain("Uses: 4 tbsp cornstarch slurry, to taste spring onion");
+  });
+
+  it("omits the Uses line for a step without uses", () => {
+    const text = formatRecipeAsText(
+      { title: "Mapo Tofu", baseServings: 2, ingredients: [], steps: [{ body: "Fry it." }] },
+      2,
+    );
+    expect(text).not.toContain("Uses:");
+  });
+});

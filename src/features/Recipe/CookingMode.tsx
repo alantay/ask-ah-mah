@@ -1,7 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { CookedCheckbox } from "@/features/shared/components/recipe";
+import { CookedCheckbox, StepBody } from "@/features/shared/components/recipe";
+import type { RecipeStepUse } from "@/lib/recipes/schemas";
 import { cn } from "@/lib/utils";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -9,6 +10,7 @@ interface Step {
   title: string;
   body: string;
   tip?: string;
+  uses?: RecipeStepUse[];
 }
 
 interface CookingModeProps {
@@ -22,6 +24,10 @@ interface CookingModeProps {
   // Toggles the cooked marker. Explicit checkbox tap only — never inferred from
   // reaching the last step (ADR-0020). Reversible: `false` un-marks it.
   onCookedChange?: (cooked: boolean) => void;
+  // servings / baseServings ratio — scales numeric Step Uses amounts the same
+  // way the master ingredient list scales. Defaults to 1 (no consumer that
+  // omits it has a servings stepper to desync from).
+  servingsRatio?: number;
 }
 
 function prepToStep(item: string): Step {
@@ -35,7 +41,7 @@ function prepToStep(item: string): Step {
   return { title, body };
 }
 
-export function CookingMode({ title, steps, prep, onExit, cooked, onCookedChange }: CookingModeProps) {
+export function CookingMode({ title, steps, prep, onExit, cooked, onCookedChange, servingsRatio = 1 }: CookingModeProps) {
   const allSteps: Step[] = [
     ...(prep ?? []).map(prepToStep),
     ...steps,
@@ -122,7 +128,7 @@ export function CookingMode({ title, steps, prep, onExit, cooked, onCookedChange
         </div>
 
         <div className="font-display text-xl leading-relaxed text-foreground">
-          {step.body}
+          <StepBody body={step.body} uses={step.uses} ratio={servingsRatio} />
         </div>
 
         {step.tip && (

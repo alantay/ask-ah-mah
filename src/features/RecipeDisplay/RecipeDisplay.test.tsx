@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { SessionProvider } from "@/contexts/SessionContext";
 import RecipeDisplay from "./RecipeDisplay";
 
@@ -88,6 +89,29 @@ describe("RecipeDisplay", () => {
     it("falls back to Streamdown when steps array is empty", async () => {
       renderRecipe({ steps: [] } as never);
       expect(await screen.findByTestId("streamdown")).toBeInTheDocument();
+    });
+
+    it("renders a Step Uses hint in the Method section, scaled to the current servings", async () => {
+      renderRecipe({
+        steps: [
+          {
+            title: "Thicken",
+            body: "Stir in the slurry.",
+            uses: [{ name: "slurry", amount: "3", unit: "tbsp" }],
+          },
+        ],
+      } as never);
+      const hint = screen.getByText("slurry");
+      expect(hint.tagName).toBe("BUTTON");
+      await userEvent.hover(hint);
+      expect(await screen.findByText("3 tbsp")).toBeInTheDocument();
+
+      // baseServings is 2 — bump to 4 via the stepper (increments by 1 per
+      // click) and confirm the hint rescales.
+      fireEvent.click(screen.getByLabelText(/increase servings/i));
+      fireEvent.click(screen.getByLabelText(/increase servings/i));
+      await userEvent.hover(hint);
+      expect(await screen.findByText("6 tbsp")).toBeInTheDocument();
     });
   });
 

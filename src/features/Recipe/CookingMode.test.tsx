@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { CookingMode } from "./CookingMode";
 
 const steps = [
@@ -77,5 +78,45 @@ describe("CookingMode — last-step cooked marker", () => {
     goToLastStep();
     expect(screen.queryByRole("checkbox", { name: "I made this" })).not.toBeInTheDocument();
     expect(screen.getByText("Done — all finished!")).toBeInTheDocument();
+  });
+});
+
+describe("CookingMode — Step Uses inline hints", () => {
+  it("turns a matched ingredient mention into a hoverable hint, scaled by servingsRatio", async () => {
+    render(
+      <CookingMode
+        title="Fried Rice"
+        steps={[
+          { title: "Prep", body: "Chop everything." },
+          {
+            title: "Thicken",
+            body: "Stir in the slurry.",
+            uses: [{ name: "slurry", amount: "2", unit: "tbsp" }],
+          },
+        ]}
+        servingsRatio={2}
+        onExit={jest.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByText("Next step →"));
+
+    const hint = screen.getByText("slurry");
+    expect(hint.tagName).toBe("BUTTON");
+    await userEvent.hover(hint);
+    expect(await screen.findByText("4 tbsp")).toBeInTheDocument();
+  });
+
+  it("renders plain body text on steps without uses (e.g. prep-synthesized steps)", () => {
+    render(
+      <CookingMode
+        title="Fried Rice"
+        steps={[{ title: "Cook", body: "Fry it up." }]}
+        prep={["Dice the onion"]}
+        onExit={jest.fn()}
+      />,
+    );
+    const matches = screen.getAllByText("Dice the onion");
+    expect(matches.length).toBeGreaterThan(0);
+    expect(matches.every((el) => el.tagName !== "BUTTON")).toBe(true);
   });
 });

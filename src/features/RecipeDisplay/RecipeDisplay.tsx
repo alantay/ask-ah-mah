@@ -357,6 +357,7 @@ function RecipeBody({
                     marker="quiet"
                     n={i + 1}
                     step={step}
+                    ratio={scale}
                     data-tweak-row={`step-${i}`}
                     className={cn(
                       "transition-colors",
@@ -627,6 +628,7 @@ export default function RecipeDisplay({
         onExit={() => setCooking(false)}
         cooked={!!workingDraft.cooked}
         onCookedChange={handleCookedChange}
+        servingsRatio={servings / (recipe.baseServings || 2)}
       />
     );
   }
