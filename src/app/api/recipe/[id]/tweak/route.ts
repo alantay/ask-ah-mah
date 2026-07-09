@@ -95,10 +95,7 @@ export const POST = withAuthDynamic<{ id: string }>(async (req: NextRequest, { u
     // Client sends block format (recipeWithIdToBlock already applied) — validate directly
     const parsedOriginal = RecipeBlockWithIdSchema.safeParse(originalRecipeRaw);
     if (!parsedOriginal.success) {
-      return NextResponse.json(
-        { error: "Invalid originalRecipe payload", details: parsedOriginal.error.flatten() },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid originalRecipe payload" }, { status: 400 });
     }
 
     if (parsedOriginal.data.id !== id) {
@@ -109,10 +106,7 @@ export const POST = withAuthDynamic<{ id: string }>(async (req: NextRequest, { u
     if (workingDraftRaw !== undefined) {
       const parsedDraft = RecipeBlockWithIdSchema.safeParse(workingDraftRaw);
       if (!parsedDraft.success) {
-        return NextResponse.json(
-          { error: "Invalid workingDraft payload", details: parsedDraft.error.flatten() },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "Invalid workingDraft payload" }, { status: 400 });
       }
       if (parsedDraft.data.id !== id) {
         return NextResponse.json({ error: "workingDraft id mismatch" }, { status: 400 });
