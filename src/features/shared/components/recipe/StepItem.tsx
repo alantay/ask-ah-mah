@@ -4,6 +4,7 @@ import type { RecipeStep } from "@/lib/recipes/schemas";
 import { cn } from "@/lib/utils";
 
 import { StepTip } from "./StepTip";
+import { StepUses } from "./StepUses";
 
 /**
  * A single numbered recipe step, rendered in one of two registers:
@@ -22,6 +23,7 @@ type StepItemProps<T extends ElementType> = {
   n: number;
   step: RecipeStep;
   marker?: "stamp" | "quiet";
+  ratio?: number;
   as?: T;
   className?: string;
 } & Omit<ComponentPropsWithoutRef<T>, "children" | "className">;
@@ -45,6 +47,7 @@ export function StepItem<T extends ElementType = "div">({
   n,
   step,
   marker = "quiet",
+  ratio = 1,
   as,
   className,
   ...rest
@@ -77,6 +80,7 @@ export function StepItem<T extends ElementType = "div">({
         <div className={cn("font-display text-foreground", r.body)}>
           {step.body}
         </div>
+        <StepUses uses={step.uses} ratio={ratio} />
         {step.tip && <StepTip>{step.tip}</StepTip>}
       </div>
     </Wrapper>

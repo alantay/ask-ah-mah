@@ -54,3 +54,29 @@ describe("StepItem", () => {
     });
   });
 });
+
+describe("uses chip row", () => {
+  it("renders a chip per use, scaling numeric amounts by ratio and leaving text uses unscaled", () => {
+    render(
+      <StepItem
+        n={1}
+        ratio={2}
+        step={{
+          title: "Thicken the sauce",
+          body: "Stir in the slurry.",
+          uses: [
+            { name: "cornstarch slurry", amount: "2", unit: "tbsp" },
+            { name: "cornstarch slurry", text: "remaining" },
+          ],
+        }}
+      />,
+    );
+    expect(screen.getByText(/4 tbsp cornstarch slurry/)).toBeInTheDocument();
+    expect(screen.getByText(/remaining cornstarch slurry/)).toBeInTheDocument();
+  });
+
+  it("omits the chip row when the step has no uses", () => {
+    render(<StepItem n={1} step={step} />);
+    expect(screen.queryByTestId("step-uses")).not.toBeInTheDocument();
+  });
+});
