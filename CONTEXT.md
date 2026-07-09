@@ -225,3 +225,11 @@ Related: [ADR-0020](docs/adr/0020-cooking-is-celebrated-not-tracked.md)
 The final step of `CookingMode` stays quiet — it keeps the ordinary step-nav footer, with `← Prev` and a jade "Done — all finished!" button (which just exits). The only addition is a single reversible "I made this" checkbox sitting above that footer, which toggles the [Cooked marker](#cooked-marker). No gradient panel, no Ah Mah line, no confetti — we tried a warm celebration bookend and pulled it back to just the marker. The checkbox is omitted when the consumer can't persist the flag.
 
 Related: [ADR-0020](docs/adr/0020-cooking-is-celebrated-not-tracked.md)
+
+---
+
+## Step Uses
+
+The per-step list of ingredients consumed *at that step*, each carrying the quantity used **in that step** — for a split-use ingredient (a slurry added partly at step 2, the rest at step 5), the partial amount at each step, never the master total. Rendered as a quiet chip row beside the step, never woven into the step prose. Quantities are numeric-and-scalable when possible; otherwise short free text ("remaining", "to taste") shown as-is, unscaled.
+
+**Why this matters:** the master ingredient list answers *"what do I gather?"*; Step Uses answers *"how much goes in **now**?"* — mid-cook, without leaving the step. Soft invariant: a split ingredient's partial amounts should sum to its master amount; this is model-authored, not enforced.
