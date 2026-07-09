@@ -238,6 +238,15 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **`POST /api/chat`**: added Zod validation before the expensive LLM path — `conversationId: string.max(100)`, `messages: array.max(100)`. Prevents multi-MB payloads from ever reaching `captureMentionedInventory` / `loadConversationContext` / `streamText`.
 - Tests updated: the old "system role succeeds" case flipped to 400; new tests assert oversized messages array, oversized conversationId, and missing conversationId all 400 before any model call.
 
+### Payload size caps — Shipped (#395)
+
+- **`POST /api/message`**: `content` capped at 8000 characters (was unbounded).
+- **`POST /api/chat`**: each message `part` capped at 20,000 serialized characters via a `.refine()` (parts are heterogeneous — `z.unknown()` — so no per-shape schema applies uniformly).
+- **`RecipeBlockSchema`** (`src/lib/recipes/schemas.ts`): every string and array field bounded (title ≤200 chars, description ≤500, ingredients/steps ≤50 entries, ingredient name ≤200, step body ≤2000, notes/tags ≤20 entries). This is the single choke point for `parseRecipeText`, `parseBlocks`, `/api/recipe/[id]` PATCH, and `/api/recipe/[id]/tweak` (which serializes the whole recipe into its system prompt) — bounding it here covers all four.
+- **`POST /api/recipe`**: found mid-implementation that `body.recipe` had **no validation at all** before reaching `saveRecipeFromBlock` — not even a shape check. Added `RecipeBlockSchema.safeParse` so the new bounds actually apply to this write path.
+- **`POST /api/market-tip` / `/api/storage-tip`**: item batch cap reduced from 200 to 50 (pantry-sized batches are far smaller); item `name` capped at 200 characters.
+- Tests updated across all six routes/schema file, following the #360 pattern: assert 400 status and that the guarded model/DB call was never invoked.
+
 ### normalizeIngredient extracted — Shipped (#362)
 
 - **Ingredient normalisation lives in one place.** `saveRecipeFromBlock` and `updateRecipeForUser` both had an identical inline map — same `category ?? "Misc"` default and the same `parseFloat` / `Number.isNaN` amount-coercion. Extracted to `src/lib/recipes/normalizeIngredient.ts` (mirrors `normalizeTags.ts`); both call sites become one-liner `.map(normalizeIngredient)` calls. A unit-test file covers the amount-parsing edge cases (valid numeric, non-numeric, undefined, decimal) and the category default.
