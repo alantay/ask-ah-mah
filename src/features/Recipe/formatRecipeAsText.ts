@@ -13,7 +13,7 @@ export interface FormattableRecipe {
   baseServings: number;
   ingredients: { name: string; amount?: string; unit?: string; note?: string }[];
   prep?: string[];
-  steps: { title?: string; body: string; tip?: string }[];
+  steps: { title?: string; body: string; tip?: string; uses?: { name: string; amount?: string; unit?: string; text?: string }[] }[];
   notes?: string[];
 }
 
@@ -70,6 +70,18 @@ export function formatRecipeAsText(
         out.push(`   ${step.body}`);
       } else {
         out.push(`${n}. ${step.body}`);
+      }
+      if (step.uses && step.uses.length > 0) {
+        const usesLine = step.uses
+          .map((u) =>
+            u.amount
+              ? `${scaleAmount(u.amount, ratio)}${u.unit ? ` ${u.unit}` : ""} ${u.name}`
+              : u.text
+                ? `${u.text} ${u.name}`
+                : u.name,
+          )
+          .join(", ");
+        out.push(`   Uses: ${usesLine}`);
       }
       if (step.tip) out.push(`   Tip: ${step.tip}`);
       return out;

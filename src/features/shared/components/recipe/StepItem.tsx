@@ -3,6 +3,7 @@ import type { ComponentPropsWithoutRef, ElementType } from "react";
 import type { RecipeStep } from "@/lib/recipes/schemas";
 import { cn } from "@/lib/utils";
 
+import { StepBody } from "./StepBody";
 import { StepTip } from "./StepTip";
 
 /**
@@ -22,6 +23,7 @@ type StepItemProps<T extends ElementType> = {
   n: number;
   step: RecipeStep;
   marker?: "stamp" | "quiet";
+  ratio?: number;
   as?: T;
   className?: string;
 } & Omit<ComponentPropsWithoutRef<T>, "children" | "className">;
@@ -45,6 +47,7 @@ export function StepItem<T extends ElementType = "div">({
   n,
   step,
   marker = "quiet",
+  ratio = 1,
   as,
   className,
   ...rest
@@ -75,7 +78,7 @@ export function StepItem<T extends ElementType = "div">({
           </div>
         )}
         <div className={cn("font-display text-foreground", r.body)}>
-          {step.body}
+          <StepBody body={step.body} uses={step.uses} ratio={ratio} />
         </div>
         {step.tip && <StepTip>{step.tip}</StepTip>}
       </div>
