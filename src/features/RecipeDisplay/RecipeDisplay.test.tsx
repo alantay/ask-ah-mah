@@ -89,6 +89,25 @@ describe("RecipeDisplay", () => {
       renderRecipe({ steps: [] } as never);
       expect(screen.getByTestId("streamdown")).toBeInTheDocument();
     });
+
+    it("renders a Step Uses chip in the Method section, scaled to the current servings", () => {
+      renderRecipe({
+        steps: [
+          {
+            title: "Thicken",
+            body: "Stir in the slurry.",
+            uses: [{ name: "cornstarch slurry", amount: "2", unit: "tbsp" }],
+          },
+        ],
+      } as never);
+      expect(screen.getByText(/2 tbsp cornstarch slurry/)).toBeInTheDocument();
+
+      // baseServings is 2 — bump to 4 via the stepper (increments by 1 per
+      // click) and confirm the chip rescales.
+      fireEvent.click(screen.getByLabelText(/increase servings/i));
+      fireEvent.click(screen.getByLabelText(/increase servings/i));
+      expect(screen.getByText(/4 tbsp cornstarch slurry/)).toBeInTheDocument();
+    });
   });
 
   describe("Servings stepper", () => {
