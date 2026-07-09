@@ -269,6 +269,11 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Fix has two parts:** (1) `useChatSession` now claims the real conversation id for `useChat` the moment a staging send creates it, instead of waiting for `commitConversation` to assign it to `activeConversationId` after the stream finishes — so `useChat`'s `id` never has to reset and drop the just-streamed reply from view (fixes #384, the finish-of-generation flash). (2) `Chat.tsx`'s empty-state gate now also checks `messagesLoading`, so switching between two existing conversations no longer shows the full-screen "New Chat" state while the newly-selected conversation's history is still being fetched (fixes #383).
 - Both issues shared one root cause; #384 was closed as a duplicate trigger and tracked under #383's agent brief.
 
+### Security headers on every response — Shipped Jul 2026 (#394)
+
+- **`next.config.ts` now sets six security headers on `/(.*)`:** a Content-Security-Policy (default/connect/font/form-action `'self'`; `img-src` additionally allows `blob: data:` + the two photo CDNs already in `images.remotePatterns`; `frame-ancestors 'none'`; `object-src 'none'`; `base-uri 'self'`), HSTS (2 years, includeSubDomains), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, and a Permissions-Policy disabling camera/microphone/geolocation — **screen-wake-lock is deliberately left enabled** because CookingMode holds one.
+- The CSP keeps `'unsafe-inline'` for script/style (Next's inline bootstrap and injected styles need it; a nonce-based CSP requires middleware and wasn't worth it yet). Dev mode adds `'unsafe-eval'` + `ws:` so Turbopack/HMR keep working. Verified against a production build: all headers served, app renders with zero CSP violations.
+
 ## Design system
 
 The two recipe surfaces — `RecipeLetter` (chat) and `RecipeDisplay` (cookbook) — were drifting because each hand-rolled the same primitives. A design system is now the north star: shared atoms stop drift, and every surface gets tweaked incrementally so it "looks like it belongs". See the spec at `docs/superpowers/specs/2026-06-20-recipe-design-system-design.md` and the issue tracker (#277–#285).
