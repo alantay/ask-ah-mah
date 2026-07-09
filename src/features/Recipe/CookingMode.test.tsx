@@ -79,3 +79,72 @@ describe("CookingMode — last-step cooked marker", () => {
     expect(screen.getByText("Done — all finished!")).toBeInTheDocument();
   });
 });
+
+describe("CookingMode — finish-moment share prompt", () => {
+  const goToLastStep = () => fireEvent.click(screen.getByText("Next step →"));
+
+  it("does not show the share prompt before cooked is ticked", () => {
+    render(
+      <CookingMode
+        title="Fried Rice"
+        steps={steps}
+        onExit={jest.fn()}
+        cooked={false}
+        onCookedChange={jest.fn()}
+        onShare={jest.fn()}
+      />,
+    );
+    goToLastStep();
+    expect(screen.queryByText(/Cooked this for someone/)).not.toBeInTheDocument();
+  });
+
+  it("shows the share prompt right after ticking cooked, and calls onShare when tapped", () => {
+    const onShare = jest.fn();
+    render(
+      <CookingMode
+        title="Fried Rice"
+        steps={steps}
+        onExit={jest.fn()}
+        cooked={false}
+        onCookedChange={jest.fn()}
+        onShare={onShare}
+      />,
+    );
+    goToLastStep();
+    fireEvent.click(screen.getByRole("checkbox", { name: "I made this" }));
+
+    expect(screen.getByText(/Cooked this for someone/)).toBeInTheDocument();
+    fireEvent.click(screen.getByText(/Cooked this for someone/));
+    expect(onShare).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not show the prompt when an already-cooked recipe mounts with cooked=true", () => {
+    render(
+      <CookingMode
+        title="Fried Rice"
+        steps={steps}
+        onExit={jest.fn()}
+        cooked
+        onCookedChange={jest.fn()}
+        onShare={jest.fn()}
+      />,
+    );
+    goToLastStep();
+    expect(screen.queryByText(/Cooked this for someone/)).not.toBeInTheDocument();
+  });
+
+  it("omits the share prompt entirely when onShare is not provided", () => {
+    render(
+      <CookingMode
+        title="Fried Rice"
+        steps={steps}
+        onExit={jest.fn()}
+        cooked={false}
+        onCookedChange={jest.fn()}
+      />,
+    );
+    goToLastStep();
+    fireEvent.click(screen.getByRole("checkbox", { name: "I made this" }));
+    expect(screen.queryByText(/Cooked this for someone/)).not.toBeInTheDocument();
+  });
+});

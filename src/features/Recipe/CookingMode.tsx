@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { CookedCheckbox } from "@/features/shared/components/recipe";
+import { CookedCheckbox, ShareCta } from "@/features/shared/components/recipe";
 import { cn } from "@/lib/utils";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -22,6 +22,10 @@ interface CookingModeProps {
   // Toggles the cooked marker. Explicit checkbox tap only — never inferred from
   // reaching the last step (ADR-0020). Reversible: `false` un-marks it.
   onCookedChange?: (cooked: boolean) => void;
+  // Mints/shares the public link for this recipe. Omitted when the recipe
+  // can't be shared yet (e.g. an unsaved chat recipe) — the prompt then never renders.
+  onShare?: () => void;
+  sharing?: boolean;
 }
 
 function prepToStep(item: string): Step {
@@ -35,12 +39,19 @@ function prepToStep(item: string): Step {
   return { title, body };
 }
 
-export function CookingMode({ title, steps, prep, onExit, cooked, onCookedChange }: CookingModeProps) {
+export function CookingMode({ title, steps, prep, onExit, cooked, onCookedChange, onShare, sharing }: CookingModeProps) {
   const allSteps: Step[] = [
     ...(prep ?? []).map(prepToStep),
     ...steps,
   ];
   const [current, setCurrent] = useState(0);
+  // Session-local: the share prompt only appears right after this mount
+  // flips cooked to true, never on load of an already-cooked recipe (ADR-0022).
+  const [justCooked, setJustCooked] = useState(false);
+  const handleCookedChange = (next: boolean) => {
+    onCookedChange?.(next);
+    if (next) setJustCooked(true);
+  };
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const total = allSteps.length;
 
@@ -136,7 +147,10 @@ export function CookingMode({ title, steps, prep, onExit, cooked, onCookedChange
       <div className="px-5 py-4 border-t border-border shrink-0 max-w-2xl mx-auto w-full">
         {/* Last-step recall marker — a quiet, reversible checkbox (ADR-0020) */}
         {canMark && onCookedChange && (
-          <CookedCheckbox cooked={!!cooked} onChange={onCookedChange} className="mb-3" />
+          <>
+            <CookedCheckbox cooked={!!cooked} onChange={handleCookedChange} className="mb-3" />
+            {justCooked && onShare && <ShareCta onShare={onShare} sharing={sharing} />}
+          </>
         )}
 
         <div className="flex items-center gap-3">
