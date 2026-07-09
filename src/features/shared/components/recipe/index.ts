@@ -4,5 +4,5 @@ export { DottedList } from "./DottedList";
 export { StepTip } from "./StepTip";
 export { StepItem } from "./StepItem";
 export { StepList } from "./StepList";
-export { StepUses } from "./StepUses";
+export { StepBody } from "./StepBody";
 export { CookedCheckbox } from "./CookedCheckbox";

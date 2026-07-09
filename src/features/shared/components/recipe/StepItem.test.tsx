@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 import { StepItem } from "./StepItem";
 
@@ -55,28 +56,60 @@ describe("StepItem", () => {
   });
 });
 
-describe("uses chip row", () => {
-  it("renders a chip per use, scaling numeric amounts by ratio and leaving text uses unscaled", () => {
+describe("step uses (inline hints)", () => {
+  it("turns a matched ingredient mention into a hoverable hint showing the scaled amount", async () => {
     render(
       <StepItem
         n={1}
         ratio={2}
         step={{
-          title: "Thicken the sauce",
-          body: "Stir in the slurry.",
-          uses: [
-            { name: "cornstarch slurry", amount: "2", unit: "tbsp" },
-            { name: "cornstarch slurry", text: "remaining" },
-          ],
+          title: "Make the savory filling",
+          body: "Heat cooking oil in a small pan, sauté the garlic until fragrant.",
+          uses: [{ name: "cooking oil", amount: "1", unit: "tbsp" }],
         }}
       />,
     );
-    expect(screen.getByText(/4 tbsp cornstarch slurry/)).toBeInTheDocument();
-    expect(screen.getByText(/remaining cornstarch slurry/)).toBeInTheDocument();
+    const hint = screen.getByText("cooking oil");
+    expect(hint.tagName).toBe("BUTTON");
+    expect(screen.queryByText("2 tbsp")).not.toBeInTheDocument();
+
+    await userEvent.hover(hint);
+    expect(await screen.findByText("2 tbsp")).toBeInTheDocument();
   });
 
-  it("omits the chip row when the step has no uses", () => {
+  it("renders free-text uses (e.g. \"remaining\") unscaled", async () => {
+    render(
+      <StepItem
+        n={1}
+        ratio={2}
+        step={{
+          title: "Finish the sauce",
+          body: "Stir in the remaining slurry.",
+          uses: [{ name: "slurry", text: "remaining" }],
+        }}
+      />,
+    );
+    await userEvent.hover(screen.getByText("slurry"));
+    expect(await screen.findByText("remaining")).toBeInTheDocument();
+  });
+
+  it("silently drops a use whose name isn't mentioned in the step body", () => {
+    render(
+      <StepItem
+        n={1}
+        step={{
+          title: "Finish the sauce",
+          body: "Stir it in and simmer.",
+          uses: [{ name: "cornstarch slurry", amount: "2", unit: "tbsp" }],
+        }}
+      />,
+    );
+    expect(screen.getByText("Stir it in and simmer.")).toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("renders plain body text when the step has no uses", () => {
     render(<StepItem n={1} step={step} />);
-    expect(screen.queryByTestId("step-uses")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 });

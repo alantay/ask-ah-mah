@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { CookedCheckbox, StepUses } from "@/features/shared/components/recipe";
+import { CookedCheckbox, StepBody } from "@/features/shared/components/recipe";
 import type { RecipeStepUse } from "@/lib/recipes/schemas";
 import { cn } from "@/lib/utils";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -128,10 +128,8 @@ export function CookingMode({ title, steps, prep, onExit, cooked, onCookedChange
         </div>
 
         <div className="font-display text-xl leading-relaxed text-foreground">
-          {step.body}
+          <StepBody body={step.body} uses={step.uses} ratio={servingsRatio} />
         </div>
-
-        <StepUses uses={step.uses} ratio={servingsRatio} />
 
         {step.tip && (
           <div className="mt-5 pl-4 border-l-[3px] border-callout font-display italic text-base text-muted-foreground leading-relaxed">

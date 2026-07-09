@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { CookingMode } from "./CookingMode";
 
 const steps = [
@@ -80,8 +81,8 @@ describe("CookingMode — last-step cooked marker", () => {
   });
 });
 
-describe("CookingMode — Step Uses chip row", () => {
-  it("renders uses chips for a step, scaled by servingsRatio", () => {
+describe("CookingMode — Step Uses inline hints", () => {
+  it("turns a matched ingredient mention into a hoverable hint, scaled by servingsRatio", async () => {
     render(
       <CookingMode
         title="Fried Rice"
@@ -90,7 +91,7 @@ describe("CookingMode — Step Uses chip row", () => {
           {
             title: "Thicken",
             body: "Stir in the slurry.",
-            uses: [{ name: "cornstarch slurry", amount: "2", unit: "tbsp" }],
+            uses: [{ name: "slurry", amount: "2", unit: "tbsp" }],
           },
         ]}
         servingsRatio={2}
@@ -98,10 +99,14 @@ describe("CookingMode — Step Uses chip row", () => {
       />,
     );
     fireEvent.click(screen.getByText("Next step →"));
-    expect(screen.getByText(/4 tbsp cornstarch slurry/)).toBeInTheDocument();
+
+    const hint = screen.getByText("slurry");
+    expect(hint.tagName).toBe("BUTTON");
+    await userEvent.hover(hint);
+    expect(await screen.findByText("4 tbsp")).toBeInTheDocument();
   });
 
-  it("omits the chip row on steps without uses (e.g. prep-synthesized steps)", () => {
+  it("renders plain body text on steps without uses (e.g. prep-synthesized steps)", () => {
     render(
       <CookingMode
         title="Fried Rice"
@@ -110,6 +115,8 @@ describe("CookingMode — Step Uses chip row", () => {
         onExit={jest.fn()}
       />,
     );
-    expect(screen.queryByTestId("step-uses")).not.toBeInTheDocument();
+    const matches = screen.getAllByText("Dice the onion");
+    expect(matches.length).toBeGreaterThan(0);
+    expect(matches.every((el) => el.tagName !== "BUTTON")).toBe(true);
   });
 });

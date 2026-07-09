@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { SessionProvider } from "@/contexts/SessionContext";
 import RecipeDisplay from "./RecipeDisplay";
 
@@ -90,23 +91,27 @@ describe("RecipeDisplay", () => {
       expect(screen.getByTestId("streamdown")).toBeInTheDocument();
     });
 
-    it("renders a Step Uses chip in the Method section, scaled to the current servings", () => {
+    it("renders a Step Uses hint in the Method section, scaled to the current servings", async () => {
       renderRecipe({
         steps: [
           {
             title: "Thicken",
             body: "Stir in the slurry.",
-            uses: [{ name: "cornstarch slurry", amount: "2", unit: "tbsp" }],
+            uses: [{ name: "slurry", amount: "3", unit: "tbsp" }],
           },
         ],
       } as never);
-      expect(screen.getByText(/2 tbsp cornstarch slurry/)).toBeInTheDocument();
+      const hint = screen.getByText("slurry");
+      expect(hint.tagName).toBe("BUTTON");
+      await userEvent.hover(hint);
+      expect(await screen.findByText("3 tbsp")).toBeInTheDocument();
 
       // baseServings is 2 — bump to 4 via the stepper (increments by 1 per
-      // click) and confirm the chip rescales.
+      // click) and confirm the hint rescales.
       fireEvent.click(screen.getByLabelText(/increase servings/i));
       fireEvent.click(screen.getByLabelText(/increase servings/i));
-      expect(screen.getByText(/4 tbsp cornstarch slurry/)).toBeInTheDocument();
+      await userEvent.hover(hint);
+      expect(await screen.findByText("6 tbsp")).toBeInTheDocument();
     });
   });
 
