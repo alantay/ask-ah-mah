@@ -293,7 +293,10 @@ const Inventory = () => {
     router.replace("/?tab=chat");
   };
 
-  if (error) return <div>Error: {error.message}</div>;
+  if (error) {
+    console.error("[Inventory]", error);
+    return <div>Aiyah, the pantry door is stuck — try again?</div>;
+  }
 
   const { ingredientInventory = [], kitchenwareInventory = [] } = data || {};
   const ingredientGroups = groupIngredients(ingredientInventory);
