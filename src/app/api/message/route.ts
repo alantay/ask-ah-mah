@@ -7,7 +7,7 @@ import { z } from "zod";
 
 const PostSchema = z.object({
   conversationId: z.string().min(1),
-  content: z.string().min(1),
+  content: z.string().min(1).max(8000),
   role: z.enum(["user", "assistant"]),
 });
 

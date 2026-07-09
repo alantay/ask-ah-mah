@@ -493,5 +493,21 @@ describe("Message API Routes", () => {
       expect(response.status).toBe(400);
       expect(mockedCreateMessage).not.toHaveBeenCalled();
     });
+
+    it("returns 400 when content exceeds 8000 characters", async () => {
+      const request = createMockRequest("http://localhost:3000/api/message", {
+        method: "POST",
+        body: JSON.stringify({
+          conversationId: "conv-123",
+          content: "x".repeat(8001),
+          role: "user",
+        }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const response = await POST(request);
+      expect(response.status).toBe(400);
+      expect(mockedCreateMessage).not.toHaveBeenCalled();
+    });
   });
 });
