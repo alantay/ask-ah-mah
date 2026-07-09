@@ -1,6 +1,7 @@
 import { deleteRecipeForUser, getRecipes, saveRecipe, saveRecipeFromBlock } from "@/lib/recipes";
 import { processRecipe } from "@/lib/recipes/recipeProcessor";
 import { normalizeTags } from "@/lib/recipes/normalizeTags";
+import { RecipeBlockSchema } from "@/lib/recipes/schemas";
 import { fetchRecipePhoto } from "@/lib/pexels/fetchPhoto";
 import { NotFoundError } from "@/lib/errors";
 import { withAuth } from "@/lib/withAuth";
@@ -16,10 +17,15 @@ export const POST = withAuth(async (req: NextRequest, { userId }) => {
   const { recipeId } = body;
 
   if (body.recipe) {
+    const parsed = RecipeBlockSchema.safeParse(body.recipe);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid recipe payload" }, { status: 400 });
+    }
+
     // `cooked` rides beside the block, never inside it — the block is
     // model-streamed and must not be able to set the marker (ADR-0020).
     const recipe = await saveRecipeFromBlock(
-      body.recipe,
+      parsed.data,
       userId,
       recipeId ?? undefined,
       body.cooked === true,

@@ -299,6 +299,27 @@ describe("Recipe API Routes", () => {
       expect(mockedProcessRecipe).not.toHaveBeenCalled();
     });
 
+    it("returns 400 for a recipe payload with a title over 200 characters", async () => {
+      const request = createMockRequest("http://localhost:3000/api/recipe", {
+        method: "POST",
+        body: JSON.stringify({
+          userId: "user-123",
+          recipe: {
+            title: "x".repeat(201),
+            ingredients: [],
+            steps: [],
+            tags: [],
+            baseServings: 2,
+          },
+        }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const response = await POST(request);
+      expect(response.status).toBe(400);
+      expect(mockedSaveRecipeFromBlock).not.toHaveBeenCalled();
+    });
+
     it("passes recipeId to saveRecipeFromBlock so isSaved detection works", async () => {
       mockedSaveRecipeFromBlock.mockResolvedValue({
         id: "recipe-new",
