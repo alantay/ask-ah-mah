@@ -12,13 +12,13 @@ const RequestSchema = z.object({
   items: z
     .array(
       z.object({
-        name: z.string().min(1),
+        name: z.string().min(1).max(200),
         // "ingredient" | "kitchenware" — steers food-vs-equipment advice.
         type: z.string().nullish(),
       }),
     )
     .min(1)
-    .max(200),
+    .max(50),
 });
 
 const TipGenSchema = z.object({

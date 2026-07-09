@@ -171,4 +171,22 @@ describe("POST /api/storage-tip", () => {
     const prompt = mockedGenerate.mock.calls[0][0].prompt as string;
     expect(prompt).toContain(PROMPT_FRAGMENTS.comprehensibleVoice);
   });
+
+  it("returns 400 when items exceeds 50 entries", async () => {
+    const req = reqWith({
+      items: Array.from({ length: 51 }, (_, i) => ({ name: `item-${i}` })),
+    });
+
+    const response = await POST(req);
+    expect(response.status).toBe(400);
+    expect(mockedGenerate).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when an item name exceeds 200 characters", async () => {
+    const req = reqWith({ items: [{ name: "x".repeat(201) }] });
+
+    const response = await POST(req);
+    expect(response.status).toBe(400);
+    expect(mockedGenerate).not.toHaveBeenCalled();
+  });
 });
