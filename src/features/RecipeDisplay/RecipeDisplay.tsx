@@ -2,12 +2,13 @@
 
 import { Button } from "@/components/ui/button";
 import { useSessionContext } from "@/contexts/SessionContext";
-import { CookingMode, ServingsStepper, formatRecipeAsText } from "@/features/Recipe";
+import { CookingMode, ServingsStepper, formatRecipeAsText, useShareRecipe } from "@/features/Recipe";
 import {
   CookedCheckbox,
   DottedList,
   Eyebrow,
   SectionHeading,
+  ShareCta,
   StepItem,
 } from "@/features/shared/components/recipe";
 import {
@@ -124,6 +125,8 @@ interface RecipeBodyProps {
   // (public share view, guests).
   cooked?: boolean;
   onCookedChange?: (cooked: boolean) => void;
+  onShare?: () => void;
+  sharing?: boolean;
 }
 
 function RecipeBody({
@@ -138,7 +141,18 @@ function RecipeBody({
   showHighlights = false,
   cooked = false,
   onCookedChange,
+  onShare,
+  sharing,
 }: RecipeBodyProps) {
+  // Session-local: the share prompt only appears right after this mount
+  // flips cooked to true, never on load of an already-cooked recipe (ADR-0022).
+  const [justCooked, setJustCooked] = useState(false);
+  const handleCookedChange = onCookedChange
+    ? (next: boolean) => {
+        onCookedChange(next);
+        if (next) setJustCooked(true);
+      }
+    : undefined;
   const baseServings = selectedRecipe.baseServings || 2;
   const ingredients = (selectedRecipe.ingredients || []) as RecipeIngredient[];
   const origIngredients = (originalRecipe?.ingredients || []) as RecipeIngredient[];
@@ -396,9 +410,10 @@ function RecipeBody({
         )}
 
         {/* Cooked marker — a quiet end-cap, out of the reading path (ADR-0020) */}
-        {onCookedChange && (
+        {handleCookedChange && (
           <div className="mt-9 pt-6 border-t border-dashed border-border">
-            <CookedCheckbox cooked={cooked} onChange={onCookedChange} />
+            <CookedCheckbox cooked={cooked} onChange={handleCookedChange} />
+            {justCooked && onShare && <ShareCta onShare={onShare} sharing={sharing} />}
           </div>
         )}
       </div>
@@ -428,7 +443,7 @@ export default function RecipeDisplay({
   const { userId } = useSessionContext();
   const { mutate } = useSWRConfig();
   const [cooking, setCooking] = useState(false);
-  const [sharing, setSharing] = useState(false);
+  const { share, sharing } = useShareRecipe(recipe.id, recipe.name);
   // Lifted out of RecipeBody so the header "Copy recipe" action can read the
   // currently displayed servings and scale the copied text to match.
   const [servings, setServings] = useState<number>(recipe.baseServings ?? 2);
@@ -584,27 +599,6 @@ export default function RecipeDisplay({
     );
   }, [workingDraft, servings]);
 
-  const handleShare = useCallback(async () => {
-    if (!userId || sharing) return;
-    setSharing(true);
-    try {
-      // Identity comes from the session cookie; the server ignores any body.
-      const res = await fetch(`/api/recipe/${recipe.id}/share`, {
-        method: "POST",
-      });
-      if (!res.ok) throw new Error("share failed");
-      const { token } = await res.json();
-      const url = `${window.location.origin}/r/${token}`;
-      await navigator.clipboard.writeText(url);
-      toast.success("Link copied — anyone can open it.");
-    } catch (err) {
-      console.error("[RecipeDisplay] share error:", err);
-      toast.error("Couldn't make a link. Try again?");
-    } finally {
-      setSharing(false);
-    }
-  }, [recipe.id, userId, sharing]);
-
   const handleStartCooking = () => {
     if (onStartCooking) {
       onStartCooking();
@@ -622,6 +616,8 @@ export default function RecipeDisplay({
         onExit={() => setCooking(false)}
         cooked={!!workingDraft.cooked}
         onCookedChange={handleCookedChange}
+        onShare={!readOnly && userId ? share : undefined}
+        sharing={sharing}
       />
     );
   }
@@ -690,7 +686,7 @@ export default function RecipeDisplay({
                   </button>
                   {!readOnly && userId && (
                     <button
-                      onClick={handleShare}
+                      onClick={share}
                       disabled={sharing}
                       className="inline-flex items-center min-h-11 px-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
                       aria-label="Share recipe — copy a public link"
@@ -744,6 +740,8 @@ export default function RecipeDisplay({
                   showHighlights={showHighlights}
                   cooked={!!workingDraft.cooked}
                   onCookedChange={!readOnly && userId ? handleCookedChange : undefined}
+                  onShare={!readOnly && userId ? share : undefined}
+                  sharing={sharing}
                 />
               </div>
             </div>
