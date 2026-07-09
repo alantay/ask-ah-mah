@@ -89,7 +89,11 @@ Emit:
     {
       "title": "Marinate the chicken",
       "body": "Toss chicken with 1 tbsp soy, cornstarch, sesame oil and a pinch of white pepper. Leave 10 min.",
-      "tip": "Cornstarch gives you that velvety texture. Don't skip it."
+      "tip": "Cornstarch gives you that velvety texture. Don't skip it.",
+      "uses": [
+        { "name": "chicken thigh", "amount": "500", "unit": "g" },
+        { "name": "soy sauce", "amount": "1", "unit": "tbsp" }
+      ]
     }
   ],
   "notes": [
@@ -107,6 +111,7 @@ Rules:
 - \`prep\` 0–8 short imperative strings covering ALL knife work (dice, mince, chop, slice), marinating, beating, soaking, scoring — anything BEFORE heat. If a step says "the diced X" or "the marinated Y", that prep MUST be in this array. Omit \`prep\` (or use \`[]\`) for assemble-only recipes with no real prep.
 - **Every ingredient must be used.** Each item in \`ingredients\` must be called for somewhere in \`prep\` or \`steps\` — by its own name, or by a natural generic reference ("the herbs", "the aromatics", "the marinade", "the sauce"). Don't list an ingredient, including a garnish, that the method never actually calls for.
 - \`tip\` on a step is optional — only add when the why/trick is non-obvious.
+- \`uses\` on a step is optional: a list of \`{ name, amount?, unit?, text? }\` for the ingredients that step actually adds, so the cook can see quantities without leaving the step. Use \`amount\` + \`unit\` (same units as the ingredient list) when the amount is a fixed, quantifiable piece of the ingredient's total; use \`text\` (e.g. \`"remaining"\`, \`"to taste"\`) when it isn't a fixed number. **If an ingredient's use is split across multiple steps** (e.g. a sauce or slurry added partly at one step, the rest later), give each step its own *partial* amount for that step only — never the ingredient's full listed amount at more than one step. Every \`name\` in \`uses\` must match an ingredient's \`name\` in the \`ingredients\` array. Omit \`uses\` (or use \`[]\`) on steps where nothing is added (resting, plating, tasting) — not every step needs it, only the ones where an ingredient goes in.
 - **Step depth is earned, not default.** The recipe is a document, so put depth where it changes the outcome (ADR-0011). Most \`steps[].body\` stay 1–2 sentences. A *pivotal* step — the browning, the emulsion, the egg-doneness moment — may run 3–4 sentences to carry: the *why* when non-obvious (Maillard, fond, carryover heat — not "stir the sauce"); a sensory doneness cue ("whites just set, yolks still jiggle" beats "cook 5–7 min"); and a failure-mode caution where one wrong move costs the dish ("if it pools water, raise the heat — it can't brown while swimming"). Trivial steps stay short — do NOT pad them. Use \`tip\` for an aside; keep the cause-and-effect that drives the cooking in \`body\`.
 - **Never echo absolute quantities into step bodies.** Steps reference ingredients **by name only** ("season the pork", "add the soy") — absolute amounts live in the ingredient list, which the servings stepper scales, so a number baked into prose goes stale the moment servings change. Proportional prose is fine and encouraged ("half the salt now, the rest at the end", "a splash of water if it's tight").
 - \`notes\` 0–4 optional whole-dish asides: make-ahead, storage, serving suggestions, or pantry-*independent* technique fallbacks ("no cumin? garam masala works — it's pre-toasted, add it late"). Omit \`notes\` (or use \`[]\`) for simple dishes with nothing worth saying. Do NOT use \`notes\` for pantry substitutions on missing ingredients — that belongs in the ingredient \`note\` field. Keep each note one sentence.
