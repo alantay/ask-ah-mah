@@ -274,6 +274,12 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **`next.config.ts` now sets six security headers on `/(.*)`:** a Content-Security-Policy (default/connect/font/form-action `'self'`; `img-src` additionally allows `blob: data:` + the two photo CDNs already in `images.remotePatterns`; `frame-ancestors 'none'`; `object-src 'none'`; `base-uri 'self'`), HSTS (2 years, includeSubDomains), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, and a Permissions-Policy disabling camera/microphone/geolocation — **screen-wake-lock is deliberately left enabled** because CookingMode holds one.
 - The CSP keeps `'unsafe-inline'` for script/style (Next's inline bootstrap and injected styles need it; a nonce-based CSP requires middleware and wasn't worth it yet). Dev mode adds `'unsafe-eval'` + `ws:` so Turbopack/HMR keep working. Verified against a production build: all headers served, app renders with zero CSP violations.
 
+### PWA installability — Shipped Jul 2026 (#397)
+
+- **The app can now be properly installed to a home screen** (first slice of #326, at ~1% of the React Native cost): `src/app/manifest.ts` serves a web manifest (`name` "Ask Ah Mah" / `short_name` "Ah Mah", `display: standalone`, Kopitiam Modern cream `#f7ebdc` as background/theme color) with 192/512 icons declared both `any` and `maskable` — the granny mark centered on cream with a safe-zone margin, so Android adaptive masks don't crop her.
+- `layout.tsx` wires the rest: `icons` (SVG favicon + existing apple-touch-icon), `appleWebApp` (title "Ah Mah", default status bar) for iOS Add to Home Screen, and a `viewport` export with light/dark `themeColor` (`#f7ebdc` / `#25170f`) so browser chrome matches the app.
+- **Out of scope for v1 (deliberate):** service worker / offline shell — separate follow-up if wanted. Real-device install check (iOS Safari + Android Chrome) still worth doing after deploy.
+
 ## Design system
 
 The two recipe surfaces — `RecipeLetter` (chat) and `RecipeDisplay` (cookbook) — were drifting because each hand-rolled the same primitives. A design system is now the north star: shared atoms stop drift, and every surface gets tweaked incrementally so it "looks like it belongs". See the spec at `docs/superpowers/specs/2026-06-20-recipe-design-system-design.md` and the issue tracker (#277–#285).

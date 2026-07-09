@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { ConversationProvider } from "@/contexts/ConversationContext";
 import { SessionProvider } from "@/contexts/SessionContext";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter, Nunito } from "next/font/google";
 import "./globals.css";
 
@@ -51,6 +51,15 @@ export const metadata: Metadata = {
     telephone: false,
   },
   metadataBase: new URL("https://ask-ah-mah.vercel.app"),
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    apple: "/apple-touch-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Ah Mah",
+  },
   alternates: {
     canonical: "/",
   },
@@ -92,6 +101,14 @@ export const metadata: Metadata = {
   // verification: {
   //   google: "google-verification-code",
   // },
+};
+
+// Kopitiam Modern --background as hex, per color scheme (browser chrome tint).
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f7ebdc" },
+    { media: "(prefers-color-scheme: dark)", color: "#25170f" },
+  ],
 };
 
 export default function RootLayout({
