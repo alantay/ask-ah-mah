@@ -13,36 +13,36 @@ export type RecipeIngredient = z.infer<typeof RecipeIngredientSchema>;
 
 // Step in a structured recipe
 export const RecipeStepSchema = z.object({
-  title: z.string(),
-  body: z.string(),
-  tip: z.string().optional(),
+  title: z.string().max(100),
+  body: z.string().max(2000),
+  tip: z.string().max(500).optional(),
 });
 export type RecipeStep = z.infer<typeof RecipeStepSchema>;
 
 // Ingredient as emitted by the model (amounts as strings for scaling)
 export const RecipeIngredientModelSchema = z.object({
-  name: z.string(),
+  name: z.string().max(200),
   category: CategorySchema.nullish().transform((v) => v ?? undefined),
-  amount: z.string().nullish().transform((v) => v ?? undefined),   // string so "1 1/2" works
-  unit: z.string().nullish().transform((v) => v ?? undefined),
-  note: z.string().nullish().transform((v) => v ?? undefined),
+  amount: z.string().max(20).nullish().transform((v) => v ?? undefined),   // string so "1 1/2" works
+  unit: z.string().max(20).nullish().transform((v) => v ?? undefined),
+  note: z.string().max(300).nullish().transform((v) => v ?? undefined),
 });
 export type RecipeIngredientModel = z.infer<typeof RecipeIngredientModelSchema>;
 
 // Full structured recipe block (```recipe fenced JSON)
 export const RecipeBlockSchema = z.object({
-  title: z.string(),
-  description: z.string().optional(),
+  title: z.string().min(1).max(200),
+  description: z.string().max(500).optional(),
   totalTimeMinutes: z.number().optional(),
   baseServings: z.number(),
-  ingredients: z.array(RecipeIngredientModelSchema),
-  prep: z.array(z.string()).optional(),
-  steps: z.array(RecipeStepSchema),
+  ingredients: z.array(RecipeIngredientModelSchema).max(50),
+  prep: z.array(z.string().max(300)).max(50).optional(),
+  steps: z.array(RecipeStepSchema).max(50),
   // Whole-dish asides (make-ahead, storage, serving, pantry-independent
   // technique fallbacks). NOT pantry substitutions — those live on the
   // ingredient `note` and the "Ask Ah Mah for substitutions" affordance.
-  notes: z.array(z.string()).optional(),
-  tags: z.array(z.string()).optional(),
+  notes: z.array(z.string().max(500)).max(20).optional(),
+  tags: z.array(z.string().max(50)).max(20).optional(),
   // Set by the model in Cook With What You Have (Mode 3) responses only.
   // "close" = 0–2 additions (UI: "Right now"); "stretch" = 3–4 additions (UI: "Worth a small trip").
   closeness: z.enum(["close", "stretch"]).optional(),

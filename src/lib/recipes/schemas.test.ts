@@ -6,6 +6,7 @@ import {
   recipeBlockToRecipeWithId,
   RecipeIngredientModelSchema,
   RecipeIngredientSchema,
+  RecipeStepSchema,
   type RecipeWithId,
   recipeWithIdToBlock,
   TweakPatchSchema,
@@ -221,5 +222,66 @@ describe("cooked marker", () => {
     const withId = recipeBlockToRecipeWithId({ ...minimalBlock, cooked: true }, base);
     expect(withId.cooked).toBe(true);
     expect(recipeWithIdToBlock(withId).cooked).toBe(true);
+  });
+});
+
+describe("RecipeBlockSchema size bounds", () => {
+  const baseBlock = {
+    title: "Test",
+    baseServings: 2,
+    ingredients: [{ name: "salt" }],
+    steps: [{ title: "Cook", body: "Cook it" }],
+  };
+
+  it("rejects a title over 200 characters", () => {
+    const result = RecipeBlockSchema.safeParse({ ...baseBlock, title: "x".repeat(201) });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a description over 500 characters", () => {
+    const result = RecipeBlockSchema.safeParse({
+      ...baseBlock,
+      description: "x".repeat(501),
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects more than 50 ingredients", () => {
+    const result = RecipeBlockSchema.safeParse({
+      ...baseBlock,
+      ingredients: Array.from({ length: 51 }, (_, i) => ({ name: `item-${i}` })),
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects an ingredient name over 200 characters", () => {
+    const result = RecipeIngredientModelSchema.safeParse({ name: "x".repeat(201) });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects more than 50 steps", () => {
+    const result = RecipeBlockSchema.safeParse({
+      ...baseBlock,
+      steps: Array.from({ length: 51 }, (_, i) => ({ title: `Step ${i}`, body: "do it" })),
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a step body over 2000 characters", () => {
+    const result = RecipeStepSchema.safeParse({ title: "Cook", body: "x".repeat(2001) });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects more than 20 tags", () => {
+    const result = RecipeBlockSchema.safeParse({
+      ...baseBlock,
+      tags: Array.from({ length: 21 }, (_, i) => `tag-${i}`),
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("still accepts a recipe block within all bounds", () => {
+    const result = RecipeBlockSchema.safeParse(baseBlock);
+    expect(result.success).toBe(true);
   });
 });
