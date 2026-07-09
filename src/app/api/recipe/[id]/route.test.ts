@@ -70,6 +70,22 @@ describe("PATCH /api/recipe/[id]", () => {
     );
   });
 
+  it("persists cooked: false when explicitly set (uncheck)", async () => {
+    mockedUpdateRecipeForUser.mockResolvedValue({ id: "recipe-1", cooked: false } as never);
+
+    const res = await PATCH(
+      makeRequest({ recipe: { ...validRecipeBlock, cooked: false } }),
+      { params },
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockedUpdateRecipeForUser).toHaveBeenCalledWith(
+      "recipe-1",
+      "user-123",
+      expect.objectContaining({ cooked: false }),
+    );
+  });
+
   it("accepts a recipe payload without cooked", async () => {
     mockedUpdateRecipeForUser.mockResolvedValue({ id: "recipe-1" } as never);
 

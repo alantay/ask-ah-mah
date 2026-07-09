@@ -544,26 +544,31 @@ export default function RecipeDisplay({
     async (nextCooked: boolean) => {
       if (!userId) return;
       const prevDraft = workingDraft;
-      const nextDraft = { ...workingDraft, cooked: nextCooked };
+      // Base the PATCH on the last *confirmed* server state, not the live
+      // (possibly-unsaved) Tweak Bench draft — the cooked marker is an
+      // independent, reversible action (ADR-0020) and must not persist
+      // in-progress bench edits as a side effect.
+      const confirmedBase = originalRecipeRef.current;
       // Optimistic — the checkbox flips instantly; revert if the save fails.
-      originalRecipeRef.current = nextDraft;
-      setWorkingDraft(nextDraft);
+      // Don't touch originalRecipeRef (the bench's revert/diff baseline) until
+      // the save is confirmed.
+      setWorkingDraft({ ...prevDraft, cooked: nextCooked });
       try {
         const res = await fetch(`/api/recipe/${recipe.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            recipe: { ...recipeWithIdToBlock(prevDraft), cooked: nextCooked },
+            recipe: { ...recipeWithIdToBlock(confirmedBase), cooked: nextCooked },
           }),
         });
 
         if (!res.ok) throw new Error("Save failed");
 
+        originalRecipeRef.current = { ...confirmedBase, cooked: nextCooked };
         mutate(`/api/recipe?userId=${userId}`);
         if (nextCooked) toast.success("Marked as made — nice one.");
       } catch (err) {
         console.error("[RecipeDisplay] cooked-toggle error:", err);
-        originalRecipeRef.current = prevDraft;
         setWorkingDraft(prevDraft);
         toast.error("Couldn't save that. Try again?");
       }

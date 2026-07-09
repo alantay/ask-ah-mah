@@ -160,6 +160,16 @@ describe("updateRecipeForUser", () => {
     expect(callArg.data.cooked).toBe(true);
   });
 
+  it("persists cooked: false when explicitly set on the block (uncheck)", async () => {
+    (mockPrisma.recipe.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+    (mockPrisma.recipe.findUnique as jest.Mock).mockResolvedValue({ id: "recipe-1" });
+
+    await updateRecipeForUser("recipe-1", "user-1", { ...baseBlock, cooked: false });
+
+    const callArg = (mockPrisma.recipe.updateMany as jest.Mock).mock.calls[0][0];
+    expect(callArg.data.cooked).toBe(false);
+  });
+
   it("omits cooked from the update when the block doesn't set it, so it never clobbers the existing value", async () => {
     (mockPrisma.recipe.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
     (mockPrisma.recipe.findUnique as jest.Mock).mockResolvedValue({ id: "recipe-1" });
