@@ -408,6 +408,23 @@ describe("Chat API Route", () => {
       expect(mockedStreamText).not.toHaveBeenCalled();
     });
 
+    it("returns 400 when a message part exceeds the per-part size cap", async () => {
+      const request = createMockRequest({
+        conversationId: "conv-123",
+        messages: [
+          {
+            id: "msg-1",
+            role: "user",
+            parts: [{ type: "text", text: "x".repeat(20_001) }],
+          },
+        ],
+      });
+
+      const response = await POST(request);
+      expect(response.status).toBe(400);
+      expect(mockedStreamText).not.toHaveBeenCalled();
+    });
+
     it("returns 400 when conversationId exceeds 100 characters", async () => {
       const request = createMockRequest({
         conversationId: "x".repeat(101),

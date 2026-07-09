@@ -17,8 +17,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { CHAT_SYSTEM_PROMPT } from "./constants";
 
+// Parts are heterogeneous (text, tool-call, tool-result, ...) so no per-shape
+// schema applies uniformly — bound the serialized size of each part instead.
+const MAX_PART_SIZE = 20_000;
+
 const UIMessageSchema = z
-  .object({ id: z.string(), role: z.string(), parts: z.array(z.unknown()) })
+  .object({
+    id: z.string(),
+    role: z.string(),
+    parts: z
+      .array(z.unknown())
+      .refine(
+        (parts) => parts.every((part) => JSON.stringify(part).length <= MAX_PART_SIZE),
+        { message: `Each message part must serialize to at most ${MAX_PART_SIZE} characters` },
+      ),
+  })
   .passthrough();
 
 const PostSchema = z.object({
