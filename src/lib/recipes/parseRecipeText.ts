@@ -25,7 +25,7 @@ FIELDS:
   - title: short action phrase (e.g. "Sauté aromatics")
   - body: the full step instruction — apply UNIT NORMALIZATION to all measurements in body text
   - tip: optional cook's note for this step
-  - uses: optional array of { name, amount?, unit?, text? } — if the source text states a quantity for an ingredient at this specific step (e.g. "add 2 tbsp of the cornstarch slurry"), extract it here with normalized amount/unit; use `text` for a non-numeric quantity ("the rest", "to taste"). Omit `uses` entirely for steps where the source text doesn't call out a specific per-step quantity — do not invent amounts that aren't in the source.
+  - uses: optional array of { name, amount?, unit?, text? } — if the source text states a quantity for an ingredient at this specific step (e.g. "add 2 tbsp of the cornstarch slurry"), extract it here with normalized amount/unit; use \`text\` for a non-numeric quantity ("the rest", "to taste"). Omit \`uses\` entirely for steps where the source text doesn't call out a specific per-step quantity — do not invent amounts that aren't in the source.
 - tags: 3–8 tags from the list below only; do not invent tags
 
 UNIT NORMALIZATION:
