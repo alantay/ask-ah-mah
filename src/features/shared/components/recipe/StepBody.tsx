@@ -36,7 +36,7 @@ export function StepBody({
   let cursor = 0;
   matches.forEach((match, i) => {
     if (match.start > cursor) nodes.push(body.slice(cursor, match.start));
-    const label = useLabel(match.use, ratio);
+    const label = formatUseLabel(match.use, ratio);
     nodes.push(
       label ? (
         <UseHint key={i} label={label}>
@@ -53,7 +53,7 @@ export function StepBody({
   return <>{nodes}</>;
 }
 
-function useLabel(use: RecipeStepUse, ratio: number): string {
+function formatUseLabel(use: RecipeStepUse, ratio: number): string {
   if (use.amount) {
     return `${scaleAmount(use.amount, ratio)}${use.unit ? ` ${use.unit}` : ""}`;
   }
