@@ -20,7 +20,7 @@ export default function AboutPopOver({
 }: InfoPopoverProps) {
   const copyEmail = async () => {
     try {
-      await navigator.clipboard.writeText("lun.tay.work@gmail.com");
+      await navigator.clipboard.writeText("lun.tay@gmail.com");
       toast.success("Email copied — drop Ah Mah a note!");
     } catch (err) {
       console.error("Failed to copy email", err);
