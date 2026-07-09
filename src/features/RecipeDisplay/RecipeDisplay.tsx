@@ -18,12 +18,17 @@ import {
   recipeWithIdToBlock,
 } from "@/lib/recipes/schemas";
 import { cn } from "@/lib/utils";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Streamdown } from "streamdown";
 import { useSWRConfig } from "swr";
 import { TweakBench } from "./TweakBench";
+
+// Deferred: streamdown pulls in katex (~253 kB parsed, ADR-0019) that recipe
+// instructions never need, so load it after the shell renders instead of
+// shipping it in the initial bundle.
+const Streamdown = dynamic(() => import("@/lib/markdown/streamdownLoader"));
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 

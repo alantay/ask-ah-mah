@@ -39,9 +39,9 @@ const renderRecipe = (overrides: Partial<typeof baseRecipe> = {}) =>
 
 describe("RecipeDisplay", () => {
   describe("Basic Rendering", () => {
-    it("renders recipe instructions via Streamdown for legacy recipes", () => {
+    it("renders recipe instructions via Streamdown for legacy recipes", async () => {
       renderRecipe();
-      const method = screen.getByTestId("streamdown");
+      const method = await screen.findByTestId("streamdown");
       expect(method).toHaveTextContent("Heat butter");
       expect(method).not.toHaveTextContent("Ingredients");
       expect(method).not.toHaveTextContent("-----");
@@ -85,9 +85,9 @@ describe("RecipeDisplay", () => {
       expect(screen.queryByTestId("streamdown")).not.toBeInTheDocument();
     });
 
-    it("falls back to Streamdown when steps array is empty", () => {
+    it("falls back to Streamdown when steps array is empty", async () => {
       renderRecipe({ steps: [] } as never);
-      expect(screen.getByTestId("streamdown")).toBeInTheDocument();
+      expect(await screen.findByTestId("streamdown")).toBeInTheDocument();
     });
   });
 

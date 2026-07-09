@@ -280,6 +280,19 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - `layout.tsx` wires the rest: `icons` (SVG favicon + existing apple-touch-icon), `appleWebApp` (title "Ah Mah", default status bar) for iOS Add to Home Screen, and a `viewport` export with light/dark `themeColor` (`#f7ebdc` / `#25170f`) so browser chrome matches the app.
 - **Out of scope for v1 (deliberate):** service worker / offline shell — separate follow-up if wanted. Real-device install check (iOS Safari + Android Chrome) still worth doing after deploy.
 
+### Lazy-loaded markdown/math renderer — Shipped Jul 2026 (#399)
+
+- `streamdown` (the chat + recipe-instructions markdown renderer, and the ~253 kB `katex` it pulls
+  in) is now behind `next/dynamic` at both call sites (`ai-elements/response.tsx`,
+  `RecipeDisplay.tsx`) instead of a static import — the ADR-0019 bundle lever. First Load JS:
+  `/` 596 kB → 274 kB, `/r/[token]` 452 kB → 183 kB, `/recipe/[id]` 486 kB → 183 kB.
+- `katex` can't be dropped from the bundle independently of this (it's baked into `streamdown`'s
+  own default-plugin chunk regardless of props passed in) — deferring the whole renderer was
+  already the real win; see ADR-0019's follow-up section for the measurement.
+- **Side effect:** `pnpm build` no longer uses `--turbopack` — it has a real bug that throws while
+  prerendering `/` once `streamdown` is dynamically imported. `next dev` keeps Turbopack (the bug is
+  build-time-only); production builds are slower until it's fixed upstream.
+
 ## Design system
 
 The two recipe surfaces — `RecipeLetter` (chat) and `RecipeDisplay` (cookbook) — were drifting because each hand-rolled the same primitives. A design system is now the north star: shared atoms stop drift, and every surface gets tweaked incrementally so it "looks like it belongs". See the spec at `docs/superpowers/specs/2026-06-20-recipe-design-system-design.md` and the issue tracker (#277–#285).
