@@ -28,6 +28,9 @@ export interface RecipeLetterProps {
   // Cooked marker for the last-step "I made this" checkbox in cooking mode (ADR-0020).
   cooked?: boolean;
   onCookedChange?: (cooked: boolean) => void;
+  // Mints/shares the public link for this recipe (finish-moment share prompt, ADR-0022).
+  onShare?: () => void;
+  sharing?: boolean;
   // Drops the substitutions prompt into the composer (not sent) so the user can
   // correct the pantry-derived missing list before asking Ah Mah.
   onDraft?: (text: string) => void;
@@ -77,6 +80,8 @@ export function RecipeLetter({
   isStreaming = false,
   cooked,
   onCookedChange,
+  onShare,
+  sharing,
 }: RecipeLetterProps) {
   // Streaming partials may be missing arrays entirely; default them so the
   // same render path serves both the live and the final view (ADR-0009).
@@ -211,6 +216,8 @@ export function RecipeLetter({
         onExit={() => setCooking(false)}
         cooked={cooked}
         onCookedChange={onCookedChange}
+        onShare={onShare}
+        sharing={sharing}
       />
     );
   }
