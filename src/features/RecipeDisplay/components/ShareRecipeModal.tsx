@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { useRecipeShareLink } from "@/features/Recipe";
 import type { RecipeWithId } from "@/lib/recipes/schemas";
 import { cn } from "@/lib/utils";
-import { Copy, Download, Mail, MessageSquare, MoreHorizontal, Send } from "lucide-react";
+import { Copy, Download, Mail, MessageSquare, MoreHorizontal } from "lucide-react";
 import Image from "next/image";
 import { useEffect } from "react";
 import { toast } from "sonner";
@@ -13,6 +13,14 @@ interface ShareRecipeModalProps {
   recipe: RecipeWithId;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+}
+
+function WhatsAppIcon({ size = 22 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.87 9.87 0 0 0 12.04 2zm0 1.67c2.2 0 4.27.86 5.82 2.42a8.19 8.19 0 0 1 2.41 5.82c0 4.54-3.7 8.23-8.24 8.23a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.18 8.18 0 0 1-1.26-4.38c0-4.54 3.7-8.23 8.25-8.23zm-3.9 4.34c-.16 0-.42.06-.64.31-.22.25-.85.83-.85 2.02s.87 2.35.99 2.51c.12.16 1.71 2.61 4.14 3.66.58.25 1.03.4 1.38.51.58.18 1.11.16 1.53.1.47-.07 1.44-.59 1.64-1.16.2-.57.2-1.06.14-1.16-.06-.1-.22-.16-.46-.28-.24-.12-1.44-.71-1.66-.79-.22-.08-.38-.12-.55.12-.16.24-.63.79-.77.95-.14.16-.28.18-.52.06-.24-.12-1.02-.38-1.94-1.2-.72-.64-1.2-1.43-1.34-1.67-.14-.24-.01-.37.11-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.55-1.33-.76-1.82-.2-.48-.4-.42-.55-.42h-.47z" />
+    </svg>
+  );
 }
 
 export function ShareRecipeModal({ recipe, open, onOpenChange }: ShareRecipeModalProps) {
@@ -119,9 +127,9 @@ export function ShareRecipeModal({ recipe, open, onOpenChange }: ShareRecipeModa
             aria-label="Share via WhatsApp"
           >
             <span className={tileClass}>
-              <Send size={22} />
+              <WhatsAppIcon size={22} />
             </span>
-            <span className="font-sans text-xs text-muted-foreground">Send</span>
+            <span className="font-sans text-xs text-muted-foreground">WhatsApp</span>
           </a>
 
           <a href={canAct ? ogImageUrl : undefined} download className={chanClass} aria-label="Save image">
