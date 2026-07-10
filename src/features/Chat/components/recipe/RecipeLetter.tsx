@@ -218,6 +218,7 @@ export function RecipeLetter({
         onCookedChange={onCookedChange}
         onShare={onShare}
         sharing={sharing}
+        servingsRatio={ratio}
       />
     );
   }
@@ -361,7 +362,7 @@ export function RecipeLetter({
       )}
 
       {/* Steps — each step a conversational bubble with a numbered ink-stamp */}
-      {steps.length > 0 && <StepList steps={steps} marker="stamp" />}
+      {steps.length > 0 && <StepList steps={steps} marker="stamp" ratio={ratio} />}
 
       {/* Notes — whole-dish asides (make-ahead, storage, serving) */}
       {recipe.notes && recipe.notes.length > 0 && (

@@ -366,6 +366,7 @@ function RecipeBody({
                     marker="quiet"
                     n={i + 1}
                     step={step}
+                    ratio={scale}
                     data-tweak-row={`step-${i}`}
                     className={cn(
                       "transition-colors",
@@ -618,6 +619,7 @@ export default function RecipeDisplay({
         onCookedChange={handleCookedChange}
         onShare={!readOnly && userId ? share : undefined}
         sharing={sharing}
+        servingsRatio={servings / (recipe.baseServings || 2)}
       />
     );
   }

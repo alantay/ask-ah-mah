@@ -11,11 +11,26 @@ export const RecipeIngredientSchema = z.object({
 
 export type RecipeIngredient = z.infer<typeof RecipeIngredientSchema>;
 
+// A single ingredient's *partial* quantity consumed at one step (Step Uses —
+// see CONTEXT.md). Not a link to the master ingredient row: a split-use
+// ingredient (e.g. a slurry added at two steps) carries the amount used at
+// THIS step only, never the master total. `amount`/`unit` scale with
+// servings like the master list; `text` is a free-text fallback ("remaining",
+// "to taste") rendered as-is, unscaled.
+export const RecipeStepUseSchema = z.object({
+  name: z.string(),
+  amount: z.string().optional(),
+  unit: z.string().optional(),
+  text: z.string().optional(),
+});
+export type RecipeStepUse = z.infer<typeof RecipeStepUseSchema>;
+
 // Step in a structured recipe
 export const RecipeStepSchema = z.object({
   title: z.string(),
   body: z.string(),
   tip: z.string().optional(),
+  uses: z.array(RecipeStepUseSchema).optional(),
 });
 export type RecipeStep = z.infer<typeof RecipeStepSchema>;
 

@@ -291,6 +291,12 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
   of the generic fallback image — unless the recipe has its own photo, which takes priority.
 - Chat's `RecipeLetter` only offers this once the recipe is saved (has a DB id to mint a token for).
 
+### Step Uses — Shipped Jul 2026 (#407)
+
+- **Per-step ingredient quantities**: each `RecipeStep` gains an optional `uses: { name, amount?, unit?, text? }[]` array — the model's own partial quantity for what that step adds. Rendered inline: `StepBody` matches each `use.name` against the step's prose and turns that word/phrase into a hoverable/tappable hint showing the quantity, rather than a separate chip row. Numeric amounts scale with the servings stepper (`scaleAmount`, same `servings/baseServings` ratio as the master ingredient list); free-text amounts ("remaining", "to taste") render unscaled. A `use` whose name isn't literally mentioned in that step's body renders no hint — silent, no fallback chip (see ADR-0021 update).
+- Shows up on all three recipe surfaces that render steps: the recipe page Method section and chat `RecipeLetter` (via shared `StepItem`/`StepList`), and CookingMode (its own local step renderer, via the same standalone `StepBody` component). Also included in the plain-text "Copy recipe" export and extracted when parsing pasted recipe text.
+- No DB migration — `uses` rides inside the existing `Json?` `steps` column and is optional everywhere, so legacy/pasted recipes without it render exactly as before. Full rationale, including why a link-to-master-ingredient design was rejected → [ADR-0021](./adr/0021-step-quantities-are-per-use-not-links.md).
+
 ## Design system
 
 The two recipe surfaces — `RecipeLetter` (chat) and `RecipeDisplay` (cookbook) — were drifting because each hand-rolled the same primitives. A design system is now the north star: shared atoms stop drift, and every surface gets tweaked incrementally so it "looks like it belongs". See the spec at `docs/superpowers/specs/2026-06-20-recipe-design-system-design.md` and the issue tracker (#277–#285).

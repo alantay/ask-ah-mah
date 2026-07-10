@@ -1,7 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { CookedCheckbox, ShareCta } from "@/features/shared/components/recipe";
+import { CookedCheckbox, ShareCta, StepBody } from "@/features/shared/components/recipe";
+import type { RecipeStepUse } from "@/lib/recipes/schemas";
 import { cn } from "@/lib/utils";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -9,6 +10,7 @@ interface Step {
   title: string;
   body: string;
   tip?: string;
+  uses?: RecipeStepUse[];
 }
 
 interface CookingModeProps {
@@ -26,6 +28,10 @@ interface CookingModeProps {
   // can't be shared yet (e.g. an unsaved chat recipe) — the prompt then never renders.
   onShare?: () => void;
   sharing?: boolean;
+  // servings / baseServings ratio — scales numeric Step Uses amounts the same
+  // way the master ingredient list scales. Defaults to 1 (no consumer that
+  // omits it has a servings stepper to desync from).
+  servingsRatio?: number;
 }
 
 function prepToStep(item: string): Step {
@@ -39,7 +45,7 @@ function prepToStep(item: string): Step {
   return { title, body };
 }
 
-export function CookingMode({ title, steps, prep, onExit, cooked, onCookedChange, onShare, sharing }: CookingModeProps) {
+export function CookingMode({ title, steps, prep, onExit, cooked, onCookedChange, onShare, sharing, servingsRatio = 1 }: CookingModeProps) {
   const allSteps: Step[] = [
     ...(prep ?? []).map(prepToStep),
     ...steps,
@@ -133,7 +139,7 @@ export function CookingMode({ title, steps, prep, onExit, cooked, onCookedChange
         </div>
 
         <div className="font-display text-xl leading-relaxed text-foreground">
-          {step.body}
+          <StepBody body={step.body} uses={step.uses} ratio={servingsRatio} />
         </div>
 
         {step.tip && (

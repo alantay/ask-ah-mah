@@ -38,10 +38,10 @@ export function SignInDialog() {
         callbackURL: "/",
       });
       if (signInError) {
-        setError("Couldn't sign in with Google — please try again.");
+        setError("Aiyah, Google didn't let you in — try again?");
       }
     } catch {
-      setError("Couldn't sign in with Google — please try again.");
+      setError("Aiyah, Google didn't let you in — try again?");
     } finally {
       setGoogleLoading(false);
     }

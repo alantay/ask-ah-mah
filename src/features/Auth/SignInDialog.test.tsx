@@ -110,7 +110,7 @@ describe("SignInDialog", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText(/couldn.t sign in with google/i),
+        screen.getByText(/google didn.t let you in/i),
       ).toBeInTheDocument(),
     );
   });

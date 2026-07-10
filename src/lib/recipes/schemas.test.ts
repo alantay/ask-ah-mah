@@ -6,6 +6,7 @@ import {
   recipeBlockToRecipeWithId,
   RecipeIngredientModelSchema,
   RecipeIngredientSchema,
+  RecipeStepSchema,
   type RecipeWithId,
   recipeWithIdToBlock,
   TweakPatchSchema,
@@ -221,5 +222,53 @@ describe("cooked marker", () => {
     const withId = recipeBlockToRecipeWithId({ ...minimalBlock, cooked: true }, base);
     expect(withId.cooked).toBe(true);
     expect(recipeWithIdToBlock(withId).cooked).toBe(true);
+  });
+});
+
+describe("step uses", () => {
+  it("accepts a step without uses", () => {
+    const parsed = RecipeStepSchema.parse({
+      title: "Fry",
+      body: "Fry the aromatics.",
+    });
+    expect(parsed.uses).toBeUndefined();
+  });
+
+  it("accepts a step with a mix of numeric and free-text uses", () => {
+    const parsed = RecipeStepSchema.parse({
+      title: "Thicken the sauce",
+      body: "Stir in the slurry, then the rest at the end.",
+      uses: [
+        { name: "cornstarch slurry", amount: "2", unit: "tbsp" },
+        { name: "cornstarch slurry", text: "remaining" },
+        { name: "spring onion" },
+      ],
+    });
+    expect(parsed.uses).toHaveLength(3);
+    expect(parsed.uses?.[0]).toEqual({ name: "cornstarch slurry", amount: "2", unit: "tbsp" });
+    expect(parsed.uses?.[1]).toEqual({ name: "cornstarch slurry", text: "remaining" });
+    expect(parsed.uses?.[2]).toEqual({ name: "spring onion" });
+  });
+
+  it("flows through RecipeBlockSchema and TweakPatchSchema", () => {
+    const block = RecipeBlockSchema.parse({
+      title: "Mapo Tofu",
+      baseServings: 2,
+      ingredients: [{ name: "tofu", category: "Misc" as const, amount: "300", unit: "g" }],
+      steps: [
+        {
+          title: "Simmer",
+          body: "Simmer the tofu in the sauce.",
+          uses: [{ name: "tofu", amount: "300", unit: "g" }],
+        },
+      ],
+    });
+    expect(block.steps[0].uses).toEqual([{ name: "tofu", amount: "300", unit: "g" }]);
+
+    const patch = TweakPatchSchema.parse({
+      steps: [{ title: "Simmer", body: "Simmer.", uses: [{ name: "tofu", text: "all of it" }] }],
+      changes: [],
+    });
+    expect(patch.steps?.[0].uses).toEqual([{ name: "tofu", text: "all of it" }]);
   });
 });
