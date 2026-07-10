@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useSessionContext } from "@/contexts/SessionContext";
+import { SignInDialog } from "@/features/Auth/SignInDialog";
 import { CookingMode, ServingsStepper, formatRecipeAsText } from "@/features/Recipe";
 import {
   CookedCheckbox,
@@ -17,6 +18,7 @@ import {
   type RecipeWithId,
   recipeWithIdToBlock,
 } from "@/lib/recipes/schemas";
+import { hasSeenSignInNudge, markSignInNudgeSeen } from "@/lib/signInNudge";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -431,10 +433,11 @@ export default function RecipeDisplay({
   hideBackButton,
   readOnly = false,
 }: RecipeDisplayProps) {
-  const { userId } = useSessionContext();
+  const { userId, isAuthenticated } = useSessionContext();
   const { mutate } = useSWRConfig();
   const [cooking, setCooking] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [signInOpen, setSignInOpen] = useState(false);
   // Lifted out of RecipeBody so the header "Copy recipe" action can read the
   // currently displayed servings and scale the copied text to match.
   const [servings, setServings] = useState<number>(recipe.baseServings ?? 2);
@@ -572,14 +575,24 @@ export default function RecipeDisplay({
 
         originalRecipeRef.current = { ...confirmedBase, cooked: nextCooked };
         mutate(`/api/recipe?userId=${userId}`);
-        if (nextCooked) toast.success("Marked as made — nice one.");
+        if (nextCooked) {
+          if (!isAuthenticated && !hasSeenSignInNudge("finish-moment")) {
+            markSignInNudgeSeen("finish-moment");
+            toast.success(
+              "Marked as made — nice one. Sign in and your kitchen follows you, wherever you cook next.",
+              { action: { label: "Sign in", onClick: () => setSignInOpen(true) } },
+            );
+          } else {
+            toast.success("Marked as made — nice one.");
+          }
+        }
       } catch (err) {
         console.error("[RecipeDisplay] cooked-toggle error:", err);
         setWorkingDraft(prevDraft);
         toast.error("Couldn't save that. Try again?");
       }
     },
-    [recipe.id, userId, workingDraft, mutate],
+    [recipe.id, userId, workingDraft, mutate, isAuthenticated],
   );
 
   const handleCopyRecipe = useCallback(() => {
@@ -635,6 +648,7 @@ export default function RecipeDisplay({
 
   return (
     <>
+      <SignInDialog open={signInOpen} onOpenChange={setSignInOpen} />
       {/* Dot animation for streaming indicator */}
       <style>{`
         @keyframes tweakDot {

@@ -7,6 +7,8 @@ import {
 import { Message, MessageContent } from "@/components/ai-elements/message";
 import { Response } from "@/components/ai-elements/response";
 import { Button } from "@/components/ui/button";
+import { useSessionContext } from "@/contexts/SessionContext";
+import { SignInDialog } from "@/features/Auth/SignInDialog";
 import {
   extractRecipeBlocks,
   getOpenFence,
@@ -21,6 +23,7 @@ import type {
 } from "@/lib/recipes/schemas";
 import { recipeWithIdToBlock } from "@/lib/recipes/schemas";
 import { fetcher } from "@/lib/utils";
+import { hasSeenSignInNudge, markSignInNudgeSeen } from "@/lib/signInNudge";
 import type { UIMessage } from "ai";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -121,6 +124,9 @@ export const MessageList = ({
     `/api/recipe?userId=${userId}`,
     saveRecipeCall,
   );
+
+  const { isAuthenticated } = useSessionContext();
+  const [signInOpen, setSignInOpen] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -244,6 +250,7 @@ export const MessageList = ({
     recipeKey: string,
     cooked = false,
   ) => {
+    const isFirstSave = (recipeSaved?.length ?? 0) === 0;
     try {
       const optimisticRecipe = {
         id: generateTempId(),
@@ -282,12 +289,26 @@ export const MessageList = ({
         { revalidate: false, populateCache: true },
       );
 
-      // Ticking "I made this" on an unsaved recipe saves it too — say so.
-      toast.success(
-        cooked
-          ? `"${recipeBlock.title}" — kept in your cookbook and marked as made.`
-          : `"${recipeBlock.title}" — kept in your cookbook.`,
-      );
+      if (!isAuthenticated && isFirstSave && !hasSeenSignInNudge("first-save")) {
+        markSignInNudgeSeen("first-save");
+        toast.success(
+          "Saved! Sign in and Ah Mah keeps your cookbook synced to every device, ah.",
+          { action: { label: "Sign in", onClick: () => setSignInOpen(true) } },
+        );
+      } else if (cooked && !isAuthenticated && !hasSeenSignInNudge("finish-moment")) {
+        markSignInNudgeSeen("finish-moment");
+        toast.success(
+          `"${recipeBlock.title}" — kept in your cookbook and marked as made. Sign in and your kitchen follows you, wherever you cook next.`,
+          { action: { label: "Sign in", onClick: () => setSignInOpen(true) } },
+        );
+      } else {
+        // Ticking "I made this" on an unsaved recipe saves it too — say so.
+        toast.success(
+          cooked
+            ? `"${recipeBlock.title}" — kept in your cookbook and marked as made.`
+            : `"${recipeBlock.title}" — kept in your cookbook.`,
+        );
+      }
     } catch (error) {
       console.error("Failed to save recipe:", error);
       toast.error("Aiyah, didn't save. Try again?");
@@ -322,7 +343,17 @@ export const MessageList = ({
         { revalidate: false, populateCache: true },
       );
 
-      if (next) toast.success("Marked as made — nice one.");
+      if (next) {
+        if (!isAuthenticated && !hasSeenSignInNudge("finish-moment")) {
+          markSignInNudgeSeen("finish-moment");
+          toast.success(
+            "Marked as made — nice one. Sign in and your kitchen follows you, wherever you cook next.",
+            { action: { label: "Sign in", onClick: () => setSignInOpen(true) } },
+          );
+        } else {
+          toast.success("Marked as made — nice one.");
+        }
+      }
     } catch (error) {
       console.error("Failed to update cooked marker:", error);
       toast.error("Couldn't save that. Try again?");
@@ -353,6 +384,7 @@ export const MessageList = ({
 
   return (
     <Conversation>
+      <SignInDialog open={signInOpen} onOpenChange={setSignInOpen} />
       <ConversationContent className="px-2 sm:p-4">
         <div
           ref={containerRef}
