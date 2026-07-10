@@ -683,10 +683,21 @@ export default function RecipeDisplay({
                       title="Share recipe"
                     >
                       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
-                        <circle cx="12" cy="3.5" r="1.9" stroke="currentColor" strokeWidth="1.4" />
-                        <circle cx="4" cy="8" r="1.9" stroke="currentColor" strokeWidth="1.4" />
-                        <circle cx="12" cy="12.5" r="1.9" stroke="currentColor" strokeWidth="1.4" />
-                        <path d="M10.4 4.5 5.6 7M5.6 9l4.8 2.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                        <path
+                          d="M9.5 3.2 13 6.5 9.5 9.8"
+                          stroke="currentColor"
+                          strokeWidth="1.4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          fill="none"
+                        />
+                        <path
+                          d="M12.7 6.5H8.2C5.6 6.5 3.5 8.6 3.5 11.2V12"
+                          stroke="currentColor"
+                          strokeWidth="1.4"
+                          strokeLinecap="round"
+                          fill="none"
+                        />
                       </svg>
                     </button>
                   )}

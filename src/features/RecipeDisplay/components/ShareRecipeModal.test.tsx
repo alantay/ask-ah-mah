@@ -58,13 +58,4 @@ describe("ShareRecipeModal", () => {
       expect(whatsapp.getAttribute("href")).toContain(encodeURIComponent("Fried Rice"));
     });
   });
-
-  it("builds the save-image link from the OG image route", async () => {
-    render(<ShareRecipeModal recipe={RECIPE} open onOpenChange={jest.fn()} />);
-
-    await waitFor(() => {
-      const saveImg = screen.getByLabelText("Save image");
-      expect(saveImg.getAttribute("href")).toContain("/r/tok1/opengraph-image");
-    });
-  });
 });

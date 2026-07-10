@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { useRecipeShareLink } from "@/features/Recipe";
 import type { RecipeWithId } from "@/lib/recipes/schemas";
 import { cn } from "@/lib/utils";
-import { Copy, Download, Mail, MessageSquare, MoreHorizontal } from "lucide-react";
+import { Copy, Mail, MessageSquare, MoreHorizontal } from "lucide-react";
 import Image from "next/image";
 import { useEffect } from "react";
 import { toast } from "sonner";
@@ -24,15 +24,13 @@ function WhatsAppIcon({ size = 22 }: { size?: number }) {
 }
 
 export function ShareRecipeModal({ recipe, open, onOpenChange }: ShareRecipeModalProps) {
-  const { url, token, loading, mint } = useRecipeShareLink(recipe.id);
+  const { url, loading, mint } = useRecipeShareLink(recipe.id);
 
   useEffect(() => {
     if (open && !url) mint();
   }, [open, url, mint]);
 
   const canAct = !!url;
-  const ogImageUrl =
-    token && typeof window !== "undefined" ? `${window.location.origin}/r/${token}/opengraph-image` : undefined;
 
   const copyLink = () => {
     if (!url) return;
@@ -96,7 +94,7 @@ export function ShareRecipeModal({ recipe, open, onOpenChange }: ShareRecipeModa
           or send via
         </div>
 
-        <div className={cn("grid gap-3", canNativeShare ? "grid-cols-5" : "grid-cols-4")}>
+        <div className={cn("grid gap-3", canNativeShare ? "grid-cols-4" : "grid-cols-3")}>
           <a
             href={canAct ? `sms:?&body=${encodeURIComponent(url ?? "")}` : undefined}
             className={chanClass}
@@ -130,13 +128,6 @@ export function ShareRecipeModal({ recipe, open, onOpenChange }: ShareRecipeModa
               <WhatsAppIcon size={22} />
             </span>
             <span className="font-sans text-xs text-muted-foreground">WhatsApp</span>
-          </a>
-
-          <a href={canAct ? ogImageUrl : undefined} download className={chanClass} aria-label="Save image">
-            <span className={tileClass}>
-              <Download size={22} />
-            </span>
-            <span className="font-sans text-xs text-muted-foreground">Save img</span>
           </a>
 
           {canNativeShare && (
