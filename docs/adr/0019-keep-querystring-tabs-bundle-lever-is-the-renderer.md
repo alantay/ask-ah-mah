@@ -89,3 +89,31 @@ This is left as a **follow-up optimization issue**, independent of the tab archi
   `analyze` script) so this measurement is repeatable — e.g. to confirm the renderer optimization,
   or to re-trigger the routing question if a panel's own bundle grows materially.
 - A follow-up issue should scope lazy-loading `streamdown` (and evaluating `katex` removal).
+
+## Follow-up (#399) — shipped
+
+Lazy-loaded `streamdown` with `next/dynamic` at both call sites (`ai-elements/response.tsx`,
+`RecipeDisplay.tsx`), via a one-line re-export module (`src/lib/markdown/streamdownLoader.ts`) so
+the loader has a stable default export to import. Measured with `pnpm build` (First Load JS):
+
+| Route | Before | After |
+|---|---|---|
+| `/` | 596 kB | **274 kB** |
+| `/r/[token]` | 452 kB | **183 kB** |
+| `/recipe/[id]` | 486 kB | **183 kB** |
+
+`katex` removal was evaluated and rejected: `streamdown`'s default rehype/remark plugin list
+(including `rehype-katex`/`remark-math`) is statically imported inside the package's own bundle
+(`defaultRehypePlugins`/`defaultRemarkPlugins`), so overriding the `rehypePlugins`/`remarkPlugins`
+props at the call site changes what runs, not what's *shipped* — `katex` stays in the same chunk
+either way. Lazy-loading the whole renderer (this change) already keeps that weight off the initial
+bundle, which was the actual goal.
+
+**Unplanned but required: the build now runs on webpack, not Turbopack.** `next build --turbopack`
+has a real bug — prerendering `/` throws `ReferenceError: Cannot access '...' before initialization`
+once `streamdown` moves behind `next/dynamic`, reproduced identically on a clean `next.config.ts`
+and after a `next` patch bump (15.5.9 → 15.5.20); a plain `next build` (no `--turbopack`) compiles
+the same code cleanly and produces the numbers above. `package.json`'s `build` script dropped
+`--turbopack`; `dev` keeps it (the bug is a static-prerendering-time issue, not a dev-server one).
+Production builds are slower as a result — worth revisiting if/when Turbopack fixes whatever chunk
+it's mis-splitting here.
