@@ -14,11 +14,29 @@ jest.mock('swr', () => ({
   useSWRConfig: () => ({ mutate: mockMutate }),
 }));
 
-jest.mock('@/features/Recipe', () => ({
-  ScaledNum: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
-  scaleAmount: (amount: string, ratio: number) => amount,
-  CookingMode: () => null,
-  ServingsStepper: ({
+jest.mock('@/features/Recipe', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- jest.mock factories can't reference top-level imports (babel-plugin-jest-hoist)
+  const React = require('react');
+  return {
+    ScaledNum: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
+    scaleAmount: (amount: string, ratio: number) => amount,
+    CookingMode: ({
+      cooked,
+      onCookedChange,
+    }: {
+      cooked?: boolean;
+      onCookedChange?: (cooked: boolean) => void;
+    }) => (
+      <div>
+        <input
+          type="checkbox"
+          aria-label="I made this"
+          defaultChecked={!!cooked}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => onCookedChange?.(e.target.checked)}
+        />
+      </div>
+    ),
+    ServingsStepper: ({
     servings,
     onDecrement,
     onIncrement,
@@ -34,8 +52,9 @@ jest.mock('@/features/Recipe', () => ({
       <span>{servings}</span>
       <button onClick={onIncrement} disabled={servings >= max} aria-label="Increase servings">+</button>
     </div>
-  ),
-}));
+    ),
+  };
+});
 
 const mockToastSuccess = jest.fn();
 const mockToastError = jest.fn();

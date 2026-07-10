@@ -141,7 +141,7 @@ export function CookingMode({ title, steps, prep, onExit, cooked, onCookedChange
       {/* Navigation footer */}
       <div className="px-5 py-4 border-t border-border shrink-0 max-w-2xl mx-auto w-full">
         {/* Last-step recall marker — a quiet, reversible checkbox (ADR-0020) */}
-        {canMark && onCookedChange && (
+        {canMark && (
           <CookedCheckbox cooked={!!cooked} onChange={onCookedChange} className="mb-3" />
         )}
 

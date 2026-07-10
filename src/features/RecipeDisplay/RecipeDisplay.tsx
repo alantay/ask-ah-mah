@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useSessionContext } from "@/contexts/SessionContext";
 import { SignInDialog } from "@/features/Auth/SignInDialog";
 import { CookingMode, ServingsStepper, formatRecipeAsText } from "@/features/Recipe";
+import { ShareRecipeModal } from "./components/ShareRecipeModal";
 import {
   CookedCheckbox,
   DottedList,
@@ -436,7 +437,7 @@ export default function RecipeDisplay({
   const { userId, isAuthenticated } = useSessionContext();
   const { mutate } = useSWRConfig();
   const [cooking, setCooking] = useState(false);
-  const [sharing, setSharing] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [signInOpen, setSignInOpen] = useState(false);
   // Lifted out of RecipeBody so the header "Copy recipe" action can read the
   // currently displayed servings and scale the copied text to match.
@@ -505,6 +506,7 @@ export default function RecipeDisplay({
     setChanges([]);
     setBenchOpen(false);
     setIsSaving(false);
+    setShareOpen(false);
   }, [recipe.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Handlers ───────────────────────────────────────────────────────────────
@@ -603,27 +605,6 @@ export default function RecipeDisplay({
     );
   }, [workingDraft, servings]);
 
-  const handleShare = useCallback(async () => {
-    if (!userId || sharing) return;
-    setSharing(true);
-    try {
-      // Identity comes from the session cookie; the server ignores any body.
-      const res = await fetch(`/api/recipe/${recipe.id}/share`, {
-        method: "POST",
-      });
-      if (!res.ok) throw new Error("share failed");
-      const { token } = await res.json();
-      const url = `${window.location.origin}/r/${token}`;
-      await navigator.clipboard.writeText(url);
-      toast.success("Link copied — anyone can open it.");
-    } catch (err) {
-      console.error("[RecipeDisplay] share error:", err);
-      toast.error("Couldn't make a link. Try again?");
-    } finally {
-      setSharing(false);
-    }
-  }, [recipe.id, userId, sharing]);
-
   const handleStartCooking = () => {
     if (onStartCooking) {
       onStartCooking();
@@ -711,17 +692,27 @@ export default function RecipeDisplay({
                   </button>
                   {!readOnly && userId && (
                     <button
-                      onClick={handleShare}
-                      disabled={sharing}
-                      className="inline-flex items-center min-h-11 px-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
-                      aria-label="Share recipe — copy a public link"
+                      onClick={() => setShareOpen(true)}
+                      className="inline-flex items-center min-h-11 px-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                      aria-label="Share recipe"
                       title="Share recipe"
                     >
                       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
-                        <circle cx="12" cy="3.5" r="1.9" stroke="currentColor" strokeWidth="1.4" />
-                        <circle cx="4" cy="8" r="1.9" stroke="currentColor" strokeWidth="1.4" />
-                        <circle cx="12" cy="12.5" r="1.9" stroke="currentColor" strokeWidth="1.4" />
-                        <path d="M10.4 4.5 5.6 7M5.6 9l4.8 2.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                        <path
+                          d="M9.5 3.2 13 6.5 9.5 9.8"
+                          stroke="currentColor"
+                          strokeWidth="1.4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          fill="none"
+                        />
+                        <path
+                          d="M12.7 6.5H8.2C5.6 6.5 3.5 8.6 3.5 11.2V12"
+                          stroke="currentColor"
+                          strokeWidth="1.4"
+                          strokeLinecap="round"
+                          fill="none"
+                        />
                       </svg>
                     </button>
                   )}
@@ -782,6 +773,10 @@ export default function RecipeDisplay({
           />
         )}
       </div>
+
+      {!readOnly && userId && (
+        <ShareRecipeModal key={recipe.id} recipe={recipe} open={shareOpen} onOpenChange={setShareOpen} />
+      )}
     </>
   );
 }

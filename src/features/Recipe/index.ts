@@ -4,3 +4,4 @@ export type { FormattableRecipe } from "./formatRecipeAsText";
 export { scaleAmount } from "./scaleAmount";
 export { ScaledNum } from "./ScaledNum";
 export { ServingsStepper } from "./ServingsStepper";
+export { useRecipeShareLink } from "./useRecipeShareLink";

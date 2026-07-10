@@ -487,7 +487,6 @@ export const MessageList = ({
                       const savedRecipe = recipeSaved?.find(
                         (r) => r.recipeId === recipeKey,
                       );
-                      const isSaved = !!savedRecipe;
                       return (
                         <RecipeLetter
                           key={blockKey}
@@ -495,10 +494,10 @@ export const MessageList = ({
                           onSave={() =>
                             saveStructuredRecipe(block.payload, recipeKey)
                           }
-                          isSaved={isSaved}
+                          isSaved={!!savedRecipe}
                           onDraft={onDraft}
                           cooked={savedRecipe?.cooked ?? false}
-                          onCookedChange={(next) =>
+                          onCookedChange={(next: boolean) =>
                             handleCookedChange(block.payload, recipeKey, next)
                           }
                         />
