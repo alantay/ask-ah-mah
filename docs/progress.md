@@ -280,15 +280,19 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - `layout.tsx` wires the rest: `icons` (SVG favicon + existing apple-touch-icon), `appleWebApp` (title "Ah Mah", default status bar) for iOS Add to Home Screen, and a `viewport` export with light/dark `themeColor` (`#f7ebdc` / `#25170f`) so browser chrome matches the app.
 - **Out of scope for v1 (deliberate):** service worker / offline shell — separate follow-up if wanted. Real-device install check (iOS Safari + Android Chrome) still worth doing after deploy.
 
-### Native share upgrade + branded OG card — Shipped Jul 2026 (#402)
+### Share recipe modal — "Pass this on" — Shipped Jul 2026 (#402)
 
-- RecipeDisplay's existing header Share button now uses the native OS share sheet on mobile
-  (straight into WhatsApp/Telegram) when available, falling back to copy-link on desktop
-  (`useShareRecipe`) — same button, same trigger, just a richer target on supporting devices.
-- `/r/<token>` links now carry a branded OG card (dish name, Ah Mah's stamp, gradient hero) instead
-  of the generic fallback image — unless the recipe has its own photo, which takes priority.
-- A "finish-moment" share prompt (nudge right after ticking "I made this") shipped alongside this
-  but was pulled shortly after — it didn't read well in practice.
+- RecipeDisplay's header Share button now opens a dedicated modal (`ShareRecipeModal`) instead of
+  directly copying/native-sharing: a mini recipe-preview card (photo or fallback tint, dish name,
+  Ah Mah's mark), a hero "Copy link" field, and a row of quiet channel chips — Message (`sms:`),
+  Email (`mailto:`), Send/WhatsApp (`wa.me`), Save img (downloads the branded OG image), and
+  native "More" when `navigator.share` is available. Design came from a Claude Design exploration
+  (`explorations/recipe-share-modal-explore.html`, variant 1A); replaces the old one-click
+  native-share-or-copy behavior (`useShareRecipe` → `useRecipeShareLink`, now mint-only).
+- `/r/<token>` links carry a branded OG card (dish name, Ah Mah's stamp, gradient hero) instead of
+  the generic fallback image — unless the recipe has its own photo, which takes priority.
+- A "finish-moment" share prompt (nudge right after ticking "I made this") shipped alongside the
+  original native-share upgrade but was pulled shortly after — it didn't read well in practice.
 
 ### Lazy-loaded markdown/math renderer — Shipped Jul 2026 (#399)
 

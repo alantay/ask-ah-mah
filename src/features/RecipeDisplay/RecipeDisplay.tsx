@@ -2,7 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { useSessionContext } from "@/contexts/SessionContext";
-import { CookingMode, ServingsStepper, formatRecipeAsText, useShareRecipe } from "@/features/Recipe";
+import { CookingMode, ServingsStepper, formatRecipeAsText } from "@/features/Recipe";
+import { ShareRecipeModal } from "./components/ShareRecipeModal";
 import {
   CookedCheckbox,
   DottedList,
@@ -434,7 +435,7 @@ export default function RecipeDisplay({
   const { userId } = useSessionContext();
   const { mutate } = useSWRConfig();
   const [cooking, setCooking] = useState(false);
-  const { share, sharing } = useShareRecipe(recipe.id, recipe.name);
+  const [shareOpen, setShareOpen] = useState(false);
   // Lifted out of RecipeBody so the header "Copy recipe" action can read the
   // currently displayed servings and scale the copied text to match.
   const [servings, setServings] = useState<number>(recipe.baseServings ?? 2);
@@ -676,9 +677,8 @@ export default function RecipeDisplay({
                   </button>
                   {!readOnly && userId && (
                     <button
-                      onClick={share}
-                      disabled={sharing}
-                      className="inline-flex items-center min-h-11 px-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
+                      onClick={() => setShareOpen(true)}
+                      className="inline-flex items-center min-h-11 px-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                       aria-label="Share recipe — copy a public link"
                       title="Share recipe"
                     >
@@ -747,6 +747,10 @@ export default function RecipeDisplay({
           />
         )}
       </div>
+
+      {!readOnly && userId && (
+        <ShareRecipeModal recipe={recipe} open={shareOpen} onOpenChange={setShareOpen} />
+      )}
     </>
   );
 }
