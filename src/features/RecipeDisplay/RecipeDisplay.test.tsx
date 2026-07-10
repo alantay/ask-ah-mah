@@ -278,6 +278,36 @@ describe("RecipeDisplay", () => {
     });
   });
 
+  describe("Read-only share view", () => {
+    const renderReadOnly = (props: Record<string, unknown> = {}) =>
+      render(
+        <SessionProvider>
+          <RecipeDisplay
+            recipe={baseRecipe as never}
+            onBack={jest.fn()}
+            readOnly
+            {...props}
+          />
+        </SessionProvider>,
+      );
+
+    it("renders the footerSlot after the recipe", () => {
+      renderReadOnly({
+        footerSlot: <div data-testid="invitation">Cook with what you have</div>,
+      });
+      expect(screen.getByTestId("invitation")).toBeInTheDocument();
+    });
+
+    it("keeps a single Copy recipe control (the hero overlay) and hides owner actions", () => {
+      renderReadOnly();
+      // Nav row is gone, so only the overlay copy button remains.
+      expect(screen.getAllByLabelText("Copy recipe")).toHaveLength(1);
+      expect(screen.queryByLabelText(/Tweak this recipe/i)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/Start cooking/i)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/Share recipe/i)).not.toBeInTheDocument();
+    });
+  });
+
   describe("Before you start (mise en place)", () => {
     it("renders prep items when present", () => {
       renderRecipe({ prep: ["Dice the onion", "Mince the garlic"] } as never);

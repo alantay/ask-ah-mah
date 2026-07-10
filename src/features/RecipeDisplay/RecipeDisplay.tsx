@@ -23,7 +23,7 @@ import { hasSeenSignInNudge, markSignInNudgeSeen } from "@/lib/signInNudge";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { TweakBench } from "./TweakBench";
@@ -425,6 +425,9 @@ interface RecipeDisplayProps {
   // Public share view: hide every owner-only action (share, tweak, bench, back)
   // and the tweak panel. Copy stays — it's useful for whoever opens the link.
   readOnly?: boolean;
+  // Rendered after the recipe card, inside the scroll area. The public share
+  // view uses it for the closing "try Ah Mah" invitation band.
+  footerSlot?: ReactNode;
 }
 
 export default function RecipeDisplay({
@@ -433,6 +436,7 @@ export default function RecipeDisplay({
   onStartCooking,
   hideBackButton,
   readOnly = false,
+  footerSlot,
 }: RecipeDisplayProps) {
   const { userId, isAuthenticated } = useSessionContext();
   const { mutate } = useSWRConfig();
@@ -652,7 +656,10 @@ export default function RecipeDisplay({
         <div className="flex flex-col flex-1 min-w-0 relative h-full">
           <div ref={scrollRef} className="flex-1 overflow-y-auto pb-24">
             <div className="mx-auto max-w-4xl px-4 sm:px-6 pt-4 sm:pt-5 pb-8">
-              {/* Nav bar */}
+              {/* Nav bar — hidden in readOnly: back + every owner action are
+                  suppressed there, so the row would otherwise be empty. Copy
+                  moves to an overlay on the hero (below). */}
+              {!readOnly && (
               <div className="flex items-center justify-between mb-3 sm:mb-4">
                 {!hideBackButton && !readOnly && (
                   <button
@@ -741,9 +748,23 @@ export default function RecipeDisplay({
                   )}
                 </div>
               </div>
+              )}
 
               {/* Recipe card */}
-              <div className="rounded-xl border border-border bg-card overflow-hidden shadow-[0_1px_0_var(--color-border-soft)]">
+              <div className="relative rounded-xl border border-border bg-card overflow-hidden shadow-[0_1px_0_var(--color-border-soft)]">
+                {readOnly && (
+                  <button
+                    onClick={handleCopyRecipe}
+                    className="absolute top-2.5 right-2.5 z-10 inline-flex items-center justify-center size-9 rounded-full bg-black/25 text-white backdrop-blur hover:bg-black/40 transition-colors cursor-pointer"
+                    aria-label="Copy recipe"
+                    title="Copy recipe"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
+                      <rect x="5" y="2" width="9" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
+                      <path d="M5 4H3.5A1.5 1.5 0 0 0 2 5.5v9A1.5 1.5 0 0 0 3.5 16h7A1.5 1.5 0 0 0 12 14.5V13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                    </svg>
+                  </button>
+                )}
                 <RecipeBody
                   selectedRecipe={workingDraft}
                   servings={servings}
@@ -758,6 +779,8 @@ export default function RecipeDisplay({
                   onCookedChange={!readOnly && userId ? handleCookedChange : undefined}
                 />
               </div>
+
+              {footerSlot}
             </div>
           </div>
         </div>
