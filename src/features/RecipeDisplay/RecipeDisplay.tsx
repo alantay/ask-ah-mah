@@ -587,7 +587,7 @@ export default function RecipeDisplay({
         toast.error("Couldn't save that. Try again?");
       }
     },
-    [recipe.id, userId, workingDraft, mutate],
+    [recipe.id, userId, workingDraft, mutate, isAuthenticated],
   );
 
   const handleCopyRecipe = useCallback(() => {

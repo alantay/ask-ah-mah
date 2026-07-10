@@ -1,7 +1,9 @@
 const PREFIX = "askahmah:signin-nudge:";
 
+export type SignInNudgeKey = "first-save" | "finish-moment";
+
 /** Has this guest-only sign-in nudge already been shown once on this browser? */
-export function hasSeenSignInNudge(key: string): boolean {
+export function hasSeenSignInNudge(key: SignInNudgeKey): boolean {
   try {
     return window.localStorage.getItem(PREFIX + key) === "1";
   } catch {
@@ -10,7 +12,7 @@ export function hasSeenSignInNudge(key: string): boolean {
 }
 
 /** Marks a sign-in nudge as shown so it never fires again on this browser. */
-export function markSignInNudgeSeen(key: string): void {
+export function markSignInNudgeSeen(key: SignInNudgeKey): void {
   try {
     window.localStorage.setItem(PREFIX + key, "1");
   } catch {

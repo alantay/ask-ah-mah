@@ -394,10 +394,12 @@ describe("MessageList", () => {
       render(<MessageList {...defaultProps} messages={[structuredRecipeMessage]} />);
       await user.click(screen.getByText("Keep this — structured"));
 
-      await waitFor(() => expect(mockFetch).toHaveBeenCalled());
-      expect(toast.success).toHaveBeenCalledWith(
-        expect.stringContaining("kept in your cookbook"),
-      );
+      await waitFor(() => {
+        expect(mockFetch).toHaveBeenCalled();
+        expect(toast.success).toHaveBeenCalledWith(
+          expect.stringContaining("kept in your cookbook"),
+        );
+      });
     });
 
     it("should render two save buttons when a message contains two recipes", () => {

@@ -202,6 +202,7 @@ describe("RecipeDisplay", () => {
 
     afterEach(() => {
       global.fetch = originalFetch;
+      mockSessionState.isAuthenticated = true;
     });
 
     it("renders the 'I made this' checkbox for the owner", () => {
@@ -252,7 +253,6 @@ describe("RecipeDisplay", () => {
           expect.objectContaining({ action: expect.objectContaining({ label: "Sign in" }) }),
         ),
       );
-      mockSessionState.isAuthenticated = true;
     });
 
     it("does not show the sign-in nudge for a signed-in user", async () => {
@@ -262,8 +262,10 @@ describe("RecipeDisplay", () => {
 
       fireEvent.click(checkbox);
 
-      await waitFor(() => expect(fetchMock).toHaveBeenCalled());
-      expect(toast.success).toHaveBeenCalledWith("Marked as made — nice one.");
+      await waitFor(() => {
+        expect(fetchMock).toHaveBeenCalled();
+        expect(toast.success).toHaveBeenCalledWith("Marked as made — nice one.");
+      });
     });
 
     it("hides the checkbox on the read-only public share view", () => {

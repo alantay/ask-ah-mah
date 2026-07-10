@@ -295,6 +295,12 @@ export const MessageList = ({
           "Saved! Sign in and Ah Mah keeps your cookbook synced to every device, ah.",
           { action: { label: "Sign in", onClick: () => setSignInOpen(true) } },
         );
+      } else if (cooked && !isAuthenticated && !hasSeenSignInNudge("finish-moment")) {
+        markSignInNudgeSeen("finish-moment");
+        toast.success(
+          `"${recipeBlock.title}" — kept in your cookbook and marked as made. Sign in and your kitchen follows you, wherever you cook next.`,
+          { action: { label: "Sign in", onClick: () => setSignInOpen(true) } },
+        );
       } else {
         // Ticking "I made this" on an unsaved recipe saves it too — say so.
         toast.success(
