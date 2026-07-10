@@ -322,6 +322,11 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - Shows up on all three recipe surfaces that render steps: the recipe page Method section and chat `RecipeLetter` (via shared `StepItem`/`StepList`), and CookingMode (its own local step renderer, via the same standalone `StepBody` component). Also included in the plain-text "Copy recipe" export and extracted when parsing pasted recipe text.
 - No DB migration — `uses` rides inside the existing `Json?` `steps` column and is optional everywhere, so legacy/pasted recipes without it render exactly as before. Full rationale, including why a link-to-master-ingredient design was rejected → [ADR-0021](./adr/0021-step-quantities-are-per-use-not-links.md).
 
+### Shopping List paste-and-extract add — Shipped Jul 2026
+
+- **The add box now takes a paste, not just a word.** Mirrors the Pantry's `/api/inventory/parse` pattern: a new `parseShoppingListText` (`src/lib/shoppingList/parseText.ts`) runs `generateObject` (`gpt-5-mini`) behind `POST /api/shopping-list/parse` to extract grocery items from a freeform block — e.g. a recipe's ingredient list copied off a webpage, quantities, prep notes, and UI noise (`img`, `Edit`) included. Extracted items still reduce to bare identities per ADR-0014 (`1 tsp chipotle paste` → `Chipotle paste`) and each carries a Pantry category, so it bridges straight to an **Aisle** without a follow-up `classifyAisles` round-trip.
+- **Hybrid routing, not a mode switch.** The add box (`src/features/ShoppingList/ShoppingList.tsx`) is a single textarea; a client-side heuristic (`/[\n,]/.test(text) || /\d/.test(text)`) sends a plain single word straight to the existing instant `POST /api/shopping-list` path, and anything multi-line, comma-separated, or amount-bearing to the new parse endpoint. Also fixes a latent bug where typing `apples, oranges` created one junk row instead of two.
+
 ## Design system
 
 The two recipe surfaces — `RecipeLetter` (chat) and `RecipeDisplay` (cookbook) — were drifting because each hand-rolled the same primitives. A design system is now the north star: shared atoms stop drift, and every surface gets tweaked incrementally so it "looks like it belongs". See the spec at `docs/superpowers/specs/2026-06-20-recipe-design-system-design.md` and the issue tracker (#277–#285).
