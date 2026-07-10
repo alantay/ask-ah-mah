@@ -15,6 +15,7 @@ jest.mock('swr', () => ({
 }));
 
 jest.mock('@/features/Recipe', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- jest.mock factories can't reference top-level imports (babel-plugin-jest-hoist)
   const React = require('react');
   return {
     ScaledNum: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
