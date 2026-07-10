@@ -17,9 +17,19 @@ import { GoogleIcon } from "./GoogleIcon";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+interface SignInDialogProps {
+  // Uncontrolled by default (renders its own trigger button). Pass both to
+  // drive the dialog externally (e.g. from a toast action) — the component
+  // then skips rendering its own trigger.
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
 /** Sign-in dialog offering Google OAuth or passwordless email (magic link). */
-export function SignInDialog() {
-  const [open, setOpen] = useState(false);
+export function SignInDialog({ open: openProp, onOpenChange: onOpenChangeProp }: SignInDialogProps = {}) {
+  const [openState, setOpenState] = useState(false);
+  const open = openProp ?? openState;
+  const setOpen = onOpenChangeProp ?? setOpenState;
   const [googleLoading, setGoogleLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState(false);
@@ -81,11 +91,13 @@ export function SignInDialog() {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <button className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-foreground bg-card border border-border rounded-lg shadow-[0_1px_0_var(--border-soft)] hover:bg-background transition-colors cursor-pointer">
-          Sign in
-        </button>
-      </DialogTrigger>
+      {openProp === undefined && (
+        <DialogTrigger asChild>
+          <button className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-foreground bg-card border border-border rounded-lg shadow-[0_1px_0_var(--border-soft)] hover:bg-background transition-colors cursor-pointer">
+            Sign in
+          </button>
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="font-display tracking-tight">

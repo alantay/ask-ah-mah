@@ -1,7 +1,15 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { toast } from "sonner";
 import { SessionProvider } from "@/contexts/SessionContext";
 import RecipeDisplay from "./RecipeDisplay";
+
+jest.mock("sonner", () => ({
+  toast: {
+    success: jest.fn(),
+    error: jest.fn(),
+  },
+}));
 
 jest.mock("streamdown", () => ({
   Streamdown: ({ children }: { children: React.ReactNode }) => (
@@ -9,10 +17,14 @@ jest.mock("streamdown", () => ({
   ),
 }));
 
+// mockSessionState is mutable so individual tests can flip isAuthenticated
+// (e.g. to exercise the guest-only sign-in nudge) — the "mock" prefix is
+// required for Jest's module-factory hoisting to allow the closure.
+const mockSessionState = { isAuthenticated: true };
 jest.mock("@/hooks/useSession", () => () => ({
   userId: "user-123",
   isLoading: false,
-  isAuthenticated: true,
+  isAuthenticated: mockSessionState.isAuthenticated,
   user: { id: "user-123", name: "Test User", email: "test@example.com", image: null },
 }));
 
@@ -190,6 +202,7 @@ describe("RecipeDisplay", () => {
 
     afterEach(() => {
       global.fetch = originalFetch;
+      mockSessionState.isAuthenticated = true;
     });
 
     it("renders the 'I made this' checkbox for the owner", () => {
@@ -224,6 +237,35 @@ describe("RecipeDisplay", () => {
       fireEvent.click(checkbox);
 
       await waitFor(() => expect(checkbox).not.toBeChecked());
+    });
+
+    it("shows a one-time sign-in nudge when a guest marks a recipe made", async () => {
+      window.localStorage.clear();
+      mockSessionState.isAuthenticated = false;
+      renderRecipe();
+      const checkbox = screen.getByRole("checkbox", { name: "I made this" });
+
+      fireEvent.click(checkbox);
+
+      await waitFor(() =>
+        expect(toast.success).toHaveBeenCalledWith(
+          expect.stringContaining("Sign in and your kitchen follows you"),
+          expect.objectContaining({ action: expect.objectContaining({ label: "Sign in" }) }),
+        ),
+      );
+    });
+
+    it("does not show the sign-in nudge for a signed-in user", async () => {
+      window.localStorage.clear();
+      renderRecipe();
+      const checkbox = screen.getByRole("checkbox", { name: "I made this" });
+
+      fireEvent.click(checkbox);
+
+      await waitFor(() => {
+        expect(fetchMock).toHaveBeenCalled();
+        expect(toast.success).toHaveBeenCalledWith("Marked as made — nice one.");
+      });
     });
 
     it("hides the checkbox on the read-only public share view", () => {

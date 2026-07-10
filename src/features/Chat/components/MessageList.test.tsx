@@ -1,9 +1,28 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render as rtlRender, screen, waitFor } from "@testing-library/react";
+import type { RenderOptions } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { UIMessage } from "ai";
+import type { ReactElement } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
+import { SessionProvider } from "@/contexts/SessionContext";
 import { MessageList } from "./MessageList";
+
+// MessageList reads guest/signed-in state via useSessionContext — every test
+// render needs the provider in the tree. Mocking the underlying useSession
+// hook (rather than relying on the global auth-client mock) avoids the real
+// hook's anonymous-sign-in side effect and lets individual tests override
+// isAuthenticated via jest.spyOn if needed.
+jest.mock("@/hooks/useSession", () => () => ({
+  userId: "user-123",
+  isLoading: false,
+  isAuthenticated: false,
+  user: null,
+}));
+
+function render(ui: ReactElement, options?: RenderOptions) {
+  return rtlRender(ui, { wrapper: SessionProvider, ...options });
+}
 
 // Mock external dependencies
 jest.mock("sonner", () => ({
@@ -51,7 +70,11 @@ jest.mock("./recipe/SuggestionsBlock", () => ({
 }));
 
 jest.mock("./recipe/RecipeLetter", () => ({
-  RecipeLetter: () => <div data-testid="recipe-letter" />,
+  RecipeLetter: ({ onSave }: { onSave?: () => void }) => (
+    <div data-testid="recipe-letter">
+      {onSave && <button onClick={onSave}>Keep this — structured</button>}
+    </div>
+  ),
 }));
 
 // Mock AI Elements components
@@ -320,6 +343,61 @@ describe("MessageList", () => {
             headers: { "Content-Type": "application/json" },
             body: expect.stringContaining("Scrambled Eggs"),
           })
+        );
+      });
+    });
+
+    const structuredRecipeMessage = createMockMessage({
+      id: "msg-structured",
+      role: "assistant",
+      parts: [
+        {
+          type: "text",
+          text:
+            "```recipe\n" +
+            JSON.stringify({
+              title: "Tomato Egg",
+              baseServings: 2,
+              ingredients: [{ name: "egg" }],
+              steps: [{ title: "Cook", body: "Cook it." }],
+            }) +
+            "\n```",
+        },
+      ],
+    });
+
+    it("shows a one-time sign-in nudge on a guest's first save", async () => {
+      window.localStorage.clear();
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ id: "recipe-1", name: "Tomato Egg" }),
+      } as Response);
+
+      render(<MessageList {...defaultProps} messages={[structuredRecipeMessage]} />);
+      await user.click(screen.getByText("Keep this — structured"));
+
+      await waitFor(() =>
+        expect(toast.success).toHaveBeenCalledWith(
+          expect.stringContaining("Sign in and Ah Mah keeps your cookbook synced"),
+          expect.objectContaining({ action: expect.objectContaining({ label: "Sign in" }) }),
+        ),
+      );
+    });
+
+    it("does not show the sign-in nudge on a repeat save", async () => {
+      window.localStorage.setItem("askahmah:signin-nudge:first-save", "1");
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ id: "recipe-1", name: "Tomato Egg" }),
+      } as Response);
+
+      render(<MessageList {...defaultProps} messages={[structuredRecipeMessage]} />);
+      await user.click(screen.getByText("Keep this — structured"));
+
+      await waitFor(() => {
+        expect(mockFetch).toHaveBeenCalled();
+        expect(toast.success).toHaveBeenCalledWith(
+          expect.stringContaining("kept in your cookbook"),
         );
       });
     });
