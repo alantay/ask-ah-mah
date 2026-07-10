@@ -291,6 +291,19 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
   of the generic fallback image — unless the recipe has its own photo, which takes priority.
 - Chat's `RecipeLetter` only offers this once the recipe is saved (has a DB id to mint a token for).
 
+### Lazy-loaded markdown/math renderer — Shipped Jul 2026 (#399)
+
+- `streamdown` (the chat + recipe-instructions markdown renderer, and the ~253 kB `katex` it pulls
+  in) is now behind `next/dynamic` at both call sites (`ai-elements/response.tsx`,
+  `RecipeDisplay.tsx`) instead of a static import — the ADR-0019 bundle lever. First Load JS:
+  `/` 596 kB → 274 kB, `/r/[token]` 452 kB → 183 kB, `/recipe/[id]` 486 kB → 183 kB.
+- `katex` can't be dropped from the bundle independently of this (it's baked into `streamdown`'s
+  own default-plugin chunk regardless of props passed in) — deferring the whole renderer was
+  already the real win; see ADR-0019's follow-up section for the measurement.
+- **Side effect:** `pnpm build` no longer uses `--turbopack` — it has a real bug that throws while
+  prerendering `/` once `streamdown` is dynamically imported. `next dev` keeps Turbopack (the bug is
+  build-time-only); production builds are slower until it's fixed upstream.
+
 ### Step Uses — Shipped Jul 2026 (#407)
 
 - **Per-step ingredient quantities**: each `RecipeStep` gains an optional `uses: { name, amount?, unit?, text? }[]` array — the model's own partial quantity for what that step adds. Rendered inline: `StepBody` matches each `use.name` against the step's prose and turns that word/phrase into a hoverable/tappable hint showing the quantity, rather than a separate chip row. Numeric amounts scale with the servings stepper (`scaleAmount`, same `servings/baseServings` ratio as the master ingredient list); free-text amounts ("remaining", "to taste") render unscaled. A `use` whose name isn't literally mentioned in that step's body renders no hint — silent, no fallback chip (see ADR-0021 update).

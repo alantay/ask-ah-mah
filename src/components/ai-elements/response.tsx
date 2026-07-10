@@ -1,10 +1,16 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { type ComponentProps, memo } from "react";
-import { Streamdown } from "streamdown";
+import dynamic from "next/dynamic";
+import { memo } from "react";
+import type { StreamdownProps } from "streamdown";
 
-type ResponseProps = ComponentProps<typeof Streamdown>;
+// Deferred: streamdown pulls in katex (~253 kB parsed, ADR-0019) that Ah Mah's
+// chat never needs on first paint, so load it after the shell renders instead
+// of shipping it in the initial bundle.
+const Streamdown = dynamic(() => import("@/lib/markdown/streamdownLoader"));
+
+type ResponseProps = StreamdownProps;
 
 export const Response = memo(
   ({ className, ...props }: ResponseProps) => (
