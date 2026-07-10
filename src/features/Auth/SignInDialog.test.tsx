@@ -114,4 +114,25 @@ describe("SignInDialog", () => {
       ).toBeInTheDocument(),
     );
   });
+
+  describe("controlled mode", () => {
+    it("renders no trigger button and is driven by the open prop", () => {
+      render(<SignInDialog open={true} onOpenChange={jest.fn()} />);
+
+      expect(
+        screen.queryByRole("button", { name: /^sign in$/i }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /continue with google/i }),
+      ).toBeInTheDocument();
+    });
+
+    it("stays closed when open is false", () => {
+      render(<SignInDialog open={false} onOpenChange={jest.fn()} />);
+
+      expect(
+        screen.queryByRole("button", { name: /continue with google/i }),
+      ).not.toBeInTheDocument();
+    });
+  });
 });
