@@ -21,18 +21,22 @@ interface RecipeListProps {
 }
 
 export default function RecipeList({ onChatClick }: RecipeListProps) {
-  const { userId } = useSessionContext();
+  const { userId, isLoading: sessionLoading } = useSessionContext();
   const router = useRouter();
   const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
 
-  const { data: recipes, isLoading } = useSWR<RecipeWithId[]>(
+  const { data: recipes, isLoading: recipesLoading } = useSWR<RecipeWithId[]>(
     userId ? `/api/recipe?userId=${userId}` : null,
     fetcher,
     { shouldRetryOnError: true, revalidateOnMount: true },
   );
+
+  // Keep showing the skeleton (not the empty state) while identity is still
+  // resolving on a cold return, so cached recipes can paint in. See ADR-0023.
+  const isLoading = recipesLoading || (!userId && sessionLoading);
 
   const deleteRecipe = async (recipeId: string) => {
     try {

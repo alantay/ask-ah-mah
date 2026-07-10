@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/popover";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { SignInDialog } from "./SignInDialog";
+import { SWR_CACHE_KEY, USER_ID_KEY } from "@/lib/swr-cache";
 import { toast } from "sonner";
 
 export function AuthButton() {
@@ -16,6 +17,10 @@ export function AuthButton() {
 
   const handleSignOut = async () => {
     await authClient.signOut();
+    // Drop the previous user's cached data and optimistic identity so the
+    // post-reload paint can't show their recipes/pantry. See ADR-0023.
+    localStorage.removeItem(SWR_CACHE_KEY);
+    localStorage.removeItem(USER_ID_KEY);
     toast.success("See you soon, ah.");
     window.location.reload();
   };

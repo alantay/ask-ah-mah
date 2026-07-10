@@ -1,6 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { ConversationProvider } from "@/contexts/ConversationContext";
 import { SessionProvider } from "@/contexts/SessionContext";
+import { SWRProvider } from "./SWRProvider";
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter, Nunito } from "next/font/google";
 import "./globals.css";
@@ -121,19 +122,21 @@ export default function RootLayout({
       <body
         className={`${fontSans.variable} ${fontDisplay.variable} ${fontLogo.variable} antialiased font-sans`}
       >
-        <SessionProvider>
-          <ConversationProvider>
-            <Toaster
-              position="top-center"
-              toastOptions={{
-                style: {
-                  color: "#6F502D",
-                },
-              }}
-            />
-            {children}
-          </ConversationProvider>
-        </SessionProvider>
+        <SWRProvider>
+          <SessionProvider>
+            <ConversationProvider>
+              <Toaster
+                position="top-center"
+                toastOptions={{
+                  style: {
+                    color: "#6F502D",
+                  },
+                }}
+              />
+              {children}
+            </ConversationProvider>
+          </SessionProvider>
+        </SWRProvider>
       </body>
     </html>
   );

@@ -11,7 +11,7 @@ import useSWR from "swr";
 export default function RecipePage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { userId } = useSessionContext();
+  const { userId, isLoading: sessionLoading } = useSessionContext();
 
   const { data: recipes, isLoading } = useSWR<RecipeWithId[]>(
     userId ? `/api/recipe?userId=${userId}` : null,
@@ -20,7 +20,11 @@ export default function RecipePage() {
 
   const recipe = recipes?.find((r) => r.id === params.id);
 
-  if (isLoading) {
+  // Treat "identity not resolved yet" as loading, not not-found — otherwise a
+  // cold reload flashes "can't find that one" until the session round-trip
+  // settles. With the persistent cache + optimistic userId, the recipe usually
+  // resolves from cache before that. See ADR-0023.
+  if (!recipe && (isLoading || sessionLoading || !userId)) {
     return (
       <div className="flex items-center justify-center">
         <p className="font-display italic text-muted-foreground">
