@@ -81,7 +81,7 @@ the save mutates the SWR cache). If `!isAuthenticated && isFirstSave && !hasSeen
 fire the nudge variant instead of the plain success toast, and call `markSignInNudgeSeen("first-save")`:
 
 ```ts
-toast.success("Saved! Sign in and Ah Mah keeps your cookbook safe on every device, ah.", {
+toast.success("Saved! Sign in and Ah Mah keeps your cookbook synced to every device, ah.", {
   action: { label: "Sign in", onClick: () => setSignInOpen(true) },
 });
 ```

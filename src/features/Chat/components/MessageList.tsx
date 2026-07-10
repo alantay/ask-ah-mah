@@ -292,7 +292,7 @@ export const MessageList = ({
       if (!isAuthenticated && isFirstSave && !hasSeenSignInNudge("first-save")) {
         markSignInNudgeSeen("first-save");
         toast.success(
-          "Saved! Sign in and Ah Mah keeps your cookbook safe on every device, ah.",
+          "Saved! Sign in and Ah Mah keeps your cookbook synced to every device, ah.",
           { action: { label: "Sign in", onClick: () => setSignInOpen(true) } },
         );
       } else {

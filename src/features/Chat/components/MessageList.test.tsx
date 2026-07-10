@@ -378,7 +378,7 @@ describe("MessageList", () => {
 
       await waitFor(() =>
         expect(toast.success).toHaveBeenCalledWith(
-          expect.stringContaining("Sign in and Ah Mah keeps your cookbook safe"),
+          expect.stringContaining("Sign in and Ah Mah keeps your cookbook synced"),
           expect.objectContaining({ action: expect.objectContaining({ label: "Sign in" }) }),
         ),
       );
