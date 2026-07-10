@@ -34,8 +34,10 @@ export function ShareRecipeModal({ recipe, open, onOpenChange }: ShareRecipeModa
 
   const copyLink = () => {
     if (!url) return;
-    navigator.clipboard.writeText(url);
-    toast.success("Link copied — send it to someone.");
+    navigator.clipboard.writeText(url).then(
+      () => toast.success("Link copied — send it to someone."),
+      () => toast.error("Couldn't copy — try again?"),
+    );
   };
 
   const canNativeShare = typeof navigator !== "undefined" && typeof navigator.share === "function";

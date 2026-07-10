@@ -21,6 +21,7 @@ export function useRecipeShareLink(recipeId: string) {
       const res = await fetch(`/api/recipe/${recipeId}/share`, { method: "POST" });
       if (!res.ok) throw new Error("share failed");
       const { token: mintedToken } = await res.json();
+      if (typeof mintedToken !== "string") throw new Error("share response missing token");
       setToken(mintedToken);
     } catch (err) {
       console.error("[useRecipeShareLink] mint error:", err);

@@ -506,6 +506,7 @@ export default function RecipeDisplay({
     setChanges([]);
     setBenchOpen(false);
     setIsSaving(false);
+    setShareOpen(false);
   }, [recipe.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Handlers ───────────────────────────────────────────────────────────────
@@ -693,7 +694,7 @@ export default function RecipeDisplay({
                     <button
                       onClick={() => setShareOpen(true)}
                       className="inline-flex items-center min-h-11 px-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                      aria-label="Share recipe — copy a public link"
+                      aria-label="Share recipe"
                       title="Share recipe"
                     >
                       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
@@ -774,7 +775,7 @@ export default function RecipeDisplay({
       </div>
 
       {!readOnly && userId && (
-        <ShareRecipeModal recipe={recipe} open={shareOpen} onOpenChange={setShareOpen} />
+        <ShareRecipeModal key={recipe.id} recipe={recipe} open={shareOpen} onOpenChange={setShareOpen} />
       )}
     </>
   );

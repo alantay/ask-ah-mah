@@ -6,10 +6,12 @@ reverted; the photo-vs-branded-card decision for the OG image stands.
 ## Update (Jul 2026)
 
 The finish-moment `ShareCta` prompt described below shipped with #402 but didn't read well in
-practice and was pulled shortly after (no replacement planned). `useShareRecipe` and the branded
-OG image at `/r/<token>` remain — only the "quiet prompt" half of this ADR is reversed. The
-"session-local, not derived from `cooked`" reasoning is now moot since the prompt no longer
-exists; kept below for history.
+practice and was pulled shortly after (no replacement planned). The header Share button now opens
+a "Pass this on" modal (`ShareRecipeModal` / `useRecipeShareLink`) instead of the one-click
+native-share-or-copy `useShareRecipe` this ADR was written against, and the branded OG image at
+`/r/<token>` remains — only the "quiet prompt" half of this ADR is reversed. The "session-local,
+not derived from `cooked`" reasoning is now moot since the prompt no longer exists; kept below for
+history.
 
 ## Context
 

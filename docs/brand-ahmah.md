@@ -50,7 +50,7 @@ Not just a content series — the **thesis**. *"No mistakes in Ah Mah's kitchen,
 
 | Motion | What | Effort | Reality check |
 |---|---|---|---|
-| Referral (private 1:1 share) | "I cooked this, try it" + link to a friend | Low — built (#402: native share sheet + branded OG card; the in-flow prompt was tried and pulled) | Fits the nervous beginner; trusted-referral converts |
+| Referral (private 1:1 share) | "I cooked this, try it" + link to a friend | Low — built (#402: "Pass this on" share modal — copy link, per-channel deep links, optional native share — plus a photo-first OG card with a branded fallback; the in-flow prompt was tried and pulled) | Fits the nervous beginner; trusted-referral converts |
 | Public social (#ahmah) | Broadcast plate photos, hashtag spreads | High — branded card + photo capture | Viral ceiling, but bets beginners post publicly (weak) |
 | Owned content (Ah Mah blog) | SEO/brand in her voice | High + ongoing | But the `MarketTip`/`StorageTip` corpus is a near-zero-cost seed |
 

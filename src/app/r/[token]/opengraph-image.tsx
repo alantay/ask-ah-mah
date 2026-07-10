@@ -8,24 +8,34 @@ const STAMP_GRADIENT = "linear-gradient(135deg, oklch(0.55 0.13 35) 0%, oklch(0.
 
 export default async function Image({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-  const recipe = await getRecipeByShareToken(token);
+
+  let recipe: Awaited<ReturnType<typeof getRecipeByShareToken>> = null;
+  try {
+    recipe = await getRecipeByShareToken(token);
+  } catch {
+    recipe = null;
+  }
 
   if (recipe?.imageUrl) {
-    return new ImageResponse(
-      (
-        <div style={{ width: "100%", height: "100%", display: "flex" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={recipe.imageUrl}
-            alt={recipe.name}
-            width={size.width}
-            height={size.height}
-            style={{ objectFit: "cover", width: "100%", height: "100%" }}
-          />
-        </div>
-      ),
-      size,
-    );
+    try {
+      return new ImageResponse(
+        (
+          <div style={{ width: "100%", height: "100%", display: "flex" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={recipe.imageUrl}
+              alt={recipe.name}
+              width={size.width}
+              height={size.height}
+              style={{ objectFit: "cover", width: "100%", height: "100%" }}
+            />
+          </div>
+        ),
+        size,
+      );
+    } catch {
+      // Fall through to the branded card if the photo fetch fails.
+    }
   }
 
   const name = recipe?.name ?? "Ask Ah Mah";
