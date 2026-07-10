@@ -23,34 +23,19 @@ jest.mock('@/features/Recipe', () => {
     CookingMode: ({
       cooked,
       onCookedChange,
-      onShare,
-      sharing,
     }: {
       cooked?: boolean;
       onCookedChange?: (cooked: boolean) => void;
-      onShare?: () => void;
-      sharing?: boolean;
-    }) => {
-      const [justCooked, setJustCooked] = React.useState(false);
-      return (
-        <div>
-          <input
-            type="checkbox"
-            aria-label="I made this"
-            defaultChecked={!!cooked}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-              onCookedChange?.(e.target.checked);
-              if (e.target.checked) setJustCooked(true);
-            }}
-          />
-          {justCooked && onShare && (
-            <button onClick={onShare} disabled={sharing}>
-              Cooked this for someone? Send them the recipe, lah.
-            </button>
-          )}
-        </div>
-      );
-    },
+    }) => (
+      <div>
+        <input
+          type="checkbox"
+          aria-label="I made this"
+          defaultChecked={!!cooked}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => onCookedChange?.(e.target.checked)}
+        />
+      </div>
+    ),
     ServingsStepper: ({
     servings,
     onDecrement,
@@ -333,24 +318,5 @@ describe('Recipe cart adds to the shopping list', () => {
     expect(cart).toBeDisabled();
     resolveRequest({ ok: true, json: async () => ({}) });
     await waitFor(() => expect(mockToastSuccess).toHaveBeenCalled());
-  });
-});
-
-describe('Finish-moment share prompt forwarding', () => {
-  it('forwards onShare/sharing into CookingMode when the recipe is saved', () => {
-    const onShare = jest.fn();
-    render(
-      <RecipeLetter
-        recipe={RECIPE}
-        isSaved
-        cooked={false}
-        onCookedChange={jest.fn()}
-        onShare={onShare}
-      />,
-    );
-    fireEvent.click(screen.getByText('Start cooking'));
-    fireEvent.click(screen.getByRole('checkbox', { name: 'I made this' }));
-    fireEvent.click(screen.getByText(/Cooked this for someone/));
-    expect(onShare).toHaveBeenCalledTimes(1);
   });
 });

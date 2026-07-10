@@ -26,26 +26,10 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
-import { useShareRecipe } from "@/features/Recipe";
 import { generateTempId } from "../constants";
 import { ChatLoader } from "./loaders";
-import { RecipeLetter, RecipeLetterProps } from "./recipe/RecipeLetter";
+import { RecipeLetter } from "./recipe/RecipeLetter";
 import { SuggestionsBlock } from "./recipe/SuggestionsBlock";
-
-// useShareRecipe is a hook, so it can't be called conditionally per-block
-// inside the blocks.map below (rules of hooks) — this wrapper isolates the
-// hook call to only the saved-recipe render branch.
-function SavedRecipeLetter({
-  recipeId,
-  recipeTitle,
-  ...rest
-}: { recipeId: string; recipeTitle: string } & Omit<
-  RecipeLetterProps,
-  "onShare" | "sharing"
->) {
-  const { share, sharing } = useShareRecipe(recipeId, recipeTitle);
-  return <RecipeLetter {...rest} onShare={share} sharing={sharing} />;
-}
 
 interface MessageListProps {
   messages: UIMessage[];
@@ -471,26 +455,20 @@ export const MessageList = ({
                       const savedRecipe = recipeSaved?.find(
                         (r) => r.recipeId === recipeKey,
                       );
-                      const isSaved = !!savedRecipe;
-                      const letterProps = {
-                        recipe: block.payload,
-                        onSave: () =>
-                          saveStructuredRecipe(block.payload, recipeKey),
-                        isSaved,
-                        onDraft,
-                        cooked: savedRecipe?.cooked ?? false,
-                        onCookedChange: (next: boolean) =>
-                          handleCookedChange(block.payload, recipeKey, next),
-                      };
-                      return isSaved && savedRecipe ? (
-                        <SavedRecipeLetter
+                      return (
+                        <RecipeLetter
                           key={blockKey}
-                          {...letterProps}
-                          recipeId={savedRecipe.id}
-                          recipeTitle={block.payload.title ?? ""}
+                          recipe={block.payload}
+                          onSave={() =>
+                            saveStructuredRecipe(block.payload, recipeKey)
+                          }
+                          isSaved={!!savedRecipe}
+                          onDraft={onDraft}
+                          cooked={savedRecipe?.cooked ?? false}
+                          onCookedChange={(next: boolean) =>
+                            handleCookedChange(block.payload, recipeKey, next)
+                          }
                         />
-                      ) : (
-                        <RecipeLetter key={blockKey} {...letterProps} />
                       );
                     }
                     return null;

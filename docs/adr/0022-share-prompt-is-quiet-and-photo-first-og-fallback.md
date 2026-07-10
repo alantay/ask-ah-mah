@@ -1,6 +1,15 @@
 # ADR-0022 — Share prompt stays quiet; real photos beat the branded OG card
 
-**Status:** Accepted
+**Status:** Superseded in part — see Update below. The share-prompt half was shipped and then
+reverted; the photo-vs-branded-card decision for the OG image stands.
+
+## Update (Jul 2026)
+
+The finish-moment `ShareCta` prompt described below shipped with #402 but didn't read well in
+practice and was pulled shortly after (no replacement planned). `useShareRecipe` and the branded
+OG image at `/r/<token>` remain — only the "quiet prompt" half of this ADR is reversed. The
+"session-local, not derived from `cooked`" reasoning is now moot since the prompt no longer
+exists; kept below for history.
 
 ## Context
 

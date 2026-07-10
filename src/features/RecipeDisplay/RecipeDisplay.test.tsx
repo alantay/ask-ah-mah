@@ -236,47 +236,6 @@ describe("RecipeDisplay", () => {
     });
   });
 
-  describe("Finish-moment share prompt", () => {
-    const originalFetch = global.fetch;
-    let fetchMock: jest.Mock;
-    const originalShare = (navigator as unknown as { share?: unknown }).share;
-
-    beforeEach(() => {
-      fetchMock = jest.fn().mockImplementation((url: string) => {
-        if (url.includes("/share")) {
-          return Promise.resolve({ ok: true, json: async () => ({ token: "tok1" }) });
-        }
-        return Promise.resolve({ ok: true, json: async () => ({}) });
-      });
-      global.fetch = fetchMock as never;
-      (navigator as unknown as { share: unknown }).share = jest.fn().mockResolvedValue(undefined);
-    });
-
-    afterEach(() => {
-      global.fetch = originalFetch;
-      (navigator as unknown as { share?: unknown }).share = originalShare;
-    });
-
-    it("shows the share prompt after ticking 'I made this', and shares the link when tapped", async () => {
-      renderRecipe();
-      fireEvent.click(screen.getByRole("checkbox", { name: "I made this" }));
-
-      expect(await screen.findByText(/Cooked this for someone/)).toBeInTheDocument();
-      fireEvent.click(screen.getByText(/Cooked this for someone/));
-
-      await waitFor(() =>
-        expect(navigator.share).toHaveBeenCalledWith(
-          expect.objectContaining({ url: expect.stringContaining("/r/tok1") }),
-        ),
-      );
-    });
-
-    it("does not show the prompt for a recipe that's already cooked on load", () => {
-      renderRecipe({ cooked: true } as never);
-      expect(screen.queryByText(/Cooked this for someone/)).not.toBeInTheDocument();
-    });
-  });
-
   describe("Before you start (mise en place)", () => {
     it("renders prep items when present", () => {
       renderRecipe({ prep: ["Dice the onion", "Mince the garlic"] } as never);

@@ -280,16 +280,15 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - `layout.tsx` wires the rest: `icons` (SVG favicon + existing apple-touch-icon), `appleWebApp` (title "Ah Mah", default status bar) for iOS Add to Home Screen, and a `viewport` export with light/dark `themeColor` (`#f7ebdc` / `#25170f`) so browser chrome matches the app.
 - **Out of scope for v1 (deliberate):** service worker / offline shell — separate follow-up if wanted. Real-device install check (iOS Safari + Android Chrome) still worth doing after deploy.
 
-### Finish-moment share loop — Shipped Jul 2026 (#402)
+### Native share upgrade + branded OG card — Shipped Jul 2026 (#402)
 
-- Dismissable "Cooked this for someone? Send them the recipe, lah." prompt appears right after
-  ticking "I made this," on both CookingMode's last step and RecipeDisplay's end-cap — never on
-  load of an already-cooked recipe (ADR-0022).
-- Tapping it mints/reuses the existing share token and opens the native share sheet on mobile
-  (straight into WhatsApp/Telegram) or copies the link on desktop (`useShareRecipe`).
+- RecipeDisplay's existing header Share button now uses the native OS share sheet on mobile
+  (straight into WhatsApp/Telegram) when available, falling back to copy-link on desktop
+  (`useShareRecipe`) — same button, same trigger, just a richer target on supporting devices.
 - `/r/<token>` links now carry a branded OG card (dish name, Ah Mah's stamp, gradient hero) instead
   of the generic fallback image — unless the recipe has its own photo, which takes priority.
-- Chat's `RecipeLetter` only offers this once the recipe is saved (has a DB id to mint a token for).
+- A "finish-moment" share prompt (nudge right after ticking "I made this") shipped alongside this
+  but was pulled shortly after — it didn't read well in practice.
 
 ### Lazy-loaded markdown/math renderer — Shipped Jul 2026 (#399)
 

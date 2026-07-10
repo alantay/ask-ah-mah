@@ -8,7 +8,6 @@ import {
   DottedList,
   Eyebrow,
   SectionHeading,
-  ShareCta,
   StepItem,
 } from "@/features/shared/components/recipe";
 import {
@@ -130,8 +129,6 @@ interface RecipeBodyProps {
   // (public share view, guests).
   cooked?: boolean;
   onCookedChange?: (cooked: boolean) => void;
-  onShare?: () => void;
-  sharing?: boolean;
 }
 
 function RecipeBody({
@@ -146,18 +143,7 @@ function RecipeBody({
   showHighlights = false,
   cooked = false,
   onCookedChange,
-  onShare,
-  sharing,
 }: RecipeBodyProps) {
-  // Session-local: the share prompt only appears right after this mount
-  // flips cooked to true, never on load of an already-cooked recipe (ADR-0022).
-  const [justCooked, setJustCooked] = useState(false);
-  const handleCookedChange = onCookedChange
-    ? (next: boolean) => {
-        onCookedChange(next);
-        if (next) setJustCooked(true);
-      }
-    : undefined;
   const baseServings = selectedRecipe.baseServings || 2;
   const ingredients = (selectedRecipe.ingredients || []) as RecipeIngredient[];
   const origIngredients = (originalRecipe?.ingredients || []) as RecipeIngredient[];
@@ -416,10 +402,9 @@ function RecipeBody({
         )}
 
         {/* Cooked marker — a quiet end-cap, out of the reading path (ADR-0020) */}
-        {handleCookedChange && (
+        {onCookedChange && (
           <div className="mt-9 pt-6 border-t border-dashed border-border">
-            <CookedCheckbox cooked={cooked} onChange={handleCookedChange} />
-            {justCooked && onShare && <ShareCta onShare={onShare} sharing={sharing} />}
+            <CookedCheckbox cooked={cooked} onChange={onCookedChange} />
           </div>
         )}
       </div>
@@ -622,8 +607,6 @@ export default function RecipeDisplay({
         onExit={() => setCooking(false)}
         cooked={!!workingDraft.cooked}
         onCookedChange={handleCookedChange}
-        onShare={!readOnly && userId ? share : undefined}
-        sharing={sharing}
         servingsRatio={servings / (recipe.baseServings || 2)}
       />
     );
@@ -747,8 +730,6 @@ export default function RecipeDisplay({
                   showHighlights={showHighlights}
                   cooked={!!workingDraft.cooked}
                   onCookedChange={!readOnly && userId ? handleCookedChange : undefined}
-                  onShare={!readOnly && userId ? share : undefined}
-                  sharing={sharing}
                 />
               </div>
             </div>
