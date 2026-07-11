@@ -12,6 +12,7 @@ import {
   SectionHeading,
   StepItem,
 } from "@/features/shared/components/recipe";
+import { ingredientsToUses } from "@/lib/recipes/ingredientUses";
 import {
   type ChangeEntry,
   type RecipeIngredient,
@@ -342,7 +343,7 @@ function RecipeBody({
         {prep.length > 0 && (
           <section className="mb-9">
             <SectionHeading className="mb-4">Before you start</SectionHeading>
-            <DottedList items={prep} />
+            <DottedList items={prep} uses={ingredientsToUses(ingredients)} ratio={scale} />
           </section>
         )}
 
@@ -627,6 +628,7 @@ export default function RecipeDisplay({
         cooked={!!workingDraft.cooked}
         onCookedChange={handleCookedChange}
         servingsRatio={servings / (recipe.baseServings || 2)}
+        prepUses={ingredientsToUses((workingDraft.ingredients ?? []) as RecipeIngredient[])}
       />
     );
   }

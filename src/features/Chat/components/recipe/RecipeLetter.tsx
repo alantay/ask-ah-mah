@@ -8,6 +8,7 @@ type GetInventoryResponse = {
   ingredientInventory: InventoryItem[];
 };
 import { Button } from "@/components/ui/button";
+import { ingredientsToUses } from "@/lib/recipes/ingredientUses";
 import { ingredientMatches } from "@/lib/recipes/matchIngredient";
 import { RecipeBlock, RecipeIngredientModel } from "@/lib/recipes/schemas";
 import { cn } from "@/lib/utils";
@@ -212,6 +213,7 @@ export function RecipeLetter({
         cooked={cooked}
         onCookedChange={onCookedChange}
         servingsRatio={ratio}
+        prepUses={ingredientsToUses(ingredients)}
       />
     );
   }
@@ -350,7 +352,7 @@ export function RecipeLetter({
       {prep && prep.length > 0 && (
         <div className="mb-5">
           <Eyebrow className="text-muted-foreground block mb-2">Before you start</Eyebrow>
-          <DottedList items={prep} />
+          <DottedList items={prep} uses={ingredientsToUses(ingredients)} ratio={ratio} />
         </div>
       )}
 
