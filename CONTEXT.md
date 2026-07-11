@@ -176,7 +176,7 @@ Related: [ADR-0017](docs/adr/0017-storage-tips-clear-adr-0008.md), [ADR-0008](do
 
 A standing, **per-user**, persisted list of items the user intends to buy — its own top-level **Section**, the conceptual inverse of the **Pantry** (current stock) and kept adjacent to it in the nav. Items are **identities, not quantities**: a row is `shallot`, never `4 shallots`, so the same item from different recipes and from direct entry collapse to one row (canonical name). Each item carries its **Market Tip**.
 
-Items arrive two ways: the **cart button** on a recipe's ingredient row (adds the missing item), or **typed in directly** (e.g. "apples", unrelated to any recipe). Lifecycle is todo-list-style — checking an item (**bought**) strikes it through for the trip; crossing it out (**✕**, changed mind) deletes it. Moving a bought item into the **Pantry** is a separate, opt-in step, never a side effect of checking it.
+Items arrive two ways: the **cart button** on a recipe's ingredient row (adds the missing item), or **typed in directly** — a single plain word or two adds instantly, while a longer paste (e.g. a recipe's ingredient list copied off a webpage) is extracted into several items by the model, still reduced to bare identities per the quantity-less rule above. Lifecycle is todo-list-style — checking an item (**bought**) strikes it through for the trip; crossing it out (**✕**, changed mind) deletes it. Moving a bought item into the **Pantry** is a separate, opt-in step, never a side effect of checking it.
 
 Items are grouped by **[Aisle](#aisle)** so the list reads as a market walk rather than a flat pile.
 

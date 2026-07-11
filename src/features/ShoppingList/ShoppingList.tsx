@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useSessionContext } from "@/contexts/SessionContext";
 import { Eyebrow } from "@/features/shared/components/recipe";
 import { TipsToggle } from "@/features/shared/components/TipsToggle";
@@ -44,19 +43,38 @@ const ShoppingList = () => {
   );
 
   const onSubmit = async () => {
-    const name = draft.trim();
-    if (!userId || !name || submitting) return;
+    const text = draft.trim();
+    if (!userId || !text || submitting) return;
     setSubmitting(true);
+    // Multi-line, comma-separated, or amount-bearing text is treated as a
+    // paste (e.g. a recipe's ingredient list) and routed through the LLM
+    // extractor; a single plain line stays on the instant direct-add path.
+    const needsParse = /[\n,]/.test(text) || /\d/.test(text);
     try {
-      const res = await fetch("/api/shopping-list", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: [{ name }] }),
-      });
+      const res = needsParse
+        ? await fetch("/api/shopping-list/parse", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text }),
+          })
+        : await fetch("/api/shopping-list", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ items: [{ name: text }] }),
+          });
       if (res.ok) {
         setDraft("");
         mutate(`/api/shopping-list?userId=${encodeURIComponent(userId)}`);
-        toast.success(`${name} — on the list.`);
+        if (needsParse) {
+          const { items } = (await res.json()) as { items: { name: string }[] };
+          toast.success(
+            items.length === 1
+              ? `${items[0].name} — on the list.`
+              : `${items.length} things, on the list.`,
+          );
+        } else {
+          toast.success(`${text} — on the list.`);
+        }
       } else {
         toast.error("Aiyah, couldn't add that. Try again?");
       }
@@ -74,35 +92,55 @@ const ShoppingList = () => {
     }
   };
 
+  // Applies the change to the SWR cache immediately (so the row updates on
+  // click, not a round-trip later), fires the request in the background, and
+  // reconciles with a revalidate on both success and failure. Revalidating
+  // (rather than rolling back to a captured "previous" snapshot) means an
+  // overlapping second mutation's optimistic write is never clobbered by a
+  // stale snapshot from the first.
   const mutateList = async (
     method: "PATCH" | "DELETE",
     body: Record<string, unknown>,
+    optimisticUpdate: (items: ShoppingListRow[]) => ShoppingListRow[],
   ) => {
     if (!userId) return;
+    const key = `/api/shopping-list?userId=${encodeURIComponent(userId)}`;
+    mutate<GetShoppingListResponse>(
+      key,
+      { items: optimisticUpdate(items) },
+      { revalidate: false },
+    );
     try {
       const res = await fetch("/api/shopping-list", {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      if (res.ok) {
-        revalidate();
-      } else {
+      mutate(key);
+      if (!res.ok) {
         toast.error("Aiyah, that didn't work. Try again?");
       }
     } catch (e) {
+      mutate(key);
       console.error("Failed to update shopping list:", e);
       toast.error("Aiyah, that didn't work. Try again?");
     }
   };
 
   const toggleBought = (item: ShoppingListRow) =>
-    mutateList("PATCH", { id: item.id, bought: !item.bought });
+    mutateList("PATCH", { id: item.id, bought: !item.bought }, (items) =>
+      items.map((i) => (i.id === item.id ? { ...i, bought: !i.bought } : i)),
+    );
 
   const removeItem = (item: ShoppingListRow) =>
-    mutateList("DELETE", { id: item.id });
+    mutateList("DELETE", { id: item.id }, (items) =>
+      items.filter((i) => i.id !== item.id),
+    );
 
-  const clearBought = () => mutateList("DELETE", { clearBought: true });
+  const clearBought = () =>
+    mutateList("DELETE", { clearBought: true }, (items) =>
+      items.filter((i) => !i.bought),
+    );
 
   const items = data?.items ?? [];
   const hasBought = items.some((item) => item.bought);
@@ -168,14 +206,21 @@ const ShoppingList = () => {
             e.preventDefault();
             onSubmit();
           }}
-          className="flex gap-2 mb-5"
+          className="flex gap-2 mb-5 items-end"
         >
-          <Input
+          <textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="e.g., apples, oranges, shallots"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                onSubmit();
+              }
+            }}
+            placeholder="e.g., apples, oranges, shallots — or paste a recipe's ingredients"
+            rows={1}
             disabled={submitting}
-            className="flex-1"
+            className="flex-1 rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm resize-none"
           />
           <Button
             type="submit"
@@ -183,7 +228,7 @@ const ShoppingList = () => {
             className="gap-1.5 font-semibold shrink-0"
           >
             <Plus className="size-[15px]" />
-            Add
+            {submitting ? "Adding…" : "Add"}
           </Button>
         </form>
 

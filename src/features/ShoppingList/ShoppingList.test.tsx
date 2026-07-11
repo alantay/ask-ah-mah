@@ -148,6 +148,84 @@ describe("ShoppingList", () => {
     expect(mutate).toHaveBeenCalledWith("/api/shopping-list?userId=user-1");
   });
 
+  it("routes a comma-separated paste through the parse API", async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        items: [
+          { name: "Apples", category: "Vegetable" },
+          { name: "Oranges", category: "Vegetable" },
+        ],
+      }),
+    });
+
+    render(<ShoppingList />);
+
+    fireEvent.change(screen.getByPlaceholderText(/apples/i), {
+      target: { value: "apples, oranges" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /add/i }));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/shopping-list/parse",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ text: "apples, oranges" }),
+        }),
+      );
+    });
+
+    expect(mutate).toHaveBeenCalledWith("/api/shopping-list?userId=user-1");
+  });
+
+  it("routes a multi-line paste through the parse API", async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        items: [{ name: "Kale", category: "Vegetable" }],
+      }),
+    });
+
+    render(<ShoppingList />);
+
+    fireEvent.change(screen.getByPlaceholderText(/apples/i), {
+      target: { value: "50g kale\nimg" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /add/i }));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/shopping-list/parse",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ text: "50g kale\nimg" }),
+        }),
+      );
+    });
+  });
+
+  it("routes a single line with a quantity through the parse API", async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ items: [{ name: "Eggs", category: "Protein" }] }),
+    });
+
+    render(<ShoppingList />);
+
+    fireEvent.change(screen.getByPlaceholderText(/apples/i), {
+      target: { value: "2 eggs" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /add/i }));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/shopping-list/parse",
+        expect.objectContaining({ method: "POST" }),
+      );
+    });
+  });
+
   it("marks an item bought via PATCH when its checkbox is toggled", async () => {
     mockData = { items: [{ id: "row-1", name: "Apples", bought: false }] };
 
