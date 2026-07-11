@@ -120,8 +120,9 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 ### Model split: gpt-5-mini vs gpt-5-nano — Shipped Jul 2026
 
 - **Every LLM call now goes through `src/lib/ai/models.ts`** (`MODEL_HEAVY` / `MODEL_LIGHT`) instead of an inline `"gpt-5-mini"` literal duplicated per call site.
-- **`MODEL_LIGHT` (`gpt-5-nano`)** — deterministic extraction/classification/titling, moved off mini for cost: inventory paste parse, shopping-list paste parse, aisle classification, chat's `captureMentionedInventory`, conversation auto-titling. These also dropped explicit `temperature` (gpt-5 models only accept the default).
-- **`MODEL_HEAVY` (`gpt-5-mini`)** — unchanged: the chat agent, recipe tweak, storage/market tips, recipe metadata processing, and recipe-text paste extraction stay on mini (voice quality, unit-conversion math, or tool-calling on these paths).
+- **`MODEL_LIGHT` (`gpt-5-nano`)** — deterministic extraction/classification/titling, moved off mini for latency/cost: inventory paste parse, shopping-list paste parse, aisle classification, chat's `captureMentionedInventory`, conversation auto-titling, storage/market tips, recipe metadata processing. These also dropped explicit `temperature` (gpt-5 models only accept the default).
+- **`MODEL_HEAVY` (`gpt-5-mini`)** — the chat agent, recipe tweak, and recipe-text paste extraction stay on mini (tool-calling, or unit-conversion math on the recipe-text path).
+- **Tip voice changed too:** storage/market tips dropped the "Ah Mah" persona and Singlish voice fragment in favor of a plain, factual register — a deliberate product decision alongside the model move, not a side effect of it. See [ADR-0023](./adr/0023-tips-speak-in-a-plain-register-not-ah-mahs-voice.md). Both cached tip tables (`MarketTip`, `StorageTip`) were cleared once on deploy so every tip regenerates in the new voice.
 
 ### Shopping List spine — the Pantry "Need" tab — Shipped Jun 2026 (#314)
 

@@ -21,7 +21,7 @@ App: **“Ask Ah Mah”** — converts pantry items into recipes via chat.
    - loads last `CONTEXT_WINDOW = 15` messages (`getMessages`)
    - merges with incoming messages
    - validates (`validateUIMessages`)
-   - calls `streamText(openai(MODEL_HEAVY))` (`src/lib/ai/models.ts` — `gpt-5-mini` for agentic/generation calls, `gpt-5-nano` for deterministic extraction/classification)
+   - calls `streamText(openai(MODEL_HEAVY))` (`src/lib/ai/models.ts` — `gpt-5-mini` reserved for tool-calling/agentic paths (chat, recipe tweak) and unit-conversion math (recipe-text parse); `gpt-5-nano` for everything else — extraction/classification and tip generation)
    - uses `CHAT_SYSTEM_PROMPT` and `stepCountIs(5)`
 3. Model tools:
    - `addInventoryItem`

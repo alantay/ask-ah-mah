@@ -1,9 +1,8 @@
 import { prisma } from "@/lib/db";
 import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
 import { KITCHEN_DOMAIN_RULE } from "@/lib/marketTips/relevance";
-import { PROMPT_FRAGMENTS } from "@/lib/prompts/fragments";
 import { withAuth } from "@/lib/withAuth";
-import { MODEL_HEAVY } from "@/lib/ai/models";
+import { MODEL_LIGHT } from "@/lib/ai/models";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { NextRequest, NextResponse } from "next/server";
@@ -77,12 +76,10 @@ export const POST = withAuth(async (req: NextRequest, { userId: _userId }) => {
         .map((k) => `${k} = ${wanted.get(k)!.type}`)
         .join("\n");
       const { object } = await generateObject({
-        model: openai(MODEL_HEAVY),
+        model: openai(MODEL_LIGHT),
         schema: TipGenSchema,
-        temperature: 0.4,
-        prompt: `You are Ah Mah, a warm Singaporean grandmother. For each kitchen item, give ONE short tip on how to KEEP it well at home — for food, how to store it so it lasts (where, how, what to avoid); for equipment, how to care for it so it lasts.
-
-${PROMPT_FRAGMENTS.comprehensibleVoice}
+        // gpt-5 models only support the default temperature; setting it errors.
+        prompt: `Give ONE short, factual tip on how to KEEP each kitchen item well at home — for food, how to store it so it lasts (where, how, what to avoid); for equipment, how to care for it so it lasts.
 
 Each item below is written as "name = kind".
 
@@ -92,7 +89,7 @@ RULES:
 - "tip": max 12 words, plain imperative. NO "to store X" preamble. e.g. "cool, dark place — never the fridge".
 - ${KITCHEN_DOMAIN_RULE}
 - If there is no meaningful way to keep it better (it just sits in the cupboard), return tip as an empty string "".
-- Warm and practical, but keep it SHORT.
+- Plain and factual, no persona. Keep it SHORT.
 
 ITEMS:
 ${list}`,

@@ -2,9 +2,8 @@ import { prisma } from "@/lib/db";
 import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
 import { isPickableCategory } from "@/lib/marketTips/pickable";
 import { KITCHEN_DOMAIN_RULE } from "@/lib/marketTips/relevance";
-import { PROMPT_FRAGMENTS } from "@/lib/prompts/fragments";
 import { withAuth } from "@/lib/withAuth";
-import { MODEL_HEAVY } from "@/lib/ai/models";
+import { MODEL_LIGHT } from "@/lib/ai/models";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { NextRequest, NextResponse } from "next/server";
@@ -76,19 +75,17 @@ export const POST = withAuth(async (req: NextRequest, { userId: _userId }) => {
     if (toGenerate.length > 0) {
       const list = toGenerate.map((k) => `- ${k}`).join("\n");
       const { object } = await generateObject({
-        model: openai(MODEL_HEAVY),
+        model: openai(MODEL_LIGHT),
         schema: TipGenSchema,
-        temperature: 0.4,
-        prompt: `You are Ah Mah, a warm Singaporean grandmother at the wet market. For each item, give ONE short tip on how to PICK a good fresh one at the shop — what to look for, feel for, or smell.
-
-${PROMPT_FRAGMENTS.comprehensibleVoice}
+        // gpt-5 models only support the default temperature; setting it errors.
+        prompt: `Give ONE short, factual tip on how to PICK a good one of each item at the shop — what to look for, feel for, or smell.
 
 RULES:
 - Return exactly one entry per item, using the EXACT given item text as "key".
 - "tip": max 12 words, plain imperative. NO "to pick a good X" preamble. e.g. "firm, deep red, no soft spots".
 - If quality does NOT meaningfully vary at the shop (dry goods, canned, bottled, salt, sugar, flour), return tip as an empty string "".
 - ${KITCHEN_DOMAIN_RULE}
-- Warm and practical, but keep it SHORT.
+- Plain and factual, no persona. Keep it SHORT.
 
 ITEMS:
 ${list}`,
