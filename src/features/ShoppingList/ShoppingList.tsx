@@ -92,11 +92,23 @@ const ShoppingList = () => {
     }
   };
 
+  // Applies the change to the SWR cache immediately (so the row updates on
+  // click, not a round-trip later), fires the request in the background, and
+  // rolls back if it fails. The API only returns `{ success }`, so on success
+  // we revalidate in the background to reconcile with the server.
   const mutateList = async (
     method: "PATCH" | "DELETE",
     body: Record<string, unknown>,
+    optimisticUpdate: (items: ShoppingListRow[]) => ShoppingListRow[],
   ) => {
     if (!userId) return;
+    const key = `/api/shopping-list?userId=${encodeURIComponent(userId)}`;
+    const previous = data;
+    mutate<GetShoppingListResponse>(
+      key,
+      { items: optimisticUpdate(items) },
+      { revalidate: false },
+    );
     try {
       const res = await fetch("/api/shopping-list", {
         method,
@@ -104,23 +116,32 @@ const ShoppingList = () => {
         body: JSON.stringify(body),
       });
       if (res.ok) {
-        revalidate();
+        mutate(key);
       } else {
+        mutate(key, previous, { revalidate: false });
         toast.error("Aiyah, that didn't work. Try again?");
       }
     } catch (e) {
+      mutate(key, previous, { revalidate: false });
       console.error("Failed to update shopping list:", e);
       toast.error("Aiyah, that didn't work. Try again?");
     }
   };
 
   const toggleBought = (item: ShoppingListRow) =>
-    mutateList("PATCH", { id: item.id, bought: !item.bought });
+    mutateList("PATCH", { id: item.id, bought: !item.bought }, (items) =>
+      items.map((i) => (i.id === item.id ? { ...i, bought: !i.bought } : i)),
+    );
 
   const removeItem = (item: ShoppingListRow) =>
-    mutateList("DELETE", { id: item.id });
+    mutateList("DELETE", { id: item.id }, (items) =>
+      items.filter((i) => i.id !== item.id),
+    );
 
-  const clearBought = () => mutateList("DELETE", { clearBought: true });
+  const clearBought = () =>
+    mutateList("DELETE", { clearBought: true }, (items) =>
+      items.filter((i) => !i.bought),
+    );
 
   const items = data?.items ?? [];
   const hasBought = items.some((item) => item.bought);
