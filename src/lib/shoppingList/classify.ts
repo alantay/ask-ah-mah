@@ -1,3 +1,4 @@
+import { MODEL_LIGHT } from "@/lib/ai/models";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
@@ -17,7 +18,7 @@ function coerce(aisle: string): Aisle {
 
 /**
  * Ask the model which Aisle each item belongs to, mirroring the Market Tip
- * engine (one `gpt-5-mini` call, name in, label out). Returns a map from each
+ * engine (one `gpt-5-nano` call, name in, label out). Returns a map from each
  * item's canonical shopping key to its Aisle. Anything the model omits or
  * mislabels resolves to `Other`, so the caller always gets an aisle per item.
  */
@@ -40,9 +41,9 @@ export async function classifyAisles(
 
   const list = keys.map((k) => `- ${k}`).join("\n");
   const { object } = await generateObject({
-    model: openai("gpt-5-mini"),
+    model: openai(MODEL_LIGHT),
     schema: AssignmentSchema,
-    // gpt-5-mini only supports the default temperature; setting it errors.
+    // gpt-5 models only support the default temperature; setting it errors.
     prompt: `You sort grocery items into the aisle where a shopper finds them at a market. For each item, pick exactly ONE aisle from this list:
 
 ${AISLE_ORDER.map((a) => `- ${a}`).join("\n")}

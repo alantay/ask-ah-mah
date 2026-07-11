@@ -1,3 +1,4 @@
+import { MODEL_HEAVY } from "@/lib/ai/models";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { RecipeBlockSchema, type RecipeBlock } from "./schemas";
@@ -6,7 +7,7 @@ import { PROMPT_FRAGMENTS } from "@/lib/prompts/fragments";
 
 export async function parseRecipeText(text: string): Promise<RecipeBlock> {
   const result = await generateObject({
-    model: openai("gpt-5-mini"),
+    model: openai(MODEL_HEAVY),
     schema: RecipeBlockSchema,
     temperature: 0.2,
     prompt: `Extract the recipe from the text below into a structured format.

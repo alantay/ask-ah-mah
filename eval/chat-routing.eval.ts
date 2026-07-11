@@ -18,6 +18,7 @@
  * "gao li cai" (cabbage) gets stored as kitchenware because the model doesn't
  * recognize the romanized name as food. Track + eval that independently.
  */
+import { MODEL_HEAVY } from "../src/lib/ai/models";
 import { openai } from "@ai-sdk/openai";
 import { generateText, stepCountIs, tool } from "ai";
 import { readFileSync } from "node:fs";
@@ -72,7 +73,7 @@ const tools = {
 
 async function runTurn(userText: string): Promise<string> {
   const { text } = await generateText({
-    model: openai("gpt-4.1-mini"),
+    model: openai(MODEL_HEAVY),
     system: CHAT_SYSTEM_PROMPT,
     messages: [{ role: "user", content: userText }],
     stopWhen: [stepCountIs(5)],

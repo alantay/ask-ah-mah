@@ -1,3 +1,4 @@
+import { MODEL_HEAVY } from "@/lib/ai/models";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
@@ -106,7 +107,7 @@ RECIPE TEXT:
 ${recipeInstructions}`;
 
   const result = await generateObject({
-    model: openai("gpt-5-mini"),
+    model: openai(MODEL_HEAVY),
     schema: RecipeMetadataSchema,
     prompt,
     temperature: 0.2,

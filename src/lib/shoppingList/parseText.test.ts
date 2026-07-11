@@ -40,7 +40,7 @@ describe("parseShoppingListText", () => {
     );
   });
 
-  it("does not set a temperature (gpt-5-mini only supports the default)", async () => {
+  it("does not set a temperature (gpt-5 models only support the default)", async () => {
     mockedGenerate.mockResolvedValue({ object: { items: [] } } as never);
 
     await parseShoppingListText("milk");

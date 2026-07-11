@@ -1,6 +1,7 @@
 import { addInventoryItem } from "@/lib/inventory/Inventory";
 import { AddInventoryItem, AddInventoryItemSchema } from "@/lib/inventory/schemas";
 import { PROMPT_FRAGMENTS } from "@/lib/prompts/fragments";
+import { MODEL_LIGHT } from "@/lib/ai/models";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
@@ -59,9 +60,9 @@ export async function captureMentionedInventory(
 
   try {
     const { object } = await generateObject({
-      model: openai("gpt-5-mini"),
+      model: openai(MODEL_LIGHT),
       schema: ExtractionSchema,
-      temperature: 0,
+      // gpt-5 models only support the default temperature; setting it errors.
       prompt: `You extract ONLY ingredients/kitchenware the user explicitly HAS or JUST ACQUIRED, from a single chat message to a cooking assistant.
 
 STRICT RULES — when in doubt, extract NOTHING:

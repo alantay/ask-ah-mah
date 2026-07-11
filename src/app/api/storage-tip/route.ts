@@ -3,6 +3,7 @@ import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
 import { KITCHEN_DOMAIN_RULE } from "@/lib/marketTips/relevance";
 import { PROMPT_FRAGMENTS } from "@/lib/prompts/fragments";
 import { withAuth } from "@/lib/withAuth";
+import { MODEL_HEAVY } from "@/lib/ai/models";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { NextRequest, NextResponse } from "next/server";
@@ -76,7 +77,7 @@ export const POST = withAuth(async (req: NextRequest, { userId: _userId }) => {
         .map((k) => `${k} = ${wanted.get(k)!.type}`)
         .join("\n");
       const { object } = await generateObject({
-        model: openai("gpt-5-mini"),
+        model: openai(MODEL_HEAVY),
         schema: TipGenSchema,
         temperature: 0.4,
         prompt: `You are Ah Mah, a warm Singaporean grandmother. For each kitchen item, give ONE short tip on how to KEEP it well at home — for food, how to store it so it lasts (where, how, what to avoid); for equipment, how to care for it so it lasts.

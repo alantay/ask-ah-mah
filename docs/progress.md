@@ -117,6 +117,12 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Why**: the Have/Need strip was the app's *only* visible tab strip, contradicting the "destinations come from the nav, never from tabs" rule (`CONTEXT.md` → Section), and its folder-tab styling (`bg-chat`) never matched the Pantry surface (`bg-muted`) — so it read as orphaned. The fix was conceptual, not cosmetic: promote, don't restyle.
 - **Changes**: 4th `NAV_ITEMS` entry + `ShoppingListIcon` in `SidebarContent`; `SECTION_LABELS.shopping` in `MobileTopBar`; `"shopping"` added to `useActiveTab`; 4th `TabsContent` (`?tab=shopping`) renders `<ShoppingList />` in `page.tsx`; `InventoryWrapper` strips its `Tabs` and renders `<Inventory />` directly. **Zero data change** — exactly as ADR-0014 §6 predicted. `Have`/`Need` retired as user-facing terms.
 
+### Model split: gpt-5-mini vs gpt-5-nano — Shipped Jul 2026
+
+- **Every LLM call now goes through `src/lib/ai/models.ts`** (`MODEL_HEAVY` / `MODEL_LIGHT`) instead of an inline `"gpt-5-mini"` literal duplicated per call site.
+- **`MODEL_LIGHT` (`gpt-5-nano`)** — deterministic extraction/classification/titling, moved off mini for cost: inventory paste parse, shopping-list paste parse, aisle classification, chat's `captureMentionedInventory`, conversation auto-titling. These also dropped explicit `temperature` (gpt-5 models only accept the default).
+- **`MODEL_HEAVY` (`gpt-5-mini`)** — unchanged: the chat agent, recipe tweak, storage/market tips, recipe metadata processing, and recipe-text paste extraction stay on mini (voice quality, unit-conversion math, or tool-calling on these paths).
+
 ### Shopping List spine — the Pantry "Need" tab — Shipped Jun 2026 (#314)
 
 - **Standing, quantity-less Shopping List** introduced as the Pantry **Need** tab (Have/Need faces), per [ADR-0014](./adr/0014-shopping-list-is-standing-and-quantityless.md) and [PRD #313](https://github.com/alantay/ask-ah-mah/issues/313). This slice is the spine — type-in, persist, view; lifecycle (✓/✕/clear), Need-tab Market Tips, and the recipe-card on-ramp + Shortfall-card retirement are the follow-up slices (#315–#318).
