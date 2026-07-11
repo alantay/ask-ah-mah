@@ -5,7 +5,7 @@ import { z } from "zod";
 import { AddShoppingListItemSchema, type AddShoppingListItem } from "./schemas";
 
 const ParseSchema = z.object({
-  items: z.array(AddShoppingListItemSchema),
+  items: z.array(AddShoppingListItemSchema).max(50),
 });
 
 /**

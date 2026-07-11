@@ -73,6 +73,13 @@ describe("POST /api/shopping-list/parse", () => {
     expect(mockedParse).not.toHaveBeenCalled();
   });
 
+  it("400s when text exceeds the length cap", async () => {
+    const res = await POST(reqWith({ text: "a".repeat(10_001) }));
+
+    expect(res.status).toBe(400);
+    expect(mockedParse).not.toHaveBeenCalled();
+  });
+
   it("401s when unauthenticated", async () => {
     mockedGetSessionUserId.mockResolvedValue(null);
 

@@ -9,6 +9,9 @@ export const POST = withAuth(async (req: NextRequest, { userId }) => {
     if (!text || typeof text !== "string" || text.trim().length === 0) {
       return NextResponse.json({ error: "text is required" }, { status: 400 });
     }
+    if (text.length > 10_000) {
+      return NextResponse.json({ error: "text is too long" }, { status: 400 });
+    }
 
     const items = await parseShoppingListText(text);
     await addShoppingListItems(items, userId);
