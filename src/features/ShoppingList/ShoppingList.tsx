@@ -94,8 +94,10 @@ const ShoppingList = () => {
 
   // Applies the change to the SWR cache immediately (so the row updates on
   // click, not a round-trip later), fires the request in the background, and
-  // rolls back if it fails. The API only returns `{ success }`, so on success
-  // we revalidate in the background to reconcile with the server.
+  // reconciles with a revalidate on both success and failure. Revalidating
+  // (rather than rolling back to a captured "previous" snapshot) means an
+  // overlapping second mutation's optimistic write is never clobbered by a
+  // stale snapshot from the first.
   const mutateList = async (
     method: "PATCH" | "DELETE",
     body: Record<string, unknown>,
@@ -103,7 +105,6 @@ const ShoppingList = () => {
   ) => {
     if (!userId) return;
     const key = `/api/shopping-list?userId=${encodeURIComponent(userId)}`;
-    const previous = data;
     mutate<GetShoppingListResponse>(
       key,
       { items: optimisticUpdate(items) },
@@ -115,14 +116,12 @@ const ShoppingList = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      if (res.ok) {
-        mutate(key);
-      } else {
-        mutate(key, previous, { revalidate: false });
+      mutate(key);
+      if (!res.ok) {
         toast.error("Aiyah, that didn't work. Try again?");
       }
     } catch (e) {
-      mutate(key, previous, { revalidate: false });
+      mutate(key);
       console.error("Failed to update shopping list:", e);
       toast.error("Aiyah, that didn't work. Try again?");
     }
