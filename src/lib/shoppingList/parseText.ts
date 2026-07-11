@@ -1,4 +1,5 @@
 import { PROMPT_FRAGMENTS } from "@/lib/prompts/fragments";
+import { MODEL_LIGHT } from "@/lib/ai/models";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
@@ -21,9 +22,9 @@ export async function parseShoppingListText(
   text: string,
 ): Promise<AddShoppingListItem[]> {
   const { object } = await generateObject({
-    model: openai("gpt-5-mini"),
+    model: openai(MODEL_LIGHT),
     schema: ParseSchema,
-    // gpt-5-mini only supports the default temperature; setting it errors.
+    // gpt-5 models only support the default temperature; setting it errors.
     prompt: `Parse the following freeform text into Shopping List items. The user pasted a recipe's ingredient list (often copied off a webpage) or typed a few things they need to buy.
 
 RULES:

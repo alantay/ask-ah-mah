@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { NotFoundError } from "@/lib/errors";
 import { generateObject } from "ai";
 import { openai } from "@ai-sdk/openai";
+import { MODEL_LIGHT } from "@/lib/ai/models";
 import { z } from "zod";
 
 export type ConversationEntity = {
@@ -166,7 +167,7 @@ export async function autoTitleConversation(id: string): Promise<void> {
   }
 
   const { object } = await generateObject({
-    model: openai("gpt-5-mini"),
+    model: openai(MODEL_LIGHT),
     schema: z.object({ title: z.string().max(40) }),
     prompt: `Give this cooking chat session a short, warm title (3-6 words, no quotes, no punctuation at end).
 User: "${firstUserMessage.content}"

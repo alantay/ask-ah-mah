@@ -1,5 +1,6 @@
 import { ChangeKindSchema, RecipeBlockSchema } from "@/lib/recipes/schemas";
 import { withAuthDynamic } from "@/lib/withAuth";
+import { MODEL_HEAVY } from "@/lib/ai/models";
 import { openai } from "@ai-sdk/openai";
 import { generateText } from "ai";
 import { NextRequest, NextResponse } from "next/server";
@@ -126,7 +127,7 @@ export const POST = withAuthDynamic<{ id: string }>(async (req: NextRequest, { u
     // nothing here — and buffering lets us inspect finishReason before we
     // respond, which a streamed response can't (status is already sent).
     const { text, finishReason } = await generateText({
-      model: openai("gpt-5-mini"),
+      model: openai(MODEL_HEAVY),
       system: buildSystemPrompt(parsedOriginal.data, workingDraft),
       messages: [{ role: "user", content: instruction }],
       maxOutputTokens: MAX_OUTPUT_TOKENS,

@@ -4,6 +4,7 @@ import { isPickableCategory } from "@/lib/marketTips/pickable";
 import { KITCHEN_DOMAIN_RULE } from "@/lib/marketTips/relevance";
 import { PROMPT_FRAGMENTS } from "@/lib/prompts/fragments";
 import { withAuth } from "@/lib/withAuth";
+import { MODEL_HEAVY } from "@/lib/ai/models";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { NextRequest, NextResponse } from "next/server";
@@ -75,7 +76,7 @@ export const POST = withAuth(async (req: NextRequest, { userId: _userId }) => {
     if (toGenerate.length > 0) {
       const list = toGenerate.map((k) => `- ${k}`).join("\n");
       const { object } = await generateObject({
-        model: openai("gpt-5-mini"),
+        model: openai(MODEL_HEAVY),
         schema: TipGenSchema,
         temperature: 0.4,
         prompt: `You are Ah Mah, a warm Singaporean grandmother at the wet market. For each item, give ONE short tip on how to PICK a good fresh one at the shop — what to look for, feel for, or smell.

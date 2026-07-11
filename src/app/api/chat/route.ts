@@ -4,6 +4,7 @@ import { chatErrorResponse } from "@/lib/chat/errors";
 import { latestUserText } from "@/lib/chat/messageText";
 import { buildChatTools } from "@/lib/chat/tools";
 import { withAuth } from "@/lib/withAuth";
+import { MODEL_HEAVY } from "@/lib/ai/models";
 import { openai } from "@ai-sdk/openai";
 import {
   convertToModelMessages,
@@ -70,7 +71,7 @@ export const POST = withAuth(async (req: NextRequest, { userId }) => {
             : "";
 
         const result = streamText({
-          model: openai("gpt-5-mini"),
+          model: openai(MODEL_HEAVY),
           messages: convertToModelMessages(validatedMessages),
           system: CHAT_SYSTEM_PROMPT + captureNote,
           stopWhen: [stepCountIs(5)],
