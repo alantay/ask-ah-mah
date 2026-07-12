@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
 import { isPickableCategory } from "@/lib/marketTips/pickable";
 import { KITCHEN_DOMAIN_RULE } from "@/lib/marketTips/relevance";
+import { runTipCorpus, type TipCorpusAdapter } from "@/lib/tipCorpus";
 import { withAuth } from "@/lib/withAuth";
 import { MODEL_LIGHT } from "@/lib/ai/models";
 import { openai } from "@ai-sdk/openai";
@@ -25,6 +26,53 @@ const TipGenSchema = z.object({
   tips: z.array(z.object({ key: z.string(), tip: z.string() })),
 });
 
+interface MarketTipItem {
+  name: string;
+  category?: string | null;
+}
+
+const marketTipAdapter: TipCorpusAdapter<MarketTipItem> = {
+  canonicalKey: (item) => canonicalTipKey(item.name),
+
+  async readCache(keys) {
+    const rows = await prisma.marketTip.findMany({ where: { key: { in: keys } } });
+    return rows.map((row) => ({ key: row.key, label: row.tip }));
+  },
+
+  async writeCache(key, label) {
+    await prisma.marketTip.create({ data: { key, tip: label } });
+  },
+
+  prefilter: (item) => isPickableCategory(item.category),
+
+  negativeLabel: "",
+  omissionLabel: "",
+
+  async generate(misses) {
+    const list = misses.map(({ key }) => `- ${key}`).join("\n");
+    const { object } = await generateObject({
+      model: openai(MODEL_LIGHT),
+      schema: TipGenSchema,
+      // gpt-5 models only support the default temperature; setting it errors.
+      prompt: `Give ONE short, factual tip on how to PICK a good one of each item at the shop — what to look for, feel for, or smell.
+
+RULES:
+- Return exactly one entry per item, using the EXACT given item text as "key".
+- "tip": max 12 words, plain imperative. NO "to pick a good X" preamble. e.g. "firm, deep red, no soft spots".
+- If quality does NOT meaningfully vary at the shop (dry goods, canned, bottled, salt, sugar, flour), return tip as an empty string "".
+- ${KITCHEN_DOMAIN_RULE}
+- Plain and factual, no persona. Keep it SHORT.
+
+ITEMS:
+${list}`,
+    });
+
+    return new Map(
+      object.tips.map((t) => [canonicalTipKey(t.key), t.tip.trim()] as const),
+    );
+  },
+};
+
 // Model-calling endpoint — gated on a verified session so anonymous callers
 // can't loop it and burn token budget. Anonymous visitors still carry a
 // session cookie, so the app's own calls are unaffected.
@@ -42,74 +90,9 @@ export const POST = withAuth(async (req: NextRequest, { userId: _userId }) => {
       return NextResponse.json({ error: "Invalid items payload" }, { status: 400 });
     }
 
-    // Canonicalize + dedupe; track a display name + pickability per key.
-    const wanted = new Map<string, { name: string; pickable: boolean }>();
-    for (const item of parsed.data.items) {
-      const key = canonicalTipKey(item.name);
-      if (!key || wanted.has(key)) continue;
-      wanted.set(key, {
-        name: item.name.trim(),
-        pickable: isPickableCategory(item.category),
-      });
-    }
+    const tips = await runTipCorpus(parsed.data.items, marketTipAdapter);
 
-    const keys = [...wanted.keys()];
-    const cached = await prisma.marketTip.findMany({ where: { key: { in: keys } } });
-    const result: Record<string, string> = Object.create(null);
-    for (const row of cached) result[row.key] = row.tip;
-
-    const misses = keys.filter(
-      (k) => !Object.prototype.hasOwnProperty.call(result, k),
-    );
-    const toGenerate = misses.filter((k) => wanted.get(k)!.pickable);
-    const staples = misses.filter((k) => !wanted.get(k)!.pickable);
-
-    // Negative-cache staples: no model call, never a tip.
-    for (const k of staples) {
-      result[k] = "";
-      await prisma.marketTip
-        .create({ data: { key: k, tip: "" } })
-        .catch((e) => console.warn("market-tip cache write failed", k, e));
-    }
-
-    if (toGenerate.length > 0) {
-      const list = toGenerate.map((k) => `- ${k}`).join("\n");
-      const { object } = await generateObject({
-        model: openai(MODEL_LIGHT),
-        schema: TipGenSchema,
-        // gpt-5 models only support the default temperature; setting it errors.
-        prompt: `Give ONE short, factual tip on how to PICK a good one of each item at the shop — what to look for, feel for, or smell.
-
-RULES:
-- Return exactly one entry per item, using the EXACT given item text as "key".
-- "tip": max 12 words, plain imperative. NO "to pick a good X" preamble. e.g. "firm, deep red, no soft spots".
-- If quality does NOT meaningfully vary at the shop (dry goods, canned, bottled, salt, sugar, flour), return tip as an empty string "".
-- ${KITCHEN_DOMAIN_RULE}
-- Plain and factual, no persona. Keep it SHORT.
-
-ITEMS:
-${list}`,
-      });
-
-      const generated = new Map(
-        object.tips.map((t) => [canonicalTipKey(t.key), t.tip.trim()]),
-      );
-      for (const k of toGenerate) {
-        if (generated.has(k)) {
-          const tip = generated.get(k)!;
-          result[k] = tip;
-          await prisma.marketTip
-            .create({ data: { key: k, tip } })
-            .catch((e) => console.warn("market-tip cache write failed", k, e));
-        } else {
-          // Model omitted this key — return no tip for this request but
-          // don't negative-cache it, so it stays retryable on a later call.
-          result[k] = "";
-        }
-      }
-    }
-
-    return NextResponse.json({ tips: result });
+    return NextResponse.json({ tips });
   } catch (error) {
     console.error("Failed to fetch market tips", error);
     return NextResponse.json(
