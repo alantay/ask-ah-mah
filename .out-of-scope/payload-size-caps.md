@@ -4,7 +4,7 @@ This project does not enforce upper-bound length/size validation on free-text in
 
 ## Why this is out of scope
 
-A full implementation shipped in PR #411 — bounded `content` on the message-create route, per-string/per-array caps on `RecipeBlockSchema`, a per-part size bound on chat message parts, and reduced market-tip/storage-tip batch sizes, all with test coverage and passing CI. The owner closed the PR without merging: "i do not like this payload size cap." The specific objection wasn't elaborated beyond that — not a quality complaint about the implementation, a disagreement with the approach itself.
+A full implementation was proposed in PR #411 — bounded `content` on the message-create route, per-string/per-array caps on `RecipeBlockSchema`, a per-part size bound on chat message parts, and reduced market-tip/storage-tip batch sizes, all with test coverage and passing CI. The owner closed the PR without merging: "i do not like this payload size cap." The specific objection wasn't elaborated beyond that — not a quality complaint about the implementation, a disagreement with the approach itself.
 
 ```ts
 // src/lib/recipes/schemas.ts — RecipeBlockSchema strings/arrays are

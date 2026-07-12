@@ -1,6 +1,6 @@
 # Ah Mah's Step Note (CookingMode)
 
-This project does not have a separate, model-authored per-step encouragement/reassurance line in CookingMode, distinct from the existing `step.tip` field.
+This project does not have a separate, model-authored encouragement/reassurance line in CookingMode, distinct from the existing `step.tip` field.
 
 ## Why this is out of scope
 
@@ -24,4 +24,4 @@ Reopen this if the owner decides it's worth the design work again. Whoever picks
 
 ## Prior requests
 
-- #378 — Ah Mah's step note (model-authored, per dish) in CookingMode
+- #378 — Ah Mah's step note (model-authored, per dish) in CookingMode. Note: brainstorming shifted this toward a per-step note (see "Why this is out of scope" above); the scope should be settled — dish or step — before this is picked up again.

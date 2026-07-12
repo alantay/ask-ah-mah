@@ -70,7 +70,7 @@ function HomeContent() {
           <TabsContent
             value="pantry"
             forceMount
-            className="flex-1 min-h-0 mt-0 overflow-hidden border border-border rounded-lg bg-muted paper data-[state=inactive]:hidden"
+            className="flex-1 min-h-0 mt-0 overflow-hidden border border-border bg-muted paper data-[state=inactive]:hidden"
           >
             <InventoryWrapper />
           </TabsContent>
@@ -79,7 +79,7 @@ function HomeContent() {
           <TabsContent
             value="shopping"
             forceMount
-            className="flex-1 min-h-0 mt-0 overflow-hidden border border-border rounded-lg bg-muted paper data-[state=inactive]:hidden"
+            className="flex-1 min-h-0 mt-0 overflow-hidden border border-border bg-muted paper data-[state=inactive]:hidden"
           >
             <ShoppingList />
           </TabsContent>
@@ -88,7 +88,7 @@ function HomeContent() {
           <TabsContent
             value="cookbook"
             forceMount
-            className="flex-1 min-h-0 mt-0 overflow-hidden border border-border rounded-lg data-[state=inactive]:hidden"
+            className="flex-1 min-h-0 mt-0 overflow-hidden border border-border data-[state=inactive]:hidden"
           >
             <RecipeList onChatClick={() => setActiveTab("chat")} />
           </TabsContent>
