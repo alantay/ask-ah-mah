@@ -28,9 +28,13 @@ interface CookingModeProps {
   // way the master ingredient list scales. Defaults to 1 (no consumer that
   // omits it has a servings stepper to desync from).
   servingsRatio?: number;
+  // Master ingredient list mapped to Step Uses (see ingredientsToUses), applied
+  // to every prep card so ingredient names mentioned in prep prose get the same
+  // hover-for-quantity hint as steps.
+  prepUses?: RecipeStepUse[];
 }
 
-function prepToStep(item: string): Step {
+function prepToStep(item: string, uses?: RecipeStepUse[]): Step {
   const normalized = item.trim();
   const commaIdx = normalized.indexOf(",");
   const title =
@@ -38,12 +42,12 @@ function prepToStep(item: string): Step {
       ? normalized.slice(0, commaIdx).trim()
       : normalized.split(/\s+/).slice(0, 4).join(" ");
   const body = normalized;
-  return { title, body };
+  return { title, body, uses };
 }
 
-export function CookingMode({ title, steps, prep, onExit, cooked, onCookedChange, servingsRatio = 1 }: CookingModeProps) {
+export function CookingMode({ title, steps, prep, onExit, cooked, onCookedChange, servingsRatio = 1, prepUses }: CookingModeProps) {
   const allSteps: Step[] = [
-    ...(prep ?? []).map(prepToStep),
+    ...(prep ?? []).map((item) => prepToStep(item, prepUses)),
     ...steps,
   ];
   const [current, setCurrent] = useState(0);
