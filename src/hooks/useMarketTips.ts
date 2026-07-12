@@ -2,6 +2,7 @@
 
 import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
 import { isPickableCategory } from "@/lib/marketTips/pickable";
+import { marketTipKey } from "@/lib/swr/keys";
 import useSWR from "swr";
 
 interface TipItem {
@@ -28,10 +29,7 @@ export function useMarketTips(
   const pickable = items.filter((i) => isPickableCategory(i.category));
   const swrKey =
     enabled && pickable.length
-      ? `market-tip:${pickable
-          .map((i) => canonicalTipKey(i.name))
-          .sort()
-          .join("|")}`
+      ? marketTipKey(pickable.map((i) => canonicalTipKey(i.name)))
       : null;
 
   const { data, isValidating } = useSWR<{ tips: Record<string, string> }>(

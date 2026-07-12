@@ -21,6 +21,7 @@ import {
   recipeWithIdToBlock,
 } from "@/lib/recipes/schemas";
 import { hasSeenSignInNudge, markSignInNudgeSeen } from "@/lib/signInNudge";
+import { recipeKey } from "@/lib/swr/keys";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -581,7 +582,7 @@ export default function RecipeDisplay({
         if (!res.ok) throw new Error("Save failed");
 
         originalRecipeRef.current = { ...confirmedBase, cooked: nextCooked };
-        mutate(`/api/recipe?userId=${userId}`);
+        mutate(recipeKey(userId));
         if (nextCooked) {
           if (!isAuthenticated && !hasSeenSignInNudge("finish-moment")) {
             markSignInNudgeSeen("finish-moment");

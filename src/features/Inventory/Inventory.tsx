@@ -21,6 +21,7 @@ import { useStorageTips } from "@/hooks/useStorageTips";
 import { useTipsPreference } from "@/hooks/useTipsPreference";
 import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
 import { STORAGE_TIPS_PREF_KEY } from "@/lib/marketTips/preferences";
+import { inventoryKey } from "@/lib/swr/keys";
 import { Check, CookingPot, Plus, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -127,7 +128,7 @@ const Inventory = () => {
   const searchParams = useSearchParams();
 
   const { data, error, isLoading } = useSWR<GetInventoryResponse>(
-    userId ? `/api/inventory?userId=${userId}` : null,
+    userId ? inventoryKey(userId) : null,
     fetcher,
     {
       shouldRetryOnError: true,
@@ -185,7 +186,7 @@ const Inventory = () => {
         };
         setDraft("");
         setIsAdding(false);
-        mutate(`/api/inventory?userId=${userId}`);
+        mutate(inventoryKey(userId));
         toast.success(
           items.length === 1
             ? `${items[0].name} — in the pantry now.`
@@ -211,7 +212,7 @@ const Inventory = () => {
         body: JSON.stringify({ itemNames: [itemName] }),
       });
       if (response.ok) {
-        mutate(`/api/inventory?userId=${userId}`);
+        mutate(inventoryKey(userId));
         toast.success(`Okay, took out the ${itemName}.`);
       } else {
         const detail = await response.text().catch(() => "");

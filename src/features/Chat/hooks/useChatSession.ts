@@ -7,6 +7,7 @@ import {
   RemoveInventoryItemSchemaObj,
 } from "@/lib/inventory/schemas";
 import { SavedMessage } from "@/lib/messages/schemas";
+import { inventoryKey, messageKey } from "@/lib/swr/keys";
 import { fetcher, upperCaseFirstLetter } from "@/lib/utils";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
@@ -140,7 +141,7 @@ export function useChatSession() {
         toast.success(
           `${names.map((name) => upperCaseFirstLetter(name)).join(", ")} ${verb} inventory!`
         );
-        mutate(`/api/inventory?userId=${userId}`);
+        if (userId) mutate(inventoryKey(userId));
       };
 
       message.parts.forEach((part) => {
@@ -193,7 +194,7 @@ export function useChatSession() {
 
   const { data, isLoading: messagesLoading } = useSWR<SavedMessage[]>(
     userId && activeConversationId
-      ? `/api/message?conversationId=${activeConversationId}`
+      ? messageKey(activeConversationId)
       : null,
     fetcher,
     { shouldRetryOnError: true, revalidateOnMount: true }
@@ -220,7 +221,7 @@ export function useChatSession() {
         throw new Error(
           `Save failed: ${response.status} (conversationId: ${targetConvId})`
         );
-      mutate(`/api/message?conversationId=${targetConvId}`);
+      mutate(messageKey(targetConvId));
     } catch (error) {
       console.error("Failed to save message:", error);
       throw error;

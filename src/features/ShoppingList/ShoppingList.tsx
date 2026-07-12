@@ -10,6 +10,7 @@ import { MARKET_TIPS_PREF_KEY } from "@/lib/marketTips/preferences";
 import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
 import { isPickableCategory } from "@/lib/marketTips/pickable";
 import { groupByAisle } from "@/lib/shoppingList";
+import { shoppingListKey } from "@/lib/swr/keys";
 import { cn, fetcher } from "@/lib/utils";
 import { Check, Plus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -33,9 +34,7 @@ const ShoppingList = () => {
   // effect fires once per distinct set of uncategorised rows (no loop).
   const classifyRequestedRef = useRef("");
 
-  const key = userId
-    ? `/api/shopping-list?userId=${encodeURIComponent(userId)}`
-    : null;
+  const key = userId ? shoppingListKey(userId) : null;
   const { data, isLoading, error } = useSWR<GetShoppingListResponse>(
     key,
     fetcher,
@@ -64,7 +63,7 @@ const ShoppingList = () => {
           });
       if (res.ok) {
         setDraft("");
-        mutate(`/api/shopping-list?userId=${encodeURIComponent(userId)}`);
+        mutate(shoppingListKey(userId));
         if (needsParse) {
           const { items } = (await res.json()) as { items: { name: string }[] };
           toast.success(
@@ -88,7 +87,7 @@ const ShoppingList = () => {
 
   const revalidate = () => {
     if (userId) {
-      mutate(`/api/shopping-list?userId=${encodeURIComponent(userId)}`);
+      mutate(shoppingListKey(userId));
     }
   };
 
@@ -104,7 +103,7 @@ const ShoppingList = () => {
     optimisticUpdate: (items: ShoppingListRow[]) => ShoppingListRow[],
   ) => {
     if (!userId) return;
-    const key = `/api/shopping-list?userId=${encodeURIComponent(userId)}`;
+    const key = shoppingListKey(userId);
     mutate<GetShoppingListResponse>(
       key,
       { items: optimisticUpdate(items) },

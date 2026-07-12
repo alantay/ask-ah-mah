@@ -11,6 +11,10 @@ import { Button } from "@/components/ui/button";
 import { ingredientsToUses } from "@/lib/recipes/ingredientUses";
 import { ingredientMatches } from "@/lib/recipes/matchIngredient";
 import { RecipeBlock, RecipeIngredientModel } from "@/lib/recipes/schemas";
+import {
+  inventoryKey as buildInventoryKey,
+  shoppingListKey,
+} from "@/lib/swr/keys";
 import { cn } from "@/lib/utils";
 import { fetcher } from "@/lib/utils";
 import { ShoppingCart, TimerIcon } from "lucide-react";
@@ -95,7 +99,7 @@ export function RecipeLetter({
   const ratio = isStreaming ? 1 : servings / baseServings;
   const { userId } = useSessionContext();
   const { mutate } = useSWRConfig();
-  const inventoryKey = userId ? `/api/inventory?userId=${userId}` : null;
+  const inventoryKey = userId ? buildInventoryKey(userId) : null;
   const { data: inventoryData } = useSWR<GetInventoryResponse>(
     inventoryKey,
     fetcher,
@@ -127,7 +131,7 @@ export function RecipeLetter({
         throw new Error(msg);
       }
       toast.success(`${ing.name} — on the list.`);
-      mutate(`/api/shopping-list?userId=${encodeURIComponent(userId)}`);
+      mutate(shoppingListKey(userId));
     } catch (err) {
       toast.error(
         err instanceof Error

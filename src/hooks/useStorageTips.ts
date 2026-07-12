@@ -1,6 +1,7 @@
 "use client";
 
 import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
+import { storageTipKey } from "@/lib/swr/keys";
 import useSWR from "swr";
 
 interface TipItem {
@@ -26,10 +27,7 @@ export function useStorageTips(
 ): { tips: Record<string, string>; isLoading: boolean } {
   const swrKey =
     enabled && items.length
-      ? `storage-tip:${items
-          .map((i) => canonicalTipKey(i.name))
-          .sort()
-          .join("|")}`
+      ? storageTipKey(items.map((i) => canonicalTipKey(i.name)))
       : null;
 
   const { data, isValidating } = useSWR<{ tips: Record<string, string> }>(

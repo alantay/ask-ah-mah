@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useSessionContext } from "@/contexts/SessionContext";
 import { Eyebrow } from "@/features/shared/components/recipe";
 import { RecipeWithId } from "@/lib/recipes/schemas";
+import { recipeKey } from "@/lib/swr/keys";
 import { fetcher } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -29,7 +30,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
   const [showAdd, setShowAdd] = useState(false);
 
   const { data: recipes, isLoading } = useSWR<RecipeWithId[]>(
-    userId ? `/api/recipe?userId=${userId}` : null,
+    userId ? recipeKey(userId) : null,
     fetcher,
     { shouldRetryOnError: true, revalidateOnMount: true },
   );
@@ -42,7 +43,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
         body: JSON.stringify({ recipeId }),
       });
       if (!res.ok) throw new Error("Delete failed");
-      mutate(`/api/recipe?userId=${userId}`);
+      if (userId) mutate(recipeKey(userId));
       toast.success("Okay, thrown away.");
     } catch {
       toast.error("Aiyah, couldn't throw it away. Try again?");
