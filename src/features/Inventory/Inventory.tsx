@@ -22,6 +22,7 @@ import { useTipsPreference } from "@/hooks/useTipsPreference";
 import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
 import { STORAGE_TIPS_PREF_KEY } from "@/lib/marketTips/preferences";
 import { inventoryKey } from "@/lib/swr/keys";
+import { mutateResource } from "@/lib/swr/mutateResource";
 import { Check, CookingPot, Plus, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -206,10 +207,10 @@ const Inventory = () => {
   const removeItem = async (itemName: string) => {
     if (!userId) return;
     try {
-      const response = await fetch("/api/inventory", {
+      const response = await mutateResource({
+        url: "/api/inventory",
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemNames: [itemName] }),
+        body: { itemNames: [itemName] },
       });
       if (response.ok) {
         mutate(inventoryKey(userId));

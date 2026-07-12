@@ -15,6 +15,7 @@ import {
   inventoryKey as buildInventoryKey,
   shoppingListKey,
 } from "@/lib/swr/keys";
+import { mutateResource } from "@/lib/swr/mutateResource";
 import { cn } from "@/lib/utils";
 import { fetcher } from "@/lib/utils";
 import { ShoppingCart, TimerIcon } from "lucide-react";
@@ -112,17 +113,17 @@ export function RecipeLetter({
     if (!userId || inFlight.has(ing.name)) return;
     setInFlight((prev) => new Set(prev).add(ing.name));
     try {
-      const res = await fetch("/api/shopping-list", {
+      const res = await mutateResource({
+        url: "/api/shopping-list",
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: {
           items: [
             {
               name: ing.name,
               ...(ing.category && { category: ing.category }),
             },
           ],
-        }),
+        },
       });
       if (!res.ok) {
         const payload = await res.json().catch(() => null);

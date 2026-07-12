@@ -11,6 +11,7 @@ import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
 import { isPickableCategory } from "@/lib/marketTips/pickable";
 import { groupByAisle } from "@/lib/shoppingList";
 import { shoppingListKey } from "@/lib/swr/keys";
+import { mutateResource } from "@/lib/swr/mutateResource";
 import { cn, fetcher } from "@/lib/utils";
 import { Check, Plus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -104,16 +105,13 @@ const ShoppingList = () => {
   ) => {
     if (!userId) return;
     const key = shoppingListKey(userId);
-    mutate<GetShoppingListResponse>(
-      key,
-      { items: optimisticUpdate(items) },
-      { revalidate: false },
-    );
     try {
-      const res = await fetch("/api/shopping-list", {
+      const res = await mutateResource<GetShoppingListResponse>({
+        key,
+        url: "/api/shopping-list",
         method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body,
+        optimisticData: { items: optimisticUpdate(items) },
       });
       mutate(key);
       if (!res.ok) {

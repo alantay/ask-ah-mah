@@ -5,6 +5,7 @@ import { useSessionContext } from "@/contexts/SessionContext";
 import { Eyebrow } from "@/features/shared/components/recipe";
 import { RecipeWithId } from "@/lib/recipes/schemas";
 import { recipeKey } from "@/lib/swr/keys";
+import { mutateResource } from "@/lib/swr/mutateResource";
 import { fetcher } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -37,10 +38,10 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
 
   const deleteRecipe = async (recipeId: string) => {
     try {
-      const res = await fetch(`/api/recipe`, {
+      const res = await mutateResource({
+        url: "/api/recipe",
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipeId }),
+        body: { recipeId },
       });
       if (!res.ok) throw new Error("Delete failed");
       if (userId) mutate(recipeKey(userId));
