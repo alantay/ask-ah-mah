@@ -28,9 +28,13 @@ export const conversationListKey = (userId: string) =>
 
 // Tips keys are pure cache keys (never fetch URLs) — sorted, pipe-joined
 // canonical item names behind a resource prefix, so identical item sets
-// dedupe regardless of order.
+// dedupe regardless of order. market/storage only differ by prefix, so both
+// build off the same shared helper.
+const tipKey = (prefix: "market-tip" | "storage-tip", canonicalNames: string[]) =>
+  `${prefix}:${[...canonicalNames].sort().join("|")}`;
+
 export const marketTipKey = (canonicalNames: string[]) =>
-  `market-tip:${[...canonicalNames].sort().join("|")}`;
+  tipKey("market-tip", canonicalNames);
 
 export const storageTipKey = (canonicalNames: string[]) =>
-  `storage-tip:${[...canonicalNames].sort().join("|")}`;
+  tipKey("storage-tip", canonicalNames);
