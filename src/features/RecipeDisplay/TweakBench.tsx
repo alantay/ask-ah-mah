@@ -314,7 +314,7 @@ export function TweakBench({
                 />
                 {n > 0 && (
                   <div className="pl-[37px]">
-                    <div className="font-sans text-eyebrow font-bold tracking-[0.16em] uppercase text-ink-faint mb-2">
+                    <div className="font-sans text-eyebrow font-bold tracking-eyebrow uppercase text-ink-faint mb-2">
                       What changed
                     </div>
                     <ul className="flex flex-col gap-1.5">
