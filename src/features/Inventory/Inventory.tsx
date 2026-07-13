@@ -352,7 +352,7 @@ const Inventory = () => {
                     onClick={enterSelectionMode}
                     className="gap-1.5 px-3.5 py-2 text-dense font-semibold shrink-0"
                   >
-                    <CookingPot className="size-[15px]" />
+                    <CookingPot className="size-3.5" />
                     Cook with what you have
                   </Button>
                 )}
@@ -362,7 +362,7 @@ const Inventory = () => {
                     onClick={() => setIsAdding(true)}
                     className="gap-1.5 px-3.5 py-2 text-dense font-semibold shrink-0"
                   >
-                    <Plus className="size-[15px]" />
+                    <Plus className="size-3.5" />
                     Add to pantry
                   </Button>
                 )}
@@ -373,7 +373,7 @@ const Inventory = () => {
                 onClick={exitSelectionMode}
                 className="gap-1.5 px-3.5 py-2 text-dense font-semibold text-muted-foreground shrink-0"
               >
-                <X className="size-[15px]" />
+                <X className="size-3.5" />
                 Cancel
               </Button>
             )}
@@ -390,7 +390,7 @@ const Inventory = () => {
                   onClick={enterSelectionMode}
                   className="gap-1.5 min-h-11 px-3 py-1.5 text-xs font-semibold"
                 >
-                  <CookingPot className="size-[14px]" />
+                  <CookingPot className="size-3.5" />
                   Cook with what you have
                 </Button>
               )}
@@ -400,7 +400,7 @@ const Inventory = () => {
                   onClick={() => setIsAdding(true)}
                   className="gap-1.5 min-h-11 px-3 py-1.5 text-xs font-semibold ml-auto"
                 >
-                  <Plus className="size-[14px]" />
+                  <Plus className="size-3.5" />
                   Add to pantry
                 </Button>
               )}
@@ -425,7 +425,7 @@ const Inventory = () => {
                   onClick={exitSelectionMode}
                   className="gap-1.5 min-h-11 px-3 py-1.5 text-xs font-semibold text-muted-foreground"
                 >
-                  <X className="size-[14px]" />
+                  <X className="size-3.5" />
                   Cancel
                 </Button>
               </div>

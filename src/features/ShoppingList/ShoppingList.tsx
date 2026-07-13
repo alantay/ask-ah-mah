@@ -225,7 +225,7 @@ const ShoppingList = () => {
             disabled={submitting || !draft.trim()}
             className="gap-1.5 font-semibold shrink-0"
           >
-            <Plus className="size-[15px]" />
+            <Plus className="size-3.5" />
             {submitting ? "Adding…" : "Add"}
           </Button>
         </form>
