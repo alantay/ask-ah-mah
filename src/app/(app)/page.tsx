@@ -44,7 +44,11 @@ function HomeContent() {
   return (
     <div className="bg-background paper h-full lg:h-full flex flex-col">
       <main className="w-full xl:container 2xl:max-w-screen-xl mx-auto h-[calc(100dvh-3.25rem)] sm:h-[calc(100dvh-3.75rem)] md:h-[calc(100dvh-4.5rem)] lg:flex-1 lg:min-h-0">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="h-full flex flex-col"
+        >
           {/* Nav is driven by the AppSidebar (desktop) and MobileTopBar drawer (mobile);
               the Tabs container only switches the content panels below. */}
 
@@ -54,7 +58,7 @@ function HomeContent() {
             forceMount
             className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden"
           >
-            <div className="flex h-full overflow-hidden relative lg:border lg:border-border lg:rounded-lg">
+            <div className="flex h-full overflow-hidden relative lg:border lg:border-border">
               {/* Chat panel */}
               <section className="flex-1 min-w-0 relative flex flex-col bg-chat">
                 <ChatWrapper />
@@ -66,7 +70,7 @@ function HomeContent() {
           <TabsContent
             value="pantry"
             forceMount
-            className="flex-1 min-h-0 mt-0 overflow-hidden border border-border rounded-lg bg-muted paper data-[state=inactive]:hidden"
+            className="flex-1 min-h-0 mt-0 overflow-hidden border border-border bg-muted paper data-[state=inactive]:hidden"
           >
             <InventoryWrapper />
           </TabsContent>
@@ -75,7 +79,7 @@ function HomeContent() {
           <TabsContent
             value="shopping"
             forceMount
-            className="flex-1 min-h-0 mt-0 overflow-hidden border border-border rounded-lg bg-muted paper data-[state=inactive]:hidden"
+            className="flex-1 min-h-0 mt-0 overflow-hidden border border-border bg-muted paper data-[state=inactive]:hidden"
           >
             <ShoppingList />
           </TabsContent>
@@ -84,7 +88,7 @@ function HomeContent() {
           <TabsContent
             value="cookbook"
             forceMount
-            className="flex-1 min-h-0 mt-0 overflow-hidden border border-border rounded-lg data-[state=inactive]:hidden"
+            className="flex-1 min-h-0 mt-0 overflow-hidden border border-border data-[state=inactive]:hidden"
           >
             <RecipeList onChatClick={() => setActiveTab("chat")} />
           </TabsContent>

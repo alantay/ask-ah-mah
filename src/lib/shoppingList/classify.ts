@@ -1,4 +1,5 @@
 import { MODEL_LIGHT } from "@/lib/ai/models";
+import { runTipCorpus, type TipCorpusAdapter } from "@/lib/tipCorpus";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
@@ -16,35 +17,18 @@ function coerce(aisle: string): Aisle {
   return AISLE_SET.has(aisle) ? (aisle as Aisle) : "Other";
 }
 
-/**
- * Ask the model which Aisle each item belongs to, mirroring the Market Tip
- * engine (one `gpt-5-nano` call, name in, label out). Returns a map from each
- * item's canonical shopping key to its Aisle. Anything the model omits or
- * mislabels resolves to `Other`, so the caller always gets an aisle per item.
- */
-export async function classifyAisles(
-  names: string[],
-): Promise<Record<string, Aisle>> {
-  // Canonicalize + dedupe; keep one display name per key for the prompt.
-  const wanted = new Map<string, string>();
-  for (const name of names) {
-    const key = canonicalShoppingKey(name);
-    if (key && !wanted.has(key)) wanted.set(key, name.trim());
-  }
+const aisleAdapter: TipCorpusAdapter<string, Aisle> = {
+  canonicalKey: (name) => canonicalShoppingKey(name),
 
-  const keys = [...wanted.keys()];
-  const result: Record<string, Aisle> = Object.create(null);
-  if (keys.length === 0) return result;
+  omissionLabel: "Other",
 
-  // Default every wanted item to Other so omissions are covered.
-  for (const k of keys) result[k] = "Other";
-
-  const list = keys.map((k) => `- ${k}`).join("\n");
-  const { object } = await generateObject({
-    model: openai(MODEL_LIGHT),
-    schema: AssignmentSchema,
-    // gpt-5 models only support the default temperature; setting it errors.
-    prompt: `You sort grocery items into the aisle where a shopper finds them at a market. For each item, pick exactly ONE aisle from this list:
+  async generate(misses) {
+    const list = misses.map(({ key }) => `- ${key}`).join("\n");
+    const { object } = await generateObject({
+      model: openai(MODEL_LIGHT),
+      schema: AssignmentSchema,
+      // gpt-5 models only support the default temperature; setting it errors.
+      prompt: `You sort grocery items into the aisle where a shopper finds them at a market. For each item, pick exactly ONE aisle from this list:
 
 ${AISLE_ORDER.map((a) => `- ${a}`).join("\n")}
 
@@ -54,12 +38,24 @@ RULES:
 
 ITEMS:
 ${list}`,
-  });
+    });
 
-  for (const a of object.assignments) {
-    const key = canonicalShoppingKey(a.key);
-    if (key in result) result[key] = coerce(a.aisle);
-  }
+    return new Map(
+      object.assignments.map(
+        (a) => [canonicalShoppingKey(a.key), coerce(a.aisle)] as const,
+      ),
+    );
+  },
+};
 
-  return result;
+/**
+ * Ask the model which Aisle each item belongs to, mirroring the Market Tip
+ * engine (one `gpt-5-nano` call, name in, label out). Returns a map from each
+ * item's canonical shopping key to its Aisle. Anything the model omits or
+ * mislabels resolves to `Other`, so the caller always gets an aisle per item.
+ */
+export async function classifyAisles(
+  names: string[],
+): Promise<Record<string, Aisle>> {
+  return runTipCorpus(names, aisleAdapter);
 }
