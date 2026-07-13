@@ -4,7 +4,7 @@ import AboutPopOver from "./AboutPopOver";
 import { AuthButton } from "@/features/Auth";
 import { Conversations } from "@/features/Conversations";
 import { useConversationContext } from "@/contexts/ConversationContext";
-import { useActiveTab } from "@/hooks/useActiveTab";
+import { useActiveSection } from "@/hooks/useActiveSection";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
@@ -61,10 +61,10 @@ export function SidebarContent({ onNavigate }: SidebarContentProps) {
   const router = useRouter();
   const { activeConversationId, pendingConversationId, conversations, startNewConversation } = useConversationContext();
 
-  const activeTab = useActiveTab();
+  const activeSection = useActiveSection();
 
-  const navigate = (tab: string) => {
-    router.replace(`/?tab=${tab}`, { scroll: false });
+  const navigate = (section: string) => {
+    router.replace(`/?tab=${section}`, { scroll: false });
     onNavigate?.();
   };
 
@@ -81,7 +81,7 @@ export function SidebarContent({ onNavigate }: SidebarContentProps) {
     ? (conversations.find(c => c.id === activeConversationId)?._count?.messages ?? 0) > 0
     : false;
   const isNewChatActive =
-    activeTab === "chat" && !activeConvHasMessages && pendingConversationId === null;
+    activeSection === "chat" && !activeConvHasMessages && pendingConversationId === null;
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -104,7 +104,7 @@ export function SidebarContent({ onNavigate }: SidebarContentProps) {
       {/* Primary nav */}
       <nav className="px-2 pb-2 flex flex-col gap-0.5 shrink-0">
         {NAV_ITEMS.map(({ id, label, Icon }) => {
-          const isActive = id === "chat" ? isNewChatActive : activeTab === id;
+          const isActive = id === "chat" ? isNewChatActive : activeSection === id;
           return (
             <button
               key={id}

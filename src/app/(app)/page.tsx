@@ -1,17 +1,17 @@
 "use client";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { SectionSwitcher } from "@/features/shared/components/SectionSwitcher";
 import ChatWrapper from "@/features/Chat/components/ChatWrapper";
 import InventoryWrapper from "@/features/Inventory/components/InventoryWrapper";
 import RecipeList from "@/features/RecipeList/RecipeList";
 import ShoppingList from "@/features/ShoppingList";
-import { useActiveTab } from "@/hooks/useActiveTab";
+import { useActiveSection } from "@/hooks/useActiveSection";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 function HomeContent() {
   const router = useRouter();
-  const urlTab = useActiveTab();
+  const urlSection = useActiveSection();
   const searchParams = useSearchParams();
 
   // A failed/expired auth callback (e.g. a stale magic link) redirects back
@@ -26,73 +26,64 @@ function HomeContent() {
     router.replace(tab ? `/?tab=${tab}` : "/", { scroll: false });
   }, [searchParams, router]);
 
-  // Drive the visible tab from local state so switching is instant; the URL is
-  // synced in the background. Without this, the active tab is derived from the
-  // URL and every switch waits on a router round-trip (feels like it hangs).
-  const [activeTab, setLocalTab] = useState(urlTab);
+  // Drive the visible Section from local state so switching is instant; the URL
+  // is synced in the background. Without this, the active Section is derived
+  // from the URL and every switch waits on a router round-trip (feels like it
+  // hangs).
+  const [activeSection, setLocalSection] = useState(urlSection);
 
-  // Re-sync when the URL-derived tab changes externally (e.g. /recipe/* → cookbook).
+  // Re-sync when the URL-derived Section changes externally (e.g. /recipe/* → cookbook).
   useEffect(() => {
-    setLocalTab(urlTab);
-  }, [urlTab]);
+    setLocalSection(urlSection);
+  }, [urlSection]);
 
-  const setActiveTab = (tab: string) => {
-    setLocalTab(tab as typeof urlTab);
-    router.replace(`/?tab=${tab}`, { scroll: false });
+  const setActiveSection = (section: string) => {
+    setLocalSection(section as typeof urlSection);
+    router.replace(`/?tab=${section}`, { scroll: false });
   };
 
   return (
     <div className="bg-background paper h-full lg:h-full flex flex-col">
       <main className="w-full xl:container 2xl:max-w-screen-xl mx-auto h-[calc(100dvh-3.25rem)] sm:h-[calc(100dvh-3.75rem)] md:h-[calc(100dvh-4.5rem)] lg:flex-1 lg:min-h-0">
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="h-full flex flex-col"
-        >
-          {/* Nav is driven by the AppSidebar (desktop) and MobileTopBar drawer (mobile);
-              the Tabs container only switches the content panels below. */}
-
-          {/* ── Chat tab ── */}
-          <TabsContent
-            value="chat"
-            forceMount
-            className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden"
-          >
-            <div className="flex h-full overflow-hidden relative lg:border lg:border-border">
-              {/* Chat panel */}
-              <section className="flex-1 min-w-0 relative flex flex-col bg-chat">
-                <ChatWrapper />
-              </section>
-            </div>
-          </TabsContent>
-
-          {/* ── Pantry tab ── */}
-          <TabsContent
-            value="pantry"
-            forceMount
-            className="flex-1 min-h-0 mt-0 overflow-hidden border border-border bg-muted paper data-[state=inactive]:hidden"
-          >
-            <InventoryWrapper />
-          </TabsContent>
-
-          {/* ── Shopping List tab ── */}
-          <TabsContent
-            value="shopping"
-            forceMount
-            className="flex-1 min-h-0 mt-0 overflow-hidden border border-border bg-muted paper data-[state=inactive]:hidden"
-          >
-            <ShoppingList />
-          </TabsContent>
-
-          {/* ── Cookbook tab ── */}
-          <TabsContent
-            value="cookbook"
-            forceMount
-            className="flex-1 min-h-0 mt-0 overflow-hidden border border-border data-[state=inactive]:hidden"
-          >
-            <RecipeList onChatClick={() => setActiveTab("chat")} />
-          </TabsContent>
-        </Tabs>
+        {/* Nav is driven by the AppSidebar (desktop) and MobileTopBar drawer
+            (mobile); this only switches the Section panels below. All panels
+            stay mounted (inactive ones hidden) so in-flight state survives
+            switching — see ADR-0019. */}
+        <div className="h-full flex flex-col">
+          <SectionSwitcher
+            active={activeSection}
+            sections={[
+              {
+                id: "chat",
+                className: "flex-1 min-h-0",
+                panel: (
+                  <div className="flex h-full overflow-hidden relative lg:border lg:border-border">
+                    <section className="flex-1 min-w-0 relative flex flex-col bg-chat">
+                      <ChatWrapper />
+                    </section>
+                  </div>
+                ),
+              },
+              {
+                id: "pantry",
+                className:
+                  "flex-1 min-h-0 overflow-hidden border border-border bg-muted paper",
+                panel: <InventoryWrapper />,
+              },
+              {
+                id: "shopping",
+                className:
+                  "flex-1 min-h-0 overflow-hidden border border-border bg-muted paper",
+                panel: <ShoppingList />,
+              },
+              {
+                id: "cookbook",
+                className: "flex-1 min-h-0 overflow-hidden border border-border",
+                panel: <RecipeList onChatClick={() => setActiveSection("chat")} />,
+              },
+            ]}
+          />
+        </div>
       </main>
     </div>
   );

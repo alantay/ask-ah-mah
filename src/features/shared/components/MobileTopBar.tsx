@@ -3,7 +3,7 @@
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import ConversationItemMenu from "@/features/Conversations/components/ConversationItemMenu";
 import { useConversationContext } from "@/contexts/ConversationContext";
-import { useActiveTab } from "@/hooks/useActiveTab";
+import { useActiveSection } from "@/hooks/useActiveSection";
 import { usePathname, useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { SidebarContent } from "./SidebarContent";
@@ -21,7 +21,7 @@ const SECTION_LABELS: Record<"pantry" | "shopping" | "cookbook", string> = {
  * elsewhere. The rename/delete menu appears only on Chat.
  */
 export function MobileTopBar() {
-  const activeTab = useActiveTab();
+  const activeSection = useActiveSection();
   const pathname = usePathname();
   const router = useRouter();
   // Recipe detail is a pushed view under the Cookbook section — the top bar
@@ -41,7 +41,7 @@ export function MobileTopBar() {
   // Set when Escape cancels the rename, so the resulting blur doesn't commit.
   const cancelRenameOnBlurRef = useRef(false);
 
-  const isChat = activeTab === "chat";
+  const isChat = activeSection === "chat";
   const conversationTitle = activeConversation?.title ?? "New chat";
   const canDelete = (activeConversation?._count?.messages ?? 0) > 0;
 
@@ -123,7 +123,7 @@ export function MobileTopBar() {
           )
         ) : (
           <span className="flex-1 mx-1 font-display italic font-medium text-base text-foreground leading-tight tracking-tight truncate">
-            {SECTION_LABELS[activeTab]}
+            {SECTION_LABELS[activeSection]}
           </span>
         ))}
       </div>
