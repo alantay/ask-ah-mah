@@ -75,38 +75,49 @@ export async function runTipCorpus<Item, Label extends string = string>(
 
   const writeCache = async (key: string, label: Label) => {
     if (!adapter.writeCache) return;
-    await adapter
-      .writeCache(key, label)
-      .catch((e) => console.warn("tip-corpus cache write failed", key, e));
+    try {
+      await adapter.writeCache(key, label);
+    } catch (e) {
+      console.warn("tip-corpus cache write failed", key, e);
+    }
   };
 
-  const toGenerate = adapter.prefilter
-    ? misses.filter((k) => adapter.prefilter!(wanted.get(k)!, k))
-    : misses;
+  const toGenerate: string[] = [];
+  const rejected: string[] = [];
+  for (const k of misses) {
+    if (!adapter.prefilter || adapter.prefilter(wanted.get(k)!, k)) {
+      toGenerate.push(k);
+    } else {
+      rejected.push(k);
+    }
+  }
 
   // Negative-cache prefilter rejections: no model call, resolved immediately.
-  const rejected = misses.filter((k) => !toGenerate.includes(k));
-  for (const k of rejected) {
-    const label = adapter.negativeLabel ?? ("" as Label);
-    result[k] = label;
-    await writeCache(k, label);
-  }
+  await Promise.all(
+    rejected.map(async (k) => {
+      const label = adapter.negativeLabel ?? ("" as Label);
+      result[k] = label;
+      await writeCache(k, label);
+    }),
+  );
 
   if (toGenerate.length > 0) {
     const generated = await adapter.generate(
       toGenerate.map((key) => ({ key, item: wanted.get(key)! })),
     );
-    for (const k of toGenerate) {
-      if (generated.has(k)) {
-        const label = generated.get(k)!;
-        result[k] = label;
-        await writeCache(k, label);
-      } else {
-        // Generator omitted this key — resolve it for this request but don't
-        // cache, so it stays retryable on a later call.
-        result[k] = adapter.omissionLabel;
-      }
-    }
+    await Promise.all(
+      toGenerate.map(async (k) => {
+        if (generated.has(k)) {
+          const label = generated.get(k)!;
+          result[k] = label;
+          await writeCache(k, label);
+        } else {
+          // Generator omitted this key — resolve it for this request but don't
+          // cache, so it stays retryable on a later call.
+          result[k] = adapter.omissionLabel;
+        }
+      }),
+    );
   }
 
   return result;
