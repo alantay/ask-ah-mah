@@ -14,6 +14,13 @@ interface AppPreloaderProps {
 // percentages in globals.css — see the comment there.
 const TIP_STEP_MS = 4000;
 
+const TIP_ITEM_CLASS =
+  'ahmah-tip absolute inset-0 flex items-center justify-center font-display text-emphasis italic text-muted-foreground text-balance opacity-0';
+const SPLASH_CLASS =
+  'paper fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-background px-6 text-center transition-opacity duration-400 ease-out';
+const HEADING_CLASS =
+  'font-display text-heading sm:text-display font-semibold italic leading-[1.1] text-foreground text-balance';
+
 /** Centered, muted cycling kitchen tip — the honest wait is unknowable, so the
  *  lines just keep it warm. Stacked absolutely so the row height never jumps.
  *  Rotation is pure CSS (see `.ahmah-tip` in globals.css), not a JS timer: the
@@ -26,7 +33,7 @@ function CyclingTip() {
         <div
           key={i}
           aria-hidden
-          className="ahmah-tip absolute inset-0 flex items-center justify-center font-display text-emphasis italic text-muted-foreground text-balance opacity-0"
+          className={TIP_ITEM_CLASS}
           style={{ animationDelay: `${i * TIP_STEP_MS}ms` }}
         >
           {tip}
@@ -46,18 +53,12 @@ export function AppPreloader({ hidden = false }: AppPreloaderProps) {
   return (
     <div
       aria-hidden={hidden}
-      className={cn(
-        'paper fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-background px-6 text-center',
-        'transition-opacity duration-400 ease-out',
-        hidden ? 'pointer-events-none opacity-0' : 'opacity-100',
-      )}
+      className={cn(SPLASH_CLASS, hidden ? 'pointer-events-none opacity-0' : 'opacity-100')}
     >
       <BowlMark className="size-40" />
 
       <div className="flex w-full max-w-md flex-col items-center gap-2">
-        <h1 className="font-display text-heading sm:text-display font-semibold italic leading-[1.1] text-foreground text-balance">
-          Ah Mah is prepping the ingredients&hellip;
-        </h1>
+        <h1 className={HEADING_CLASS}>Ah Mah is prepping the ingredients&hellip;</h1>
         <CyclingTip />
       </div>
 

@@ -14,6 +14,9 @@ export default function useSession() {
   // True only while we're minting the first anonymous session, so consumers keep
   // showing "loading" rather than briefly seeing a null userId.
   const [creatingGuest, setCreatingGuest] = useState(false);
+  // True if minting the anonymous session failed — lets consumers (e.g. the
+  // preloader) treat this as a terminal state instead of loading forever.
+  const [sessionFailed, setSessionFailed] = useState(false);
   const attemptedRef = useRef(false);
 
   useEffect(() => {
@@ -31,8 +34,11 @@ export default function useSession() {
         // derives the userId from the session; no need to pass it in the body.
         if (res?.data?.user?.id) {
           fetch("/api/inventory/seed", { method: "POST" });
+        } else {
+          setSessionFailed(true);
         }
       })
+      .catch(() => setSessionFailed(true))
       .finally(() => setCreatingGuest(false));
   }, [isPending, session]);
 
@@ -42,5 +48,5 @@ export default function useSession() {
   const isLoading = isPending || creatingGuest;
   const user = session?.user ?? null;
 
-  return { userId, isLoading, isAuthenticated, user };
+  return { userId, isLoading, isAuthenticated, sessionFailed, user };
 }

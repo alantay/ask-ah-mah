@@ -18,8 +18,11 @@ const FADE_MS = 400;
  * (no session providers) is never gated.
  */
 export function PreloaderGate({ children }: { children: React.ReactNode }) {
-  const { isLoading, userId } = useSessionContext();
-  const ready = !isLoading && !!userId;
+  const { isLoading, userId, sessionFailed } = useSessionContext();
+  // A failed anonymous sign-in never produces a userId — without sessionFailed
+  // as an escape hatch, `ready` would never flip and the splash would stay up
+  // forever. Unblock the app either way; it just falls back to a signed-out state.
+  const ready = !isLoading && (!!userId || sessionFailed);
 
   const [minElapsed, setMinElapsed] = useState(false);
   const [unmounted, setUnmounted] = useState(false);
