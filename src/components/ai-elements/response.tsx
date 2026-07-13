@@ -22,7 +22,7 @@ export const Response = memo(
         "[&_ol]:pl-5 [&_ol]:mt-2 [&_ol]:mb-1",
         "[&_em]:italic [&_em]:font-display",
         "[&_strong]:font-semibold [&_strong]:not-italic",
-        "[&_code]:font-mono [&_code]:not-italic [&_code]:text-[13px] [&_code]:bg-card [&_code]:border [&_code]:border-border [&_code]:rounded [&_code]:px-1",
+        "[&_code]:font-mono [&_code]:not-italic [&_code]:text-dense [&_code]:bg-card [&_code]:border [&_code]:border-border [&_code]:rounded [&_code]:px-1",
         className
       )}
       {...props}

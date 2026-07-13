@@ -245,7 +245,7 @@ function RecipeBody({
             </div>
             <div className="flex-1 min-w-0">
               <Eyebrow className="block mb-1">From Ah Mah</Eyebrow>
-              <div className="font-display italic text-[15px] sm:text-base text-foreground leading-[1.5] max-w-prose">
+              <div className="font-display italic text-emphasis sm:text-base text-foreground max-w-prose">
                 {selectedRecipe.description}
               </div>
             </div>

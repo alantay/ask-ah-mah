@@ -273,10 +273,10 @@ export function TweakBench({
             <PencilIcon />
           </div>
           <div>
-            <div className="font-display italic font-semibold text-[15px] text-foreground tracking-tight leading-none">
+            <div className="font-display italic font-semibold text-emphasis text-foreground tracking-tight leading-none">
               Tweak bench
             </div>
-            <div className="font-sans text-[11px] text-ink-faint mt-0.5">
+            <div className="font-sans text-micro text-ink-faint mt-0.5">
               Ah Mah drafts each tweak for review
             </div>
           </div>
@@ -284,7 +284,7 @@ export function TweakBench({
         <button
           onClick={onClose}
           aria-label="Close tweak bench"
-          className="w-7 h-7 inline-flex items-center justify-center border border-border rounded-full text-[11px] text-muted-foreground hover:bg-muted/60 transition-colors cursor-pointer shrink-0 mt-0.5"
+          className="w-7 h-7 inline-flex items-center justify-center border border-border rounded-full text-micro text-muted-foreground hover:bg-muted/60 transition-colors cursor-pointer shrink-0 mt-0.5"
         >
           ✕
         </button>
@@ -357,7 +357,7 @@ export function TweakBench({
               <button
                 key={chip}
                 onClick={() => sendTweak(chip)}
-                className="px-2.5 py-1 text-[11px] font-medium text-muted-foreground bg-background border border-border/70 rounded-full cursor-pointer hover:bg-muted/60 transition-colors"
+                className="px-2.5 py-1 text-micro font-medium text-muted-foreground bg-background border border-border/70 rounded-full cursor-pointer hover:bg-muted/60 transition-colors"
               >
                 {chip}
               </button>
@@ -376,7 +376,7 @@ export function TweakBench({
                 if (e.key === "Enter") sendTweak();
               }}
               placeholder="e.g. less spicy, add cucumber…"
-              className="flex-1 bg-transparent border-none outline-none text-[13px] text-foreground placeholder:text-muted-foreground font-sans"
+              className="flex-1 bg-transparent border-none outline-none text-dense text-foreground placeholder:text-muted-foreground font-sans"
             />
             <button
               onClick={() => sendTweak()}
@@ -395,7 +395,7 @@ export function TweakBench({
           </div>
         ) : (
           <div className="flex items-center gap-2 px-3.5 py-2 bg-background border border-border/60 rounded-full opacity-60">
-            <span className="font-sans text-[13px] text-muted-foreground italic">
+            <span className="font-sans text-dense text-muted-foreground italic">
               Ah Mah is rewriting…
             </span>
           </div>
@@ -407,7 +407,7 @@ export function TweakBench({
             <button
               onClick={onSave}
               disabled={isSaving}
-              className="w-full py-2.5 text-[13px] font-semibold text-primary-foreground bg-primary border border-primary/80 rounded-lg cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-60"
+              className="w-full py-2.5 text-dense font-semibold text-primary-foreground bg-primary border border-primary/80 rounded-lg cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-60"
             >
               {isSaving ? "Saving…" : "Save to my cookbook"}
             </button>
