@@ -55,7 +55,7 @@ describe("buildChatTools", () => {
         kitchenwareInventory: [],
       });
       const tools = buildChatTools(userId);
-      await tools.getInventory.execute({});
+      await tools.getInventory.execute();
       expect(getInventory).toHaveBeenCalledWith(userId);
     });
 
@@ -65,7 +65,7 @@ describe("buildChatTools", () => {
         kitchenwareInventory: [{ name: "wok" }],
       });
       const tools = buildChatTools(userId);
-      const result = await tools.getInventory.execute({});
+      const result = await tools.getInventory.execute();
       expect(result).toHaveProperty("content");
       expect(result).toHaveProperty("inventory");
       expect((result as { content: string }).content).toContain("2 ingredients");

@@ -8,6 +8,7 @@
     "analyze": "prisma generate && ANALYZE=true next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

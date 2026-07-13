@@ -4,7 +4,7 @@ import { migrateGuestData } from "./migrateGuestData";
 // Mock Prisma. The interactive transaction runs its callback against the same
 // mock so every reassignment is observable on the shared jest.fn()s.
 jest.mock("@/lib/db", () => {
-  const prismaMock = {
+  const prismaMock: Record<string, unknown> = {
     recipe: { updateMany: jest.fn() },
     conversation: { updateMany: jest.fn() },
     message: { updateMany: jest.fn() },

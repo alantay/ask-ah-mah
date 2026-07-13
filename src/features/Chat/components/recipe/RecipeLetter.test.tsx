@@ -7,7 +7,7 @@ jest.mock('@/contexts/SessionContext', () => ({
 }));
 
 const mockMutate = jest.fn();
-const mockUseSWR = jest.fn(() => ({ data: undefined as unknown }));
+const mockUseSWR = jest.fn((..._args: unknown[]) => ({ data: undefined as unknown }));
 jest.mock('swr', () => ({
   __esModule: true,
   default: (...args: unknown[]) => mockUseSWR(...args),
@@ -163,7 +163,7 @@ describe('Shortfall card retired', () => {
   const RECIPE_3: RecipeLetterProps['recipe'] = {
     ...RECIPE,
     ingredients: [
-      ...RECIPE.ingredients,
+      ...(RECIPE.ingredients ?? []),
       { name: 'ginger', category: 'Vegetable', amount: '1', unit: 'thumb', note: undefined },
     ],
   };

@@ -117,6 +117,7 @@ describe("Recipe API Routes", () => {
           photographerName: null,
           photographerUrl: null,
           shareToken: null,
+          cooked: false,
         },
         {
           id: "recipe-2",
@@ -137,6 +138,7 @@ describe("Recipe API Routes", () => {
           photographerName: null,
           photographerUrl: null,
           shareToken: null,
+          cooked: false,
         },
       ];
 
@@ -223,6 +225,7 @@ describe("Recipe API Routes", () => {
           photographerName: null,
           photographerUrl: null,
           shareToken: null,
+          cooked: false,
         },
       ];
 
@@ -263,6 +266,7 @@ describe("Recipe API Routes", () => {
         photographerName: null,
         photographerUrl: null,
         shareToken: null,
+        cooked: false,
       };
       mockedSaveRecipeFromBlock.mockResolvedValue(savedRecipe);
 
@@ -319,6 +323,7 @@ describe("Recipe API Routes", () => {
         photographerName: null,
         photographerUrl: null,
         shareToken: null,
+        cooked: false,
       });
 
       const request = createMockRequest("http://localhost:3000/api/recipe", {
@@ -400,6 +405,7 @@ describe("Recipe API Routes", () => {
         photographerName: null,
         photographerUrl: null,
         shareToken: null,
+        cooked: false,
       };
 
       mockedProcessRecipe.mockResolvedValue({
@@ -462,6 +468,7 @@ describe("Recipe API Routes", () => {
         photographerName: null,
         photographerUrl: null,
         shareToken: null,
+        cooked: false,
       };
 
       mockedProcessRecipe.mockResolvedValue(defaultProcessed);
@@ -539,6 +546,7 @@ describe("Recipe API Routes", () => {
         photographerName: null,
         photographerUrl: null,
         shareToken: null,
+        cooked: false,
       });
 
       // Attacker tries to write into someone else's cookbook via the body.
@@ -583,6 +591,7 @@ describe("Recipe API Routes", () => {
         photographerName: null,
         photographerUrl: null,
         shareToken: null,
+        cooked: false,
       };
 
       mockedProcessRecipe.mockResolvedValue(defaultProcessed);
@@ -644,6 +653,7 @@ describe("Recipe API Routes", () => {
         photographerName: null,
         photographerUrl: null,
         shareToken: null,
+        cooked: false,
       };
 
       mockedProcessRecipe.mockResolvedValue(defaultProcessed);
