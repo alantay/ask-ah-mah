@@ -1,7 +1,7 @@
 "use client";
 
 import { useConversationContext } from "@/contexts/ConversationContext";
-import { useActiveTab } from "@/hooks/useActiveTab";
+import { useActiveSection } from "@/hooks/useActiveSection";
 import { ConversationItem } from "./components/ConversationItem";
 import { ConversationListSkeleton } from "./components/ConversationListSkeleton";
 
@@ -20,7 +20,7 @@ export function Conversations({ onItemClick }: ConversationsProps) {
     deleteConversation,
   } = useConversationContext();
 
-  const isChatActive = useActiveTab() === "chat";
+  const isChatActive = useActiveSection() === "chat";
 
   const committedConversations = allConversations.filter(
     (c) => (c._count?.messages ?? 0) > 0 || c.id === pendingConversationId

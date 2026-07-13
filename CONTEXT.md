@@ -16,7 +16,7 @@ Related: [ADR-0002](docs/adr/0002-conversation-requires-at-least-one-message.md)
 
 ## Section
 
-One of the four primary destinations — **Chat**, **Pantry**, **Shopping List**, **Cookbook**. Selected from the `AppSidebar` on desktop and from the nav drawer on mobile. The Radix `Tabs` container that switches the content panels underneath is an implementation detail, not a user-facing surface — there is no visible tab strip.
+One of the four primary destinations — **Chat**, **Pantry**, **Shopping List**, **Cookbook**. Selected from the `AppSidebar` on desktop and from the nav drawer on mobile. The `SectionSwitcher` that shows the active Section's panel (and keeps the others mounted-but-hidden underneath) is an implementation detail, not a user-facing surface — there is no visible tab strip. It deliberately does **not** use a tabs primitive: with no tab strip, tab semantics (`role="tablist"`/`"tab"`/`"tabpanel"`) would misrepresent the sidebar-driven nav. The `?tab=` query key is a kept URL contract (see [ADR-0019](docs/adr/0019-keep-querystring-tabs-bundle-lever-is-the-renderer.md)), not evidence of a tab UI.
 
 The **Pantry** (current stock) and the **Shopping List** (what to buy) are conceptual inverses, kept **adjacent in the nav** rather than nested under one surface. They were briefly co-located as a Have/Need tab strip inside the Pantry; that strip was the app's only visible tabs and read as foreign to the "destinations come from the nav" rule, so the Shopping List was promoted to its own Section. See [ADR-0015](docs/adr/0015-shopping-list-is-its-own-section.md) (amends [ADR-0014](docs/adr/0014-shopping-list-is-standing-and-quantityless.md)).
 
