@@ -7,6 +7,25 @@ import {
 } from "@/components/ui/popover";
 import { toast } from "sonner";
 
+const CONTACT_EMAIL = "lun.tay@gmail.com";
+const LINKEDIN_URL = "https://www.linkedin.com/in/tay-alan/";
+
+const ABOUT_COPY = {
+  heading: "About Ask Ah Mah",
+  intro: `A passion project inspired by my own cooking journey. I loved using
+    AI for cooking help, but it kept forgetting my ingredients! So I built Ask
+    Ah Mah with persistent memory and a caring personality.`,
+  mission: `But this app is about more than just fixing a technical problem,
+    it's about making cooking feel approachable, where you understand your
+    ingredients, learn the "why" behind each step, and cook with love!`,
+  feedbackHeading: "I'd love your feedback!",
+};
+
+const COPY_EMAIL_TOAST = {
+  success: "Email copied — drop Ah Mah a note!",
+  error: "Aiyah, couldn't copy. Try again?",
+};
+
 interface InfoPopoverProps {
   className?: string;
   svgSize?: string;
@@ -20,11 +39,11 @@ export default function AboutPopOver({
 }: InfoPopoverProps) {
   const copyEmail = async () => {
     try {
-      await navigator.clipboard.writeText("lun.tay@gmail.com");
-      toast.success("Email copied — drop Ah Mah a note!");
+      await navigator.clipboard.writeText(CONTACT_EMAIL);
+      toast.success(COPY_EMAIL_TOAST.success);
     } catch (err) {
       console.error("Failed to copy email", err);
-      toast.error("Aiyah, couldn't copy. Try again?");
+      toast.error(COPY_EMAIL_TOAST.error);
     }
   };
   return (
@@ -55,22 +74,12 @@ export default function AboutPopOver({
         className="w-150 max-w-[95vw]"
       >
         <div className="space-y-2">
-          <h4 className="font-medium leading-none">About Ask Ah Mah</h4>
+          <h4 className="font-medium leading-none">{ABOUT_COPY.heading}</h4>
           <div className="text-sm">
-            <p>
-              {`A passion project inspired by my own cooking journey. I loved
-              using AI for cooking help, but it kept forgetting my ingredients!
-              So I built Ask Ah Mah with persistent memory and a caring
-              personality.`}
-            </p>
-            <p className="mt-4">
-              {`But this app is about more than just fixing a technical problem,
-              it's about making cooking feel approachable, where you understand
-              your ingredients, learn the "why" behind each step, and cook with
-              love!`}
-            </p>
+            <p>{ABOUT_COPY.intro}</p>
+            <p className="mt-4">{ABOUT_COPY.mission}</p>
 
-            <h3 className="mt-4">{`I'd love your feedback!`}</h3>
+            <h3 className="mt-4">{ABOUT_COPY.feedbackHeading}</h3>
             <p>
               <Button
                 variant="ghost"
@@ -99,7 +108,7 @@ export default function AboutPopOver({
                 size="icon"
               >
                 <a
-                  href="https://www.linkedin.com/in/tay-alan/"
+                  href={LINKEDIN_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="LinkedIn profile"

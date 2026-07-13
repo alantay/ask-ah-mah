@@ -1,6 +1,6 @@
 "use client";
 
-import AboutPopOver from "@/components/AboutPopOver";
+import AboutPopOver from "./AboutPopOver";
 import { AuthButton } from "@/features/Auth";
 import { Conversations } from "@/features/Conversations";
 import { useConversationContext } from "@/contexts/ConversationContext";
