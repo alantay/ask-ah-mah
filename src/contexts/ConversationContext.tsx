@@ -2,6 +2,7 @@
 
 import { useSessionContext } from "@/contexts/SessionContext";
 import type { ConversationEntity } from "@/lib/conversations";
+import { conversationListKey } from "@/lib/swr/keys";
 import {
   createContext,
   ReactNode,
@@ -59,7 +60,7 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
   // Fetch the conversations list. userId lives in the SWR key only to partition
   // the cache per user — it is NOT sent to the server (the session cookie is the
   // identity). A tuple key keeps the fetch URL clean: /api/conversation, no query.
-  const listKey = userId ? (["/api/conversation", userId] as const) : null;
+  const listKey = userId ? conversationListKey(userId) : null;
 
   const { data: listData, isLoading: listLoading } = useSWR<ConversationListResponse>(
     listKey,
@@ -110,11 +111,12 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     // Only revalidate the current user's bucket. Matching every
     // ["/api/conversation", *] tuple would refetch a prior user's cache under
     // the new session after an account switch.
+    const [urlPart, userIdPart] = conversationListKey(userId);
     return globalMutate(
       (key: unknown) =>
         Array.isArray(key) &&
-        key[0] === "/api/conversation" &&
-        key[1] === userId,
+        key[0] === urlPart &&
+        key[1] === userIdPart,
     );
   };
 

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useSessionContext } from "@/contexts/SessionContext";
 import RecipeDisplay from "@/features/RecipeDisplay/RecipeDisplay";
 import { RecipeWithId } from "@/lib/recipes/schemas";
+import { recipeKey } from "@/lib/swr/keys";
 import { fetcher } from "@/lib/utils";
 import { useParams, useRouter } from "next/navigation";
 import useSWR from "swr";
@@ -14,7 +15,7 @@ export default function RecipePage() {
   const { userId } = useSessionContext();
 
   const { data: recipes, isLoading } = useSWR<RecipeWithId[]>(
-    userId ? `/api/recipe?userId=${userId}` : null,
+    userId ? recipeKey(userId) : null,
     fetcher,
   );
 

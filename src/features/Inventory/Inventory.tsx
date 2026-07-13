@@ -21,6 +21,8 @@ import { useStorageTips } from "@/hooks/useStorageTips";
 import { useTipsPreference } from "@/hooks/useTipsPreference";
 import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
 import { STORAGE_TIPS_PREF_KEY } from "@/lib/marketTips/preferences";
+import { inventoryKey } from "@/lib/swr/keys";
+import { mutateResource } from "@/lib/swr/mutateResource";
 import { Check, CookingPot, Plus, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -127,7 +129,7 @@ const Inventory = () => {
   const searchParams = useSearchParams();
 
   const { data, error, isLoading } = useSWR<GetInventoryResponse>(
-    userId ? `/api/inventory?userId=${userId}` : null,
+    userId ? inventoryKey(userId) : null,
     fetcher,
     {
       shouldRetryOnError: true,
@@ -185,7 +187,7 @@ const Inventory = () => {
         };
         setDraft("");
         setIsAdding(false);
-        mutate(`/api/inventory?userId=${userId}`);
+        mutate(inventoryKey(userId));
         toast.success(
           items.length === 1
             ? `${items[0].name} — in the pantry now.`
@@ -205,13 +207,13 @@ const Inventory = () => {
   const removeItem = async (itemName: string) => {
     if (!userId) return;
     try {
-      const response = await fetch("/api/inventory", {
+      const response = await mutateResource({
+        url: "/api/inventory",
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemNames: [itemName] }),
+        body: { itemNames: [itemName] },
       });
       if (response.ok) {
-        mutate(`/api/inventory?userId=${userId}`);
+        mutate(inventoryKey(userId));
         toast.success(`Okay, took out the ${itemName}.`);
       } else {
         const detail = await response.text().catch(() => "");

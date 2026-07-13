@@ -11,6 +11,11 @@ import { Button } from "@/components/ui/button";
 import { ingredientsToUses } from "@/lib/recipes/ingredientUses";
 import { ingredientMatches } from "@/lib/recipes/matchIngredient";
 import { RecipeBlock, RecipeIngredientModel } from "@/lib/recipes/schemas";
+import {
+  inventoryKey as buildInventoryKey,
+  shoppingListKey,
+} from "@/lib/swr/keys";
+import { mutateResource } from "@/lib/swr/mutateResource";
 import { cn } from "@/lib/utils";
 import { fetcher } from "@/lib/utils";
 import { ShoppingCart, TimerIcon } from "lucide-react";
@@ -95,7 +100,7 @@ export function RecipeLetter({
   const ratio = isStreaming ? 1 : servings / baseServings;
   const { userId } = useSessionContext();
   const { mutate } = useSWRConfig();
-  const inventoryKey = userId ? `/api/inventory?userId=${userId}` : null;
+  const inventoryKey = userId ? buildInventoryKey(userId) : null;
   const { data: inventoryData } = useSWR<GetInventoryResponse>(
     inventoryKey,
     fetcher,
@@ -108,17 +113,17 @@ export function RecipeLetter({
     if (!userId || inFlight.has(ing.name)) return;
     setInFlight((prev) => new Set(prev).add(ing.name));
     try {
-      const res = await fetch("/api/shopping-list", {
+      const res = await mutateResource({
+        url: "/api/shopping-list",
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: {
           items: [
             {
               name: ing.name,
               ...(ing.category && { category: ing.category }),
             },
           ],
-        }),
+        },
       });
       if (!res.ok) {
         const payload = await res.json().catch(() => null);
@@ -127,7 +132,7 @@ export function RecipeLetter({
         throw new Error(msg);
       }
       toast.success(`${ing.name} — on the list.`);
-      mutate(`/api/shopping-list?userId=${encodeURIComponent(userId)}`);
+      mutate(shoppingListKey(userId));
     } catch (err) {
       toast.error(
         err instanceof Error

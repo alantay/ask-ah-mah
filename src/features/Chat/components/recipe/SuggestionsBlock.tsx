@@ -8,6 +8,7 @@ type GetInventoryResponse = {
   ingredientInventory: InventoryItem[];
 };
 import { SuggestionsBlockData, SuggestionOption } from '@/lib/recipes/schemas';
+import { inventoryKey } from '@/lib/swr/keys';
 import { cn } from '@/lib/utils';
 import { fetcher } from '@/lib/utils';
 import { TextUIPart, UIMessage } from 'ai';
@@ -163,7 +164,7 @@ export function SuggestionsBlock({
 }: SuggestionsBlockProps) {
   const { userId } = useSessionContext();
   const { data: inventoryData } = useSWR<GetInventoryResponse>(
-    userId ? `/api/inventory?userId=${userId}` : null,
+    userId ? inventoryKey(userId) : null,
     fetcher
   );
 

@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { useSessionContext } from "@/contexts/SessionContext";
 import { Eyebrow } from "@/features/shared/components/recipe";
 import { RecipeWithId } from "@/lib/recipes/schemas";
+import { recipeKey } from "@/lib/swr/keys";
+import { mutateResource } from "@/lib/swr/mutateResource";
 import { fetcher } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -29,20 +31,20 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
   const [showAdd, setShowAdd] = useState(false);
 
   const { data: recipes, isLoading } = useSWR<RecipeWithId[]>(
-    userId ? `/api/recipe?userId=${userId}` : null,
+    userId ? recipeKey(userId) : null,
     fetcher,
     { shouldRetryOnError: true, revalidateOnMount: true },
   );
 
   const deleteRecipe = async (recipeId: string) => {
     try {
-      const res = await fetch(`/api/recipe`, {
+      const res = await mutateResource({
+        url: "/api/recipe",
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipeId }),
+        body: { recipeId },
       });
       if (!res.ok) throw new Error("Delete failed");
-      mutate(`/api/recipe?userId=${userId}`);
+      if (userId) mutate(recipeKey(userId));
       toast.success("Okay, thrown away.");
     } catch {
       toast.error("Aiyah, couldn't throw it away. Try again?");

@@ -22,6 +22,7 @@ import type {
   SuggestionsBlockData,
 } from "@/lib/recipes/schemas";
 import { recipeWithIdToBlock } from "@/lib/recipes/schemas";
+import { recipeKey as savedRecipesKey } from "@/lib/swr/keys";
 import { fetcher } from "@/lib/utils";
 import { hasSeenSignInNudge, markSignInNudgeSeen } from "@/lib/signInNudge";
 import type { UIMessage } from "ai";
@@ -116,12 +117,12 @@ export const MessageList = ({
   onRecipeDetected,
 }: MessageListProps) => {
   const { data: recipeSaved, mutate } = useSWR<RecipeWithId[]>(
-    `/api/recipe?userId=${userId}`,
+    savedRecipesKey(userId),
     fetcher,
   );
 
   const { trigger } = useSWRMutation(
-    `/api/recipe?userId=${userId}`,
+    savedRecipesKey(userId),
     saveRecipeCall,
   );
 

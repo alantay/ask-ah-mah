@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import RecipeDisplay from "@/features/RecipeDisplay/RecipeDisplay";
 import { type RecipeBlock, type RecipeWithId } from "@/lib/recipes/schemas";
+import { recipeKey } from "@/lib/swr/keys";
 import { useSessionContext } from "@/contexts/SessionContext";
 import { VisuallyHidden } from "radix-ui";
 import { useEffect, useRef, useState } from "react";
@@ -213,7 +214,7 @@ export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
         body: JSON.stringify({ recipe: preview }),
       });
       if (!res.ok) throw new Error("Save failed");
-      mutate(`/api/recipe?userId=${userId}`);
+      mutate(recipeKey(userId));
       toast.success("Kept in your cookbook.");
       handleOpenChange(false);
     } catch {

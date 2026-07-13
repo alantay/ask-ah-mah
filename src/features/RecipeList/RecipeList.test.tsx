@@ -67,7 +67,9 @@ describe("RecipeList — delete recipe", () => {
     render(<RecipeList />);
     fireEvent.click(screen.getByRole("button", { name: /Delete Test Recipe/i }));
 
-    // Give the async deleteRecipe a tick to resolve
+    // Give the async deleteRecipe a tick to resolve (mutateResource adds one
+    // more microtask hop around the fetch than the inline call it replaced)
+    await Promise.resolve();
     await Promise.resolve();
     await Promise.resolve();
 
