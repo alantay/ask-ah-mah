@@ -120,6 +120,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
               {tagEntries.length > 0 && (
                 <button
                   onClick={() => setMobileFilterOpen(true)}
+                  aria-label="Filter"
                   className="sm:hidden shrink-0 flex items-center gap-1.5 px-3 py-[7px] font-sans text-dense font-medium text-muted-foreground bg-card border border-border rounded-full cursor-pointer hover:text-foreground transition-colors"
                 >
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -130,7 +131,6 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
                       strokeLinecap="round"
                     />
                   </svg>
-                  Filter
                   {activeTags.size > 0 && (
                     <span className="ml-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold">
                       {activeTags.size}
@@ -138,7 +138,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
                   )}
                 </button>
               )}
-              <label className="flex items-center gap-2 px-3 py-[7px] bg-card border border-border rounded-full sm:min-w-[200px] flex-1 sm:flex-none text-muted-foreground cursor-text">
+              <label className="flex items-center gap-2 px-3 py-[7px] bg-card border border-border rounded-full min-w-0 sm:min-w-[200px] flex-1 sm:flex-none text-muted-foreground cursor-text">
                 <svg
                   width="13"
                   height="13"
@@ -172,6 +172,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
           <Button
             variant="cta"
             onClick={() => setShowAdd(true)}
+            aria-label="Add recipe"
             className="shrink-0 gap-1.5 px-3 py-[7px] font-sans text-dense font-semibold rounded-full"
           >
             <svg
@@ -188,7 +189,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
                 strokeLinecap="round"
               />
             </svg>
-            Add recipe
+            <span className="hidden sm:inline">Add recipe</span>
           </Button>
         </div>
       </div>

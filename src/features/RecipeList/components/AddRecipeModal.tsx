@@ -2,10 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { useSessionContext } from "@/contexts/SessionContext";
 import RecipeDisplay from "@/features/RecipeDisplay/RecipeDisplay";
 import { type RecipeBlock, type RecipeWithId } from "@/lib/recipes/schemas";
 import { recipeKey } from "@/lib/swr/keys";
-import { useSessionContext } from "@/contexts/SessionContext";
 import { VisuallyHidden } from "radix-ui";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -85,7 +85,10 @@ function ExtractingSkeleton({ revealStage }: { revealStage: number }) {
               style={ingredientVisible(i)}
             >
               <div className={`h-2.5 w-10 ${shimmer} shrink-0`} />
-              <div className={`h-2.5 ${shimmer}`} style={{ width: `${50 + (i % 4) * 10}%` }} />
+              <div
+                className={`h-2.5 ${shimmer}`}
+                style={{ width: `${50 + (i % 4) * 10}%` }}
+              />
             </div>
           ))}
         </div>
@@ -100,7 +103,10 @@ function ExtractingSkeleton({ revealStage }: { revealStage: number }) {
               <div className={`h-5 w-5 ${shimmer} rounded-full shrink-0`} />
               <div className="flex-1 flex flex-col gap-1.5">
                 <div className={`h-2.5 w-full ${shimmer}`} />
-                <div className={`h-2.5 ${shimmer}`} style={{ width: `${60 + (i % 2) * 20}%` }} />
+                <div
+                  className={`h-2.5 ${shimmer}`}
+                  style={{ width: `${60 + (i % 2) * 20}%` }}
+                />
               </div>
             </div>
           ))}
@@ -126,7 +132,11 @@ export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
   const apiFetchDoneRef = useRef(false);
 
   const tryTransitionToPreview = () => {
-    if (minTimerDoneRef.current && apiFetchDoneRef.current && resolvedRef.current) {
+    if (
+      minTimerDoneRef.current &&
+      apiFetchDoneRef.current &&
+      resolvedRef.current
+    ) {
       setPreview(resolvedRef.current);
       setStep("preview");
     }
@@ -140,7 +150,10 @@ export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
     }
     const iv = setInterval(() => {
       setRevealStage((s) => {
-        if (s >= 3) { clearInterval(iv); return s; }
+        if (s >= 3) {
+          clearInterval(iv);
+          return s;
+        }
         return s + 1;
       });
     }, STAGE_INTERVAL_MS);
@@ -232,38 +245,58 @@ export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
       >
         <VisuallyHidden.Root>
           <DialogTitle>
-            {step === "paste" ? "Add a recipe" : step === "extracting" ? "Reading recipe…" : "Preview recipe"}
+            {step === "paste"
+              ? "Add a recipe"
+              : step === "extracting"
+                ? "Reading recipe…"
+                : "Preview recipe"}
           </DialogTitle>
         </VisuallyHidden.Root>
 
         {/* ── Header — changes per step ── */}
-        {step === "extracting" ? (
-          <div className="px-5 sm:px-6 pt-5 pb-4 border-b border-border shrink-0 flex items-center gap-3">
-            <div className="w-4 h-4 rounded-full border-2 border-border border-t-primary shrink-0 [animation:modalSpin_0.9s_linear_infinite]" />
-            <span className="font-display italic text-emphasis text-foreground">
-              Ah Mah is reading your recipe…
-            </span>
-          </div>
-        ) : step === "paste" ? (
-          <div className="px-5 sm:px-6 pt-5 pb-4 border-b border-border shrink-0">
-            <div className="flex items-start gap-3 sm:gap-4">
-              <div className="hidden sm:flex w-9 h-9 shrink-0 rounded-lg bg-primary/10 border border-border items-center justify-center text-primary">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <rect x="6" y="3" width="12" height="18" rx="2" stroke="currentColor" strokeWidth="1.7" />
-                  <path d="M9 8h6M9 12h6M9 16h4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-                </svg>
-              </div>
-              <div>
-                <h2 className="font-display font-semibold text-heading text-foreground tracking-tight leading-tight">
-                  Add a recipe
-                </h2>
-                <p className="hidden sm:block font-display italic text-dense text-muted-foreground mt-1 leading-snug">
-                  Paste any recipe text — Ah Mah will read it and tidy it up for you.
-                </p>
+        {
+          step === "extracting" ? (
+            <div className="px-5 sm:px-6 pt-5 pb-4 border-b border-border shrink-0 flex items-center gap-3">
+              <div className="w-4 h-4 rounded-full border-2 border-border border-t-primary shrink-0 [animation:modalSpin_0.9s_linear_infinite]" />
+              <span className="font-display italic text-emphasis text-foreground">
+                Ah Mah is reading your recipe…
+              </span>
+            </div>
+          ) : step === "paste" ? (
+            <div className="px-5 sm:px-6 pt-5 pb-4 border-b border-border shrink-0">
+              <div className="flex items-start gap-3 sm:gap-4">
+                <div className="hidden sm:flex w-9 h-9 shrink-0 rounded-lg bg-primary/10 border border-border items-center justify-center text-primary">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <rect
+                      x="6"
+                      y="3"
+                      width="12"
+                      height="18"
+                      rx="2"
+                      stroke="currentColor"
+                      strokeWidth="1.7"
+                    />
+                    <path
+                      d="M9 8h6M9 12h6M9 16h4"
+                      stroke="currentColor"
+                      strokeWidth="1.7"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="font-display font-semibold text-heading text-foreground tracking-tight leading-tight">
+                    Add a recipe
+                  </h2>
+                  <p className="hidden sm:block font-display italic text-dense text-muted-foreground mt-1 leading-snug">
+                    Paste any recipe text — Ah Mah will read it and tidy it up
+                    for you.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        ) : null /* preview: no custom header, RecipeDisplay handles its own layout */}
+          ) : null /* preview: no custom header, RecipeDisplay handles its own layout */
+        }
 
         {/* ── Body — keyed so the enter animation fires on every step change ── */}
         <style>{`
@@ -279,7 +312,9 @@ export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
         <div
           key={step}
           className="flex-1 overflow-hidden flex flex-col"
-          style={{ animation: "modalBodyIn 180ms cubic-bezier(0.32,0.72,0,1) both" }}
+          style={{
+            animation: "modalBodyIn 180ms cubic-bezier(0.32,0.72,0,1) both",
+          }}
         >
           {/* ── Paste step ── */}
           {step === "paste" && (
@@ -300,8 +335,8 @@ export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
                     error
                       ? "border-danger-border ring-[3px] ring-danger-border/12"
                       : text
-                      ? "border-primary ring-[3px] ring-primary/10"
-                      : "border-border focus:border-primary focus:ring-[3px] focus:ring-primary/10",
+                        ? "border-primary ring-[3px] ring-primary/10"
+                        : "border-border focus:border-primary focus:ring-[3px] focus:ring-primary/10",
                   ].join(" ")}
                 />
 
@@ -311,9 +346,12 @@ export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
                       !
                     </div>
                     <div className="font-sans text-dense text-foreground leading-[1.5]">
-                      <span className="font-semibold">Ah Mah couldn&rsquo;t find a recipe in this.</span>{" "}
+                      <span className="font-semibold">
+                        Ah Mah couldn&rsquo;t find a recipe in this.
+                      </span>{" "}
                       <span className="text-muted-foreground">
-                        Try pasting just the recipe portion — usually the ingredients and steps.
+                        Try pasting just the recipe portion — usually the
+                        ingredients and steps.
                       </span>
                     </div>
                   </div>
@@ -324,7 +362,8 @@ export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
                     Tip: paste just the recipe portion for the cleanest result.
                   </span>
                   <span className="hidden sm:inline font-mono text-eyebrow text-muted-foreground tabular-nums">
-                    {text.length.toLocaleString()} / {CHAR_LIMIT.toLocaleString()}
+                    {text.length.toLocaleString()} /{" "}
+                    {CHAR_LIMIT.toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -349,7 +388,8 @@ export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
                 <ExtractingSkeleton revealStage={revealStage} />
               </div>
               <div className="px-6 py-3 border-t border-dashed border-border text-center font-sans text-micro text-muted-foreground shrink-0">
-                Pulling out ingredients, steps, and timing… usually 4–6 seconds.
+                Pulling out ingredients, steps, and timing… usually 40–60
+                seconds.
               </div>
             </>
           )}
@@ -372,7 +412,13 @@ export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
                   className="inline-flex items-center gap-1.5 font-sans text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 >
                   <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
-                    <path d="M10 4l-4 4 4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    <path
+                      d="M10 4l-4 4 4 4"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                   Back to edit
                 </button>
