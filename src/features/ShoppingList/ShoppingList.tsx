@@ -6,9 +6,9 @@ import { Eyebrow } from "@/features/shared/components/recipe";
 import { TipsToggle } from "@/features/shared/components/TipsToggle";
 import { useMarketTips } from "@/hooks/useMarketTips";
 import { useTipsPreference } from "@/hooks/useTipsPreference";
-import { MARKET_TIPS_PREF_KEY } from "@/lib/marketTips/preferences";
 import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
 import { isPickableCategory } from "@/lib/marketTips/pickable";
+import { MARKET_TIPS_PREF_KEY } from "@/lib/marketTips/preferences";
 import { groupByAisle } from "@/lib/shoppingList";
 import { shoppingListKey } from "@/lib/swr/keys";
 import { mutateResource } from "@/lib/swr/mutateResource";
@@ -203,7 +203,7 @@ const ShoppingList = () => {
             e.preventDefault();
             onSubmit();
           }}
-          className="flex gap-2 mb-5 items-end"
+          className="flex gap-2 mb-5 items-center"
         >
           <textarea
             value={draft}
@@ -214,13 +214,14 @@ const ShoppingList = () => {
                 onSubmit();
               }
             }}
-            placeholder="e.g., apples, oranges, shallots — or paste a recipe's ingredients"
+            placeholder="e.g. apples — or paste a list"
             rows={1}
             disabled={submitting}
-            className="flex-1 rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm resize-none"
+            className="min-w-0 flex-1 rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm resize-none"
           />
           <Button
             type="submit"
+            variant="cta"
             disabled={submitting || !draft.trim()}
             className="gap-1.5 font-semibold shrink-0"
           >
@@ -245,11 +246,7 @@ const ShoppingList = () => {
         {items.length > 0 && (
           <div className="flex flex-col gap-6">
             <div className="flex justify-end">
-              <TipsToggle
-                enabled={tipsOn}
-                onChange={setTipsOn}
-                label="Tips"
-              />
+              <TipsToggle enabled={tipsOn} onChange={setTipsOn} label="Tips" />
             </div>
             {aisleGroups.map((group) => (
               <section key={group.aisle}>
@@ -284,11 +281,13 @@ const ShoppingList = () => {
                         )}
                       >
                         {item.name}
-                        {tipsOn && !item.bought && tips[canonicalTipKey(item.name)] && (
-                          <span className="block font-display italic text-dense text-muted-foreground leading-snug">
-                            — {tips[canonicalTipKey(item.name)]}
-                          </span>
-                        )}
+                        {tipsOn &&
+                          !item.bought &&
+                          tips[canonicalTipKey(item.name)] && (
+                            <span className="block font-display italic text-dense text-muted-foreground leading-snug">
+                              — {tips[canonicalTipKey(item.name)]}
+                            </span>
+                          )}
                         {tipsOn &&
                           !item.bought &&
                           tipsLoading &&
