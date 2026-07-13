@@ -68,7 +68,7 @@ export default function RecipeCard({ recipe, onSelect, onDelete }: RecipeCardPro
           }}
         >
           {isOptimistic && (
-            <span className="font-mono text-eyebrow tracking-[0.16em] text-foreground/40 uppercase">
+            <span className="font-mono text-eyebrow tracking-eyebrow text-foreground/40 uppercase">
               Saving…
             </span>
           )}

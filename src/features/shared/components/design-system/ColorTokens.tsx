@@ -71,7 +71,7 @@ export function ColorTokens({ className }: { className?: string }) {
     <div className={cn("flex flex-col gap-6", className)}>
       {GROUPS.map((group) => (
         <section key={group.label} className="flex flex-col gap-2.5">
-          <h3 className="font-sans text-eyebrow font-bold tracking-[0.16em] uppercase text-ink-faint">
+          <h3 className="font-sans text-eyebrow font-bold tracking-eyebrow uppercase text-ink-faint">
             {group.label}
           </h3>
           <div className="flex flex-wrap gap-3">

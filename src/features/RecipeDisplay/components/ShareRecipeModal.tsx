@@ -62,7 +62,7 @@ export function ShareRecipeModal({ recipe, open, onOpenChange }: ShareRecipeModa
               <img src={recipe.imageUrl} alt="" className="w-full h-full object-cover" />
             )}
             {recipe.totalTimeMinutes && (
-              <span className="absolute left-3 top-3 font-sans text-[10px] font-bold tracking-wider uppercase text-white bg-black/50 backdrop-blur-sm px-2.5 py-1 rounded-full">
+              <span className="absolute left-3 top-3 font-sans text-eyebrow font-bold tracking-wider uppercase text-white bg-black/50 backdrop-blur-sm px-2.5 py-1 rounded-full">
                 {recipe.totalTimeMinutes} min
               </span>
             )}
@@ -79,7 +79,7 @@ export function ShareRecipeModal({ recipe, open, onOpenChange }: ShareRecipeModa
         </div>
 
         <div className="flex items-center border border-border rounded-xl overflow-hidden bg-chat mt-4">
-          <span className="flex-1 px-4 font-mono text-[13px] text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis">
+          <span className="flex-1 px-4 font-mono text-dense text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis">
             {url ?? (loading ? "Fetching your link…" : "—")}
           </span>
           <button
@@ -92,7 +92,7 @@ export function ShareRecipeModal({ recipe, open, onOpenChange }: ShareRecipeModa
           </button>
         </div>
 
-        <div className="flex items-center gap-3.5 text-ink-faint font-sans text-[11px] font-semibold tracking-wider uppercase my-4 before:content-[''] before:flex-1 before:h-px before:border-t before:border-dashed before:border-border after:content-[''] after:flex-1 after:h-px after:border-t after:border-dashed after:border-border">
+        <div className="flex items-center gap-3.5 text-ink-faint font-sans text-micro font-semibold tracking-wider uppercase my-4 before:content-[''] before:flex-1 before:h-px before:border-t before:border-dashed before:border-border after:content-[''] after:flex-1 after:h-px after:border-t after:border-dashed after:border-border">
           or send via
         </div>
 

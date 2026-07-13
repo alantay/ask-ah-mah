@@ -235,7 +235,7 @@ export function RecipeLetter({
       {/* Cook-With closeness caption */}
       {closenessLabel && (
         <div className="mb-3">
-          <span className="inline-flex items-center gap-1 font-sans text-eyebrow font-bold tracking-[0.16em] uppercase px-2 py-0.5 rounded-full border border-dashed border-primary/40 text-primary bg-primary/5">
+          <span className="inline-flex items-center gap-1 font-sans text-eyebrow font-bold tracking-eyebrow uppercase px-2 py-0.5 rounded-full border border-dashed border-primary/40 text-primary bg-primary/5">
             {recipe.closeness === "close" ? "✓" : "↗"} {closenessLabel}
           </span>
         </div>

@@ -40,7 +40,7 @@ export default function RecipePage() {
         <Button
           variant="cta"
           onClick={() => router.push("/?tab=cookbook")}
-          className="px-3.5 py-2 text-[13px] font-semibold"
+          className="px-3.5 py-2 text-dense font-semibold"
         >
           Back to cookbook
         </Button>

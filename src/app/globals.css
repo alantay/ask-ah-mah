@@ -73,6 +73,10 @@
   --text-display: 40px;
   --text-display--line-height: 1;
 
+  /* Eyebrow letter-spacing — the wide tracking on uppercase eyebrow/label text.
+     Pairs with text-eyebrow; use tracking-eyebrow instead of tracking-[0.16em]. */
+  --tracking-eyebrow: 0.16em;
+
   /* CTA hard shadows — the "stamped paper" depth under the terracotta primary button.
      Always use these tokens for the hard-shadow pattern; never reinvent inline.
      Uses --primary-deeper so the depth stays visible now that CTAs sit on --primary-deep. */

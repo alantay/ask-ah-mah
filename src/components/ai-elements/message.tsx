@@ -31,7 +31,7 @@ const messageContentVariants = cva(
         ],
         flat: [
           "group-[.is-user]:max-w-[80%] group-[.is-user]:bg-secondary group-[.is-user]:px-4 group-[.is-user]:py-2.5 group-[.is-user]:text-secondary-foreground group-[.is-user]:border group-[.is-user]:border-secondary-deep group-[.is-user]:rounded-tl-[14px] group-[.is-user]:rounded-tr-[14px] group-[.is-user]:rounded-br-[4px] group-[.is-user]:rounded-bl-[14px] group-[.is-user]:shadow-[0_1px_0_var(--secondary-deep)]",
-          "group-[.is-assistant]:w-full group-[.is-assistant]:text-foreground group-[.is-assistant]:font-display group-[.is-assistant]:text-[15px] group-[.is-assistant]:leading-relaxed",
+          "group-[.is-assistant]:w-full group-[.is-assistant]:text-foreground group-[.is-assistant]:font-display group-[.is-assistant]:text-emphasis group-[.is-assistant]:leading-relaxed",
         ],
       },
     },
