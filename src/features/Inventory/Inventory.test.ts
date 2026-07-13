@@ -1,12 +1,14 @@
 import { buildCookWithMessage } from "./Inventory";
 import type { InventoryItem } from "@/lib/inventory/schemas";
 
+const TS = "2024-01-01T10:00:00.000Z";
+
 function makeIngredient(name: string): InventoryItem {
-  return { id: name, userId: "u1", name, type: "ingredient" };
+  return { id: name, name, type: "ingredient", dateAdded: TS, lastUpdated: TS };
 }
 
 function makeEquipment(name: string): InventoryItem {
-  return { id: name, userId: "u1", name, type: "kitchenware" };
+  return { id: name, name, type: "kitchenware", dateAdded: TS, lastUpdated: TS };
 }
 
 describe("buildCookWithMessage", () => {

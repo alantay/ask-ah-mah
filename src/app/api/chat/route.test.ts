@@ -125,6 +125,7 @@ describe("Chat API Route", () => {
           role: "user",
           content: "Hello",
           userId: "user-123",
+          conversationId: "conv-123",
           createdAt: new Date("2024-01-01T10:00:00.000Z"),
         },
         {
@@ -132,6 +133,7 @@ describe("Chat API Route", () => {
           role: "assistant",
           content: "Hi there!",
           userId: "user-123",
+          conversationId: "conv-123",
           createdAt: new Date("2024-01-01T10:01:00.000Z"),
         },
       ];
@@ -192,6 +194,7 @@ describe("Chat API Route", () => {
         role: i % 2 === 0 ? "user" : "assistant",
         content: `Message ${i}`,
         userId: "user-123",
+        conversationId: "conv-123",
         createdAt: new Date("2024-01-01T10:00:00.000Z"),
       }));
 
@@ -225,6 +228,7 @@ describe("Chat API Route", () => {
           role: "user",
           content: "Test message",
           userId: "user-123",
+          conversationId: "conv-123",
           createdAt: new Date("2024-01-01T10:00:00.000Z"),
         },
         {
@@ -232,6 +236,7 @@ describe("Chat API Route", () => {
           role: "assistant",
           content: "Test response",
           userId: "user-123",
+          conversationId: "conv-123",
           createdAt: new Date("2024-01-01T10:01:00.000Z"),
         },
       ];
@@ -534,6 +539,7 @@ describe("Chat API Route", () => {
               userId: "user-123",
               quantity: 6,
               unit: "pieces",
+              category: null,
               dateAdded: new Date("2024-01-01T10:00:00.000Z"),
               lastUpdated: new Date("2024-01-01T10:00:00.000Z"),
             },
@@ -544,6 +550,7 @@ describe("Chat API Route", () => {
               userId: "user-123",
               quantity: 1,
               unit: "kg",
+              category: null,
               dateAdded: new Date("2024-01-01T10:00:00.000Z"),
               lastUpdated: new Date("2024-01-01T10:00:00.000Z"),
             },
@@ -556,6 +563,7 @@ describe("Chat API Route", () => {
               userId: "user-123",
               quantity: null,
               unit: null,
+              category: null,
               dateAdded: new Date("2024-01-01T10:00:00.000Z"),
               lastUpdated: new Date("2024-01-01T10:00:00.000Z"),
             },

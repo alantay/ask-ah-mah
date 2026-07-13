@@ -3,7 +3,7 @@ import { createMessage, getMessages } from "./messages";
 
 // Mock Prisma
 jest.mock("@/lib/db", () => {
-  const prismaMock = {
+  const prismaMock: Record<string, unknown> = {
     message: {
       findMany: jest.fn(),
       create: jest.fn(),
