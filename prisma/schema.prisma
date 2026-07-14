@@ -105,7 +105,7 @@ model Recipe {
   notes            String[] @default([])
   description      String?
   totalTimeMinutes Int?
-  createdAt        DateTime?
+  createdAt        DateTime? @default(now())
   imageUrl         String?
   photographerName String?
   photographerUrl  String?
