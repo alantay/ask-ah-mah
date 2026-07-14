@@ -6,6 +6,7 @@ import { useState } from "react";
 import { ChatEmptyState } from "./components/ChatEmptyState";
 import { MessageInput } from "./components/MessageInput";
 import { MessageList } from "./components/MessageList";
+import { HistorySkeleton } from "./components/loaders";
 import { LOADING_MESSAGES } from "./constants";
 
 const Chat = () => {
@@ -60,7 +61,12 @@ const Chat = () => {
     <div
       className="flex flex-col animate-in fade-in duration-300 h-full"
     >
-      {isEmpty ? (
+      {messagesLoading ? (
+        <>
+          <HistorySkeleton />
+          {composer}
+        </>
+      ) : isEmpty ? (
         <ChatEmptyState
           onSend={handleSendMessage}
           onCookWith={() => router.replace("/?tab=pantry&selectionMode=1")}
