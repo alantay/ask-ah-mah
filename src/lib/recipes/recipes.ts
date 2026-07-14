@@ -10,6 +10,7 @@ import { Recipe, RecipeBlock } from "./schemas";
 export async function getRecipes(userId: string) {
   const recipes = await prisma.recipe.findMany({
     where: { userId },
+    orderBy: { createdAt: { sort: "desc", nulls: "last" } },
   });
 
   return recipes;
