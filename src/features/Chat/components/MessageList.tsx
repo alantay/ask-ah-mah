@@ -223,7 +223,7 @@ export const MessageList = ({
         ingredients: [],
       };
 
-      mutate((current = []) => [...current, optimisticRecipe], {
+      mutate((current = []) => [optimisticRecipe, ...current], {
         revalidate: false,
         populateCache: true,
       });
@@ -265,7 +265,7 @@ export const MessageList = ({
         cooked,
       };
 
-      mutate((current = []) => [...current, optimisticRecipe], {
+      mutate((current = []) => [optimisticRecipe, ...current], {
         revalidate: false,
         populateCache: true,
       });
