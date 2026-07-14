@@ -14,9 +14,10 @@
     "test:coverage": "jest --coverage",
     "test:ci": "jest --ci --coverage --watchAll=false",
     "test:eval": "tsx eval/chat-routing.eval.ts",
-    "db:local": "prisma generate && prisma db push",
-    "db:prod": "prisma generate && prisma db push",
-    "db:studio": "DATABASE_URL=\"file:./prisma/dev.db\" prisma studio"
+    "db:push": "prisma generate && prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma generate && prisma migrate deploy",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
     "@ai-sdk/google": "^2.0.12",
