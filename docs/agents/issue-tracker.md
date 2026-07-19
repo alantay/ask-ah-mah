@@ -20,3 +20,21 @@ Create a GitHub issue.
 ## When a skill says "fetch the relevant ticket"
 
 Run `gh issue view <number> --comments`.
+
+## Wayfinding operations
+
+`gh` cannot reliably set GitHub's native issue-dependency edges, so a wayfinder map expresses its structure by **labels + body conventions**, and the frontier is a **query**, not a stored list.
+
+- **Map** — an issue labelled `wayfinder:map`. Its body is the low-res index (Destination, Notes, Decisions so far, Not yet specified, Out of scope). It does **not** list open tickets.
+- **Ticket** — a child issue labelled `wayfinder:ticket` plus one type label (`wayfinder:research` / `wayfinder:prototype` / `wayfinder:grilling` / `wayfinder:task`). Its body carries two lines: `Map: #<map>` and `Blocked by: #a, #b` (or `—` when unblocked).
+- **Claim** — assign the ticket to yourself before working it. An open, unassigned ticket is unclaimed.
+- **Frontier query** — open `wayfinder:ticket` issues for a map whose every `Blocked by:` issue is closed and which are unassigned:
+
+  ```
+  gh issue list --state open --label wayfinder:ticket \
+    --json number,title,body,assignees \
+    --jq '[.[] | select(.body | contains("Map: #<map>"))]'
+  ```
+
+  Then keep the ones whose `Blocked by:` numbers are all closed and that have no assignee.
+- **Resolve** — post the answer as a comment, `gh issue close` the ticket, and append a one-line pointer to the map's *Decisions so far*.
