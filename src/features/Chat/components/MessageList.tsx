@@ -17,6 +17,7 @@ import {
 } from "@/lib/recipes/parseBlocks";
 import type { OpenFenceKind } from "@/lib/recipes/parseBlocks";
 import type {
+  ClarifyBlockData,
   RecipeBlock,
   RecipeWithId,
   SuggestionsBlockData,
@@ -32,6 +33,7 @@ import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
 import { generateTempId } from "../constants";
 import { ChatLoader } from "./loaders";
+import { ClarifyBlock } from "./recipe/ClarifyBlock";
 import { RecipeLetter } from "./recipe/RecipeLetter";
 import { SuggestionsBlock } from "./recipe/SuggestionsBlock";
 
@@ -483,6 +485,19 @@ export const MessageList = ({
                         </div>
                       );
                     }
+                    if (block.kind === "clarify") {
+                      return (
+                        <div key={blockKey}>
+                          <hr className="border-t border-border my-3" />
+                          <ClarifyBlock
+                            data={block.payload}
+                            allMessages={messages}
+                            messageIndex={messageIndex}
+                            onSend={onSend}
+                          />
+                        </div>
+                      );
+                    }
                     if (block.kind === "recipe") {
                       const recipeKey = `${message.id}-${bi}`;
                       const savedRecipe = recipeSaved?.find(
@@ -519,6 +534,17 @@ export const MessageList = ({
                         recipe={activePartial.data as Partial<RecipeBlock>}
                         isStreaming
                       />
+                    ) : activePartial.kind === "clarify" ? (
+                      <div key={`${message.id}-streaming`}>
+                        <hr className="border-t border-border my-3" />
+                        <ClarifyBlock
+                          data={activePartial.data as Partial<ClarifyBlockData>}
+                          allMessages={messages}
+                          messageIndex={messageIndex}
+                          onSend={onSend}
+                          isStreaming
+                        />
+                      </div>
                     ) : (
                       <div key={`${message.id}-streaming`}>
                         <hr className="border-t border-border my-3" />
