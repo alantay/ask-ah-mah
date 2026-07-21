@@ -3,12 +3,12 @@ import {
   ClarifyBlockSchema,
   RecipeBlockSchema,
   SuggestionsBlockSchema,
-} from "@/lib/recipes/schemas";
+} from "./schemas";
 import type {
   ClarifyBlockData,
   RecipeBlock,
   SuggestionsBlockData,
-} from "@/lib/recipes/schemas";
+} from "./schemas";
 
 export type ParsedBlock =
   | { kind: "suggestions"; payload: SuggestionsBlockData; index: number }
