@@ -88,6 +88,22 @@ export const SuggestionsBlockSchema = z.object({
 });
 export type SuggestionsBlockData = z.infer<typeof SuggestionsBlockSchema>;
 
+// One option inside a ```clarify block. Single-select: tapping sends `label`
+// back as the user's reply. `hint` is optional supporting text.
+export const ClarifyOptionSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  hint: z.string().optional(),
+});
+export type ClarifyOption = z.infer<typeof ClarifyOptionSchema>;
+
+// Full ```clarify block — Ah Mah asks one question, offers tappable options.
+export const ClarifyBlockSchema = z.object({
+  question: z.string(),
+  options: z.array(ClarifyOptionSchema),
+});
+export type ClarifyBlockData = z.infer<typeof ClarifyBlockSchema>;
+
 // ```gate block
 export const GateSchema = z.object({
   recipeId: z.string(),
