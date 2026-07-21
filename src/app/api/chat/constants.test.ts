@@ -34,6 +34,13 @@ describe("CHAT_SYSTEM_PROMPT recipe example", () => {
   it("carries the distilled voice-stance fragment", () => {
     expect(CHAT_SYSTEM_PROMPT).toContain(PROMPT_FRAGMENTS.voiceStance);
   });
+
+  it("routes makeable components and basics (not only plated dishes) to a recipe", () => {
+    // "how to make mayonnaise?" must emit a `recipe` block, not fall through to
+    // prose as a general question. Guards the Mode 2 broadening clause.
+    expect(CHAT_SYSTEM_PROMPT).toContain("any concrete edible");
+    expect(CHAT_SYSTEM_PROMPT).toMatch(/mayonnaise/i);
+  });
 });
 
 // Mode 4 (clarify) reopened "never ask" — the model may now ask one tappable
