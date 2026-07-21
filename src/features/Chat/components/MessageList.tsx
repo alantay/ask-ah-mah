@@ -442,13 +442,19 @@ export const MessageList = ({
                       when an open fence is detected, prefixText is already trimmed */}
                   {hasNewBlocks ? (
                     proseText ? (
-                      <Response key={`${message.id}-prose`}>
+                      <Response
+                        key={`${message.id}-prose`}
+                        mode={isStreamingThis ? "streaming" : "static"}
+                      >
                         {proseText}
                       </Response>
                     ) : null
                   ) : hasOpenFence ? (
                     proseText ? (
-                      <Response key={`${message.id}-prose`}>
+                      <Response
+                        key={`${message.id}-prose`}
+                        mode={isStreamingThis ? "streaming" : "static"}
+                      >
                         {proseText}
                       </Response>
                     ) : null
@@ -460,7 +466,10 @@ export const MessageList = ({
                         ).trim();
                         if (!stripped) return null;
                         return (
-                          <Response key={`${message.id}-${index}`}>
+                          <Response
+                            key={`${message.id}-${index}`}
+                            mode={isStreamingThis ? "streaming" : "static"}
+                          >
                             {stripped}
                           </Response>
                         );
