@@ -34,6 +34,29 @@ describe("extractRecipeBlocks", () => {
     }
   });
 
+  it("parses a valid clarify block", () => {
+    const text = `Quick question:
+\`\`\`clarify
+{
+  "question": "What kind of meal are you after?",
+  "options": [
+    { "id": "quick", "label": "Something quick", "hint": "under 20 min" },
+    { "id": "comfort", "label": "Comfort food" }
+  ]
+}
+\`\`\``;
+
+    const blocks = extractRecipeBlocks(text);
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0].kind).toBe("clarify");
+    if (blocks[0].kind === "clarify") {
+      expect(blocks[0].payload.question).toBe("What kind of meal are you after?");
+      expect(blocks[0].payload.options[0].id).toBe("quick");
+      expect(blocks[0].payload.options[0].hint).toBe("under 20 min");
+      expect(blocks[0].payload.options[1].hint).toBeUndefined();
+    }
+  });
+
   it("parses a valid recipe block", () => {
     const text = `Here it is:
 \`\`\`recipe
@@ -157,6 +180,17 @@ describe("getOpenFence", () => {
     expect(getOpenFence('```suggestions\n{"intro":"hi"}\n```')).toBeNull();
   });
 
+  it("returns null when the clarify fence is closed", () => {
+    expect(getOpenFence('```clarify\n{"question":"hi","options":[]}\n```')).toBeNull();
+  });
+
+  it("detects an unclosed clarify fence", () => {
+    const text = 'Quick question:\n```clarify\n{"question":"What kind';
+    const fence = getOpenFence(text);
+    expect(fence?.kind).toBe("clarify");
+    expect(fence?.json).toBe('{"question":"What kind');
+  });
+
   it("detects an unclosed recipe fence with its prose offset and json body", () => {
     const text = 'Some prose\n```recipe\n{"title":"Gin';
     const fence = getOpenFence(text);
@@ -237,6 +271,14 @@ describe("parsePartialBlock", () => {
     expect(partial?.steps).toEqual([]); // in-progress step held back
   });
 
+  it("streams clarify options, holding back the in-progress one", async () => {
+    const partial = await parsePartialBlock(
+      '{"question":"What meal?","options":[{"id":"quick","label":"Quick"},{"id":"comf',
+    );
+    expect(partial?.question).toBe("What meal?");
+    expect(partial?.options).toEqual([{ id: "quick", label: "Quick" }]);
+  });
+
   it("returns the whole object untrimmed once the JSON is complete", async () => {
     const partial = await parsePartialBlock(
       '{"title":"X","baseServings":2,"ingredients":[{"name":"a"}],"steps":[]}',
@@ -252,6 +294,14 @@ describe("stripFences", () => {
     expect(result).toContain("Here are ideas:");
     expect(result).toContain("More prose.");
     expect(result).not.toContain("```suggestions");
+  });
+
+  it("strips clarify fences, leaving prose", () => {
+    const text = `Quick question:\n\`\`\`clarify\n{"question":"hi","options":[]}\n\`\`\`\nMore prose.`;
+    const result = stripFences(text);
+    expect(result).toContain("Quick question:");
+    expect(result).toContain("More prose.");
+    expect(result).not.toContain("```clarify");
   });
 
   it("strips recipe fences", () => {

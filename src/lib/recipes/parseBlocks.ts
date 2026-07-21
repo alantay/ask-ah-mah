@@ -1,32 +1,39 @@
 import { parsePartialJson } from "ai";
 import {
+  ClarifyBlockSchema,
   RecipeBlockSchema,
   SuggestionsBlockSchema,
-} from "@/lib/recipes/schemas";
+} from "./schemas";
 import type {
+  ClarifyBlockData,
   RecipeBlock,
   SuggestionsBlockData,
-} from "@/lib/recipes/schemas";
+} from "./schemas";
 
 export type ParsedBlock =
   | { kind: "suggestions"; payload: SuggestionsBlockData; index: number }
+  | { kind: "clarify"; payload: ClarifyBlockData; index: number }
   | { kind: "recipe"; payload: RecipeBlock; index: number }
   | { kind: "legacy"; recipeStr: string; index: number };
 
 export function extractRecipeBlocks(text: string): ParsedBlock[] {
   const blocks: ParsedBlock[] = [];
 
-  const fenceRegex = /^```(suggestions|recipe)\n([\s\S]*?)\n```/gm;
+  const fenceRegex = /^```(suggestions|clarify|recipe)\n([\s\S]*?)\n```/gm;
   let match: RegExpExecArray | null;
 
   while ((match = fenceRegex.exec(text)) !== null) {
-    const kind = match[1] as "suggestions" | "recipe";
+    const kind = match[1] as "suggestions" | "clarify" | "recipe";
     try {
       const payload = JSON.parse(match[2]);
       if (kind === "suggestions") {
         const result = SuggestionsBlockSchema.safeParse(payload);
         if (result.success)
           blocks.push({ kind: "suggestions", payload: result.data, index: match.index });
+      } else if (kind === "clarify") {
+        const result = ClarifyBlockSchema.safeParse(payload);
+        if (result.success)
+          blocks.push({ kind: "clarify", payload: result.data, index: match.index });
       } else if (kind === "recipe") {
         const result = RecipeBlockSchema.safeParse(payload);
         if (result.success)
@@ -55,11 +62,11 @@ export function stripFences(text: string): string {
   return text
     // Keep stripping legacy `gate` fences for backward-compat and to avoid
     // rendering unsupported fenced-language blocks from older messages.
-    .replace(/^```(?:suggestions|gate|recipe)\n[\s\S]*?\n```/gm, "")
+    .replace(/^```(?:suggestions|clarify|gate|recipe)\n[\s\S]*?\n```/gm, "")
     .trim();
 }
 
-export type OpenFenceKind = "recipe" | "suggestions";
+export type OpenFenceKind = "recipe" | "suggestions" | "clarify";
 
 export interface OpenFence {
   kind: OpenFenceKind;
@@ -78,6 +85,7 @@ export function getOpenFence(text: string): OpenFence | null {
   const markers: { kind: OpenFenceKind; marker: string }[] = [
     { kind: "recipe", marker: "```recipe\n" },
     { kind: "suggestions", marker: "```suggestions\n" },
+    { kind: "clarify", marker: "```clarify\n" },
   ];
 
   let best: { kind: OpenFenceKind; index: number; markerLen: number } | null =
