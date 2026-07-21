@@ -233,3 +233,15 @@ Related: [ADR-0020](docs/adr/0020-cooking-is-celebrated-not-tracked.md)
 The per-step list of ingredients consumed *at that step*, each carrying the quantity used **in that step** — for a split-use ingredient (a slurry added partly at step 2, the rest at step 5), the partial amount at each step, never the master total. Rendered as a quiet chip row beside the step, never woven into the step prose. Quantities are numeric-and-scalable when possible; otherwise short free text ("remaining", "to taste") shown as-is, unscaled.
 
 **Why this matters:** the master ingredient list answers *"what do I gather?"*; Step Uses answers *"how much goes in **now**?"* — mid-cook, without leaving the step. Soft invariant: a split ingredient's partial amounts should sum to its master amount; this is model-authored, not enforced.
+
+---
+
+## Clarify block
+
+A fenced ` ```clarify ` block (`{ question, options: [{ id, label, hint? }] }`) that Ah Mah may emit — Mode 4 in `CHAT_SYSTEM_PROMPT` — to ask **one** clarifying question, rendered as a single-select card. Tapping an option sends its `label` back verbatim as the user's reply (`ClarifyBlock`, mirrors `SuggestionsBlock`). It reopens the app's long-standing **"never ask"** stance, but only through this tap-to-answer channel, and only for a narrow purpose.
+
+**The governing line is dish vs. parameter:** a Clarify block picks a **parameter** — a constraint that reshapes *which* dishes fit (meal type, diet, spice, cuisine mood, effort, use-it-up vs. cook-fresh); the **Suggestions** block (Mode 1) picks a **dish**. If the missing thing is *which dish*, that's suggestions' job, not clarify's.
+
+**Why this matters:** the ban existed because prose questions read as Ah Mah stalling instead of cooking. Clarify is bounded so it can't become that stall — three hard guards hold: (1) if she can already act at a sensible default she acts, never asks; (2) no permission questions ("want me to suggest?"); (3) freshness stays off-limits — she never asks whether an item is still good ([ADR-0008](docs/adr/0008-no-shelf-life-ui.md)). Clarify narrows the *request*, never audits the pantry.
+
+Related: [ADR-0024](docs/adr/0024-clarify-reopens-never-ask.md), [ADR-0008](docs/adr/0008-no-shelf-life-ui.md)

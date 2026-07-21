@@ -1,6 +1,6 @@
 import { extractRecipeBlocks } from "@/lib/recipes/parseBlocks";
 import { PROMPT_FRAGMENTS } from "@/lib/prompts/fragments";
-import { RecipeBlockSchema } from "@/lib/recipes/schemas";
+import { ClarifyBlockSchema, RecipeBlockSchema } from "@/lib/recipes/schemas";
 import { CHAT_SYSTEM_PROMPT } from "./constants";
 
 // The system prompt carries a worked `recipe` example the model mirrors. If a
@@ -33,5 +33,31 @@ describe("CHAT_SYSTEM_PROMPT recipe example", () => {
 
   it("carries the distilled voice-stance fragment", () => {
     expect(CHAT_SYSTEM_PROMPT).toContain(PROMPT_FRAGMENTS.voiceStance);
+  });
+});
+
+// Mode 4 (clarify) reopened "never ask" — the model may now ask one tappable
+// clarifying question. These guard the worked example's shape and the two
+// boundaries that keep the reopening bounded (ADR-0024).
+describe("CHAT_SYSTEM_PROMPT clarify mode", () => {
+  it("carries a clarify example that parses against ClarifyBlockSchema", () => {
+    const blocks = extractRecipeBlocks(CHAT_SYSTEM_PROMPT);
+    const clarify = blocks.find((b) => b.kind === "clarify");
+
+    expect(clarify).toBeDefined();
+    expect(ClarifyBlockSchema.safeParse(clarify!.payload).success).toBe(true);
+  });
+
+  it("retains the dish-vs-parameter governing rule", () => {
+    // The line that keeps clarify from stealing suggestions' job: clarify picks
+    // a parameter, suggestions picks a dish.
+    expect(CHAT_SYSTEM_PROMPT).toContain("parameter");
+    expect(CHAT_SYSTEM_PROMPT).toMatch(/clarify picks a \*\*parameter\*\*/i);
+  });
+
+  it("keeps the shelf-life / freshness question off-limits (ADR-0008)", () => {
+    // Clarify narrows the request, never audits the user's perishables.
+    expect(CHAT_SYSTEM_PROMPT).toContain("ADR-0008");
+    expect(CHAT_SYSTEM_PROMPT).toMatch(/never.*freshness|freshness.*never/i);
   });
 });
