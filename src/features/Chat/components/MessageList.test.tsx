@@ -69,6 +69,10 @@ jest.mock("./recipe/SuggestionsBlock", () => ({
   SuggestionsBlock: () => <div data-testid="suggestions-block" />,
 }));
 
+jest.mock("./recipe/ClarifyBlock", () => ({
+  ClarifyBlock: () => <div data-testid="clarify-block" />,
+}));
+
 jest.mock("./recipe/RecipeLetter", () => ({
   RecipeLetter: ({ onSave }: { onSave?: () => void }) => (
     <div data-testid="recipe-letter">
@@ -496,6 +500,36 @@ describe("MessageList", () => {
 
       // Should not make any API calls
       expect(mockFetch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Clarify block rendering", () => {
+    const clarifyMessage = createMockMessage({
+      id: "msg-clarify",
+      role: "assistant",
+      parts: [
+        {
+          type: "text",
+          text:
+            "Quick question:\n```clarify\n" +
+            JSON.stringify({
+              question: "What kind of meal are you after?",
+              options: [
+                { id: "quick", label: "Something quick" },
+                { id: "comfort", label: "Comfort food" },
+              ],
+            }) +
+            "\n```",
+        },
+      ],
+    });
+
+    it("renders a ClarifyBlock for a completed clarify fence", () => {
+      render(<MessageList {...defaultProps} messages={[clarifyMessage]} />);
+
+      expect(screen.getByTestId("clarify-block")).toBeInTheDocument();
+      // The raw JSON must not leak into the prose renderer.
+      expect(screen.queryByText(/```clarify/)).not.toBeInTheDocument();
     });
   });
 
