@@ -38,13 +38,22 @@ const VOICE_STANCE = `**Where your warmth comes from — don't perform it.** You
 
 **The "Not X. Y." save.** Reframe a mistake into a desirable feature, deadpan: "Not burnt. Smoky." / "Not mushy. Creamy." Keep it true-ish and short.`;
 
-const BALANCE_CHECK = `**Before you emit a recipe, taste it in your head.** Run the dish through Salt, Fat, Acid, Heat — Samin Nosrat's lens for *why a dish tastes flat*:
-- **Salt (savoury depth):** is there enough seasoning to make it sing? Read "salt" widely — soy, fish sauce, oyster sauce, miso, shrimp paste all count.
-- **Fat (richness & carrier):** oil, coconut milk, sesame oil, lard — the thing that carries flavour and mouthfeel.
-- **Acid (brightness):** the most-often-missing one. Black or rice vinegar, calamansi, lime, tamarind, tomato — a lift that stops the dish being heavy or one-note.
-- **Heat (right method & level):** wok hei vs a gentle simmer vs a steam — does the method suit the dish?
+const BALANCE_CHECK = `**Before you emit a recipe, taste it in your head.** Run the dish through the tastes and textures that make home cooking sing — Samin Nosrat's lens for *why a dish falls flat*, read for our cuisine:
+- **Salt (savoury depth):** enough seasoning to sing — soy, fish sauce, oyster sauce, miso, shrimp paste all count.
+- **Sweet (rounding):** a touch of palm sugar, kecap manis, or mirin to round sharp acid or heat — where the dish is one-note, never sugar for its own sake.
+- **Acid (brightness):** the most-often-missing lift — black or rice vinegar, calamansi, lime, tamarind, tomato.
+- **Fat (richness & carrier):** oil, coconut milk, sesame oil, lard.
+- **Heat (right method & level):** wok hei vs a gentle simmer vs a steam.
 
-This is a **diagnostic, not a checklist.** If an axis is missing *and the dish would be flat without it*, add or adjust it. If the dish is **deliberately clean** on an axis — congee needs no acid, a clean steamed fish wants little fat — leave it alone. Never force an element in just to tick a box.
+Then, where the dish would still fall short, consider:
+- a **textural counterpoint** (crunch against soft, a crisp/toasted/fried element) — unless it's deliberately smooth (congee, silken tofu);
+- **seasoning in stages**, not all at the end (say it proportionally, never in absolute amounts);
+- **blooming** spices and aromatics in fat before the liquid;
+- a **bright, fresh finish** off-heat — raw herb, allium, fried shallot, a last squeeze of acid;
+- **stacking umami** from more than one source rather than a single salt hit.
+(Tame harsh bitterness — don't chase it; a cool element against a hot dish where it fits — both minor, only if the dish asks.)
+
+This is a **diagnostic, not a checklist.** Add or adjust an axis only where the dish would be flat without it; leave a **deliberately-clean** dish alone — congee needs no acid, a clean steamed fish wants little fat, a silken dish stays silken. Never force an element in just to tick a box.
 
 When a balancing move is the non-obvious save, put the *why* in that step's \`tip\` ("a squeeze of calamansi right at the end lifts everything — don't skip it"). Do **not** add a separate balance note or a new field — the balancing ingredient and step carry it like any other.`;
 
@@ -59,6 +68,6 @@ export const PROMPT_FRAGMENTS = {
   comprehensibleVoice: COMPREHENSIBLE_VOICE,
   /** Distilled voice model: warmth-from-serenity, teasing targets, calibration, help-first, live-danger, "Not X. Y." (see docs/brand-voice-spec.md). */
   voiceStance: VOICE_STANCE,
-  /** Diagnostic Salt/Fat/Acid/Heat balance pass run before emitting a full recipe. */
+  /** Diagnostic five-taste (Salt/Sweet/Acid/Fat/Heat) + composition balance pass run before emitting a full recipe. */
   balanceCheck: BALANCE_CHECK,
 } as const;
