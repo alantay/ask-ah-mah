@@ -215,7 +215,7 @@ assetless; fail-closed at render only guards a model-emitted string *outside* th
 
 **Per-technique shape:**
 
-```
+```text
 Technique (keyed by slug):
   label:   string      // human-readable name for the "Show me how · <label>" tab (§8)
   intro?:  string      // optional — Ah-Mah-voiced opener (like a step tip)
@@ -263,7 +263,8 @@ confirmed against a rendered prototype (`helper-ux-450.html`).
 
 **Held defaults (uncontested):**
 
-- Tap a panel image → **zoom / lightbox** (kitchen legibility — "how small is a mince").
+- Tap a panel image → **zoom / lightbox** (kitchen legibility — "how small is a mince"); a11y
+  contract for the zoom modal is in §9.4.
 - **Multiple foldouts open independently** — no accordion.
 
 A step carries **0..N** helpers, so the UI renders several tabs on one step (a small tray/row),
@@ -313,6 +314,20 @@ Resolved in [Specify caption a11y + i18n mechanics](https://github.com/alantay/a
    locale-keyed lookup, `<html lang>` + optional per-`figcaption` `lang` get wired, and
    **`alt=""` plus the entire DOM skeleton stay untouched** (empty alt is locale-independent).
    Images are never re-generated (nothing load-bearing is baked).
+4. **Zoom lightbox a11y (§8 tap-to-zoom).** The `alt=""` decorative treatment in point 2 is the
+   *inline strip* pattern; the zoomed panel is a **modal dialog** and needs its own contract:
+   - **Dialog semantics** — `role="dialog"` + `aria-modal="true"` (or a native `<dialog>`).
+   - **Accessible name** — the dialog is named by the panel's caption (e.g. `aria-labelledby`
+     pointing at the rendered caption text), so opening a zoom announces *which* panel and its
+     instruction. Inside the dialog the enlarged image is still decorative (`alt=""`) — the
+     caption remains the sole carrier, consistent with §5.
+   - **Keyboard** — the zoom trigger is keyboard-activatable (a real `<button>`/`<a>` wrapping
+     the image, not a click-only handler); **Escape closes**; a visible close control is in the
+     tab order.
+   - **Focus** — focus moves into the dialog on open, is **trapped** while open, and is
+     **restored to the triggering panel image** on close.
+   This applies in **both registers** (§8) and leaves the independent-foldout behaviour (§8 held
+   default — no accordion) untouched.
 
 ---
 
@@ -345,7 +360,8 @@ The order below groups the work; sequence to taste.
       both `stamp` (chat) and `quiet` (cookbook) registers.
 - [ ] Folded "Show me how · <label>" tab(s), one per tagged technique (0..N); no accordion.
 - [ ] Narrow: swipe/scroll-snap strip with edge-peek + dot indicators. Wide: full row.
-- [ ] Tap-to-zoom lightbox on each panel.
+- [ ] Tap-to-zoom lightbox on each panel — modal dialog with the a11y contract in §9.4
+      (dialog semantics, caption as accessible name, Escape/close, focus trap + restore).
 - [ ] DOM per §9: `<details>` → `<ol aria-label>` → `<li>` → `<figure>` (`img alt=""` +
       `figcaption`); numeral badge + dots `aria-hidden`.
 - [ ] Verify with `/verify` before claiming working behaviour.
