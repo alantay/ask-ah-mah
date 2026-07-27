@@ -36,6 +36,8 @@ The transient state between the first message being sent and the assistant strea
 
 When the stream finishes (`onFinish`), `commitConversation(id)` flips `pendingConversationId → activeConversationId`.
 
+Committing continues the **same on-screen session** the user just watched stream — it is not a reload of the now-saved conversation. The reply stays put; there is no re-fetch of history and no loading placeholder at the moment of commit.
+
 ---
 
 ## Nav Selection

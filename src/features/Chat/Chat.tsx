@@ -36,6 +36,13 @@ const Chat = () => {
   const isEmpty =
     messageCount === 0 && status === "ready" && !isSending && !messagesLoading;
 
+  // Only show the history skeleton when there's genuinely nothing on screen yet
+  // (a real conversation switch or a cold load). On the new-chat path the reply
+  // is already in the useChat store when commitConversation flips the history
+  // fetch on, so gating on an empty view suppresses the redundant post-stream
+  // skeleton flash while leaving the real switch/cold-load case intact.
+  const showHistorySkeleton = messagesLoading && messageCount === 0;
+
   const composer = (
     <MessageInput
       onSendMessage={handleSendMessage}
@@ -61,7 +68,7 @@ const Chat = () => {
     <div
       className="flex flex-col animate-in fade-in duration-300 h-full"
     >
-      {messagesLoading ? (
+      {showHistorySkeleton ? (
         <>
           <HistorySkeleton />
           {composer}

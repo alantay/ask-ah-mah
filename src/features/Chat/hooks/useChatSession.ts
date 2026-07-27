@@ -48,11 +48,15 @@ export function useChatSession() {
   // Holds the pending conversation id during the first-message stream
   const pendingConvIdRef = useRef<string | null>(null);
 
-  // Set for exactly one render right before we call commitConversation
-  // ourselves (see onFinish below), so the chatId-sync effect can tell "our
-  // own commit just landed" apart from "the user switched conversations" and
-  // skip that one activeConversationId change.
-  const skipNextChatIdSyncRef = useRef(false);
+  // The conversation id the live "staging" store currently represents, set when
+  // that staging session commits (see onFinish below). While activeConversationId
+  // equals it, the chatId-sync effect must NOT re-key useChat — the staging store
+  // already holds this conversation's messages, and re-keying would reset the AI
+  // SDK's store and blank the just-streamed reply for a beat. An earlier boolean
+  // one-shot guard raced against StrictMode/async and lost its arm; keying on the
+  // id makes the skip idempotent (running twice both no-op) and correct across a
+  // sidebar away-and-back to the same freshly-created conversation.
+  const stagingRepresentsIdRef = useRef<string | null>(null);
 
   // The id passed to useChat below. Deliberately does NOT mirror
   // activeConversationId while a staging send's stream is still in flight or
@@ -65,10 +69,17 @@ export function useChatSession() {
     () => activeConversationId ?? "staging"
   );
   useEffect(() => {
-    if (skipNextChatIdSyncRef.current) {
-      skipNextChatIdSyncRef.current = false;
+    // Our own staging session catching up to its committed id — keep chatId on
+    // "staging" so useChat's store (and the reply in it) survives.
+    if (
+      activeConversationId &&
+      activeConversationId === stagingRepresentsIdRef.current
+    ) {
       return;
     }
+    // Genuinely different target — the staging buffer no longer represents
+    // anything to protect; re-key and release it.
+    stagingRepresentsIdRef.current = null;
     setChatId(activeConversationId ?? "staging");
   }, [activeConversationId]);
 
@@ -186,7 +197,9 @@ export function useChatSession() {
       const pendingId = pendingConvIdRef.current;
       if (pendingId) {
         pendingConvIdRef.current = null;
-        skipNextChatIdSyncRef.current = true;
+        // "staging" now represents this committed conversation — the sync effect
+        // keys on this to avoid re-keying useChat and wiping the reply.
+        stagingRepresentsIdRef.current = pendingId;
         commitConversation(pendingId);
       }
     },
