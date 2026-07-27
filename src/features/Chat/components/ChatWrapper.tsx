@@ -6,8 +6,7 @@ import { LOADING_MESSAGES } from "../constants";
 
 export default function ChatWrapper() {
   const { userId, isLoading: sessionLoading } = useSessionContext();
-  const { activeConversationId } =
-    useConversationContext();
+  const { chatSessionKey } = useConversationContext();
 
   const isLoading = sessionLoading || !userId;
 
@@ -24,7 +23,7 @@ export default function ChatWrapper() {
           </div>
         </div>
       ) : (
-        <Chat key={activeConversationId ?? "staging"} />
+        <Chat key={chatSessionKey} />
       )}
     </>
   );

@@ -15,12 +15,22 @@ import useSWR, { mutate as globalMutate } from "swr";
 
 const LOCAL_STORAGE_KEY = "ask-ah-mah-active-conversation";
 
+// A staging session's remount key. Each fresh staging session (New Chat, an
+// orphaned active id, a delete that lands on staging) gets a unique token so
+// React remounts <Chat> and clears the previous view — while a single staging
+// session keeps ONE token from first keystroke through its own commit, so
+// landing its committed id never remounts and never flashes the reply away.
+const newStagingKey = () => `staging:${crypto.randomUUID()}`;
+
 type ConversationListResponse = {
   conversations: ConversationEntity[];
 };
 
 interface ConversationContextType {
   activeConversationId: string | null;
+  // The <Chat> remount key. Tracks activeConversationId for genuine switches
+  // but stays put across a staging session's self-commit (see newStagingKey).
+  chatSessionKey: string;
   pendingConversationId: string | null;
   activeConversation: ConversationEntity | null;
   conversations: ConversationEntity[];
@@ -57,6 +67,14 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
   const [pendingConversationId, setPendingConversationId] = useState<string | null>(null);
   const [pendingCookWithMessage, setPendingCookWithMessage] = useState<string | null>(null);
 
+  // Mirrors the initial active id so the first render's key matches the server's
+  // ("staging" when none) — no hydration mismatch. commitConversation leaves it
+  // untouched; every genuine switch below reassigns it.
+  const [chatSessionKey, setChatSessionKey] = useState<string>(() => {
+    if (typeof window === "undefined") return "staging";
+    return localStorage.getItem(LOCAL_STORAGE_KEY) ?? "staging";
+  });
+
   // Fetch the conversations list. userId lives in the SWR key only to partition
   // the cache per user — it is NOT sent to the server (the session cookie is the
   // identity). A tuple key keeps the fetch URL clean: /api/conversation, no query.
@@ -79,6 +97,7 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
 
   const setActiveConversation = (id: string) => {
     setActiveConversationId(id);
+    setChatSessionKey(id);
     localStorage.setItem(LOCAL_STORAGE_KEY, id);
   };
 
@@ -102,7 +121,10 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     const stillOwned = listData.conversations.some(
       (c) => c.id === activeConversationId
     );
-    if (!stillOwned) persistActiveConversation(null);
+    if (!stillOwned) {
+      persistActiveConversation(null);
+      setChatSessionKey(newStagingKey());
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listLoading, listData, activeConversationId]);
 
@@ -123,6 +145,7 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
   // Clear active conversation and enter staging state — no API call
   const startNewConversation = () => {
     persistActiveConversation(null);
+    setChatSessionKey(newStagingKey());
     setPendingConversationId(null);
   };
 
@@ -142,7 +165,10 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Called in onFinish after stream completes: commit the pending conversation as active
+  // Called in onFinish after stream completes: commit the pending conversation as active.
+  // Deliberately does NOT touch chatSessionKey — the staging session that just
+  // streamed keeps its remount key so landing its own id never remounts <Chat>
+  // (which would blank the just-streamed reply and flash the history skeleton).
   const commitConversation = (id: string) => {
     persistActiveConversation(id);
     setPendingConversationId(null);
@@ -208,9 +234,11 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
 
       if (nextConversation) {
         persistActiveConversation(nextConversation.id);
+        setChatSessionKey(nextConversation.id);
       } else {
         // No next conversation — go to staging state
         persistActiveConversation(null);
+        setChatSessionKey(newStagingKey());
       }
 
       try {
@@ -233,6 +261,7 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
           );
         }
         persistActiveConversation(previousActiveConversationId);
+        setChatSessionKey(previousActiveConversationId);
         toast.error("Could not delete conversation. Try again.");
       }
     } else {
@@ -272,6 +301,7 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     <ConversationContext.Provider
       value={{
         activeConversationId,
+        chatSessionKey,
         pendingConversationId,
         activeConversation,
         conversations: listData?.conversations ?? [],
