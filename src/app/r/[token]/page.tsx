@@ -15,7 +15,10 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { token } = await params;
   const recipe = await getRecipeByShareToken(token);
-  if (!recipe) return { title: "Recipe not found" };
+  // Kept in step with r/not-found.tsx, which renders for this same case — the
+  // tab must not say "Recipe not found" while the page says "put away". Both
+  // set it because which one wins is Next's business, not ours.
+  if (!recipe) return { title: "This one's been put away" };
 
   const title = recipe.name;
   const description =
