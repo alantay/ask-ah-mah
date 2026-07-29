@@ -247,3 +247,29 @@ A fenced ` ```clarify ` block (`{ question, options: [{ id, label, hint? }] }`) 
 **Why this matters:** the ban existed because prose questions read as Ah Mah stalling instead of cooking. Clarify is bounded so it can't become that stall — three hard guards hold: (1) if she can already act at a sensible default she acts, never asks; (2) no permission questions ("want me to suggest?"); (3) freshness stays off-limits — she never asks whether an item is still good ([ADR-0008](docs/adr/0008-no-shelf-life-ui.md)). Clarify narrows the *request*, never audits the pantry.
 
 Related: [ADR-0024](docs/adr/0024-clarify-reopens-never-ask.md), [ADR-0008](docs/adr/0008-no-shelf-life-ui.md)
+
+---
+
+## Shared Link
+
+The public, unauthenticated URL (`/r/<token>`) a recipe owner mints to pass one recipe to someone else. Sharing is a **hand-off, not a publication**: the recipe stays the owner's, the recipient gets a *view* and never a copy — no save-to-my-cookbook, no fork. Owner-scoped fields are never exposed, and the page is `noindex` (link-only, protected solely by an unguessable token).
+
+A Shared Link is therefore **mortal, and mortal in exactly one way**. Minting is one-way and idempotent — the same token forever, and there is no unshare — so the only thing that kills a link is the owner throwing the recipe away. The recipe is hard-deleted with no tombstone, so a dead token is indistinguishable from a bogus one: both resolve to nothing.
+
+The person at a Shared Link is a **Recipient** — a stranger with no pantry, no cookbook, and no idea what this app is. Every surface on this route is written for them rather than for the owner, including the closing invitation under a live recipe and the [Retired Link](#retired-link) page under a dead one.
+
+**Why this matters:** it explains why the app has an acquisition surface at all. A Recipient is the only person who meets Ah Mah without choosing to, so `/r/` is the one route that has to introduce her.
+
+Related: [ADR-0022](docs/adr/0022-share-prompt-is-quiet-and-photo-first-og-fallback.md), [Copy recipe](#copy-recipe)
+
+---
+
+## Retired Link
+
+A **[Shared Link](#shared-link)** whose recipe no longer exists. It gets its own page rather than the app's generic 404, because the two are not the same event: a stray URL means *you typed something wrong*, a Retired Link means *something real was here and the cook put it away*.
+
+The page **presumes the recipe was thrown away** and says so, even though the code cannot actually distinguish that from a garbage token. This is deliberate: tokens are unguessable, so a human only ever arrives here by clicking a link that once worked — the presumption is right essentially every time for the people who read it, and only ever wrong for crawlers. Writing agnostic copy to stay technically correct for bots would cost the page the one thing it has.
+
+Retiring is described to the Recipient as **put away**, never *thrown away* — the app's own word for deletion. "Thrown away" is the **owner's** word for their **own** act (the delete toast says *"Okay, thrown away."*); repeating it to a stranger makes the person who shared the link look careless. Same event, different audience, different register.
+
+**Why this matters:** the alternative was a tombstone — retaining the name of a deleted recipe so the page could confirm the loss and even name the dish. Rejected: the owner tapped throw-away and was told it was thrown away. Quietly keeping it so strangers can still read it breaks that promise.
