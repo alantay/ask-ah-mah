@@ -14,6 +14,18 @@ Related: [ADR-0002](docs/adr/0002-conversation-requires-at-least-one-message.md)
 
 ---
 
+## Conversation Title
+
+The short name a **Conversation** carries in the sidebar. Its job is **identification for later recall** — the user must recognise a chat in a list weeks after having it — so it names the **dish**, or failing that the ingredients discussed. Where a conversation produced a recipe, the recipe's own name serves.
+
+A Conversation Title is written once, automatically, from the first exchange, and is the user's to overwrite by renaming. It is never rewritten afterwards: a title the user has grown used to is more useful than a better-worded one.
+
+**A Conversation Title does not speak in Ah Mah's voice.** Warmth was tried here and failed — asked for a *warm* title in a handful of words, the model spent the budget on warmth and returned chats named for a mood rather than a dish, which no one can search for. Warmth belongs in her prose, where it has room; a label does a job. This is the same finding as [ADR-0023](docs/adr/0023-tips-speak-in-a-plain-register-not-ah-mahs-voice.md), reached independently on a second surface. Titles carry no emoji ([ADR-0026](docs/adr/0026-emoji-are-voice-not-system.md)).
+
+Related: [ADR-0023](docs/adr/0023-tips-speak-in-a-plain-register-not-ah-mahs-voice.md), [ADR-0026](docs/adr/0026-emoji-are-voice-not-system.md)
+
+---
+
 ## Section
 
 One of the four primary destinations — **Chat**, **Pantry**, **Shopping List**, **Cookbook**. Selected from the `AppSidebar` on desktop and from the nav drawer on mobile. The `SectionSwitcher` that shows the active Section's panel (and keeps the others mounted-but-hidden underneath) is an implementation detail, not a user-facing surface — there is no visible tab strip. It deliberately does **not** use a tabs primitive: with no tab strip, tab semantics (`role="tablist"`/`"tab"`/`"tabpanel"`) would misrepresent the sidebar-driven nav. The `?tab=` query key is a kept URL contract (see [ADR-0019](docs/adr/0019-keep-querystring-tabs-bundle-lever-is-the-renderer.md)), not evidence of a tab UI.

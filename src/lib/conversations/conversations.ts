@@ -169,7 +169,7 @@ export async function autoTitleConversation(id: string): Promise<void> {
   const { object } = await generateObject({
     model: openai(MODEL_LIGHT),
     schema: z.object({ title: z.string().max(40) }),
-    prompt: `Give this cooking chat session a short, warm title (3-6 words, no quotes, no punctuation at end).
+    prompt: `Name this cooking chat by its dish or main ingredient, so it can be recognised in a list weeks later (3-6 words, no quotes, no punctuation at end). Lead with the dish. If no dish was settled on, name the ingredients discussed. No emoji.
 User: "${firstUserMessage.content}"
 Ah Mah: "${firstAssistantMessage.content}"`,
   });
