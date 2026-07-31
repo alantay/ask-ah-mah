@@ -41,7 +41,7 @@ export const POST = withAuth(async (req: NextRequest, { userId }) => {
     const message = await createMessage(conversationId, userId, content, role);
 
     if (role === "assistant") {
-      void maybeAutoTitleConversation(conversationId);
+      void maybeAutoTitleConversation(conversationId, userId);
     }
 
     return NextResponse.json({ message });

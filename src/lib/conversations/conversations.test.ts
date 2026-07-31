@@ -269,7 +269,7 @@ describe("Conversation Functions", () => {
         },
       ]);
 
-      await autoTitleConversation("conv-1");
+      await autoTitleConversation("conv-1", "user-1");
 
       expect(mockedGenerateObject).not.toHaveBeenCalled();
       expect(mockedPrisma.conversation.update).not.toHaveBeenCalled();
@@ -295,11 +295,11 @@ describe("Conversation Functions", () => {
         },
       ]);
 
-      mockedPrisma.conversation.findUnique.mockResolvedValue(
+      mockedPrisma.conversation.findFirst.mockResolvedValue(
         makeConversation({ title: "Existing Title" })
       );
 
-      await autoTitleConversation("conv-1");
+      await autoTitleConversation("conv-1", "user-1");
 
       expect(mockedGenerateObject).not.toHaveBeenCalled();
     });
@@ -324,7 +324,7 @@ describe("Conversation Functions", () => {
         },
       ]);
 
-      mockedPrisma.conversation.findUnique.mockResolvedValue(
+      mockedPrisma.conversation.findFirst.mockResolvedValue(
         makeConversation({ title: null })
       );
 
@@ -332,17 +332,88 @@ describe("Conversation Functions", () => {
         object: { title: "Cooking With Eggs" },
       } as ReturnType<typeof generateObject> extends Promise<infer T> ? T : never);
 
-      mockedPrisma.conversation.update.mockResolvedValue(
-        makeConversation({ title: "Cooking With Eggs" })
-      );
+      mockedPrisma.conversation.updateMany.mockResolvedValue({ count: 1 });
 
-      await autoTitleConversation("conv-1");
+      await autoTitleConversation("conv-1", "user-1");
 
       expect(mockedGenerateObject).toHaveBeenCalledTimes(1);
-      expect(mockedPrisma.conversation.update).toHaveBeenCalledWith({
-        where: { id: "conv-1" },
+      // Scoped to title: null so a rename or autoTitleIfNull landing during
+      // generation is not clobbered.
+      expect(mockedPrisma.conversation.updateMany).toHaveBeenCalledWith({
+        where: { id: "conv-1", userId: "user-1", title: null },
         data: { title: "Cooking With Eggs" },
       });
+    });
+
+    it("strips emoji from a generated title before storing it", async () => {
+      mockedPrisma.message.findMany.mockResolvedValue([
+        {
+          id: "msg-1",
+          conversationId: "conv-1",
+          userId: "user-1",
+          content: "What can I cook with eggs?",
+          role: "user",
+          createdAt: new Date(),
+        },
+        {
+          id: "msg-2",
+          conversationId: "conv-1",
+          userId: "user-1",
+          content: "You can make scrambled eggs!",
+          role: "assistant",
+          createdAt: new Date(),
+        },
+      ]);
+
+      mockedPrisma.conversation.findFirst.mockResolvedValue(
+        makeConversation({ title: null })
+      );
+
+      mockedGenerateObject.mockResolvedValue({
+        object: { title: "🍳 Scrambled eggs for one" },
+      } as ReturnType<typeof generateObject> extends Promise<infer T> ? T : never);
+
+      mockedPrisma.conversation.updateMany.mockResolvedValue({ count: 1 });
+
+      await autoTitleConversation("conv-1", "user-1");
+
+      expect(mockedPrisma.conversation.updateMany).toHaveBeenCalledWith({
+        where: { id: "conv-1", userId: "user-1", title: null },
+        data: { title: "Scrambled eggs for one" },
+      });
+    });
+
+    it("writes nothing when a generated title is only emoji", async () => {
+      mockedPrisma.message.findMany.mockResolvedValue([
+        {
+          id: "msg-1",
+          conversationId: "conv-1",
+          userId: "user-1",
+          content: "What can I cook with eggs?",
+          role: "user",
+          createdAt: new Date(),
+        },
+        {
+          id: "msg-2",
+          conversationId: "conv-1",
+          userId: "user-1",
+          content: "You can make scrambled eggs!",
+          role: "assistant",
+          createdAt: new Date(),
+        },
+      ]);
+
+      mockedPrisma.conversation.findFirst.mockResolvedValue(
+        makeConversation({ title: null })
+      );
+
+      mockedGenerateObject.mockResolvedValue({
+        object: { title: "🍳🥚" },
+      } as ReturnType<typeof generateObject> extends Promise<infer T> ? T : never);
+
+      await autoTitleConversation("conv-1", "user-1");
+
+      expect(mockedPrisma.conversation.updateMany).not.toHaveBeenCalled();
     });
   });
 });

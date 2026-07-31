@@ -23,7 +23,7 @@ Two smaller costs: an emoji baked into a stored conversation title is read aloud
 Concretely:
 
 - Prose written in Ah Mah's voice may carry an occasional hand-placed emoji. The two that exist stay.
-- No emoji in model-generated output. The conversation-title prompt states `No emoji` explicitly, because a title that now names a dish invites the model to reach for a glyph unprompted.
+- No emoji in model-generated output. The conversation-title prompt states `No emoji` explicitly, because a title that now names a dish invites the model to reach for a glyph unprompted. Where that output is **persisted**, the prompt is backed by enforcement — generated titles are stripped of emoji before storage, since a prompt is not a guarantee and the asymmetry below makes the database the expensive place to be wrong.
 - No emoji as a row-level or category-level visual affordance. Where scanning is weak, fix it with structure (grouping headers), with the label itself, or with content the user wrote — not with a glyph.
 - Iconography remains lucide, styled with project tokens.
 

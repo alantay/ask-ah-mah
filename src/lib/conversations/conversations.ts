@@ -137,13 +137,30 @@ export async function deleteConversation(
   }
 }
 
-export async function maybeAutoTitleConversation(conversationId: string): Promise<void> {
+export async function maybeAutoTitleConversation(
+  conversationId: string,
+  userId: string
+): Promise<void> {
   const count = await prisma.message.count({ where: { conversationId } });
   if (count !== 2) return;
-  autoTitleConversation(conversationId).catch(() => {});
+  autoTitleConversation(conversationId, userId).catch(() => {});
 }
 
-export async function autoTitleConversation(id: string): Promise<void> {
+/**
+ * The prompt asks for no emoji, but a prompt is not a guarantee and the title is
+ * persisted — an emoji that lands in the database costs a migration to remove
+ * (ADR-0026). Strip rather than reject: this runs once, at exactly two messages,
+ * and its caller swallows errors, so a rejected title would leave the
+ * conversation permanently untitled.
+ */
+function stripEmoji(title: string): string {
+  return title
+    .replace(/\p{Extended_Pictographic}/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export async function autoTitleConversation(id: string, userId: string): Promise<void> {
   const messages = await prisma.message.findMany({
     where: { conversationId: id },
     orderBy: { createdAt: "asc" },
@@ -154,7 +171,7 @@ export async function autoTitleConversation(id: string): Promise<void> {
     return;
   }
 
-  const conversation = await prisma.conversation.findUnique({ where: { id } });
+  const conversation = await prisma.conversation.findFirst({ where: { id, userId } });
   if (conversation?.title) {
     return;
   }
@@ -174,5 +191,15 @@ User: "${firstUserMessage.content}"
 Ah Mah: "${firstAssistantMessage.content}"`,
   });
 
-  await prisma.conversation.update({ where: { id }, data: { title: object.title } });
+  const title = stripEmoji(object.title);
+  if (!title) return;
+
+  // Same atomic guard as autoTitleIfNull, and load-bearing here because generation
+  // takes seconds: a rename or an autoTitleIfNull recipe-title stamp can land while
+  // we wait. Scoping the write to { title: null } means the late writer loses
+  // instead of clobbering a title the user (or a recipe) already gave this row.
+  await prisma.conversation.updateMany({
+    where: { id, userId, title: null },
+    data: { title },
+  });
 }
