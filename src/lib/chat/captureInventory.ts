@@ -1,4 +1,5 @@
 import { addInventoryItem } from "@/lib/inventory/Inventory";
+import { extractRecipeBlocks } from "@/lib/recipes/parseBlocks";
 import { AddInventoryItem, AddInventoryItemSchema } from "@/lib/inventory/schemas";
 import { PROMPT_FRAGMENTS } from "@/lib/prompts/fragments";
 import { MODEL_LIGHT } from "@/lib/ai/models";
@@ -57,6 +58,13 @@ export async function captureMentionedInventory(
   userId: string,
 ): Promise<AddInventoryItem[]> {
   if (!text || !text.trim() || !mentionsPossession(text)) return [];
+  // A checklist reply ("I've got the Thick rice noodles.") reads as a possession
+  // claim, but the client has already written those ticks to the pantry using the
+  // model's own labels and categories. Extracting again re-words them ("Thick
+  // rice noodles" → "Rice noodle"), misses the upsert key, and lands a
+  // near-duplicate row beside the one the tick just created.
+  if (extractRecipeBlocks(text).some((block) => block.kind === "checklist-reply"))
+    return [];
 
   try {
     const { object } = await generateObject({

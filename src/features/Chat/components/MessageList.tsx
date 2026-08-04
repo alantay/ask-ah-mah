@@ -17,13 +17,15 @@ import {
 } from "@/lib/recipes/parseBlocks";
 import type { OpenFenceKind } from "@/lib/recipes/parseBlocks";
 import type {
+  ChecklistBlockData,
+  ChecklistRow,
   ClarifyBlockData,
   RecipeBlock,
   RecipeWithId,
   SuggestionsBlockData,
 } from "@/lib/recipes/schemas";
 import { recipeWithIdToBlock } from "@/lib/recipes/schemas";
-import { recipeKey as savedRecipesKey } from "@/lib/swr/keys";
+import { inventoryKey, recipeKey as savedRecipesKey } from "@/lib/swr/keys";
 import { fetcher } from "@/lib/utils";
 import { hasSeenSignInNudge, markSignInNudgeSeen } from "@/lib/signInNudge";
 import type { UIMessage } from "ai";
@@ -33,6 +35,7 @@ import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
 import { generateTempId } from "../constants";
 import { ChatLoader } from "./loaders";
+import { ChecklistBlock } from "./recipe/ChecklistBlock";
 import { ClarifyBlock } from "./recipe/ClarifyBlock";
 import { RecipeLetter } from "./recipe/RecipeLetter";
 import { SuggestionsBlock } from "./recipe/SuggestionsBlock";
@@ -127,6 +130,37 @@ export const MessageList = ({
     savedRecipesKey(userId),
     saveRecipeCall,
   );
+
+  const { mutate: mutateInventory } = useSWR(inventoryKey(userId), fetcher);
+
+  // A tick is the user asserting "I own this", so the Pantry write is
+  // deterministic and client-driven rather than left to the model to choose to
+  // call `addInventoryItem`. `addInventoryItem` normalises the name and upserts
+  // on (userId, name, type), so an item the user already had is not duplicated.
+  const handleTicked = async (rows: ChecklistRow[]) => {
+    try {
+      const res = await fetch("/api/inventory", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: rows.map((r) => ({
+            name: r.label,
+            type: "ingredient",
+            ...(r.category ? { category: r.category } : {}),
+          })),
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to update pantry");
+      await mutateInventory();
+      toast.success(
+        rows.length === 1
+          ? `Added ${rows[0].label} to your pantry`
+          : `Added ${rows.length} items to your pantry`,
+      );
+    } catch {
+      toast.error("Couldn't add those to your pantry — you can add them by hand.");
+    }
+  };
 
   const { isAuthenticated } = useSessionContext();
   const [signInOpen, setSignInOpen] = useState(false);
@@ -507,6 +541,23 @@ export const MessageList = ({
                         </div>
                       );
                     }
+                    if (block.kind === "checklist") {
+                      return (
+                        <div key={blockKey}>
+                          <hr className="border-t border-border my-3" />
+                          <ChecklistBlock
+                            data={block.payload}
+                            allMessages={messages}
+                            messageIndex={messageIndex}
+                            onSend={onSend}
+                            onTicked={handleTicked}
+                          />
+                        </div>
+                      );
+                    }
+                    // The reply fence rides inside the user's own message and is
+                    // read by ChecklistBlock's replay; it renders nothing itself.
+                    if (block.kind === "checklist-reply") return null;
                     if (block.kind === "recipe") {
                       const recipeKey = `${message.id}-${bi}`;
                       const savedRecipe = recipeSaved?.find(
@@ -554,7 +605,24 @@ export const MessageList = ({
                           isStreaming
                         />
                       </div>
-                    ) : (
+                    ) : activePartial.kind === "checklist" ? (
+                      <div key={`${message.id}-streaming`}>
+                        <hr className="border-t border-border my-3" />
+                        <ChecklistBlock
+                          data={
+                            activePartial.data as Partial<ChecklistBlockData>
+                          }
+                          allMessages={messages}
+                          messageIndex={messageIndex}
+                          onSend={onSend}
+                          onTicked={handleTicked}
+                          isStreaming
+                        />
+                      </div>
+                    ) : activePartial.kind === "suggestions" ? (
+                      // Matched explicitly rather than used as the fall-through:
+                      // a new fence kind that reaches here must render nothing
+                      // until it is wired, never masquerade as suggestions (#463).
                       <div key={`${message.id}-streaming`}>
                         <hr className="border-t border-border my-3" />
                         <SuggestionsBlock
@@ -567,7 +635,7 @@ export const MessageList = ({
                           isStreaming
                         />
                       </div>
-                    ))}
+                    ) : null)}
 
                   {/* "More ideas" button — shown on completed Cook-With responses */}
                   {!hasOpenFence &&

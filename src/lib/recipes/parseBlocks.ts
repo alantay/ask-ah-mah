@@ -1,10 +1,14 @@
 import { parsePartialJson } from "ai";
 import {
+  ChecklistBlockSchema,
+  ChecklistReplySchema,
   ClarifyBlockSchema,
   RecipeBlockSchema,
   SuggestionsBlockSchema,
 } from "./schemas";
 import type {
+  ChecklistBlockData,
+  ChecklistReplyData,
   ClarifyBlockData,
   RecipeBlock,
   SuggestionsBlockData,
@@ -13,17 +17,27 @@ import type {
 export type ParsedBlock =
   | { kind: "suggestions"; payload: SuggestionsBlockData; index: number }
   | { kind: "clarify"; payload: ClarifyBlockData; index: number }
+  | { kind: "checklist"; payload: ChecklistBlockData; index: number }
+  | { kind: "checklist-reply"; payload: ChecklistReplyData; index: number }
   | { kind: "recipe"; payload: RecipeBlock; index: number }
   | { kind: "legacy"; recipeStr: string; index: number };
 
 export function extractRecipeBlocks(text: string): ParsedBlock[] {
   const blocks: ParsedBlock[] = [];
 
-  const fenceRegex = /^```(suggestions|clarify|recipe)\n([\s\S]*?)\n```/gm;
+  // `checklist-reply` precedes `checklist` in the alternation for clarity; the
+  // trailing `\n` in the pattern already makes them unambiguous.
+  const fenceRegex =
+    /^```(suggestions|clarify|checklist-reply|checklist|recipe)\n([\s\S]*?)\n```/gm;
   let match: RegExpExecArray | null;
 
   while ((match = fenceRegex.exec(text)) !== null) {
-    const kind = match[1] as "suggestions" | "clarify" | "recipe";
+    const kind = match[1] as
+      | "suggestions"
+      | "clarify"
+      | "checklist-reply"
+      | "checklist"
+      | "recipe";
     try {
       const payload = JSON.parse(match[2]);
       if (kind === "suggestions") {
@@ -34,6 +48,18 @@ export function extractRecipeBlocks(text: string): ParsedBlock[] {
         const result = ClarifyBlockSchema.safeParse(payload);
         if (result.success)
           blocks.push({ kind: "clarify", payload: result.data, index: match.index });
+      } else if (kind === "checklist") {
+        const result = ChecklistBlockSchema.safeParse(payload);
+        if (result.success)
+          blocks.push({ kind: "checklist", payload: result.data, index: match.index });
+      } else if (kind === "checklist-reply") {
+        const result = ChecklistReplySchema.safeParse(payload);
+        if (result.success)
+          blocks.push({
+            kind: "checklist-reply",
+            payload: result.data,
+            index: match.index,
+          });
       } else if (kind === "recipe") {
         const result = RecipeBlockSchema.safeParse(payload);
         if (result.success)
@@ -62,11 +88,16 @@ export function stripFences(text: string): string {
   return text
     // Keep stripping legacy `gate` fences for backward-compat and to avoid
     // rendering unsupported fenced-language blocks from older messages.
-    .replace(/^```(?:suggestions|clarify|gate|recipe)\n[\s\S]*?\n```/gm, "")
+    .replace(
+      /^```(?:suggestions|clarify|checklist-reply|checklist|gate|recipe)\n[\s\S]*?\n```/gm,
+      "",
+    )
     .trim();
 }
 
-export type OpenFenceKind = "recipe" | "suggestions" | "clarify";
+// `checklist-reply` is absent here on purpose: it is authored by the client on
+// submit, never streamed, so it can never be the trailing open fence.
+export type OpenFenceKind = "recipe" | "suggestions" | "clarify" | "checklist";
 
 export interface OpenFence {
   kind: OpenFenceKind;
@@ -86,6 +117,7 @@ export function getOpenFence(text: string): OpenFence | null {
     { kind: "recipe", marker: "```recipe\n" },
     { kind: "suggestions", marker: "```suggestions\n" },
     { kind: "clarify", marker: "```clarify\n" },
+    { kind: "checklist", marker: "```checklist\n" },
   ];
 
   let best: { kind: OpenFenceKind; index: number; markerLen: number } | null =

@@ -246,7 +246,41 @@ A fenced ` ```clarify ` block (`{ question, options: [{ id, label, hint? }] }`) 
 
 **Why this matters:** the ban existed because prose questions read as Ah Mah stalling instead of cooking. Clarify is bounded so it can't become that stall — three hard guards hold: (1) if she can already act at a sensible default she acts, never asks; (2) no permission questions ("want me to suggest?"); (3) freshness stays off-limits — she never asks whether an item is still good ([ADR-0008](docs/adr/0008-no-shelf-life-ui.md)). Clarify narrows the *request*, never audits the pantry.
 
-Related: [ADR-0024](docs/adr/0024-clarify-reopens-never-ask.md), [ADR-0008](docs/adr/0008-no-shelf-life-ui.md)
+Related: [ADR-0024](docs/adr/0024-clarify-reopens-never-ask.md), [ADR-0008](docs/adr/0008-no-shelf-life-ui.md), [Checklist block](#checklist-block)
+
+---
+
+## Checklist block
+
+A fenced ` ```checklist ` block (`{ question, deal, rows: [{ id, label, hint?, category? }] }`) that Ah Mah may emit — Mode 5 in `CHAT_SYSTEM_PROMPT` — asking whether the user owns the things a **named dish stands on**, before she commits to the dish. Rendered as a **multi-select** card with staging and an explicit submit (`ChecklistBlock`), unlike the single-select **Clarify block**. It is a **gate**: emitted alone, then she waits, then cooks exactly one recipe.
+
+**The governing line is dish vs. parameter vs. possession.** Suggestions (Mode 1) picks a **dish** — *which dish?*; Clarify (Mode 4) picks a **parameter** — *which constraint reshapes the answer?*; a Checklist block asks about a **possession** — *is this fixed dish achievable?* It presupposes the dish, so it can never be used to pick between dishes; and it asks about nothing but what the user owns, so it never narrows the request.
+
+**A tick is a factual claim — "I own this."** Ticked rows are written straight to the pantry (`POST /api/inventory`, client-driven), which makes the card the fastest inventory backfill in the app. A row **shown and left unticked** on submit is **confirmed absent** — stronger than merely "not in the pantry record", because the user engaged and said no. It binds **the name, and only the name**: substitution and **Addition** notes continue exactly as before.
+
+**The makeable fork.** When the missing load-bearing item is something a home cook can make in one session — a rempah, a curry paste, a stock, a sambal, pasta — *how* comes before *what*: a [clarify](#clarify-block) offers "make my own" vs. "store-bought", and the checklist that follows asks about **that route's** ingredients only. Picking from-scratch turns the card into the paste's **makings** (dried chilli, belacan, galangal, candlenut), which is what an incomplete pantry record actually misses — a jar is memorable, loose candlenuts at the back of a cupboard are not. Ticking them satisfies the name test by [building the thing rather than substituting it](#name-test), so the dish keeps its real name. Bounded: nothing long-ferment (soy sauce, miso, gochujang) forks, more than 4 makings does not fit a card, and a dish she can already cook never forks — that would be a permission question wearing a costume.
+
+**It composes with Additions, it does not compete.** Additions *accept* the pantry record ("not in pantry — grab next shop"); the checklist *corrects* it ("you may already own this"). The checklist runs before the recipe exists; Additions run after, on whatever is genuinely absent.
+
+**Scope:** at most one per dish, no limit per conversation, and **nothing carries between dishes** — a new dish standing on a previously-declined item asks again. "Per dish" means **per cooking**: a confirmed-absent row binds the dish she cooked, not the rest of the conversation, so asking for that same dish *again* re-opens the card — the user has had time to go to the shops, and the second ask is the signal. Nothing the user has **already told her they lack** earns a row either; that is an answer, not a question, and if it empties the list there is no card at all. Chat only; **Cook With What You Have** (Mode 3) is untouched. Presence is not freshness: she asks *do you have it*, never *is it still good* ([ADR-0008](docs/adr/0008-no-shelf-life-ui.md)).
+
+Related: [ADR-0026](docs/adr/0026-checklist-reopens-never-ask-for-possession.md), [ADR-0024](docs/adr/0024-clarify-reopens-never-ask.md), [Name test](#name-test), [Addition](#addition)
+
+---
+
+## Name test
+
+The rule that decides whether an ingredient is **load-bearing** for a dish:
+
+> An ingredient qualifies **iff** removing or substituting it means the dish can no longer honestly carry its name.
+
+Laksa → laksa paste, coconut milk, thick rice noodles. Not garlic, shallots, oil, soy. It is a semantic judgement about the dish, authored by the model — never a set-membership check against a suggestion's `keyIngredients` (a deliberately broad coverage set that includes soy and garlic).
+
+Two things it does **not** qualify: anything freely substitutable without touching the name (guanciale → pancetta leaves carbonara carbonara), and anything the pantry can already **build** — dried chilli, belacan, lemongrass, galangal and candlenut *are* laksa paste. Making the thing is not substituting the thing, so there is no gap to ask about and the name survives. Because the rename is driven off the same rows, a stand-in that never becomes a row can never cost a dish a name it earned.
+
+One rule does double duty: it selects the rows of a **Checklist block** *and* decides whether the cooked result keeps the dish's name, so the two can never disagree. **The name is binary, the dish is a gradient**: with anything load-bearing still missing, the dish may not wear the name — however much else was ticked — but the recipe still uses every ticked item and lands as close as it honestly can. *"Not the real laksa without the paste, but with your coconut milk and those noodles — a proper coconut noodle soup lah."*
+
+Related: [ADR-0026](docs/adr/0026-checklist-reopens-never-ask-for-possession.md), [Checklist block](#checklist-block)
 
 ---
 
