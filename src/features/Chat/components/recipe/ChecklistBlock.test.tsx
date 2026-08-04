@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { UIMessage } from 'ai';
 import { ChecklistBlock, buildReplyMessage } from './ChecklistBlock';
 
@@ -95,13 +95,15 @@ describe('ChecklistBlock', () => {
     expect(screen.getByText('I have all 3')).toBeInTheDocument();
   });
 
-  it('sends a sentence plus the reply fence, and reports the ticked rows for the Pantry', () => {
+  it('sends a sentence plus the reply fence, and reports the ticked rows for the Pantry', async () => {
     const onSend = jest.fn();
-    const onTicked = jest.fn();
+    const onTicked = jest.fn().mockResolvedValue(undefined);
     renderBlock({ onSend, onTicked });
     fireEvent.click(screen.getByText('Laksa paste'));
     fireEvent.click(screen.getByText('Coconut milk'));
     fireEvent.click(screen.getByText('I have these 2'));
+    // The send now waits on the Pantry write.
+    await waitFor(() => expect(onSend).toHaveBeenCalled());
 
     const sent = onSend.mock.calls[0][0] as string;
     expect(sent).toContain("I've got the Laksa paste and Coconut milk.");
@@ -164,6 +166,58 @@ describe('ChecklistBlock', () => {
     });
     expect(screen.queryByText(/✓ Answered/)).not.toBeInTheDocument();
     expect(screen.getByText('Tell Ah Mah')).toBeInTheDocument();
+  });
+
+  it('does not claim a later card\'s answer when this one was ignored', () => {
+    // Re-asking means a conversation can hold several cards, and an ignored card
+    // has no reply of its own. Without stopping at the card that superseded it,
+    // this one would scan forward and render itself answered with the ticks the
+    // user gave the *second* card.
+    const secondCard: UIMessage = {
+      id: 'a1',
+      role: 'assistant',
+      parts: [
+        {
+          type: 'text',
+          text: `Quick check again\n\`\`\`checklist\n${JSON.stringify(data)}\n\`\`\``,
+        },
+      ],
+    };
+    renderBlock({
+      allMessages: [
+        assistantMsg,
+        userReply('make me laksa'),
+        secondCard,
+        reply(['laksa-paste'], ['coconut-milk', 'rice-noodles']),
+      ],
+    });
+    expect(screen.queryByText(/✓ Answered/)).not.toBeInTheDocument();
+    expect(screen.getByText('Tell Ah Mah')).toBeInTheDocument();
+  });
+
+  it('writes the ticks to the Pantry before sending the reply', async () => {
+    // The chat turn calls getInventory, and captureMentionedInventory skips
+    // checklist replies — so if the write races the send, the model can answer
+    // without ever seeing what the user just ticked.
+    const order: string[] = [];
+    const onTicked = jest.fn(
+      () =>
+        new Promise<void>(resolve =>
+          setTimeout(() => {
+            order.push('pantry');
+            resolve();
+          }, 0)
+        )
+    );
+    const onSend = jest.fn(() => {
+      order.push('send');
+    });
+    renderBlock({ onSend, onTicked });
+    fireEvent.click(screen.getByText('Laksa paste'));
+    fireEvent.click(screen.getByText('I have this 1'));
+
+    await waitFor(() => expect(onSend).toHaveBeenCalled());
+    expect(order).toEqual(['pantry', 'send']);
   });
 
   it('shows the "or just tell me" escape-hatch footer while live', () => {

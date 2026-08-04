@@ -20,7 +20,10 @@ interface ChecklistBlockProps {
   // Called with the rows the user ticked, so they can be written to the Pantry.
   // A tick is a factual claim ("I own this"), so the write is deterministic and
   // client-driven rather than left to the model to choose to perform.
-  onTicked: (rows: ChecklistRow[]) => void;
+  // Awaited before the reply is sent: the chat turn calls `getInventory`, and
+  // `captureMentionedInventory` deliberately skips checklist replies, so this
+  // write is the only thing putting the ticks in front of the model.
+  onTicked: (rows: ChecklistRow[]) => Promise<void>;
   // While true the block is still streaming: rows may be incomplete and staging
   // is suppressed (mirrors ClarifyBlock/SuggestionsBlock).
   isStreaming?: boolean;
@@ -37,13 +40,19 @@ function deriveReply(
   messageIndex: number
 ): ChecklistReplyData | null {
   for (const msg of allMessages.slice(messageIndex + 1)) {
-    if (msg.role !== 'user') continue;
     const text =
       msg.parts
         ?.filter((p): p is TextUIPart => p.type === 'text')
         .map(p => p.text)
         .join('') ?? '';
-    const reply = extractRecipeBlocks(text).find(b => b.kind === 'checklist-reply');
+    const blocks = extractRecipeBlocks(text);
+    // Stop at the next card. Re-asking means one conversation can hold several
+    // checklists, and an *ignored* card has no reply of its own — without this
+    // bound it would scan past the card that superseded it and render itself
+    // answered with the later card's ticks.
+    if (msg.role === 'assistant' && blocks.some(b => b.kind === 'checklist')) return null;
+    if (msg.role !== 'user') continue;
+    const reply = blocks.find(b => b.kind === 'checklist-reply');
     if (reply) return reply.payload;
   }
   return null;
@@ -81,6 +90,7 @@ function ChecklistCard({ row, isTicked, locked, onToggle }: ChecklistCardProps) 
       type="button"
       onClick={onToggle}
       disabled={locked}
+      aria-pressed={isTicked}
       className={cn(
         'w-full text-left bg-card rounded-xl px-4 py-3 relative transition-all duration-180 flex items-center gap-3',
         isTicked
@@ -135,10 +145,12 @@ export function ChecklistBlock({
   const locked = reply !== null;
   const ticked = reply ? reply.ticked : staged;
 
-  const submit = () => {
+  const submit = async () => {
     const tickedRows = rows.filter(r => ticked.includes(r.id));
     const absentRows = rows.filter(r => !ticked.includes(r.id));
-    if (tickedRows.length) onTicked(tickedRows);
+    // Await the Pantry write first, or the chat turn races it and `getInventory`
+    // can miss the very items the user just ticked.
+    if (tickedRows.length) await onTicked(tickedRows);
     onSend(buildReplyMessage(tickedRows, absentRows));
   };
 

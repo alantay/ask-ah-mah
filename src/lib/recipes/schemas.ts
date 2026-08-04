@@ -127,7 +127,9 @@ export type ChecklistRow = z.infer<typeof ChecklistRowSchema>;
 export const ChecklistBlockSchema = z.object({
   question: z.string(),
   deal: z.string(),
-  rows: z.array(ChecklistRowSchema),
+  // A card with no rows is a question with no answer — it would render as an
+  // empty box the user cannot dismiss. Reject it so the fence is simply dropped.
+  rows: z.array(ChecklistRowSchema).min(1),
 });
 export type ChecklistBlockData = z.infer<typeof ChecklistBlockSchema>;
 

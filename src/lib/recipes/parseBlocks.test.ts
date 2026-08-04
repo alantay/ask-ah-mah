@@ -114,7 +114,7 @@ describe("extractRecipeBlocks", () => {
 
   it("does not confuse a checklist fence with a checklist-reply fence", () => {
     const text = `\`\`\`checklist
-{"question":"q","deal":"d","rows":[]}
+{"question":"q","deal":"d","rows":[{"id":"r","label":"Row"}]}
 \`\`\`
 \`\`\`checklist-reply
 {"ticked":[],"absent":[]}
@@ -122,6 +122,14 @@ describe("extractRecipeBlocks", () => {
 
     const blocks = extractRecipeBlocks(text);
     expect(blocks.map(b => b.kind)).toEqual(["checklist", "checklist-reply"]);
+  });
+
+  it("drops a checklist with no rows — a question with no answer", () => {
+    const text = `\`\`\`checklist
+{"question":"q","deal":"d","rows":[]}
+\`\`\``;
+
+    expect(extractRecipeBlocks(text)).toEqual([]);
   });
 
   it("parses a valid recipe block", () => {
