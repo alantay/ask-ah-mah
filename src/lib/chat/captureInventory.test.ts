@@ -73,6 +73,20 @@ describe("captureMentionedInventory", () => {
     expect(mockedGenerateObject).not.toHaveBeenCalled();
   });
 
+  it("skips a checklist reply — the ticks are already in the pantry", async () => {
+    // The card's sentence trips the possession gate, but re-extracting it
+    // re-words the labels ("Thick rice noodles" → "Rice noodle") and lands a
+    // near-duplicate row beside the one the tick just wrote.
+    const result = await captureMentionedInventory(
+      'I\'ve got the Coconut milk and Thick rice noodles.\n```checklist-reply\n{"ticked":["coconut-milk","rice-noodles"],"absent":["laksa-paste"]}\n```',
+      "user-1",
+    );
+
+    expect(result).toEqual([]);
+    expect(mockedGenerateObject).not.toHaveBeenCalled();
+    expect(mockedAddInventoryItem).not.toHaveBeenCalled();
+  });
+
   it("extracts and persists possessed items when the gate passes", async () => {
     const items = [{ name: "Chicken broth", type: "ingredient", category: "Misc" }];
     mockExtraction(items);

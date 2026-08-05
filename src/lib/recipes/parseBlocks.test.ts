@@ -57,6 +57,81 @@ describe("extractRecipeBlocks", () => {
     }
   });
 
+  it("parses a valid checklist block", () => {
+    const text = `Soup ah? Then Ah Mah got one in mind already.
+\`\`\`checklist
+{
+  "question": "Ah Mah thinking laksa for you. Got any of these hiding in your kitchen?",
+  "deal": "Got these, I make you proper laksa. If not, still cook you something good, just cannot call it laksa lah.",
+  "rows": [
+    { "id": "laksa-paste", "label": "laksa paste", "hint": "the whole soul of it" },
+    { "id": "coconut-milk", "label": "coconut milk" }
+  ]
+}
+\`\`\``;
+
+    const blocks = extractRecipeBlocks(text);
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0].kind).toBe("checklist");
+    if (blocks[0].kind === "checklist") {
+      expect(blocks[0].payload.deal).toContain("cannot call it laksa");
+      expect(blocks[0].payload.rows[0].id).toBe("laksa-paste");
+      expect(blocks[0].payload.rows[0].hint).toBe("the whole soul of it");
+      expect(blocks[0].payload.rows[1].hint).toBeUndefined();
+    }
+  });
+
+  it("parses a checklist-reply block on a user message", () => {
+    const text = `I've got the coconut milk.
+\`\`\`checklist-reply
+{ "ticked": ["coconut-milk"], "absent": ["laksa-paste"] }
+\`\`\``;
+
+    const blocks = extractRecipeBlocks(text);
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0].kind).toBe("checklist-reply");
+    if (blocks[0].kind === "checklist-reply") {
+      expect(blocks[0].payload.ticked).toEqual(["coconut-milk"]);
+      expect(blocks[0].payload.absent).toEqual(["laksa-paste"]);
+    }
+  });
+
+  // The whole point of the reply fence: a zero-tick answer is a real answer,
+  // and must stay distinguishable from a card that was never touched.
+  it("parses a zero-tick checklist-reply", () => {
+    const text = `I don't have any of those.
+\`\`\`checklist-reply
+{ "ticked": [], "absent": ["laksa-paste", "coconut-milk"] }
+\`\`\``;
+
+    const blocks = extractRecipeBlocks(text);
+    expect(blocks).toHaveLength(1);
+    if (blocks[0].kind === "checklist-reply") {
+      expect(blocks[0].payload.ticked).toEqual([]);
+      expect(blocks[0].payload.absent).toHaveLength(2);
+    }
+  });
+
+  it("does not confuse a checklist fence with a checklist-reply fence", () => {
+    const text = `\`\`\`checklist
+{"question":"q","deal":"d","rows":[{"id":"r","label":"Row"}]}
+\`\`\`
+\`\`\`checklist-reply
+{"ticked":[],"absent":[]}
+\`\`\``;
+
+    const blocks = extractRecipeBlocks(text);
+    expect(blocks.map(b => b.kind)).toEqual(["checklist", "checklist-reply"]);
+  });
+
+  it("drops a checklist with no rows — a question with no answer", () => {
+    const text = `\`\`\`checklist
+{"question":"q","deal":"d","rows":[]}
+\`\`\``;
+
+    expect(extractRecipeBlocks(text)).toEqual([]);
+  });
+
   it("parses a valid recipe block", () => {
     const text = `Here it is:
 \`\`\`recipe
@@ -184,6 +259,19 @@ describe("getOpenFence", () => {
     expect(getOpenFence('```clarify\n{"question":"hi","options":[]}\n```')).toBeNull();
   });
 
+  it("detects an unclosed checklist fence", () => {
+    const text = 'Got one in mind:\n```checklist\n{"question":"Got any of';
+    const fence = getOpenFence(text);
+    expect(fence?.kind).toBe("checklist");
+    expect(fence?.json).toBe('{"question":"Got any of');
+  });
+
+  it("returns null when the checklist fence is closed", () => {
+    expect(
+      getOpenFence('```checklist\n{"question":"q","deal":"d","rows":[]}\n```'),
+    ).toBeNull();
+  });
+
   it("detects an unclosed clarify fence", () => {
     const text = 'Quick question:\n```clarify\n{"question":"What kind';
     const fence = getOpenFence(text);
@@ -279,6 +367,14 @@ describe("parsePartialBlock", () => {
     expect(partial?.options).toEqual([{ id: "quick", label: "Quick" }]);
   });
 
+  it("streams checklist rows, holding back the in-progress one", async () => {
+    const partial = await parsePartialBlock(
+      '{"question":"Got any of these?","deal":"Got these, proper laksa.","rows":[{"id":"laksa-paste","label":"laksa paste"},{"id":"coco',
+    );
+    expect(partial?.question).toBe("Got any of these?");
+    expect(partial?.rows).toEqual([{ id: "laksa-paste", label: "laksa paste" }]);
+  });
+
   it("returns the whole object untrimmed once the JSON is complete", async () => {
     const partial = await parsePartialBlock(
       '{"title":"X","baseServings":2,"ingredients":[{"name":"a"}],"steps":[]}',
@@ -302,6 +398,16 @@ describe("stripFences", () => {
     expect(result).toContain("Quick question:");
     expect(result).toContain("More prose.");
     expect(result).not.toContain("```clarify");
+  });
+
+  // The reply fence rides inside the user's own message, so failing to strip it
+  // would show raw JSON in their chat bubble.
+  it("strips checklist and checklist-reply fences, leaving prose", () => {
+    const ask = `Got one in mind:\n\`\`\`checklist\n{"question":"q","deal":"d","rows":[]}\n\`\`\`\nMore prose.`;
+    expect(stripFences(ask)).toBe("Got one in mind:\n\nMore prose.");
+
+    const reply = `I've got the coconut milk.\n\`\`\`checklist-reply\n{"ticked":[],"absent":[]}\n\`\`\``;
+    expect(stripFences(reply)).toBe("I've got the coconut milk.");
   });
 
   it("strips recipe fences", () => {

@@ -104,6 +104,52 @@ export const ClarifyBlockSchema = z.object({
 });
 export type ClarifyBlockData = z.infer<typeof ClarifyBlockSchema>;
 
+// One row inside a ```checklist block — a load-bearing ingredient Ah Mah is
+// asking about. `hint` is optional supporting text, as in clarify.
+// `category` is assigned by the model at emit time rather than at write time:
+// it already knows what it is asking about, so a ticked row lands in the right
+// Pantry bucket without a second classification round-trip.
+export const ChecklistRowSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  hint: z.string().optional(),
+  category: CategorySchema.optional(),
+});
+export type ChecklistRow = z.infer<typeof ChecklistRowSchema>;
+
+// Full ```checklist block — Ah Mah asks whether the user owns the things a
+// named dish stands on, before committing to the dish. Its own fence rather
+// than a `multi` flag on clarify: clarify picks a PARAMETER, this asks about a
+// POSSESSION, and the two are governed by different rules (ADR-0024 vs. the
+// checklist ADR). `deal` is a separate field, not folded into `question`, so
+// the ask-policy's "state both sides up front" is structural rather than a
+// hope about how the model phrases one blob.
+export const ChecklistBlockSchema = z.object({
+  question: z.string(),
+  deal: z.string(),
+  // A card with no rows is a question with no answer — it would render as an
+  // empty box the user cannot dismiss. Reject it so the fence is simply dropped.
+  rows: z.array(ChecklistRowSchema).min(1),
+});
+export type ChecklistBlockData = z.infer<typeof ChecklistBlockSchema>;
+
+// The ```checklist-reply fence — the FIRST user-authored fence in the app.
+// Submitting the card sends a human sentence plus this payload; the sentence is
+// the durable receipt (ADR-0006) and what the model reads most naturally, while
+// this is what the replay path reads. Recovery never scans the prose: a message
+// naming an absent item ("but no laksa paste") would otherwise scan as present,
+// and a zero-tick answer would be indistinguishable from an ignored card.
+//
+// `absent` is stored explicitly rather than derived from the preceding
+// checklist block, so a reply is self-contained — replay never has to locate
+// the assistant turn that raised it, and the model sees both sides of the
+// answer when it applies the name test.
+export const ChecklistReplySchema = z.object({
+  ticked: z.array(z.string()),
+  absent: z.array(z.string()),
+});
+export type ChecklistReplyData = z.infer<typeof ChecklistReplySchema>;
+
 // ```gate block
 export const GateSchema = z.object({
   recipeId: z.string(),

@@ -73,6 +73,29 @@ jest.mock("./recipe/ClarifyBlock", () => ({
   ClarifyBlock: () => <div data-testid="clarify-block" />,
 }));
 
+jest.mock("./recipe/ChecklistBlock", () => ({
+  ChecklistBlock: ({
+    onTicked,
+    isStreaming,
+  }: {
+    onTicked: (rows: { id: string; label: string; category?: string }[]) => void;
+    isStreaming?: boolean;
+  }) => (
+    <div data-testid="checklist-block" data-streaming={!!isStreaming}>
+      <button
+        onClick={() =>
+          onTicked([
+            { id: "laksa-paste", label: "Laksa paste", category: "Condiments" },
+            { id: "coconut-milk", label: "Coconut milk" },
+          ])
+        }
+      >
+        tick
+      </button>
+    </div>
+  ),
+}));
+
 jest.mock("./recipe/RecipeLetter", () => ({
   RecipeLetter: ({ onSave }: { onSave?: () => void }) => (
     <div data-testid="recipe-letter">
@@ -530,6 +553,149 @@ describe("MessageList", () => {
       expect(screen.getByTestId("clarify-block")).toBeInTheDocument();
       // The raw JSON must not leak into the prose renderer.
       expect(screen.queryByText(/```clarify/)).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Checklist block rendering", () => {
+    const checklistJson = JSON.stringify({
+      question: "Do you have these for laksa?",
+      deal: "With all three I can give you the real thing.",
+      rows: [
+        { id: "laksa-paste", label: "Laksa paste", category: "Condiments" },
+        { id: "coconut-milk", label: "Coconut milk" },
+      ],
+    });
+
+    const checklistMessage = createMockMessage({
+      id: "msg-checklist",
+      role: "assistant",
+      parts: [
+        {
+          type: "text",
+          text: "Before I commit:\n```checklist\n" + checklistJson + "\n```",
+        },
+      ],
+    });
+
+    it("renders a ChecklistBlock for a completed checklist fence", () => {
+      render(<MessageList {...defaultProps} messages={[checklistMessage]} />);
+
+      expect(screen.getByTestId("checklist-block")).toBeInTheDocument();
+      expect(screen.queryByText(/```checklist/)).not.toBeInTheDocument();
+    });
+
+    // #463: a block kind with no case of its own used to fall through to
+    // SuggestionsBlock. Both render paths must match `checklist` explicitly.
+    it("does not fall through to a SuggestionsBlock", () => {
+      render(<MessageList {...defaultProps} messages={[checklistMessage]} />);
+
+      expect(screen.queryByTestId("suggestions-block")).not.toBeInTheDocument();
+    });
+
+    it("renders the streaming ChecklistBlock, not a SuggestionsBlock", async () => {
+      render(
+        <MessageList
+          {...defaultProps}
+          status="streaming"
+          messages={[
+            createMockMessage({
+              id: "msg-checklist-streaming",
+              role: "assistant",
+              parts: [
+                {
+                  type: "text",
+                  // Open fence: no closing ``` yet.
+                  text:
+                    'Before I commit:\n```checklist\n{"question":"Do you have these for laksa?","rows":[',
+                },
+              ],
+            }),
+          ]}
+        />,
+      );
+
+      await waitFor(() =>
+        expect(screen.getByTestId("checklist-block")).toHaveAttribute(
+          "data-streaming",
+          "true",
+        ),
+      );
+      expect(screen.queryByTestId("suggestions-block")).not.toBeInTheDocument();
+    });
+
+    it("renders the user's reply sentence but not the reply fence", () => {
+      render(
+        <MessageList
+          {...defaultProps}
+          messages={[
+            checklistMessage,
+            createMockMessage({
+              id: "msg-reply",
+              role: "user",
+              parts: [
+                {
+                  type: "text",
+                  text:
+                    "I've got the Laksa paste.\n```checklist-reply\n" +
+                    JSON.stringify({
+                      ticked: ["laksa-paste"],
+                      absent: ["coconut-milk"],
+                    }) +
+                    "\n```",
+                },
+              ],
+            }),
+          ]}
+        />,
+      );
+
+      expect(screen.getByText("I've got the Laksa paste.")).toBeInTheDocument();
+      expect(screen.queryByText(/checklist-reply/)).not.toBeInTheDocument();
+      // The reply fence renders no block of its own.
+      expect(screen.getAllByTestId("checklist-block")).toHaveLength(1);
+    });
+
+    it("writes ticked rows to the Pantry and refreshes the inventory", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({}),
+      } as Response);
+
+      render(<MessageList {...defaultProps} messages={[checklistMessage]} />);
+      fireEvent.click(screen.getByText("tick"));
+
+      await waitFor(() =>
+        expect(mockFetch).toHaveBeenCalledWith(
+          "/api/inventory",
+          expect.objectContaining({ method: "POST" }),
+        ),
+      );
+      const body = JSON.parse(
+        (mockFetch.mock.calls[0][1] as RequestInit).body as string,
+      );
+      expect(body).toEqual({
+        items: [
+          { name: "Laksa paste", type: "ingredient", category: "Condiments" },
+          { name: "Coconut milk", type: "ingredient" },
+        ],
+      });
+      expect(mockMutate).toHaveBeenCalled();
+      expect(toast.success).toHaveBeenCalledWith(
+        "Added 2 items to your pantry",
+      );
+    });
+
+    it("tells the user to add by hand when the Pantry write fails", async () => {
+      mockFetch.mockResolvedValueOnce({ ok: false } as Response);
+
+      render(<MessageList {...defaultProps} messages={[checklistMessage]} />);
+      fireEvent.click(screen.getByText("tick"));
+
+      await waitFor(() =>
+        expect(toast.error).toHaveBeenCalledWith(
+          expect.stringMatching(/by hand/),
+        ),
+      );
     });
   });
 
