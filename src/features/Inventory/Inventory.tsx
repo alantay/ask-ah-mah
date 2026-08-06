@@ -9,7 +9,7 @@ import {
   InventoryItem,
 } from "@/lib/inventory/schemas";
 
-type GetInventoryResponse = {
+export type GetInventoryResponse = {
   kitchenwareInventory: InventoryItem[];
   ingredientInventory: InventoryItem[];
 };
@@ -110,6 +110,27 @@ export function buildCookWithMessage(
     return `Suggest recipes using: ${ingredientClause}. Kitchenware: ${equipment}`;
   }
   return `Suggest recipes using: ${ingredientClause}`;
+}
+
+/**
+ * Inventory minus every item with this name. Filters both lists with no
+ * `type` filter, mirroring the server: `removeInventoryItem` deletes by
+ * `{ name, userId }` alone, so a name that exists as both ingredient and
+ * kitchenware goes from both. Handles `undefined` because SWR can apply an
+ * optimistic updater before any data has landed.
+ */
+export function withoutItemNamed(
+  data: GetInventoryResponse | undefined,
+  itemName: string,
+): GetInventoryResponse {
+  return {
+    ingredientInventory: (data?.ingredientInventory ?? []).filter(
+      (i) => i.name !== itemName,
+    ),
+    kitchenwareInventory: (data?.kitchenwareInventory ?? []).filter(
+      (i) => i.name !== itemName,
+    ),
+  };
 }
 
 const Inventory = () => {
