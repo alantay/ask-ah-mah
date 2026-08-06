@@ -225,25 +225,38 @@ const Inventory = () => {
     }
   };
 
+  // Optimistic: the row disappears on click and the DELETE settles in the
+  // background. Success is silent — the row vanishing is the confirmation, and
+  // a toast per delete just recreates the pile-up when clearing out several
+  // items. No revalidation on success either: the optimistic write is
+  // authoritative for a delete, and revalidateOnFocus heals any drift from
+  // chat-side adds. Only failure pays for a round-trip.
   const removeItem = async (itemName: string) => {
     if (!userId) return;
+    const key = inventoryKey(userId);
+    const rollback = (e: unknown) => {
+      console.error("Failed to remove item:", e);
+      mutate(key);
+      toast.error(`Aiyah, ${itemName} won't budge. Try again?`);
+    };
+
     try {
-      const response = await mutateResource({
+      const response = await mutateResource<GetInventoryResponse>({
         url: "/api/inventory",
         method: "DELETE",
         body: { itemNames: [itemName] },
+        key,
+        // Functional, not a precomputed value: several deletes can be fired
+        // from the same render snapshot, and each must apply to live cache
+        // state or the last write resurrects the earlier ones.
+        optimisticData: (current) => withoutItemNamed(current, itemName),
       });
-      if (response.ok) {
-        mutate(inventoryKey(userId));
-        toast.success(`Okay, took out the ${itemName}.`);
-      } else {
+      if (!response.ok) {
         const detail = await response.text().catch(() => "");
-        console.error(`DELETE /api/inventory ${response.status}:`, detail);
-        toast.error(`Aiyah, ${itemName} won't budge. Try again?`);
+        rollback(`DELETE /api/inventory ${response.status}: ${detail}`);
       }
     } catch (e) {
-      console.error("Failed to remove item:", e);
-      toast.error(`Aiyah, ${itemName} won't budge. Try again?`);
+      rollback(e);
     }
   };
 
