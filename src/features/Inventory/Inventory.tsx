@@ -19,16 +19,18 @@ import { Eyebrow } from "@/features/shared/components/recipe";
 import { TipsToggle } from "@/features/shared/components/TipsToggle";
 import { useStorageTips } from "@/hooks/useStorageTips";
 import { useTipsPreference } from "@/hooks/useTipsPreference";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
 import { STORAGE_TIPS_PREF_KEY } from "@/lib/marketTips/preferences";
 import { inventoryKey } from "@/lib/swr/keys";
 import { mutateResource } from "@/lib/swr/mutateResource";
 import { Check, CookingPot, Plus, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
 import { InventoryItemRow } from "./components/InventoryItemRow";
+import { TIP_ITEMS_DEBOUNCE_MS } from "./constants";
 
 const CATEGORY_ORDER: Category[] = [
   "Protein",
@@ -182,13 +184,24 @@ const Inventory = () => {
   // Ah Mah's "keep it well at home" tips, shown per item. Default OFF (opt-in);
   // toggling off (or being in selection mode) nulls the fetch. See ADR-0017.
   const [tipsOn, setTipsOn] = useTipsPreference(STORAGE_TIPS_PREF_KEY, false);
-  const tipItems = [
-    ...(data?.ingredientInventory ?? []),
-    ...(data?.kitchenwareInventory ?? []),
-  ].map((i) => ({ name: i.name, type: i.type }));
+  // Memoized because useDebouncedValue compares by reference — a list rebuilt
+  // each render would restart the timer forever and never settle. SWR's `data`
+  // is referentially stable between revalidations, so this changes only when
+  // the inventory really does.
+  const tipItems = useMemo(
+    () =>
+      [
+        ...(data?.ingredientInventory ?? []),
+        ...(data?.kitchenwareInventory ?? []),
+      ].map((i) => ({ name: i.name, type: i.type })),
+    [data],
+  );
+  // Debounced so clearing out several items fires one tip request, not one per
+  // delete. keepPreviousData in useTips keeps existing tips on screen meanwhile.
+  const debouncedTipItems = useDebouncedValue(tipItems, TIP_ITEMS_DEBOUNCE_MS);
   const showTips = tipsOn && !selectionMode;
   const { tips: storageTips, isLoading: storageTipsLoading } = useStorageTips(
-    tipItems,
+    debouncedTipItems,
     showTips,
   );
 
