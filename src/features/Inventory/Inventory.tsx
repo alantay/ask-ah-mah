@@ -26,7 +26,7 @@ import { inventoryKey } from "@/lib/swr/keys";
 import { mutateResource } from "@/lib/swr/mutateResource";
 import { Check, CookingPot, Plus, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
 import { InventoryItemRow } from "./components/InventoryItemRow";
@@ -238,6 +238,11 @@ const Inventory = () => {
     }
   };
 
+  // In-flight DELETE count, plus whether any of them failed. Refs, not state:
+  // these coordinate concurrent requests and must never trigger a re-render.
+  const pendingDeletes = useRef(0);
+  const rollbackPending = useRef(false);
+
   // Optimistic: the row disappears on click and the DELETE settles in the
   // background. Success is silent — the row vanishing is the confirmation, and
   // a toast per delete just recreates the pile-up when clearing out several
@@ -249,10 +254,11 @@ const Inventory = () => {
     const key = inventoryKey(userId);
     const rollback = (e: unknown) => {
       console.error("Failed to remove item:", e);
-      mutate(key);
+      rollbackPending.current = true;
       toast.error(`Aiyah, ${itemName} won't budge. Try again?`);
     };
 
+    pendingDeletes.current += 1;
     try {
       const response = await mutateResource<GetInventoryResponse>({
         url: "/api/inventory",
@@ -270,6 +276,18 @@ const Inventory = () => {
       }
     } catch (e) {
       rollback(e);
+    } finally {
+      // The rollback GET is deferred until every delete has settled. Firing it
+      // while siblings are still in flight would repopulate the cache from a
+      // server that hasn't processed them yet, resurrecting rows whose DELETE
+      // then succeeds — and since success never revalidates, those ghosts would
+      // sit there until the next focus. The toast is not deferred; that
+      // feedback belongs to the click that failed.
+      pendingDeletes.current -= 1;
+      if (pendingDeletes.current === 0 && rollbackPending.current) {
+        rollbackPending.current = false;
+        mutate(key);
+      }
     }
   };
 

@@ -151,4 +151,44 @@ describe("Inventory — optimistic delete", () => {
     expect(mockMutate).toHaveBeenCalledWith("/api/inventory?userId=u1");
     expect(mockToastError).toHaveBeenCalledWith("Aiyah, Duck won't budge. Try again?");
   });
+
+  // A failing delete must not refetch while sibling deletes are still in
+  // flight: the server hasn't processed them yet, so the response would
+  // resurrect rows whose DELETE then succeeds — and success never revalidates,
+  // so the ghost would persist until the next focus.
+  it("defers the rollback refetch until every in-flight delete has settled", async () => {
+    const settle: Array<(r: { ok: boolean; status?: number; text?: () => Promise<string> }) => void> =
+      [];
+    mockMutateResource.mockImplementation(
+      () => new Promise((resolve) => settle.push(resolve)),
+    );
+
+    render(<Inventory />);
+    fireEvent.click(removeButtonFor("Duck"));
+    fireEvent.click(removeButtonFor("Eggs"));
+    expect(settle).toHaveLength(2);
+
+    // Duck fails first, while Eggs is still in flight.
+    await act(async () => {
+      settle[0]({ ok: false, status: 500, text: async () => "boom" });
+    });
+    expect(mockToastError).toHaveBeenCalledWith("Aiyah, Duck won't budge. Try again?");
+    expect(mockMutate).not.toHaveBeenCalled();
+
+    // Only once Eggs settles does the refetch fire — exactly once.
+    await act(async () => {
+      settle[1]({ ok: true });
+    });
+    expect(mockMutate).toHaveBeenCalledTimes(1);
+    expect(mockMutate).toHaveBeenCalledWith("/api/inventory?userId=u1");
+  });
+
+  it("does not refetch when concurrent deletes all succeed", async () => {
+    render(<Inventory />);
+    fireEvent.click(removeButtonFor("Duck"));
+    fireEvent.click(removeButtonFor("Eggs"));
+    await flush();
+
+    expect(mockMutate).not.toHaveBeenCalled();
+  });
 });
