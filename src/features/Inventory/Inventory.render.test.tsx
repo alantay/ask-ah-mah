@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import Inventory from "./Inventory";
-import { withoutItemNamed, type GetInventoryResponse } from "./Inventory";
+import { type GetInventoryResponse } from "./Inventory";
 import type { InventoryItem } from "@/lib/inventory/schemas";
 
 const TS = "2024-01-01T10:00:00.000Z";
