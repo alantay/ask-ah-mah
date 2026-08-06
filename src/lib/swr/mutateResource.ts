@@ -6,9 +6,12 @@ type MutateResourceOptions<T> = {
   body: Record<string, unknown>;
   // Optimistic cache write applied before the request fires. `key` and
   // `optimisticData` must be supplied together to enable it — omit both for
-  // call sites with no optimistic update.
+  // call sites with no optimistic update. Pass the functional form when
+  // several mutations can be fired from the same render snapshot: SWR applies
+  // it against live cache state, so concurrent updates compose instead of
+  // each clobbering the last.
   key?: string;
-  optimisticData?: T;
+  optimisticData?: T | ((current?: T) => T);
 };
 
 /**
