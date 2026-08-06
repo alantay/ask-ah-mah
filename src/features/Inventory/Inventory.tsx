@@ -9,7 +9,7 @@ import {
   InventoryItem,
 } from "@/lib/inventory/schemas";
 
-type GetInventoryResponse = {
+export type GetInventoryResponse = {
   kitchenwareInventory: InventoryItem[];
   ingredientInventory: InventoryItem[];
 };
@@ -19,16 +19,18 @@ import { Eyebrow } from "@/features/shared/components/recipe";
 import { TipsToggle } from "@/features/shared/components/TipsToggle";
 import { useStorageTips } from "@/hooks/useStorageTips";
 import { useTipsPreference } from "@/hooks/useTipsPreference";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
 import { STORAGE_TIPS_PREF_KEY } from "@/lib/marketTips/preferences";
 import { inventoryKey } from "@/lib/swr/keys";
 import { mutateResource } from "@/lib/swr/mutateResource";
 import { Check, CookingPot, Plus, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
 import { InventoryItemRow } from "./components/InventoryItemRow";
+import { TIP_ITEMS_DEBOUNCE_MS } from "./constants";
 
 const CATEGORY_ORDER: Category[] = [
   "Protein",
@@ -112,6 +114,27 @@ export function buildCookWithMessage(
   return `Suggest recipes using: ${ingredientClause}`;
 }
 
+/**
+ * Inventory minus every item with this name. Filters both lists with no
+ * `type` filter, mirroring the server: `removeInventoryItem` deletes by
+ * `{ name, userId }` alone, so a name that exists as both ingredient and
+ * kitchenware goes from both. Handles `undefined` because SWR can apply an
+ * optimistic updater before any data has landed.
+ */
+export function withoutItemNamed(
+  data: GetInventoryResponse | undefined,
+  itemName: string,
+): GetInventoryResponse {
+  return {
+    ingredientInventory: (data?.ingredientInventory ?? []).filter(
+      (i) => i.name !== itemName,
+    ),
+    kitchenwareInventory: (data?.kitchenwareInventory ?? []).filter(
+      (i) => i.name !== itemName,
+    ),
+  };
+}
+
 const Inventory = () => {
   const [isAdding, setIsAdding] = useState(false);
   const [draft, setDraft] = useState("");
@@ -161,13 +184,24 @@ const Inventory = () => {
   // Ah Mah's "keep it well at home" tips, shown per item. Default OFF (opt-in);
   // toggling off (or being in selection mode) nulls the fetch. See ADR-0017.
   const [tipsOn, setTipsOn] = useTipsPreference(STORAGE_TIPS_PREF_KEY, false);
-  const tipItems = [
-    ...(data?.ingredientInventory ?? []),
-    ...(data?.kitchenwareInventory ?? []),
-  ].map((i) => ({ name: i.name, type: i.type }));
+  // Memoized because useDebouncedValue compares by reference — a list rebuilt
+  // each render would restart the timer forever and never settle. SWR's `data`
+  // is referentially stable between revalidations, so this changes only when
+  // the inventory really does.
+  const tipItems = useMemo(
+    () =>
+      [
+        ...(data?.ingredientInventory ?? []),
+        ...(data?.kitchenwareInventory ?? []),
+      ].map((i) => ({ name: i.name, type: i.type })),
+    [data],
+  );
+  // Debounced so clearing out several items fires one tip request, not one per
+  // delete. keepPreviousData in useTips keeps existing tips on screen meanwhile.
+  const debouncedTipItems = useDebouncedValue(tipItems, TIP_ITEMS_DEBOUNCE_MS);
   const showTips = tipsOn && !selectionMode;
   const { tips: storageTips, isLoading: storageTipsLoading } = useStorageTips(
-    tipItems,
+    debouncedTipItems,
     showTips,
   );
 
@@ -204,25 +238,56 @@ const Inventory = () => {
     }
   };
 
+  // In-flight DELETE count, plus whether any of them failed. Refs, not state:
+  // these coordinate concurrent requests and must never trigger a re-render.
+  const pendingDeletes = useRef(0);
+  const rollbackPending = useRef(false);
+
+  // Optimistic: the row disappears on click and the DELETE settles in the
+  // background. Success is silent — the row vanishing is the confirmation, and
+  // a toast per delete just recreates the pile-up when clearing out several
+  // items. No revalidation on success either: the optimistic write is
+  // authoritative for a delete, and revalidateOnFocus heals any drift from
+  // chat-side adds. Only failure pays for a round-trip.
   const removeItem = async (itemName: string) => {
     if (!userId) return;
+    const key = inventoryKey(userId);
+    const rollback = (e: unknown) => {
+      console.error("Failed to remove item:", e);
+      rollbackPending.current = true;
+      toast.error(`Aiyah, ${itemName} won't budge. Try again?`);
+    };
+
+    pendingDeletes.current += 1;
     try {
-      const response = await mutateResource({
+      const response = await mutateResource<GetInventoryResponse>({
         url: "/api/inventory",
         method: "DELETE",
         body: { itemNames: [itemName] },
+        key,
+        // Functional, not a precomputed value: several deletes can be fired
+        // from the same render snapshot, and each must apply to live cache
+        // state or the last write resurrects the earlier ones.
+        optimisticData: (current) => withoutItemNamed(current, itemName),
       });
-      if (response.ok) {
-        mutate(inventoryKey(userId));
-        toast.success(`Okay, took out the ${itemName}.`);
-      } else {
+      if (!response.ok) {
         const detail = await response.text().catch(() => "");
-        console.error(`DELETE /api/inventory ${response.status}:`, detail);
-        toast.error(`Aiyah, ${itemName} won't budge. Try again?`);
+        rollback(`DELETE /api/inventory ${response.status}: ${detail}`);
       }
     } catch (e) {
-      console.error("Failed to remove item:", e);
-      toast.error(`Aiyah, ${itemName} won't budge. Try again?`);
+      rollback(e);
+    } finally {
+      // The rollback GET is deferred until every delete has settled. Firing it
+      // while siblings are still in flight would repopulate the cache from a
+      // server that hasn't processed them yet, resurrecting rows whose DELETE
+      // then succeeds — and since success never revalidates, those ghosts would
+      // sit there until the next focus. The toast is not deferred; that
+      // feedback belongs to the click that failed.
+      pendingDeletes.current -= 1;
+      if (pendingDeletes.current === 0 && rollbackPending.current) {
+        rollbackPending.current = false;
+        mutate(key);
+      }
     }
   };
 
