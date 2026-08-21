@@ -27,7 +27,8 @@ interface ChatEmptyStateProps {
  * Fills the chat column (which would otherwise be a tall empty void on desktop)
  * with a stamped Ah Mah mark, the greeting, three tappable opener cards, and the
  * quick-start chips. Once the first message is sent, the normal message thread
- * takes over and the greeting reappears as Ah Mah's opening bubble.
+ * takes over — the greeting is not repeated as a bubble, so a thread opens on
+ * the user's own words and Ah Mah's first turn is her actual reply.
  */
 export function ChatEmptyState({
   onSend,

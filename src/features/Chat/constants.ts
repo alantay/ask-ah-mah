@@ -21,26 +21,6 @@ export const THINKING_MESSAGES = [
   "Ah Mah is warming up her ideas...",
 ] as const;
 
-export const INITIAL_MESSAGE = {
-  role: "assistant" as const,
-  id: "initial",
-  parts: [
-    {
-      type: "text" as const,
-      text: `**Aiyoh, you're here — good!** I'm Ah Mah. Tell me what's in your kitchen and we cook something together, can?
-
-
-- **What you have** — "got some chicken and rice"
-- **Your tools** — "I have a wok"
-- **Or just ask** — "what can I make for dinner?"
-
----
-
-**So — what are we cooking today?** 🍳`,
-    },
-  ],
-};
-
 export const LOADING_MESSAGES = [
   "Ah Mah is getting ready...",
   "Preparing your cooking assistant...",

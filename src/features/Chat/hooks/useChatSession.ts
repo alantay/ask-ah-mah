@@ -15,7 +15,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
 import { z } from "zod";
-import { INITIAL_MESSAGE } from "../constants";
 import { convertToUIMessage } from "../utils";
 
 export function useChatSession() {
@@ -300,7 +299,7 @@ export function useChatSession() {
     });
   });
 
-  const allMessages = [INITIAL_MESSAGE, ...savedMessagesFiltered, ...messages];
+  const allMessages = [...savedMessagesFiltered, ...messages];
 
   const handleSendMessage = async (message: string) => {
     // Synchronous guard: bail immediately if a send is already in progress.
