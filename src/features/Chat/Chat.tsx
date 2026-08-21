@@ -29,7 +29,7 @@ const Chat = () => {
   const handleDraft = (text: string) =>
     setSeed({ text, nonce: Date.now() });
 
-  const messageCount = allMessages.length - 1; // exclude initial
+  const messageCount = allMessages.length;
   // messagesLoading is true only while fetching a just-switched-to conversation's
   // saved history — gate on it so a mid-switch data gap never renders the
   // full-screen empty state (see #383/#384).

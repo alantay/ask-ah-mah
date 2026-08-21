@@ -3,8 +3,8 @@
 import { ShimmerLine } from './ShimmerLine';
 
 // Ghost of a short back-and-forth, shown while a just-switched-to conversation's
-// saved history loads. Replaces the split-second flash of the lone
-// INITIAL_MESSAGE welcome (see Chat.tsx). Reads as a chat: Ah Mah's turns sit
+// saved history loads. Replaces the split-second flash of an empty thread
+// (see Chat.tsx). Reads as a chat: Ah Mah's turns sit
 // left, the user's turns sit right in the secondary bubble. A single delay
 // cascade (see delays below) sweeps the shimmer top-to-bottom so the exchange
 // settles in rather than popping as a grid of placeholders.

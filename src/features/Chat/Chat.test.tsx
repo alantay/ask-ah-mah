@@ -23,14 +23,14 @@ jest.mock("./components/MessageList", () => ({
 
 const mockUseChatSession = useChatSession as jest.Mock;
 
-const INITIAL_MESSAGE_ONLY = [
-  { id: "initial", role: "assistant" as const, parts: [{ type: "text", text: "hi" }] },
-];
+// A genuinely empty thread is now an empty array — the chat no longer prepends
+// a phantom welcome message to every conversation.
+const NO_MESSAGES: ReturnType<typeof useChatSession>["allMessages"] = [];
 
 function baseSession(overrides: Partial<ReturnType<typeof useChatSession>>) {
   return {
     userId: "user-1",
-    allMessages: INITIAL_MESSAGE_ONLY,
+    allMessages: NO_MESSAGES,
     status: "ready",
     submittedAt: null,
     isSending: false,
@@ -62,5 +62,20 @@ describe("Chat — empty-state gate during conversation switch", () => {
     render(<Chat />);
 
     expect(screen.queryByText(/aiyoh, you.re here/i)).not.toBeInTheDocument();
+  });
+
+  it("drops the greeting once the thread has a committed message", () => {
+    mockUseChatSession.mockReturnValue(
+      baseSession({
+        allMessages: [
+          { id: "m1", role: "user", parts: [{ type: "text", text: "got chicken" }] },
+        ] as ReturnType<typeof useChatSession>["allMessages"],
+      })
+    );
+
+    render(<Chat />);
+
+    expect(screen.queryByText(/aiyoh, you.re here/i)).not.toBeInTheDocument();
+    expect(screen.getByTestId("message-list")).toBeInTheDocument();
   });
 });
