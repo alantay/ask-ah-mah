@@ -62,12 +62,15 @@ A bad match on an **add** is harmless (one extra pantry row). A bad match on a
 **delete** is destructive (unticking *dark soy sauce* removes *fish sauce*).
 
 - **Tick a missing row** → `POST /api/inventory` with the recipe's ingredient
-  name and its `category`. Upserts on `(userId, name, type)`, so re-adding is a
-  no-op. Mirrors ADR-0026 §8.
+  name, `type: "ingredient"`, and its `category` passed straight through
+  (`RecipeIngredientModel.category` and `InventoryItemSchema.category` are the
+  same `CategorySchema`, so no re-classification round-trip). Upserts on
+  `(userId, name, type)`, so re-adding is a no-op. Mirrors ADR-0026 §8.
 - **Untick a have row** → `DELETE /api/inventory` with the **matched pantry
   item's** name (not the recipe's), and **only when exactly one pantry item
-  matches**. On an ambiguous match (2+), skip the delete and treat the item as
-  missing **for this dish only** — ADR-0026 §5's transient confirmed-absence,
+  matches** — i.e. exactly one entry of `inventoryItems` satisfies
+  `ingredientMatches(ing.name, [item.name])`. On an ambiguous match (2+), skip
+  the delete and treat the item as missing **for this dish only** — ADR-0026 §5's transient confirmed-absence,
   already the sanctioned fallback.
 
 When the matched pantry name differs from the ingredient name, the row shows it
@@ -107,6 +110,19 @@ marks.
 
 The toast is not a confirm (rejected — the card's point is speed) but it is the
 only feedback on a destructive write, so it is not optional.
+
+### 6. Prop change: `onDraft` → `onSend`
+
+`MessageList` already passes `onSend` to every other block (`ClarifyBlock`,
+`SuggestionsBlock`, `ChecklistBlock`); `RecipeLetter` takes `onSend` the same
+way and drops `onDraft`.
+
+`RecipeLetter` is `onDraft`'s **only** consumer, so this orphans the whole
+composer-seeding path: `handleDraft` and the re-seed nonce in `Chat.tsx`, the
+`onDraft` prop on `MessageList`, and `MessageInput`'s seed handling. Removing it
+is part of this change rather than left dead — this change is what orphans it,
+and leaving an unused seeding mechanism plumbed through three components is a
+trap for the next reader.
 
 ## Why not the alternatives
 
@@ -165,6 +181,9 @@ outright duplicates — an item sharing any token would already have rendered as
 - zero-missing submit applies writes and sends nothing
 - exit discards staged ticks without writing
 - nudge renders at 10/10 when a pantry is tracked
+
+`MessageInput.test.tsx` and `MessageList.test.tsx` lose their seed-text cases
+along with the seeding path.
 
 ## Docs
 
