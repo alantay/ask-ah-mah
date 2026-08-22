@@ -46,6 +46,11 @@ const FAKE_INVENTORY = {
     { name: "garlic", category: "Vegetable" },
     { name: "soy sauce", category: "Condiments" },
     { name: "gao li cai", category: "Vegetable" },
+    // #492: exact covers for the issue's missing items — `dry sherry` for
+    // shaoxing wine, `napa cabbage` for bok choy. A pantry-aware answer leads
+    // with these; a generic one buries them in a list of five.
+    { name: "dry sherry", category: "Condiments" },
+    { name: "napa cabbage", category: "Vegetable" },
   ],
   kitchenwareInventory: [{ name: "wok" }],
 };
@@ -71,22 +76,35 @@ const tools = {
   }),
 };
 
-async function runTurn(userText: string): Promise<string> {
-  const { text } = await generateText({
+type TurnResult = { text: string; toolNames: string[] };
+
+async function runTurn(userText: string): Promise<TurnResult> {
+  const { text, steps } = await generateText({
     model: openai(MODEL_HEAVY),
     system: CHAT_SYSTEM_PROMPT,
     messages: [{ role: "user", content: userText }],
     stopWhen: [stepCountIs(5)],
     tools,
   });
-  return text;
+  const toolNames = steps.flatMap((s) => s.toolCalls.map((c) => c.toolName));
+  return { text, toolNames };
 }
 
 const hasSuggestions = (t: string) => /```suggestions/.test(t);
 const hasRecipe = (t: string) => /```recipe/.test(t);
 const hasAnyBlock = (t: string) => hasSuggestions(t) || hasRecipe(t);
+const calledInventory = (r: TurnResult) => r.toolNames.includes("getInventory");
 
-type Case = { name: string; input: string; expect: (t: string) => boolean };
+// "Leads with" as a position check: the pantry cover must show up in the
+// opening of the reply, not buried after a ranked list of generic swaps.
+// 300 chars is roughly the first paragraph — generous enough to survive a
+// warm one-line opener, tight enough to fail the five-option essay.
+const leadsWithPantry = (t: string) => {
+  const i = t.toLowerCase().indexOf("dry sherry");
+  return i !== -1 && i < 300;
+};
+
+type Case = { name: string; input: string; expect: (r: TurnResult) => boolean };
 
 const CASES: Case[] = [
   {
@@ -97,26 +115,53 @@ const CASES: Case[] = [
     // The regression is the absence of any block, so we assert on hasAnyBlock.
     name: "produces a block for 'make something with X, i bought some' (no asking)",
     input: "i want to make something with gao li cai. i bought some",
-    expect: hasAnyBlock,
+    expect: ({ text }) => hasAnyBlock(text),
   },
   {
     // Strict Mode-1: explicit open-ended "any ideas?" → suggestions, not a recipe.
     name: "suggests (Mode 1) for 'have chicken, any ideas?'",
     input: "have chicken, any ideas?",
-    expect: hasSuggestions,
+    expect: ({ text }) => hasSuggestions(text),
   },
   {
     // Negative case: bare acknowledgment must NOT explode into suggestions.
     name: "does NOT emit a block for bare 'i bought salmon today'",
     input: "i bought salmon today",
-    expect: (t) => !hasAnyBlock(t),
+    expect: ({ text }) => !hasAnyBlock(text),
   },
   {
     // Mode 2 still works: a named dish (squarely in pantry, unambiguous)
     // yields a full recipe — never suggestions, never a question.
     name: "emits a recipe for named dish 'make me chicken fried rice'",
     input: "make me chicken fried rice",
-    expect: hasRecipe,
+    expect: ({ text }) => hasRecipe(text),
+  },
+  {
+    // #492: THE reported bug. The reconcile button sends exactly this string.
+    // Zero tool calls was the observed failure — she answered with generic
+    // swaps while dry sherry sat on the shelf. `leadsWithPantry` is a
+    // deliberate position check: the old reply DID name dry sherry, but buried
+    // it mid-list among five alternatives, which is the failure this fixes.
+    name: "#492 reconcile ask calls getInventory and leads with the pantry",
+    input:
+      "I'm missing bok choy, shaoxing wine for the Ginger Chicken. Can you suggest substitutions or alternatives?",
+    expect: (r) => calledInventory(r) && leadsWithPantry(r.text),
+  },
+  {
+    // Parity: the typed form of the same question must get the same answer.
+    // Scoping the rule to the reconcile message shape was rejected in the
+    // spec precisely because it would split these two apart.
+    name: "#492 typed substitute ask calls getInventory and names dry sherry",
+    input: "what can I use instead of shaoxing wine?",
+    expect: (r) => calledInventory(r) && /dry sherry/i.test(r.text),
+  },
+  {
+    // Negative / regression guard. A prompt edit touches every chat turn: the
+    // new routing row must NOT leak into comparisons, which have nothing to
+    // replace and so nothing to gain from the pantry.
+    name: "#492 knowledge comparison still makes NO tool call",
+    input: "what's the difference between baking soda and baking powder?",
+    expect: (r) => r.toolNames.length === 0,
   },
 ];
 
@@ -130,13 +175,14 @@ async function main() {
   let failures = 0;
   for (const c of CASES) {
     try {
-      const text = await runTurn(c.input);
-      const pass = c.expect(text);
+      const result = await runTurn(c.input);
+      const pass = c.expect(result);
       console.log(`${pass ? "PASS" : "FAIL"}  ${c.name}`);
       if (!pass) {
         failures++;
         console.log(`      input: ${c.input}`);
-        console.log(`      got:   ${text.replace(/\n/g, " ").slice(0, 200)}…`);
+        console.log(`      tools: [${result.toolNames.join(", ")}]`);
+        console.log(`      got:   ${result.text.replace(/\n/g, " ").slice(0, 200)}…`);
       }
     } catch (err) {
       failures++;
