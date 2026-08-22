@@ -108,17 +108,26 @@ Five edits to `CHAT_SYSTEM_PROMPT` in `src/app/api/chat/constants.ts`:
 
 String assertions in `constants.test.ts` (matching that file's existing cheap-guard
 style) prove the prompt text survived future edits. They do not prove behaviour.
-Behaviour is verified end-to-end against the live model, reproducing the issue's
-setup:
+
+Behaviour is verified in the existing live-model harness, `eval/chat-routing.eval.ts`
+(`pnpm test:eval`) — real model, canned `getInventory`, opt-in and deliberately out
+of CI. It already exists for exactly this class of regression: prompt routing that
+`route.test.ts` cannot see, because that suite mocks `streamText`.
+
+One gap to close first: `runTurn` returns only the assistant text, so the harness
+cannot currently observe whether a tool fired — which is the entire assertion this
+issue needs. It gains a `toolNames` field read off `generateText`'s `steps`.
+
+Three cases, run red before the prompt edit and green after:
 
 | Scenario | Assertion |
 |---|---|
-| Pantry `chicken thigh, dry sherry, napa cabbage`; reconcile ask for `bok choy, shaoxing wine` | `getInventory` fires; reply **leads** with dry sherry and napa cabbage |
-| Typed "what can I use instead of shaoxing wine?" | Same pantry-first answer as the button — parity |
-| "What's the difference between baking soda and baking powder?" | **No** tool call — the new row did not leak into knowledge questions |
+| Pantry seeded with `dry sherry` + `napa cabbage`; the reconcile ask verbatim | `getInventory` fires, **and** "dry sherry" appears in the first 300 chars — a position check, since the old reply named it but buried it |
+| Typed "what can I use instead of shaoxing wine?" | Same: tool fires, reply names the pantry cover — parity between tapped and typed |
+| "What's the difference between baking soda and baking powder?" | **Zero** tool calls — the new row did not leak into knowledge questions |
 
-The third row is the regression guard that earns the change: a prompt edit touches
-every chat turn.
+The third row is the guard that earns the change: a prompt edit touches every chat
+turn. The first row failing *before* the edit is the reproduction of #492.
 
 ## Also shipped
 
