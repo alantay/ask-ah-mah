@@ -25,6 +25,11 @@ import { DottedList, Eyebrow, StepList } from "@/features/shared/components/reci
 import { toast } from "sonner";
 import useSWR, { useSWRConfig } from "swr";
 import { ScaledNum, scaleAmount, formatRecipeAsText } from "@/features/Recipe";
+import {
+  buildReconcilePlan,
+  claimedPantryNames,
+  matchingPantryItems,
+} from "./reconcile";
 
 export interface RecipeLetterProps {
   // Partial during progressive reveal — fields fill in as the JSON streams.
@@ -34,9 +39,9 @@ export interface RecipeLetterProps {
   // Cooked marker for the last-step "I made this" checkbox in cooking mode (ADR-0020).
   cooked?: boolean;
   onCookedChange?: (cooked: boolean) => void;
-  // Drops the substitutions prompt into the composer (not sent) so the user can
-  // correct the pantry-derived missing list before asking Ah Mah.
-  onDraft?: (text: string) => void;
+  // Opens reconcile mode, then sends the substitutions ask once the user has
+  // corrected the pantry-derived have/missing state.
+  onSend?: (text: string) => void;
   // While true the recipe is still streaming: arrays may be incomplete and all
   // interactivity (stepper, add-to-list, save, cook, substitutions) is suppressed.
   isStreaming?: boolean;
@@ -79,7 +84,7 @@ export function RecipeLetter({
   recipe,
   onSave,
   isSaved,
-  onDraft,
+  onSend,
   isStreaming = false,
   cooked,
   onCookedChange,
@@ -95,6 +100,9 @@ export function RecipeLetter({
   const [servings, setServings] = useState(baseServings);
   const [inFlight, setInFlight] = useState<Set<string>>(new Set());
   const [cooking, setCooking] = useState(false);
+  const [reconciling, setReconciling] = useState(false);
+  const [ticked, setTicked] = useState<Set<string>>(new Set());
+  const [submitting, setSubmitting] = useState(false);
   // While streaming the stepper is hidden and baseServings may still be filling
   // in, so show amounts as authored (ratio 1) rather than briefly mis-scaling.
   const ratio = isStreaming ? 1 : servings / baseServings;
@@ -152,23 +160,24 @@ export function RecipeLetter({
     ...(inventoryData?.ingredientInventory ?? []),
     ...(inventoryData?.kitchenwareInventory ?? []),
   ];
+  // The delete pool is narrower than the display pool above. `DELETE
+  // /api/inventory` has no type filter, so under the loose matcher an unticked
+  // ingredient could take out an appliance — "jasmine rice" matches "Rice
+  // cooker" via "rice". The display pool stays combined: the pill, the carts
+  // and the pre-tick have always counted both, and reconcile is not the place
+  // to move them.
+  const deletableItems: InventoryItem[] = inventoryData?.ingredientInventory ?? [];
   const inventoryNames = inventoryItems.map((i) => i.name.trim().toLowerCase());
 
   const haveCount = ingredients.filter((ing) =>
     ingredientHave(ing.name, inventoryNames),
   ).length;
 
-  const missingIngredients = ingredients.filter(
-    (ing) => !ingredientHave(ing.name, inventoryNames),
-  );
-  // The substitutions on-ramp is useful whenever the user is tracking a pantry
-  // and is short an ingredient — Ah Mah can suggest a swap for what's missing.
+  // The nudge is an on-ramp to correcting the pantry record, so it shows
+  // whenever a pantry is tracked — including at a full pantry count, where the
+  // record may be over-reporting an item the user has finished.
   const showSubstitutions =
-    !isStreaming &&
-    !!onDraft &&
-    !!userId &&
-    inventoryItems.length > 0 &&
-    missingIngredients.length > 0;
+    !isStreaming && !!onSend && !!userId && inventoryItems.length > 0;
 
   const copyRecipe = () => {
     const text = formatRecipeAsText(
@@ -190,11 +199,36 @@ export function RecipeLetter({
     );
   };
 
-  const askForSubstitutions = () => {
-    if (!onDraft) return;
-    const names = missingIngredients.map((i) => i.name).join(", ");
-    onDraft(`I'm missing ${names} for the ${title}. Can you suggest substitutions or alternatives?`);
+  const openReconcile = () => {
+    setTicked(
+      new Set(
+        ingredients
+          .filter((ing) => ingredientHave(ing.name, inventoryNames))
+          .map((ing) => ing.name),
+      ),
+    );
+    setReconciling(true);
   };
+
+  // Deliberately leaves `submitting` alone: both of submitReconcile's exits
+  // clear it themselves, and clearing it here would let a mid-flight "Never
+  // mind" reopen the grid and write the pantry twice. "Never mind" is disabled
+  // while a submit is in flight, so the two cannot overlap.
+  const exitReconcile = () => {
+    setReconciling(false);
+    setTicked(new Set());
+  };
+
+  const toggleTick = (name: string) =>
+    setTicked((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+
+  const untickedCount = ingredients.filter((ing) => !ticked.has(ing.name)).length;
+
 
   const timeLabel = recipe.totalTimeMinutes
     ? `${recipe.totalTimeMinutes} min`
@@ -229,6 +263,63 @@ export function RecipeLetter({
       : recipe.closeness === "stretch"
         ? "Worth a small trip"
         : null;
+
+  // Ticks are factual claims about the pantry (ADR-0026 §8), so they are written
+  // straight through. The writes are awaited before the ask goes out: the chat
+  // turn calls getInventory, and sending first lets the model read the
+  // pre-correction pantry.
+  const submitReconcile = async () => {
+    // The writes are network round-trips and the button stays mounted until
+    // they land, so a second click would duplicate both the pantry writes and
+    // the ask — same guard addToShoppingList uses for the cart.
+    if (submitting) return;
+    setSubmitting(true);
+
+    const { adds, deletes, stillMissing } = buildReconcilePlan(
+      ingredients,
+      deletableItems,
+      ticked,
+    );
+
+    // mutateResource resolves on a failed response rather than throwing, so
+    // every call site checks `res.ok` itself — addToShoppingList above does the
+    // same. Without this a 500 would silently "succeed" and the ask would go
+    // out against an uncorrected pantry.
+    const write = async (
+      method: 'POST' | 'DELETE',
+      body: Record<string, unknown>,
+    ) => {
+      const res = await mutateResource({ url: '/api/inventory', method, body });
+      if (!res.ok) throw new Error('inventory write failed');
+    };
+
+    try {
+      if (adds.length) await write('POST', { items: adds });
+      if (deletes.length) await write('DELETE', { itemNames: deletes });
+      if (adds.length || deletes.length) {
+        if (userId) mutate(inventoryKey);
+        toast.success(
+          `Pantry updated — ${adds.length} added, ${deletes.length} removed.`,
+        );
+      }
+    } catch {
+      toast.error("Aiyah, couldn't update your pantry. Try again?");
+      setSubmitting(false);
+      return;
+    }
+
+    setSubmitting(false);
+    exitReconcile();
+
+    // Nothing left missing is a complete answer: the corrections were the whole
+    // point, and there is no substitution to ask for.
+    if (stillMissing.length === 0) return;
+
+    const names = stillMissing.map((i) => i.name).join(', ');
+    onSend?.(
+      `I'm missing ${names} for the ${title}. Can you suggest substitutions or alternatives?`,
+    );
+  };
 
   return (
     <div className="border-y border-border-soft px-4 sm:px-[26px] pt-5 pb-[22px] relative">
@@ -276,7 +367,7 @@ export function RecipeLetter({
               a quiet link rather than a button so it doesn't read as an action. */}
           {showSubstitutions && (
             <button
-              onClick={askForSubstitutions}
+              onClick={openReconcile}
               className="group mt-2 inline-flex items-center gap-1.5 font-sans text-xs cursor-pointer"
             >
               <span className="text-muted-foreground">Short an ingredient?</span>
@@ -319,6 +410,26 @@ export function RecipeLetter({
                 ? `${scaledAmt}${ing.unit ? " " + ing.unit : ""}`
                 : "";
               const have = ingredientHave(ing.name, inventoryNames);
+              const matches = matchingPantryItems(ing.name, deletableItems);
+              // Every pantry row some OTHER ticked ingredient is relying on —
+              // this row's own tick is excluded, or a freshly opened grid (all
+              // matched rows pre-ticked) would suppress every caption.
+              const claimedByOthers = claimedPantryNames(
+                ingredients.filter((other) => other.name !== ing.name),
+                deletableItems,
+                ticked,
+              );
+              // Only worth showing when the record's wording differs from the
+              // recipe's, and only when this row's untick would actually reach
+              // that item — same pool, same two guards as the delete. Naming an
+              // item the guards hold back would promise a write that cannot
+              // happen.
+              const pantryLabel =
+                matches.length === 1 &&
+                !claimedByOthers.has(matches[0].name) &&
+                matches[0].name.toLowerCase() !== ing.name.toLowerCase()
+                  ? matches[0].name
+                  : null;
               const isLastTwo = i >= ingredients.length - 2;
               return (
                 <div
@@ -331,6 +442,15 @@ export function RecipeLetter({
                   <span className="flex-[0_0_72px] font-mono text-dense font-semibold text-foreground text-right tabular-nums whitespace-nowrap">
                     {amountLabel ? <ScaledNum>{amountLabel}</ScaledNum> : ""}
                   </span>
+                  {reconciling && (
+                    <input
+                      type="checkbox"
+                      aria-label={ing.name}
+                      checked={ticked.has(ing.name)}
+                      onChange={() => toggleTick(ing.name)}
+                      className="shrink-0 size-4 accent-primary cursor-pointer"
+                    />
+                  )}
                   <span className="flex-1 font-display text-emphasis text-foreground">
                     {ing.name}
                     {ing.note && (
@@ -338,8 +458,13 @@ export function RecipeLetter({
                         , {ing.note}
                       </span>
                     )}
+                    {reconciling && pantryLabel && (
+                      <span className="block font-sans text-eyebrow text-muted-foreground normal-case tracking-normal">
+                        pantry: {pantryLabel}
+                      </span>
+                    )}
                   </span>
-                  {!isStreaming && userId && inventoryItems.length > 0 && !have && (
+                  {!reconciling && !isStreaming && userId && inventoryItems.length > 0 && !have && (
                     <NeedCartButton
                       ingredientName={ing.name}
                       onAdd={() => addToShoppingList(ing)}
@@ -350,6 +475,31 @@ export function RecipeLetter({
               );
             })}
           </div>
+          {reconciling && (
+            <div className="mt-3 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={submitReconcile}
+                disabled={submitting}
+                className="flex-1 rounded-xl bg-primary text-primary-foreground font-display font-semibold text-base px-4 py-3 cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-default"
+              >
+                {untickedCount === 0
+                  ? 'Save what I have'
+                  : `Ask about the ${untickedCount} you're missing`}
+              </button>
+              <button
+                type="button"
+                onClick={exitReconcile}
+                disabled={submitting}
+                className={cn(
+                  secondaryAction,
+                  'text-muted-foreground border border-border bg-card disabled:opacity-60 disabled:cursor-default',
+                )}
+              >
+                Never mind
+              </button>
+            </div>
+          )}
         </div>
       )}
 
