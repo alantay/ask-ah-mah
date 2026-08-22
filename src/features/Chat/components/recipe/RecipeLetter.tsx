@@ -25,7 +25,7 @@ import { DottedList, Eyebrow, StepList } from "@/features/shared/components/reci
 import { toast } from "sonner";
 import useSWR, { useSWRConfig } from "swr";
 import { ScaledNum, scaleAmount, formatRecipeAsText } from "@/features/Recipe";
-import { matchingPantryItems } from "./reconcile";
+import { buildReconcilePlan, matchingPantryItems } from "./reconcile";
 
 export interface RecipeLetterProps {
   // Partial during progressive reveal — fields fill in as the JSON streams.
@@ -247,8 +247,53 @@ export function RecipeLetter({
         ? "Worth a small trip"
         : null;
 
-  const submitReconcile = () => {
+  // Ticks are factual claims about the pantry (ADR-0026 §8), so they are written
+  // straight through. The writes are awaited before the ask goes out: the chat
+  // turn calls getInventory, and sending first lets the model read the
+  // pre-correction pantry.
+  const submitReconcile = async () => {
+    const { adds, deletes, stillMissing } = buildReconcilePlan(
+      ingredients,
+      inventoryItems,
+      ticked,
+    );
+
+    // mutateResource resolves on a failed response rather than throwing, so
+    // every call site checks `res.ok` itself — addToShoppingList above does the
+    // same. Without this a 500 would silently "succeed" and the ask would go
+    // out against an uncorrected pantry.
+    const write = async (
+      method: 'POST' | 'DELETE',
+      body: Record<string, unknown>,
+    ) => {
+      const res = await mutateResource({ url: '/api/inventory', method, body });
+      if (!res.ok) throw new Error('inventory write failed');
+    };
+
+    try {
+      if (adds.length) await write('POST', { items: adds });
+      if (deletes.length) await write('DELETE', { itemNames: deletes });
+      if (adds.length || deletes.length) {
+        if (userId) mutate(inventoryKey);
+        toast.success(
+          `Pantry updated — ${adds.length} added, ${deletes.length} removed.`,
+        );
+      }
+    } catch {
+      toast.error("Aiyah, couldn't update your pantry. Try again?");
+      return;
+    }
+
     exitReconcile();
+
+    // Nothing left missing is a complete answer: the corrections were the whole
+    // point, and there is no substitution to ask for.
+    if (stillMissing.length === 0) return;
+
+    const names = stillMissing.map((i) => i.name).join(', ');
+    onSend?.(
+      `I'm missing ${names} for the ${title}. Can you suggest substitutions or alternatives?`,
+    );
   };
 
   return (

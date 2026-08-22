@@ -395,3 +395,140 @@ describe('Recipe cart adds to the shopping list', () => {
     await waitFor(() => expect(mockToastSuccess).toHaveBeenCalled());
   });
 });
+
+describe('Reconcile submit writes the pantry then asks', () => {
+  const mockOnSend = jest.fn();
+
+  beforeEach(() => {
+    mockOnSend.mockReset();
+    mockUseSessionContext.mockReturnValue({ userId: 'user-123' });
+    mockUseSWR.mockReturnValue({ data: INVENTORY_WITH_CHICKEN });
+    global.fetch = jest.fn(() =>
+      Promise.resolve({ ok: true, json: () => Promise.resolve({ success: true }) }),
+    ) as unknown as typeof fetch;
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  const openReconcile = () =>
+    fireEvent.click(
+      screen.getByRole('button', { name: /Ask Ah Mah for substitutions/ }),
+    );
+
+  const callsTo = (method: string) =>
+    (global.fetch as jest.Mock).mock.calls.filter(
+      ([url, init]) => url === '/api/inventory' && init?.method === method,
+    );
+
+  it('adds a newly ticked ingredient with its category', async () => {
+    render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
+    openReconcile();
+    fireEvent.click(screen.getByRole('checkbox', { name: /bok choy/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Save what I have/ }));
+
+    await waitFor(() => expect(callsTo('POST').length).toBe(1));
+    expect(JSON.parse(callsTo('POST')[0][1].body)).toEqual({
+      items: [{ name: 'bok choy', type: 'ingredient', category: 'Vegetable' }],
+    });
+  });
+
+  it('deletes an unticked pantry item by its pantry name', async () => {
+    render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
+    openReconcile();
+    fireEvent.click(screen.getByRole('checkbox', { name: /chicken thigh/ }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /Ask about the 2 you're missing/ }),
+    );
+
+    await waitFor(() => expect(callsTo('DELETE').length).toBe(1));
+    expect(JSON.parse(callsTo('DELETE')[0][1].body)).toEqual({
+      itemNames: ['chicken thigh'],
+    });
+  });
+
+  it('sends an ask naming only what is still missing', async () => {
+    render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
+    openReconcile();
+    fireEvent.click(
+      screen.getByRole('button', { name: /Ask about the 1 you're missing/ }),
+    );
+
+    await waitFor(() => expect(mockOnSend).toHaveBeenCalled());
+    const sent = mockOnSend.mock.calls[0][0] as string;
+    expect(sent).toContain('bok choy');
+    expect(sent).not.toContain('chicken thigh');
+    expect(sent).toContain('Ginger Chicken');
+  });
+
+  // Unticking chicken thigh forces BOTH a write and a send in one submit —
+  // the only scenario where the ordering is observable. A tick-only submit
+  // sends nothing, so it would pass this assertion vacuously.
+  it('writes the pantry before it sends', async () => {
+    const order: string[] = [];
+    (global.fetch as jest.Mock).mockImplementation(() => {
+      order.push('write');
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+    });
+    mockOnSend.mockImplementation(() => {
+      order.push('send');
+    });
+
+    render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
+    openReconcile();
+    fireEvent.click(screen.getByRole('checkbox', { name: /chicken thigh/ }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /Ask about the 2 you're missing/ }),
+    );
+
+    await waitFor(() => expect(order).toContain('send'));
+    expect(order).toEqual(['write', 'send']);
+  });
+
+  it('sends nothing when the corrected list has no gaps', async () => {
+    render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
+    openReconcile();
+    fireEvent.click(screen.getByRole('checkbox', { name: /bok choy/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Save what I have/ }));
+
+    await waitFor(() => expect(callsTo('POST').length).toBe(1));
+    expect(mockOnSend).not.toHaveBeenCalled();
+  });
+
+  it('leaves reconcile mode after submit', async () => {
+    render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
+    openReconcile();
+    fireEvent.click(
+      screen.getByRole('button', { name: /Ask about the 1 you're missing/ }),
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole('checkbox', { name: /bok choy/ })).not.toBeInTheDocument(),
+    );
+  });
+
+  it('summarises the writes in a toast', async () => {
+    render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
+    openReconcile();
+    fireEvent.click(screen.getByRole('checkbox', { name: /bok choy/ }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /chicken thigh/ }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /Ask about the 1 you're missing/ }),
+    );
+    await waitFor(() =>
+      expect(mockToastSuccess).toHaveBeenCalledWith(
+        'Pantry updated — 1 added, 1 removed.',
+      ),
+    );
+  });
+
+  it('raises no toast when the ticks changed nothing', async () => {
+    render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
+    openReconcile();
+    fireEvent.click(
+      screen.getByRole('button', { name: /Ask about the 1 you're missing/ }),
+    );
+    await waitFor(() => expect(mockOnSend).toHaveBeenCalled());
+    expect(mockToastSuccess).not.toHaveBeenCalled();
+  });
+});
