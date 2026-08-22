@@ -211,33 +211,28 @@ describe('Shortfall card retired', () => {
   });
 });
 
-describe('Substitutions relocated to the action bar', () => {
-  const mockOnDraft = jest.fn();
+describe('Substitutions opens reconcile mode', () => {
+  const mockOnSend = jest.fn();
 
   beforeEach(() => {
-    mockOnDraft.mockReset();
+    mockOnSend.mockReset();
     mockUseSessionContext.mockReturnValue({ userId: 'user-123' });
     mockUseSWR.mockReturnValue({ data: INVENTORY_WITH_CHICKEN });
   });
 
-  it('offers "Ask Ah Mah for substitutions" when ingredients are missing', () => {
-    render(<RecipeLetter recipe={RECIPE} onDraft={mockOnDraft} />);
+  const openReconcile = () =>
+    fireEvent.click(
+      screen.getByRole('button', { name: /Ask Ah Mah for substitutions/ }),
+    );
+
+  it('offers the nudge when a pantry is tracked', () => {
+    render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
     expect(
       screen.getByRole('button', { name: /Ask Ah Mah for substitutions/ }),
     ).toBeInTheDocument();
   });
 
-  it('drafts a substitutions prompt naming the missing ingredients (not sent)', () => {
-    render(<RecipeLetter recipe={RECIPE} onDraft={mockOnDraft} />);
-    fireEvent.click(
-      screen.getByRole('button', { name: /Ask Ah Mah for substitutions/ }),
-    );
-    expect(mockOnDraft).toHaveBeenCalledWith(
-      expect.stringContaining('bok choy'),
-    );
-  });
-
-  it('does not offer substitutions when nothing is missing', () => {
+  it('still offers the nudge when the pantry says nothing is missing', () => {
     mockUseSWR.mockReturnValue({
       data: {
         ingredientInventory: [
@@ -247,10 +242,90 @@ describe('Substitutions relocated to the action bar', () => {
         kitchenwareInventory: [],
       },
     });
-    render(<RecipeLetter recipe={RECIPE} onDraft={mockOnDraft} />);
+    render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
+    expect(
+      screen.getByRole('button', { name: /Ask Ah Mah for substitutions/ }),
+    ).toBeInTheDocument();
+  });
+
+  it('hides the nudge when no pantry is tracked', () => {
+    mockUseSWR.mockReturnValue({
+      data: { ingredientInventory: [], kitchenwareInventory: [] },
+    });
+    render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
     expect(
       screen.queryByRole('button', { name: /Ask Ah Mah for substitutions/ }),
     ).not.toBeInTheDocument();
+  });
+
+  it('sends nothing when the nudge is tapped', () => {
+    render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
+    openReconcile();
+    expect(mockOnSend).not.toHaveBeenCalled();
+  });
+
+  it('gives every ingredient a checkbox, pre-ticked from the pantry', () => {
+    render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
+    openReconcile();
+    expect(screen.getByRole('checkbox', { name: /chicken thigh/ })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: /bok choy/ })).not.toBeChecked();
+  });
+
+  it('toggles a checkbox on click', () => {
+    render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
+    openReconcile();
+    const box = screen.getByRole('checkbox', { name: /bok choy/ });
+    fireEvent.click(box);
+    expect(box).toBeChecked();
+  });
+
+  it('labels submit with the count still unticked', () => {
+    render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
+    openReconcile();
+    expect(
+      screen.getByRole('button', { name: /Ask about the 1 you're missing/ }),
+    ).toBeInTheDocument();
+  });
+
+  it('offers to save instead of ask when nothing is left missing', () => {
+    render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
+    openReconcile();
+    fireEvent.click(screen.getByRole('checkbox', { name: /bok choy/ }));
+    expect(
+      screen.getByRole('button', { name: /Save what I have/ }),
+    ).toBeInTheDocument();
+  });
+
+  it('hides the cart buttons while reconciling', () => {
+    render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
+    openReconcile();
+    expect(
+      screen.queryByRole('button', { name: /Add bok choy to shopping list/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('discards ticks on exit without writing', () => {
+    render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
+    openReconcile();
+    fireEvent.click(screen.getByRole('checkbox', { name: /bok choy/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Done/ }));
+    expect(screen.queryByRole('checkbox', { name: /bok choy/ })).not.toBeInTheDocument();
+    openReconcile();
+    expect(screen.getByRole('checkbox', { name: /bok choy/ })).not.toBeChecked();
+  });
+
+  it('names the matched pantry item when it differs from the ingredient', () => {
+    mockUseSWR.mockReturnValue({
+      data: {
+        ingredientInventory: [
+          { id: '1', name: 'boneless chicken', type: 'ingredient' as const, category: 'Protein' as const, dateAdded: new Date().toISOString(), lastUpdated: new Date().toISOString() },
+        ],
+        kitchenwareInventory: [],
+      },
+    });
+    render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
+    openReconcile();
+    expect(screen.getByText(/pantry: boneless chicken/)).toBeInTheDocument();
   });
 });
 

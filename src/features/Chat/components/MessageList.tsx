@@ -571,7 +571,7 @@ export const MessageList = ({
                             saveStructuredRecipe(block.payload, recipeKey)
                           }
                           isSaved={!!savedRecipe}
-                          onDraft={onDraft}
+                          onSend={onSend}
                           cooked={savedRecipe?.cooked ?? false}
                           onCookedChange={(next: boolean) =>
                             handleCookedChange(block.payload, recipeKey, next)
