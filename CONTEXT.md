@@ -150,6 +150,10 @@ UI label: **"Worth a small trip."** The internal term is `Stretch`.
 
 An ingredient a generated recipe calls for that is not present in the user's pantry. The Addition count distinguishes Close from Stretch. Salt, pepper, water, and cooking oil are **free staples** — never counted as Additions even if absent from the pantry. Everything else in the pantry is also free; only items genuinely missing are Additions.
 
+Additions **accept** the pantry record as it stands. Correcting that record is someone else's job: the [Checklist block](#checklist-block) before the recipe exists, [Reconcile mode](#reconcile-mode) after it.
+
+Related: [Reconcile mode](#reconcile-mode), [Checklist block](#checklist-block), [Close Recipe](#close-recipe), [Stretch Recipe](#stretch-recipe)
+
 ---
 
 ## Shortfall card
@@ -276,7 +280,23 @@ A fenced ` ```checklist ` block (`{ question, deal, rows: [{ id, label, hint?, c
 
 **Scope:** at most one per dish, no limit per conversation, and **nothing carries between dishes** — a new dish standing on a previously-declined item asks again. "Per dish" means **per cooking**: a confirmed-absent row binds the dish she cooked, not the rest of the conversation, so asking for that same dish *again* re-opens the card — the user has had time to go to the shops, and the second ask is the signal. Nothing the user has **already told her they lack** earns a row either; that is an answer, not a question, and if it empties the list there is no card at all. Chat only; **Cook With What You Have** (Mode 3) is untouched. Presence is not freshness: she asks *do you have it*, never *is it still good* ([ADR-0008](docs/adr/0008-no-shelf-life-ui.md)).
 
-Related: [ADR-0026](docs/adr/0026-checklist-reopens-never-ask-for-possession.md), [ADR-0024](docs/adr/0024-clarify-reopens-never-ask.md), [Name test](#name-test), [Addition](#addition)
+Related: [ADR-0026](docs/adr/0026-checklist-reopens-never-ask-for-possession.md), [ADR-0024](docs/adr/0024-clarify-reopens-never-ask.md), [Name test](#name-test), [Addition](#addition), [Reconcile mode](#reconcile-mode)
+
+---
+
+## Reconcile mode
+
+The state a recipe's **What to gather** grid flips into when the user taps *"Ask Ah Mah for substitutions"*. The same grid, not a second card: every ingredient row gains a checkbox, pre-ticked from the pantry record, and the footer becomes a submit labelled by what is still unticked (*"Ask about the 3 you're missing"*). One list on screen, never two — a separate checkbox card would show the same soy sauce twice, in two states that can disagree.
+
+**It exists because the record drifts both ways.** It under-reports (owned but never entered) and over-reports (entered but since finished), and the substitutions ask used to trust it blindly. So the nudge shows **whenever a pantry is tracked**, including at a full `10/10` count: over-reporting is invisible otherwise.
+
+**A tick adds, an untick removes.** Both are factual claims about what the user owns, written client-side and **awaited before the message sends** (the chat turn calls `getInventory`; sending first races the writes). A tick `POST`s the recipe's own ingredient name with its `category` passed straight through. An untick `DELETE`s the **matched pantry item's** name — and **only when exactly one pantry item matches**, because `ingredientMatches` matches on any shared token, so a delete on an ambiguous match would remove the wrong ingredient. An ambiguous unticked row is skipped and simply treated as absent *for this dish only*, which is the [Checklist block](#checklist-block)'s transient confirmed-absence. Where the pantry's wording differs from the recipe's, the row shows it (*pantry: fresh galangal*) so no delete is a surprise.
+
+**The pre/post pair:** the **Checklist block** is the *pre-recipe* corrector — it asks before the dish is committed to, to protect the dish's name. Reconcile mode is the *post-recipe* corrector — the recipe already exists, and the user is looking at a finite list they can judge item by item. Between them sit **[Additions](#addition)**, which only ever *accept* the record. Reconcile is **recipe-scoped by construction**: it cannot seed an empty pantry, survey the whole pantry, or feed **[Featured Selection](#featured-selection)** — that is the Pantry's job, and the split between the two is deliberately unsettled.
+
+The submit sends directly, with no composer round-trip: that step only existed because the drafted text was wrong. Not a chat block — no fence, no schema, no replay state; the sent sentence is the whole receipt.
+
+Related: [ADR-0027](docs/adr/0027-the-pantry-is-corrected-at-the-point-of-use.md), [ADR-0026](docs/adr/0026-checklist-reopens-never-ask-for-possession.md), [Checklist block](#checklist-block), [Addition](#addition)
 
 ---
 
