@@ -76,14 +76,7 @@ describe('buildReconcilePlan', () => {
       new Set(['soy sauce']),
     );
     expect(plan.deletes).toEqual([]);
-  });
-
-  it('still reports the held-back ingredient as missing', () => {
-    const plan = buildReconcilePlan(
-      [ing('soy sauce'), ing('fish sauce')],
-      [inv('Soy sauce')],
-      new Set(['soy sauce']),
-    );
+    // Held back from the write, but still absent for this dish.
     expect(plan.stillMissing.map(i => i.name)).toEqual(['fish sauce']);
   });
 

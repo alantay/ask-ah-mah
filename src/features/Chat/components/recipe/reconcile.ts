@@ -15,6 +15,22 @@ export function matchingPantryItems(
   );
 }
 
+// Every pantry item some ticked ingredient is relying on. Computed across the
+// whole recipe, because a per-ingredient decision cannot see the claim. Shared
+// with the row caption so the label and the write agree on what is deletable.
+export function claimedPantryNames(
+  ingredients: RecipeIngredientModel[],
+  inventoryItems: InventoryItem[],
+  ticked: Set<string>,
+): Set<string> {
+  return new Set(
+    ingredients
+      .filter((ing) => ticked.has(ing.name))
+      .flatMap((ing) => matchingPantryItems(ing.name, inventoryItems))
+      .map((item) => item.name),
+  );
+}
+
 export type ReconcilePlan = {
   adds: AddInventoryItem[];
   deletes: string[];
@@ -44,14 +60,7 @@ export function buildReconcilePlan(
   const deletes: string[] = [];
   const stillMissing: RecipeIngredientModel[] = [];
 
-  // Every pantry item some ticked ingredient is relying on. Computed across the
-  // whole recipe first: a per-ingredient decision cannot see the claim.
-  const claimedByTicked = new Set(
-    ingredients
-      .filter((ing) => ticked.has(ing.name))
-      .flatMap((ing) => matchingPantryItems(ing.name, inventoryItems))
-      .map((item) => item.name),
-  );
+  const claimedByTicked = claimedPantryNames(ingredients, inventoryItems, ticked);
 
   for (const ing of ingredients) {
     const matches = matchingPantryItems(ing.name, inventoryItems);

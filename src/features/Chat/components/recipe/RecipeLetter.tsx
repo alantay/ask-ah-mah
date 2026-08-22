@@ -25,7 +25,11 @@ import { DottedList, Eyebrow, StepList } from "@/features/shared/components/reci
 import { toast } from "sonner";
 import useSWR, { useSWRConfig } from "swr";
 import { ScaledNum, scaleAmount, formatRecipeAsText } from "@/features/Recipe";
-import { buildReconcilePlan, matchingPantryItems } from "./reconcile";
+import {
+  buildReconcilePlan,
+  claimedPantryNames,
+  matchingPantryItems,
+} from "./reconcile";
 
 export interface RecipeLetterProps {
   // Partial during progressive reveal — fields fill in as the JSON streams.
@@ -220,6 +224,7 @@ export function RecipeLetter({
 
   const untickedCount = ingredients.filter((ing) => !ticked.has(ing.name)).length;
 
+
   const timeLabel = recipe.totalTimeMinutes
     ? `${recipe.totalTimeMinutes} min`
     : null;
@@ -392,13 +397,23 @@ export function RecipeLetter({
                 ? `${scaledAmt}${ing.unit ? " " + ing.unit : ""}`
                 : "";
               const have = ingredientHave(ing.name, inventoryNames);
-              const matches = matchingPantryItems(ing.name, inventoryItems);
+              const matches = matchingPantryItems(ing.name, deletableItems);
+              // Every pantry row some OTHER ticked ingredient is relying on —
+              // this row's own tick is excluded, or a freshly opened grid (all
+              // matched rows pre-ticked) would suppress every caption.
+              const claimedByOthers = claimedPantryNames(
+                ingredients.filter((other) => other.name !== ing.name),
+                deletableItems,
+                ticked,
+              );
               // Only worth showing when the record's wording differs from the
-              // recipe's, and only when one item matched — an ambiguous match
-              // is never deleted, so naming it would promise a write that
-              // cannot happen.
+              // recipe's, and only when this row's untick would actually reach
+              // that item — same pool, same two guards as the delete. Naming an
+              // item the guards hold back would promise a write that cannot
+              // happen.
               const pantryLabel =
                 matches.length === 1 &&
+                !claimedByOthers.has(matches[0].name) &&
                 matches[0].name.toLowerCase() !== ing.name.toLowerCase()
                   ? matches[0].name
                   : null;

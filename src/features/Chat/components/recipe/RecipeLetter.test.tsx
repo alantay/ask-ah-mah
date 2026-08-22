@@ -78,6 +78,21 @@ const RECIPE: RecipeLetterProps['recipe'] = {
   ],
 };
 
+const CHICKEN_PAIR: RecipeLetterProps['recipe'] = {
+  ...RECIPE,
+  ingredients: [
+    { name: 'chicken thigh', category: 'Protein', amount: '500', unit: 'g', note: undefined },
+    { name: 'chicken stock', category: 'Misc', amount: '200', unit: 'ml', note: undefined },
+  ],
+};
+
+const RICE_RECIPE: RecipeLetterProps['recipe'] = {
+  ...RECIPE,
+  ingredients: [
+    { name: 'jasmine rice', category: 'Carbs', amount: '2', unit: 'cups', note: undefined },
+  ],
+};
+
 const INVENTORY_WITH_CHICKEN = {
   ingredientInventory: [
     {
@@ -326,6 +341,42 @@ describe('Substitutions opens reconcile mode', () => {
     render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
     openReconcile();
     expect(screen.getByText(/pantry: boneless chicken/)).toBeInTheDocument();
+  });
+
+  it('drops a row\'s pantry caption once another ticked ingredient claims the item', () => {
+    // Both rows match "boneless chicken" via "chicken", and one pantry row
+    // cannot answer both. Untick both and each row honestly names it; re-tick
+    // one and the other's delete can no longer fire, so its caption goes too.
+    mockUseSWR.mockReturnValue({
+      data: {
+        ingredientInventory: [
+          { id: 'boneless chicken', name: 'boneless chicken', type: 'ingredient' as const, category: 'Protein' as const, dateAdded: new Date().toISOString(), lastUpdated: new Date().toISOString() },
+        ],
+        kitchenwareInventory: [],
+      },
+    });
+    render(<RecipeLetter recipe={CHICKEN_PAIR} onSend={mockOnSend} />);
+    openReconcile();
+    fireEvent.click(screen.getByRole('checkbox', { name: /chicken thigh/ }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /chicken stock/ }));
+    expect(screen.getAllByText(/pantry: boneless chicken/)).toHaveLength(2);
+
+    fireEvent.click(screen.getByRole('checkbox', { name: /chicken thigh/ }));
+    expect(screen.getAllByText(/pantry: boneless chicken/)).toHaveLength(1);
+  });
+
+  it('never captions a kitchenware match — it is not deletable', () => {
+    mockUseSWR.mockReturnValue({
+      data: {
+        ingredientInventory: [],
+        kitchenwareInventory: [
+          { id: 'rice cooker', name: 'rice cooker', type: 'kitchenware' as const, category: 'Misc' as const, dateAdded: new Date().toISOString(), lastUpdated: new Date().toISOString() },
+        ],
+      },
+    });
+    render(<RecipeLetter recipe={RICE_RECIPE} onSend={mockOnSend} />);
+    openReconcile();
+    expect(screen.queryByText(/pantry: rice cooker/i)).not.toBeInTheDocument();
   });
 });
 

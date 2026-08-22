@@ -53,7 +53,7 @@ That is a real defect ([#491](https://github.com/alantay/ask-ah-mah/issues/491))
 
 `buildReconcilePlan` is a pure function over `(ingredients, inventoryItems, ticked)` returning `{ adds, deletes, stillMissing }`, so the whole of this rule is testable without a DOM.
 
-When the matched pantry name differs from the recipe's wording, reconcile mode shows it on the row (`galangal` · *pantry: fresh galangal*) — and shows it **only** on an unambiguous match, since naming a pantry item beside a row that will never be deleted would promise a write that cannot happen.
+When the matched pantry name differs from the recipe's wording, reconcile mode shows it on the row (`galangal` · *pantry: fresh galangal*). The caption reads the **same pool and the same guards** as the delete — naming a pantry item beside a row that will never be deleted would promise a write that cannot happen — with one exception: a row's *own* tick does not suppress its caption, or a freshly opened grid, where every matched row is pre-ticked, would show no captions at all. What suppresses a caption is another row claiming the item.
 
 ### 4. The submit sends directly; the composer round-trip is deleted
 
