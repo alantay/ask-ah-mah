@@ -677,6 +677,42 @@ describe('Reconcile submit writes the pantry then asks', () => {
     expect(mockOnSend).toHaveBeenCalledTimes(1);
   });
 
+  it('cannot be cancelled while the first submit is still writing', async () => {
+    // "Never mind" used to clear the in-flight guard, which let the user
+    // reopen the grid and submit a second time — and left the original submit
+    // free to send its ask after the cancel.
+    let release: (v: unknown) => void = () => {};
+    (global.fetch as jest.Mock).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          release = () => resolve({ ok: true, json: () => Promise.resolve({}) });
+        }),
+    );
+
+    render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
+    openReconcile();
+    fireEvent.click(screen.getByRole('checkbox', { name: /chicken thigh/ }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /Ask about the 2 you're missing/ }),
+    );
+
+    const cancel = screen.getByRole('button', { name: 'Never mind' });
+    expect(cancel).toBeDisabled();
+    fireEvent.click(cancel);
+
+    // Still in reconcile mode: the cancel did not take, so there is no way
+    // back to a second submit.
+    expect(
+      screen.getByRole('button', { name: /Ask about the 2 you're missing/ }),
+    ).toBeDisabled();
+
+    await act(async () => {
+      release(null);
+    });
+    expect(callsTo('DELETE')).toHaveLength(1);
+    expect(mockOnSend).toHaveBeenCalledTimes(1);
+  });
+
   it('sends nothing when the corrected list has no gaps', async () => {
     render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
     openReconcile();

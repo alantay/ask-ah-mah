@@ -210,12 +210,13 @@ export function RecipeLetter({
     setReconciling(true);
   };
 
+  // Deliberately leaves `submitting` alone: both of submitReconcile's exits
+  // clear it themselves, and clearing it here would let a mid-flight "Never
+  // mind" reopen the grid and write the pantry twice. "Never mind" is disabled
+  // while a submit is in flight, so the two cannot overlap.
   const exitReconcile = () => {
     setReconciling(false);
     setTicked(new Set());
-    // "Never mind" stays live during a submit, so clear the guard here too or a
-    // mid-flight exit would leave the next reconcile unable to submit.
-    setSubmitting(false);
   };
 
   const toggleTick = (name: string) =>
@@ -489,7 +490,11 @@ export function RecipeLetter({
               <button
                 type="button"
                 onClick={exitReconcile}
-                className={cn(secondaryAction, 'text-muted-foreground border border-border bg-card')}
+                disabled={submitting}
+                className={cn(
+                  secondaryAction,
+                  'text-muted-foreground border border-border bg-card disabled:opacity-60 disabled:cursor-default',
+                )}
               >
                 Never mind
               </button>

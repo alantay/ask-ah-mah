@@ -77,7 +77,7 @@ The condition is now: a pantry is tracked (`userId` and a non-empty inventory) a
 
 ### 6. One toast, no per-delete confirm
 
-A summary toast — *"Pantry updated — 2 added, 1 removed."* — fires once, after the writes land. It is not a confirmation step, deliberately; but it is the only feedback on a **destructive** write, so it is not optional either. The reconcile footer is two buttons and no more: the submit, labelled *"Ask about the N you're missing"* or *"Save what I have"* depending on what is still unticked, and a secondary **Never mind** beside it that discards the staged ticks and writes nothing. "Never mind" rather than "Done", because the button throws the user's corrections away and should say so.
+A summary toast — *"Pantry updated — 2 added, 1 removed."* — fires once, after the writes land. It is not a confirmation step, deliberately; but it is the only feedback on a **destructive** write, so it is not optional either. The reconcile footer is two buttons and no more: the submit, labelled *"Ask about the N you're missing"* or *"Save what I have"* depending on what is still unticked, and a secondary **Never mind** beside it that discards the staged ticks and writes nothing. "Never mind" rather than "Done", because the button throws the user's corrections away and should say so. Both buttons go dead while a submit is in flight: the pantry writes are already on the wire and cannot be recalled, so an escape hatch there would only let the same corrections be written a second time.
 
 ## Why not the alternatives
 
