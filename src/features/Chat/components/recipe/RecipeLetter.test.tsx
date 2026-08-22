@@ -467,10 +467,21 @@ describe('Reconcile submit writes the pantry then asks', () => {
   // sends nothing, so it would pass this assertion vacuously.
   it('writes the pantry before it sends', async () => {
     const order: string[] = [];
-    (global.fetch as jest.Mock).mockImplementation(() => {
-      order.push('write');
-      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
-    });
+    // `mutateResource` is `async function() { return fetch(...) }` — calling it
+    // (and `write()` around it) runs synchronously up to fetch's own first
+    // await, so recording 'write' at invocation time would pass even if the
+    // implementation forgot to `await write(...)`. Recording it only when the
+    // mocked fetch RESOLVES, on a later macrotask, means an un-awaited write
+    // lets 'send' land first — the only version of this test that can fail.
+    (global.fetch as jest.Mock).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          setTimeout(() => {
+            order.push('write');
+            resolve({ ok: true, json: () => Promise.resolve({}) });
+          }, 0);
+        }),
+    );
     mockOnSend.mockImplementation(() => {
       order.push('send');
     });
@@ -530,5 +541,24 @@ describe('Reconcile submit writes the pantry then asks', () => {
     );
     await waitFor(() => expect(mockOnSend).toHaveBeenCalled());
     expect(mockToastSuccess).not.toHaveBeenCalled();
+  });
+
+  it('on a failed write, errors instead of sending and stays in reconcile mode', async () => {
+    global.fetch = jest.fn(() =>
+      Promise.resolve({ ok: false, json: () => Promise.resolve({}) }),
+    ) as unknown as typeof fetch;
+
+    render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
+    openReconcile();
+    fireEvent.click(screen.getByRole('checkbox', { name: /bok choy/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Save what I have/ }));
+
+    await waitFor(() =>
+      expect(mockToastError).toHaveBeenCalledWith(
+        "Aiyah, couldn't update your pantry. Try again?",
+      ),
+    );
+    expect(mockOnSend).not.toHaveBeenCalled();
+    expect(screen.getByRole('checkbox', { name: /bok choy/ })).toBeInTheDocument();
   });
 });
