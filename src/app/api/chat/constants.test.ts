@@ -244,4 +244,43 @@ describe("CHAT_SYSTEM_PROMPT checklist mode", () => {
     // The ban survives verbatim — the checklist is a block, not prose.
     expect(CHAT_SYSTEM_PROMPT).toContain('Never ask "do you have X?" in prose');
   });
+  it("routes a named-ingredient substitute ask through getInventory", () => {
+    // #492: the pantry IS the answer to "what do I use instead of X". A
+    // generic swap list while a cover sits on the shelf inverts ADR-0006.
+    expect(CHAT_SYSTEM_PROMPT).toMatch(
+      /what to use \*\*instead of\*\* a named ingredient/i,
+    );
+    expect(CHAT_SYSTEM_PROMPT).toMatch(/Lead with what the pantry already covers/i);
+  });
+
+  it("no longer files substitutions under pantry-free knowledge questions", () => {
+    // The old row classified a substitution as a knowledge question, and the
+    // tool description barred getInventory for those. That pair is what
+    // suppressed the call — it must not come back.
+    expect(CHAT_SYSTEM_PROMPT).not.toMatch(
+      /a comparison \("baking soda vs baking powder"\), a substitution/,
+    );
+    expect(CHAT_SYSTEM_PROMPT).toMatch(
+      /no single thing to make and nothing to replace/i,
+    );
+  });
+
+  it("lists substitute asks among getInventory's triggers", () => {
+    expect(CHAT_SYSTEM_PROMPT).toMatch(
+      /call this before suggesting recipes, answering "what can I cook", or saying what to use \*\*instead of\*\* a named ingredient/,
+    );
+  });
+
+  it("carves substitute asks out of the knowledge-question tool ban", () => {
+    // Without this clause the tool description still reads as a prohibition
+    // and fights the new routing row.
+    expect(CHAT_SYSTEM_PROMPT).toMatch(
+      /a substitute ask is not one of those: the pantry IS the answer there/i,
+    );
+  });
+
+  it("carries the pantry-first substitution behavior rule", () => {
+    expect(CHAT_SYSTEM_PROMPT).toContain("Substitutions start on their shelf");
+    expect(CHAT_SYSTEM_PROMPT).toMatch(/lead with what they already have/i);
+  });
 });

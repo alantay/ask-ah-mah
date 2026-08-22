@@ -95,13 +95,27 @@ const hasRecipe = (t: string) => /```recipe/.test(t);
 const hasAnyBlock = (t: string) => hasSuggestions(t) || hasRecipe(t);
 const calledInventory = (r: TurnResult) => r.toolNames.includes("getInventory");
 
-// "Leads with" as a position check: the pantry cover must show up in the
-// opening of the reply, not buried after a ranked list of generic swaps.
-// 300 chars is roughly the first paragraph — generous enough to survive a
-// warm one-line opener, tight enough to fail the five-option essay.
+// "Leads with" as a position check: a pantry cover must appear in the opening
+// of the reply, not buried after a ranked list of generic swaps — which is
+// exactly how #492 presented (it named dry sherry, mid-list, as the fifth
+// textbook option). Which cover leads varies run to run: the model follows the
+// order the user named the missing items, so bok choy's cover leads as often
+// as shaoxing wine's. The check is therefore on the earliest cover, not a
+// fixed one. 300 chars is roughly the first paragraph — generous enough for a
+// warm opener, tight enough to fail the essay.
+const PANTRY_COVERS = ["dry sherry", "napa cabbage", "gao li cai"];
 const leadsWithPantry = (t: string) => {
-  const i = t.toLowerCase().indexOf("dry sherry");
-  return i !== -1 && i < 300;
+  const lower = t.toLowerCase();
+  const positions = PANTRY_COVERS.map((c) => lower.indexOf(c)).filter(
+    (i) => i !== -1,
+  );
+  // The sherry swap is the specific win the issue is about — it must be named
+  // somewhere even when the greens happen to lead.
+  return (
+    positions.length > 0 &&
+    Math.min(...positions) < 300 &&
+    lower.includes("dry sherry")
+  );
 };
 
 type Case = { name: string; input: string; expect: (r: TurnResult) => boolean };
