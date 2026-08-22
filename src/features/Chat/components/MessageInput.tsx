@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 interface MessageInputProps {
   onSendMessage: (message: string) => Promise<void>;
@@ -17,7 +17,6 @@ export const MessageInput = ({
   className,
 }: MessageInputProps) => {
   const [input, setInput] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
 
   return (
     <form
@@ -32,7 +31,6 @@ export const MessageInput = ({
     >
       <div className="flex gap-1 items-center bg-muted/50 rounded-xl border border-border/60 px-3 py-1 max-w-5xl mx-auto">
         <Input
-          ref={inputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           disabled={disabled}

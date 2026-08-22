@@ -27,10 +27,14 @@ export type ReconcilePlan = {
 //
 // The two directions are deliberately asymmetric. An add uses the recipe's own
 // name — a bad match there costs one spare pantry row. A delete removes the
-// MATCHED pantry item, and only when exactly one item matched: under the loose
-// matcher, deleting on an ambiguous match would remove the wrong ingredient.
-// An ambiguous unticked item is simply absent for this dish, which is the
-// transient confirmed-absence ADR-0026 §5 already sanctions.
+// MATCHED pantry item, and only past two guards, because under the loose
+// matcher a delete destroys data: it fires only when exactly one item matched
+// (an ambiguous match would remove the wrong ingredient) and only when no
+// TICKED ingredient matched that same item (one pantry row can answer two
+// ingredients — unticking "fish sauce" must not take away the "Soy sauce" the
+// user just affirmed). An unticked item held back by either guard is simply
+// absent for this dish, which is the transient confirmed-absence ADR-0026 §5
+// already sanctions.
 export function buildReconcilePlan(
   ingredients: RecipeIngredientModel[],
   inventoryItems: InventoryItem[],
@@ -39,6 +43,15 @@ export function buildReconcilePlan(
   const adds: AddInventoryItem[] = [];
   const deletes: string[] = [];
   const stillMissing: RecipeIngredientModel[] = [];
+
+  // Every pantry item some ticked ingredient is relying on. Computed across the
+  // whole recipe first: a per-ingredient decision cannot see the claim.
+  const claimedByTicked = new Set(
+    ingredients
+      .filter((ing) => ticked.has(ing.name))
+      .flatMap((ing) => matchingPantryItems(ing.name, inventoryItems))
+      .map((item) => item.name),
+  );
 
   for (const ing of ingredients) {
     const matches = matchingPantryItems(ing.name, inventoryItems);
@@ -53,7 +66,8 @@ export function buildReconcilePlan(
     }
 
     if (!isTicked) {
-      if (matches.length === 1) deletes.push(matches[0].name);
+      if (matches.length === 1 && !claimedByTicked.has(matches[0].name))
+        deletes.push(matches[0].name);
       stillMissing.push(ing);
     }
   }

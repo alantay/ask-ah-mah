@@ -308,7 +308,7 @@ describe('Substitutions opens reconcile mode', () => {
     render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
     openReconcile();
     fireEvent.click(screen.getByRole('checkbox', { name: /bok choy/ }));
-    fireEvent.click(screen.getByRole('button', { name: /Done/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Never mind/ }));
     expect(screen.queryByRole('checkbox', { name: /bok choy/ })).not.toBeInTheDocument();
     openReconcile();
     expect(screen.getByRole('checkbox', { name: /bok choy/ })).not.toBeChecked();
@@ -434,7 +434,17 @@ describe('Reconcile submit writes the pantry then asks', () => {
     });
   });
 
+  // The pantry's wording deliberately differs from the recipe's, so sending the
+  // recipe's own name instead of the matched item's would fail this.
   it('deletes an unticked pantry item by its pantry name', async () => {
+    mockUseSWR.mockReturnValue({
+      data: {
+        ingredientInventory: [
+          { id: '1', name: 'boneless chicken', type: 'ingredient' as const, category: 'Protein' as const, dateAdded: new Date().toISOString(), lastUpdated: new Date().toISOString() },
+        ],
+        kitchenwareInventory: [],
+      },
+    });
     render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
     openReconcile();
     fireEvent.click(screen.getByRole('checkbox', { name: /chicken thigh/ }));
@@ -444,7 +454,96 @@ describe('Reconcile submit writes the pantry then asks', () => {
 
     await waitFor(() => expect(callsTo('DELETE').length).toBe(1));
     expect(JSON.parse(callsTo('DELETE')[0][1].body)).toEqual({
-      itemNames: ['chicken thigh'],
+      itemNames: ['boneless chicken'],
+    });
+  });
+
+  // Two pantry items match `dark soy sauce` under the loose matcher, so there is
+  // no safe row to remove: the item is absent for this dish only.
+  const RECIPE_SAUCE: RecipeLetterProps['recipe'] = {
+    ...RECIPE,
+    ingredients: [
+      { name: 'dark soy sauce', category: 'Condiments', amount: '1', unit: 'tbsp', note: undefined },
+    ],
+  };
+
+  const AMBIGUOUS_PANTRY = {
+    data: {
+      ingredientInventory: [
+        { id: '1', name: 'fish sauce', type: 'ingredient' as const, category: 'Condiments' as const, dateAdded: new Date().toISOString(), lastUpdated: new Date().toISOString() },
+        { id: '2', name: 'soy sauce', type: 'ingredient' as const, category: 'Condiments' as const, dateAdded: new Date().toISOString(), lastUpdated: new Date().toISOString() },
+      ],
+      kitchenwareInventory: [],
+    },
+  };
+
+  it('sends no delete when two pantry items match the unticked ingredient', async () => {
+    mockUseSWR.mockReturnValue(AMBIGUOUS_PANTRY);
+    render(<RecipeLetter recipe={RECIPE_SAUCE} onSend={mockOnSend} />);
+    openReconcile();
+    fireEvent.click(screen.getByRole('checkbox', { name: /dark soy sauce/ }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /Ask about the 1 you're missing/ }),
+    );
+
+    await waitFor(() => expect(mockOnSend).toHaveBeenCalled());
+    expect(callsTo('DELETE')).toHaveLength(0);
+  });
+
+  it('still asks about an ambiguously matched unticked ingredient', async () => {
+    mockUseSWR.mockReturnValue(AMBIGUOUS_PANTRY);
+    render(<RecipeLetter recipe={RECIPE_SAUCE} onSend={mockOnSend} />);
+    openReconcile();
+    fireEvent.click(screen.getByRole('checkbox', { name: /dark soy sauce/ }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /Ask about the 1 you're missing/ }),
+    );
+
+    await waitFor(() => expect(mockOnSend).toHaveBeenCalled());
+    expect(mockOnSend.mock.calls[0][0]).toContain('dark soy sauce');
+  });
+
+  // `jasmine rice` matches the kitchenware row "Rice cooker" via "rice", so the
+  // grid pre-ticks it — but kitchenware is not in the delete pool, and
+  // `DELETE /api/inventory` has no type filter to stop it landing.
+  const RECIPE_RICE: RecipeLetterProps['recipe'] = {
+    ...RECIPE,
+    ingredients: [
+      { name: 'jasmine rice', category: 'Carbs', amount: '2', unit: 'cup', note: undefined },
+    ],
+  };
+
+  const RICE_COOKER_PANTRY = {
+    data: {
+      ingredientInventory: [],
+      kitchenwareInventory: [
+        { id: '1', name: 'Rice cooker', type: 'kitchenware' as const, dateAdded: new Date().toISOString(), lastUpdated: new Date().toISOString() },
+      ],
+    },
+  };
+
+  it('never deletes kitchenware for an unticked ingredient', async () => {
+    mockUseSWR.mockReturnValue(RICE_COOKER_PANTRY);
+    render(<RecipeLetter recipe={RECIPE_RICE} onSend={mockOnSend} />);
+    openReconcile();
+    fireEvent.click(screen.getByRole('checkbox', { name: /jasmine rice/ }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /Ask about the 1 you're missing/ }),
+    );
+
+    await waitFor(() => expect(mockOnSend).toHaveBeenCalled());
+    expect(callsTo('DELETE')).toHaveLength(0);
+  });
+
+  it('adds an ingredient whose only pantry match was kitchenware', async () => {
+    mockUseSWR.mockReturnValue(RICE_COOKER_PANTRY);
+    render(<RecipeLetter recipe={RECIPE_RICE} onSend={mockOnSend} />);
+    openReconcile();
+    fireEvent.click(screen.getByRole('button', { name: /Save what I have/ }));
+
+    await waitFor(() => expect(callsTo('POST').length).toBe(1));
+    expect(JSON.parse(callsTo('POST')[0][1].body)).toEqual({
+      items: [{ name: 'jasmine rice', type: 'ingredient', category: 'Carbs' }],
     });
   });
 

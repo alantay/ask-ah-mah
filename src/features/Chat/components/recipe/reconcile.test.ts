@@ -67,6 +67,44 @@ describe('buildReconcilePlan', () => {
     expect(plan.deletes).toEqual([]);
   });
 
+  it('skips the delete when the matched item is claimed by a ticked ingredient', () => {
+    // Pantry holds only "Soy sauce". `fish sauce` matches it via "sauce" and is
+    // the sole match, but `soy sauce` is ticked and relies on that same row.
+    const plan = buildReconcilePlan(
+      [ing('soy sauce'), ing('fish sauce')],
+      [inv('Soy sauce')],
+      new Set(['soy sauce']),
+    );
+    expect(plan.deletes).toEqual([]);
+  });
+
+  it('still reports the held-back ingredient as missing', () => {
+    const plan = buildReconcilePlan(
+      [ing('soy sauce'), ing('fish sauce')],
+      [inv('Soy sauce')],
+      new Set(['soy sauce']),
+    );
+    expect(plan.stillMissing.map(i => i.name)).toEqual(['fish sauce']);
+  });
+
+  it('guards a claim made by a ticked ingredient listed after the unticked one', () => {
+    const plan = buildReconcilePlan(
+      [ing('fish sauce'), ing('soy sauce')],
+      [inv('Soy sauce')],
+      new Set(['soy sauce']),
+    );
+    expect(plan.deletes).toEqual([]);
+  });
+
+  it('still deletes when no ticked ingredient claims the matched item', () => {
+    const plan = buildReconcilePlan(
+      [ing('galangal'), ing('fish sauce')],
+      [inv('Soy sauce')],
+      new Set(['galangal']),
+    );
+    expect(plan.deletes).toEqual(['Soy sauce']);
+  });
+
   it('still reports an ambiguous unticked ingredient as missing', () => {
     const plan = buildReconcilePlan(
       [ing('dark soy sauce')],

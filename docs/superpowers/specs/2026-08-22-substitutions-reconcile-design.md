@@ -39,8 +39,9 @@ button, the nudge sits under the pantry pill.
 **Reconciling** — the same "What to gather" grid flips: every row gains a
 checkbox, pre-ticked from `ingredientHave()`. Cart buttons hide (a row being
 re-classified is not a row being shopped for). The servings stepper stays. The
-footer swaps to a submit labelled by what is still unticked — *"Ask about the 3
-you're missing"*.
+footer swaps to two buttons: a submit labelled by what is still unticked —
+*"Ask about the 3 you're missing"*, or *"Save what I have"* when none are — and
+a secondary *"Never mind"* that discards.
 
 One list on screen, never two. A separate checkbox card was rejected: it would
 put the same soy sauce on screen twice, in two states that can disagree.
@@ -104,7 +105,7 @@ marks.
 | Case | Behaviour |
 |---|---|
 | Nothing missing after edits | Writes apply, no message sent, submit reads *"Save what I have"* |
-| Exit without submitting | Done/✕ discards staged ticks, writes nothing |
+| Exit without submitting | **Never mind**, the footer's second button beside the submit, discards staged ticks and writes nothing |
 | Writes landed | One toast — *"Pantry updated — 2 added, 1 removed"* |
 | Streaming / guest / empty pantry | Nudge hidden, exactly as today |
 

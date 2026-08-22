@@ -155,6 +155,13 @@ export function RecipeLetter({
     ...(inventoryData?.ingredientInventory ?? []),
     ...(inventoryData?.kitchenwareInventory ?? []),
   ];
+  // The delete pool is narrower than the display pool above. `DELETE
+  // /api/inventory` has no type filter, so under the loose matcher an unticked
+  // ingredient could take out an appliance — "jasmine rice" matches "Rice
+  // cooker" via "rice". The display pool stays combined: the pill, the carts
+  // and the pre-tick have always counted both, and reconcile is not the place
+  // to move them.
+  const deletableItems: InventoryItem[] = inventoryData?.ingredientInventory ?? [];
   const inventoryNames = inventoryItems.map((i) => i.name.trim().toLowerCase());
 
   const haveCount = ingredients.filter((ing) =>
@@ -254,7 +261,7 @@ export function RecipeLetter({
   const submitReconcile = async () => {
     const { adds, deletes, stillMissing } = buildReconcilePlan(
       ingredients,
-      inventoryItems,
+      deletableItems,
       ticked,
     );
 
@@ -456,7 +463,7 @@ export function RecipeLetter({
                 onClick={exitReconcile}
                 className={cn(secondaryAction, 'text-muted-foreground border border-border bg-card')}
               >
-                Done
+                Never mind
               </button>
             </div>
           )}
