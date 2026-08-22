@@ -165,9 +165,18 @@ const CASES: Case[] = [
     // Parity: the typed form of the same question must get the same answer.
     // Scoping the rule to the reconcile message shape was rejected in the
     // spec precisely because it would split these two apart.
-    name: "#492 typed substitute ask calls getInventory and names dry sherry",
+    //
+    // Position matters here for the same reason it does above: a reply that
+    // names dry sherry as its fifth option has not led with the pantry, and a
+    // bare `/dry sherry/` test would pass it. Only shaoxing wine is in play,
+    // so this checks that one cover's position rather than the earliest of
+    // several.
+    name: "#492 typed substitute ask calls getInventory and leads with dry sherry",
     input: "what can I use instead of shaoxing wine?",
-    expect: (r) => calledInventory(r) && /dry sherry/i.test(r.text),
+    expect: (r) => {
+      const i = r.text.toLowerCase().indexOf("dry sherry");
+      return calledInventory(r) && i !== -1 && i < 300;
+    },
   },
   {
     // Negative / regression guard. A prompt edit touches every chat turn: the

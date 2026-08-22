@@ -282,5 +282,26 @@ describe("CHAT_SYSTEM_PROMPT checklist mode", () => {
   it("carries the pantry-first substitution behavior rule", () => {
     expect(CHAT_SYSTEM_PROMPT).toContain("Substitutions start on their shelf");
     expect(CHAT_SYSTEM_PROMPT).toMatch(/lead with what they already have/i);
+    // "Lead with the pantry" without the ratio is half an answer — knowing you
+    // own dry sherry does not tell you how much to pour. Both the Behavior
+    // rule and its worked example must keep it.
+    expect(CHAT_SYSTEM_PROMPT).toMatch(/name it and give the ratio/i);
+    expect(CHAT_SYSTEM_PROMPT).toContain("1:1 for the shaoxing");
+  });
+
+  it("orders the substitution row above the knowledge row", () => {
+    // Routing precedence is load-bearing, not cosmetic: the knowledge row also
+    // matches a substitute ask on its face, so the narrower rule has to be read
+    // first. Swap the two and #492 comes straight back with every string guard
+    // above still green.
+    const substitution = CHAT_SYSTEM_PROMPT.indexOf(
+      "| User asks what to use **instead of** a named ingredient",
+    );
+    const knowledge = CHAT_SYSTEM_PROMPT.indexOf(
+      "| General cooking *knowledge* question with no single thing to make",
+    );
+    expect(substitution).toBeGreaterThan(-1);
+    expect(knowledge).toBeGreaterThan(-1);
+    expect(substitution).toBeLessThan(knowledge);
   });
 });
