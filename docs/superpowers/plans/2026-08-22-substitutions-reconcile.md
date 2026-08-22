@@ -819,10 +819,10 @@ nonce even when the text is identical"` (around lines 515-580) — and the
 `src/features/Chat/components/MessageList.test.tsx` has **no** `onDraft` cases;
 verified, nothing to delete there.
 
-- [ ] **Step 3: Run the tests to verify they fail**
+- [ ] **Step 3: Run the tests to establish a green baseline**
 
 Run: `pnpm test src/features/Chat/components/MessageInput.test.tsx`
-Expected: PASS (the deletions cannot fail). This step confirms the remaining tests are green **before** the source changes, so a later failure is unambiguous.
+Expected: PASS. This is a removal task, so there is no red phase — deleting tests cannot fail. The point is to confirm the remaining tests are green **before** the source changes, so any failure in Step 5 is unambiguously caused by the removal.
 
 - [ ] **Step 4: Remove the implementation**
 
