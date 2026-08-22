@@ -633,6 +633,9 @@ describe('Reconcile submit writes the pantry then asks', () => {
     expect(sent).toContain('Ginger Chicken');
   });
 
+  // Unticking chicken thigh forces BOTH a write and a send in one submit —
+  // the only scenario where the ordering is observable. A tick-only submit
+  // sends nothing, so it would pass this assertion vacuously.
   it('writes the pantry before it sends', async () => {
     const order: string[] = [];
     (global.fetch as jest.Mock).mockImplementation(() => {
@@ -645,11 +648,13 @@ describe('Reconcile submit writes the pantry then asks', () => {
 
     render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
     openReconcile();
-    fireEvent.click(screen.getByRole('checkbox', { name: /bok choy/ }));
-    fireEvent.click(screen.getByRole('button', { name: /Save what I have/ }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /chicken thigh/ }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /Ask about the 2 you're missing/ }),
+    );
 
-    await waitFor(() => expect(order).toContain('write'));
-    expect(order.indexOf('send')).toBe(-1);
+    await waitFor(() => expect(order).toContain('send'));
+    expect(order).toEqual(['write', 'send']);
   });
 
   it('sends nothing when the corrected list has no gaps', async () => {
@@ -725,21 +730,21 @@ import { buildReconcilePlan, matchingPantryItems } from './reconcile';
       ticked,
     );
 
+    // mutateResource resolves on a failed response rather than throwing, so
+    // every call site checks `res.ok` itself — addToShoppingList above does the
+    // same. Without this a 500 would silently "succeed" and the ask would go
+    // out against an uncorrected pantry.
+    const write = async (
+      method: 'POST' | 'DELETE',
+      body: Record<string, unknown>,
+    ) => {
+      const res = await mutateResource({ url: '/api/inventory', method, body });
+      if (!res.ok) throw new Error('inventory write failed');
+    };
+
     try {
-      if (adds.length) {
-        await mutateResource({
-          url: '/api/inventory',
-          method: 'POST',
-          body: { items: adds },
-        });
-      }
-      if (deletes.length) {
-        await mutateResource({
-          url: '/api/inventory',
-          method: 'DELETE',
-          body: { itemNames: deletes },
-        });
-      }
+      if (adds.length) await write('POST', { items: adds });
+      if (deletes.length) await write('DELETE', { itemNames: deletes });
       if (adds.length || deletes.length) {
         if (userId) mutate(inventoryKey);
         toast.success(
@@ -785,7 +790,7 @@ git commit -m "feat(recipe): reconcile submit corrects the pantry then asks"
 - Modify: `src/features/Chat/Chat.tsx:26-30,50,91`
 - Modify: `src/features/Chat/components/MessageInput.tsx:12-15,22,27-39`
 - Modify: `src/features/Chat/components/MessageList.tsx:51-52,121`
-- Test: `src/features/Chat/components/MessageInput.test.tsx`, `src/features/Chat/components/MessageList.test.tsx`
+- Test: `src/features/Chat/components/MessageInput.test.tsx` (three seed cases)
 
 **Interfaces:**
 - Consumes: nothing. Task 2 already removed the last caller of `onDraft`.
@@ -805,12 +810,18 @@ Expected: hits only in `Chat.tsx`, `MessageInput.tsx`, `MessageList.tsx` and the
 
 - [ ] **Step 2: Delete the seed cases from the tests**
 
-In `src/features/Chat/components/MessageInput.test.tsx`, delete every test that passes a `seed` prop, and the `describe` wrapping them if it becomes empty.
-In `src/features/Chat/components/MessageList.test.tsx`, delete every test that passes an `onDraft` prop, and the `describe` wrapping them if it becomes empty.
+In `src/features/Chat/components/MessageInput.test.tsx`, delete the three seed
+tests — `"fills the composer with the seed text without sending"`,
+`"replaces whatever was already typed when seeded"`, and `"re-seeds on a new
+nonce even when the text is identical"` (around lines 515-580) — and the
+`describe` wrapping them if it becomes empty.
+
+`src/features/Chat/components/MessageList.test.tsx` has **no** `onDraft` cases;
+verified, nothing to delete there.
 
 - [ ] **Step 3: Run the tests to verify they fail**
 
-Run: `pnpm test src/features/Chat/components/MessageInput.test.tsx src/features/Chat/components/MessageList.test.tsx`
+Run: `pnpm test src/features/Chat/components/MessageInput.test.tsx`
 Expected: PASS (the deletions cannot fail). This step confirms the remaining tests are green **before** the source changes, so a later failure is unambiguous.
 
 - [ ] **Step 4: Remove the implementation**
