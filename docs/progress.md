@@ -390,6 +390,16 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **No ADR**: a one-commit revert fails the "hard to reverse" test. `CONTEXT.md` needs no edit either — "Staging State" says the greeting shows in Staging State, which stays true of the hero.
 - **Files**: `src/features/Chat/constants.ts` (constant removed), `src/features/Chat/hooks/useChatSession.ts` (prepend + import), `src/features/Chat/Chat.tsx` (`messageCount`), `Chat.test.tsx` (fixture is now `[]`, plus a case asserting the greeting is gone once a message is committed), and stale comments in `ChatEmptyState.tsx` / `HistorySkeleton.tsx`.
 
+### Substitutions are answered from the shelf first — Shipped Aug 2026 (#492)
+
+- **Problem**: reconcile's ask — *"I'm missing bok choy, shaoxing wine for the Ginger Chicken. Can you suggest substitutions or alternatives?"* — came back generic. Verified against the real model: **zero tool calls**. `dry sherry` and `napa cabbage` were in the pantry, exact covers for both, and the reply named them only as textbook substitutes buried mid-list among five others.
+- **Cause**: not a missing routing row but two lines that *instructed* the skip — the routing table filed a substitution under *knowledge questions*, and `getInventory`'s description barred the tool for exactly those. The model was obeying the prompt. Adding a row on top would have left a contradiction, not a rule.
+- **Fix**: five edits to `CHAT_SYSTEM_PROMPT` — a routing row (substitute ask for a **named ingredient** → `getInventory` first), the knowledge row narrowed to *"nothing to replace"*, the tool ban carved out, Mode 2's prose pointer clarified (prose ≠ tool-free), and a Behavior rule: **lead with what they already have**, name it, give the ratio; one short line for what the pantry can't cover.
+- **Scope**: every named-ingredient substitute ask, typed or reconcile-generated — the boundary is *replacement intent*, not the word "substitute", so comparisons and definitions stay pantry-free. Reconcile-only scoping was rejected: it pattern-matches a client-authored string and splits one question into two answers depending on how it was asked.
+- **Verified**: `eval/chat-routing.eval.ts` gained tool-call capture (`runTurn` returns `toolNames`) plus three cases — the reconcile ask, its typed twin, and a negative guard that a comparison still makes no call. 5/7 red before the prompt edit, 7/7 green after. `pnpm test` 902/902.
+- **Side effect**: [ADR-0027](./adr/0027-the-pantry-is-corrected-at-the-point-of-use.md)'s await-the-writes ordering was correct for the wrong reason — it guarded a `getInventory` race that could not happen because the call was never made. The ordering is unchanged; its stated reason is now true.
+- Full rationale → [ADR-0028](./adr/0028-substitutions-are-answered-from-the-shelf-first.md).
+
 ### Substitutions reconcile — correct the pantry at the point of use — Shipped Aug 2026
 
 - **Problem** (owner-reported): *"a lot of the time our inventory does not sync with the real world."* The substitutions nudge trusted the pantry record blindly and dumped every supposedly-missing ingredient into the composer, leaving prose to hand-edit. The record drifts both ways — under-reports (owned, never entered) and over-reports (entered, since finished) — and nothing corrected it *after* a recipe existed.
