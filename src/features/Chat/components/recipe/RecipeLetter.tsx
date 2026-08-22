@@ -102,6 +102,7 @@ export function RecipeLetter({
   const [cooking, setCooking] = useState(false);
   const [reconciling, setReconciling] = useState(false);
   const [ticked, setTicked] = useState<Set<string>>(new Set());
+  const [submitting, setSubmitting] = useState(false);
   // While streaming the stepper is hidden and baseServings may still be filling
   // in, so show amounts as authored (ratio 1) rather than briefly mis-scaling.
   const ratio = isStreaming ? 1 : servings / baseServings;
@@ -212,6 +213,9 @@ export function RecipeLetter({
   const exitReconcile = () => {
     setReconciling(false);
     setTicked(new Set());
+    // "Never mind" stays live during a submit, so clear the guard here too or a
+    // mid-flight exit would leave the next reconcile unable to submit.
+    setSubmitting(false);
   };
 
   const toggleTick = (name: string) =>
@@ -264,6 +268,12 @@ export function RecipeLetter({
   // turn calls getInventory, and sending first lets the model read the
   // pre-correction pantry.
   const submitReconcile = async () => {
+    // The writes are network round-trips and the button stays mounted until
+    // they land, so a second click would duplicate both the pantry writes and
+    // the ask — same guard addToShoppingList uses for the cart.
+    if (submitting) return;
+    setSubmitting(true);
+
     const { adds, deletes, stillMissing } = buildReconcilePlan(
       ingredients,
       deletableItems,
@@ -293,9 +303,11 @@ export function RecipeLetter({
       }
     } catch {
       toast.error("Aiyah, couldn't update your pantry. Try again?");
+      setSubmitting(false);
       return;
     }
 
+    setSubmitting(false);
     exitReconcile();
 
     // Nothing left missing is a complete answer: the corrections were the whole
@@ -467,7 +479,8 @@ export function RecipeLetter({
               <button
                 type="button"
                 onClick={submitReconcile}
-                className="flex-1 rounded-xl bg-primary text-primary-foreground font-display font-semibold text-base px-4 py-3 cursor-pointer hover:opacity-90 transition-opacity"
+                disabled={submitting}
+                className="flex-1 rounded-xl bg-primary text-primary-foreground font-display font-semibold text-base px-4 py-3 cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-default"
               >
                 {untickedCount === 0
                   ? 'Save what I have'

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { RecipeLetter, RecipeLetterProps } from './RecipeLetter';
 
 const mockUseSessionContext = jest.fn(() => ({ userId: null as string | null }));
@@ -645,6 +645,36 @@ describe('Reconcile submit writes the pantry then asks', () => {
 
     await waitFor(() => expect(order).toContain('send'));
     expect(order).toEqual(['write', 'send']);
+  });
+
+  it('ignores a second submit while the first is still writing', async () => {
+    // Hold the write open so both clicks land inside the same in-flight window.
+    let release: (v: unknown) => void = () => {};
+    (global.fetch as jest.Mock).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          release = () => resolve({ ok: true, json: () => Promise.resolve({}) });
+        }),
+    );
+
+    render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
+    openReconcile();
+    // Untick chicken thigh so the submit both writes and sends.
+    fireEvent.click(screen.getByRole('checkbox', { name: /chicken thigh/ }));
+    const submit = screen.getByRole('button', {
+      name: /Ask about the 2 you're missing/,
+    });
+    fireEvent.click(submit);
+    fireEvent.click(submit);
+
+    expect(submit).toBeDisabled();
+    expect(callsTo('DELETE')).toHaveLength(1);
+
+    await act(async () => {
+      release(null);
+    });
+    expect(callsTo('DELETE')).toHaveLength(1);
+    expect(mockOnSend).toHaveBeenCalledTimes(1);
   });
 
   it('sends nothing when the corrected list has no gaps', async () => {

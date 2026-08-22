@@ -57,7 +57,10 @@ export function buildReconcilePlan(
   ticked: Set<string>,
 ): ReconcilePlan {
   const adds: AddInventoryItem[] = [];
-  const deletes: string[] = [];
+  // A Set: two unticked ingredients can each uniquely match the SAME pantry row
+  // under the loose matcher. `deleteMany` would shrug off the repeat, but
+  // `deletes.length` is the number the "n removed" toast reports.
+  const deletes = new Set<string>();
   const stillMissing: RecipeIngredientModel[] = [];
 
   const claimedByTicked = claimedPantryNames(ingredients, inventoryItems, ticked);
@@ -76,10 +79,10 @@ export function buildReconcilePlan(
 
     if (!isTicked) {
       if (matches.length === 1 && !claimedByTicked.has(matches[0].name))
-        deletes.push(matches[0].name);
+        deletes.add(matches[0].name);
       stillMissing.push(ing);
     }
   }
 
-  return { adds, deletes, stillMissing };
+  return { adds, deletes: [...deletes], stillMissing };
 }

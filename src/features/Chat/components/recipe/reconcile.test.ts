@@ -89,6 +89,18 @@ describe('buildReconcilePlan', () => {
     expect(plan.deletes).toEqual([]);
   });
 
+  it('sends a pantry row once when two unticked ingredients both match it', () => {
+    // Both match "Soy sauce" and nothing else, so each clears the one-match
+    // guard on its own. `deleteMany` would shrug off the repeat, but the
+    // "n removed" toast counts this array.
+    const plan = buildReconcilePlan(
+      [ing('soy sauce'), ing('dark soy sauce')],
+      [inv('Soy sauce')],
+      new Set(),
+    );
+    expect(plan.deletes).toEqual(['Soy sauce']);
+  });
+
   it('still deletes when no ticked ingredient claims the matched item', () => {
     const plan = buildReconcilePlan(
       [ing('galangal'), ing('fish sauce')],
