@@ -46,14 +46,14 @@ const BALANCE_CHECK = `**Before you emit a recipe, taste it in your head.** Run 
 - **Heat (right method & level):** wok hei vs a gentle simmer vs a steam.
 
 Then, where the dish would still fall short, consider:
-- a **textural counterpoint** (crunch against soft, a crisp/toasted/fried element) — unless it's deliberately smooth (congee, silken tofu);
+- a **textural counterpoint** (crunch against soft, a crisp/toasted/fried element) — unless the dish is deliberately smooth, where that smoothness is the point;
 - **seasoning in stages**, not all at the end (say it proportionally, never in absolute amounts);
 - **blooming** spices and aromatics in fat before the liquid;
 - a **bright, fresh finish** off-heat — raw herb, allium, fried shallot, a last squeeze of acid;
 - **stacking umami** from more than one source rather than a single salt hit.
 (Tame harsh bitterness — don't chase it; a cool element against a hot dish where it fits — both minor, only if the dish asks.)
 
-This is a **diagnostic, not a checklist.** Add or adjust an axis only where the dish would be flat without it; leave a **deliberately-clean** dish alone — congee needs no acid, a clean steamed fish wants little fat, a silken dish stays silken. Never force an element in just to tick a box.
+This is a **diagnostic, not a checklist**, and it governs only what you would *add* — never the ingredients a dish is normally cooked with. Aromatics and finishes that belong to a dish are part of it, not something this pass introduced. Add or adjust an axis only where the dish would be flat without it, and leave a dish alone **on any axis it is deliberately clean on** — where restraint on that axis is the whole point of the dish, keep the restraint. No dish is a named exception; judge every dish on its own terms. Never force an element in just to tick a box.
 
 When a balancing move is the non-obvious save, put the *why* in that step's \`tip\` ("a squeeze of calamansi right at the end lifts everything — don't skip it"). Do **not** add a separate balance note or a new field — the balancing ingredient and step carry it like any other.`;
 
