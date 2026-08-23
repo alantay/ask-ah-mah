@@ -1,4 +1,4 @@
-import { MODEL_LIGHT } from "@/lib/ai/models";
+import { EFFORT_MECHANICAL, MODEL } from "@/lib/ai/models";
 import { runTipCorpus, type TipCorpusAdapter } from "@/lib/tipCorpus";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
@@ -25,7 +25,8 @@ const aisleAdapter: TipCorpusAdapter<string, Aisle> = {
   async generate(misses) {
     const list = misses.map(({ key }) => `- ${key}`).join("\n");
     const { object } = await generateObject({
-      model: openai(MODEL_LIGHT),
+      model: openai(MODEL),
+      providerOptions: EFFORT_MECHANICAL,
       schema: AssignmentSchema,
       // gpt-5 models only support the default temperature; setting it errors.
       prompt: `You sort grocery items into the aisle where a shopper finds them at a market. For each item, pick exactly ONE aisle from this list:

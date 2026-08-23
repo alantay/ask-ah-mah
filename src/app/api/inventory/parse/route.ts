@@ -2,7 +2,7 @@ import { addInventoryItem } from "@/lib/inventory/Inventory";
 import { AddInventoryItemSchema } from "@/lib/inventory/schemas";
 import { PROMPT_FRAGMENTS } from "@/lib/prompts/fragments";
 import { withAuth } from "@/lib/withAuth";
-import { MODEL_LIGHT } from "@/lib/ai/models";
+import { EFFORT_MECHANICAL, MODEL } from "@/lib/ai/models";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { NextRequest, NextResponse } from "next/server";
@@ -20,7 +20,8 @@ export const POST = withAuth(async (req: NextRequest, { userId }) => {
     }
 
     const { object } = await generateObject({
-      model: openai(MODEL_LIGHT),
+      model: openai(MODEL),
+      providerOptions: EFFORT_MECHANICAL,
       schema: ParseSchema,
       // gpt-5 models only support the default temperature; setting it errors.
       prompt: `Parse the following freeform inventory entry into structured items. The user is dumping what they just bought or what they have on hand.

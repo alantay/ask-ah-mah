@@ -1,4 +1,4 @@
-import { MODEL_LIGHT } from "@/lib/ai/models";
+import { EFFORT_MECHANICAL, MODEL } from "@/lib/ai/models";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
@@ -107,7 +107,8 @@ RECIPE TEXT:
 ${recipeInstructions}`;
 
   const result = await generateObject({
-    model: openai(MODEL_LIGHT),
+    model: openai(MODEL),
+    providerOptions: EFFORT_MECHANICAL,
     schema: RecipeMetadataSchema,
     // gpt-5 models only support the default temperature; setting it errors.
     prompt,

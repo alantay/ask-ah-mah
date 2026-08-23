@@ -2,7 +2,7 @@ import { addInventoryItem } from "@/lib/inventory/Inventory";
 import { extractRecipeBlocks } from "@/lib/recipes/parseBlocks";
 import { AddInventoryItem, AddInventoryItemSchema } from "@/lib/inventory/schemas";
 import { PROMPT_FRAGMENTS } from "@/lib/prompts/fragments";
-import { MODEL_LIGHT } from "@/lib/ai/models";
+import { EFFORT_MECHANICAL, MODEL } from "@/lib/ai/models";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
@@ -68,7 +68,8 @@ export async function captureMentionedInventory(
 
   try {
     const { object } = await generateObject({
-      model: openai(MODEL_LIGHT),
+      model: openai(MODEL),
+      providerOptions: EFFORT_MECHANICAL,
       schema: ExtractionSchema,
       // gpt-5 models only support the default temperature; setting it errors.
       prompt: `You extract ONLY ingredients/kitchenware the user explicitly HAS or JUST ACQUIRED, from a single chat message to a cooking assistant.

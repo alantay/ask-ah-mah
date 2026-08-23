@@ -157,6 +157,13 @@ describe("Chat API Route", () => {
 
       expect(response).toBe("mock-stream-response");
       expect(mockedOpenai).toHaveBeenCalledWith("gpt-5.6-luna");
+      // Effort is the axis that actually moves routing behaviour, so it gets
+      // the same canary treatment as the model — pinned by literal, not by
+      // importing EFFORT_AGENTIC (which would pass for any value). At "none"
+      // the Mode 5 checklist gate stops firing entirely.
+      expect(mockedStreamText.mock.calls[0][0].providerOptions).toEqual({
+        openai: { reasoningEffort: "low" },
+      });
       expect(mockedGetMessages).toHaveBeenCalledWith("conv-123", "user-123");
       expect(mockedValidateUIMessages).toHaveBeenCalled();
       expect(mockedStreamText).toHaveBeenCalled();

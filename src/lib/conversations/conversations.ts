@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import { NotFoundError } from "@/lib/errors";
 import { generateObject } from "ai";
 import { openai } from "@ai-sdk/openai";
-import { MODEL_LIGHT } from "@/lib/ai/models";
+import { EFFORT_MECHANICAL, MODEL } from "@/lib/ai/models";
 import { z } from "zod";
 
 export type ConversationEntity = {
@@ -184,7 +184,8 @@ export async function autoTitleConversation(id: string, userId: string): Promise
   }
 
   const { object } = await generateObject({
-    model: openai(MODEL_LIGHT),
+    model: openai(MODEL),
+    providerOptions: EFFORT_MECHANICAL,
     schema: z.object({ title: z.string().max(40) }),
     prompt: `Name this cooking chat by its dish or main ingredient, so it can be recognised in a list weeks later (3-6 words, no quotes, no punctuation at end). Lead with the dish. If no dish was settled on, name the ingredients discussed. No emoji.
 User: "${firstUserMessage.content}"

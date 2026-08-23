@@ -4,7 +4,7 @@ import { chatErrorResponse } from "@/lib/chat/errors";
 import { latestUserText } from "@/lib/chat/messageText";
 import { buildChatTools } from "@/lib/chat/tools";
 import { withAuth } from "@/lib/withAuth";
-import { MODEL_HEAVY } from "@/lib/ai/models";
+import { EFFORT_AGENTIC, MODEL } from "@/lib/ai/models";
 import { openai } from "@ai-sdk/openai";
 import {
   convertToModelMessages,
@@ -71,7 +71,8 @@ export const POST = withAuth(async (req: NextRequest, { userId }) => {
             : "";
 
         const result = streamText({
-          model: openai(MODEL_HEAVY),
+          model: openai(MODEL),
+          providerOptions: EFFORT_AGENTIC,
           messages: convertToModelMessages(validatedMessages),
           system: CHAT_SYSTEM_PROMPT + captureNote,
           stopWhen: [stepCountIs(5)],
