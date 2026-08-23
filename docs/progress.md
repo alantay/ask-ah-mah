@@ -398,6 +398,13 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Left open**: what Pantry is *for*. Reconcile is recipe-scoped — it can't seed a cold-start pantry, survey the whole pantry, or feed Featured Selection (ADR-0007). Likely split is Pantry as *stock and survey*, reconcile as *correct in place*, but deliberately unresolved on the owner's call: *"let's try the app first. leave pantry as is. we will figure along."* Known cost: recipe-phrased pantry entries, with the loose matcher incidentally preventing doubles. Out of scope: [#490](https://github.com/alantay/ask-ah-mah/issues/490) (free staples still counted as Additions) and [#491](https://github.com/alantay/ask-ah-mah/issues/491) (`ingredientMatches` over-permissive).
 - Full rationale → [ADR-0027](./adr/0027-the-pantry-is-corrected-at-the-point-of-use.md); glossary → **Reconcile mode** in `CONTEXT.md`.
 
+### Model swap: gpt-5.6-luna / gpt-5.4-nano — Shipped Aug 2026
+
+- **Both tiers moved up a generation.** `MODEL_HEAVY` `gpt-5-mini` → `gpt-5.6-luna`; `MODEL_LIGHT` `gpt-5-nano` → `gpt-5.4-nano`. The split itself is unchanged — heavy still covers tool-calling/agentic paths (chat, recipe tweak) and the recipe-text unit math, light still covers extraction/classification/titling and tip generation.
+- **One-line change in `src/lib/ai/models.ts`**, which is the whole point of the constants introduced in the Jul 2026 model split — no call site was touched.
+- **`src/app/api/chat/route.test.ts` pins the heavy model by literal** (`expect(mockedOpenai).toHaveBeenCalledWith(...)`) and moved with it. Deliberately still a literal rather than an import of `MODEL_HEAVY` — asserting against the constant would pass for any value and lose the canary.
+- Earlier entries in this file keep their original model names; they record what shipped at the time.
+
 ## Design system
 
 The two recipe surfaces — `RecipeLetter` (chat) and `RecipeDisplay` (cookbook) — were drifting because each hand-rolled the same primitives. A design system is now the north star: shared atoms stop drift, and every surface gets tweaked incrementally so it "looks like it belongs". See the spec at `docs/superpowers/specs/2026-06-20-recipe-design-system-design.md` and the issue tracker (#277–#285).

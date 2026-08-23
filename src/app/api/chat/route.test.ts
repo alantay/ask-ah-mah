@@ -156,7 +156,7 @@ describe("Chat API Route", () => {
       const response = await POST(request);
 
       expect(response).toBe("mock-stream-response");
-      expect(mockedOpenai).toHaveBeenCalledWith("gpt-5-mini");
+      expect(mockedOpenai).toHaveBeenCalledWith("gpt-5.6-luna");
       expect(mockedGetMessages).toHaveBeenCalledWith("conv-123", "user-123");
       expect(mockedValidateUIMessages).toHaveBeenCalled();
       expect(mockedStreamText).toHaveBeenCalled();
