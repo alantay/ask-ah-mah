@@ -18,7 +18,7 @@
  * "gao li cai" (cabbage) gets stored as kitchenware because the model doesn't
  * recognize the romanized name as food. Track + eval that independently.
  */
-import { MODEL_HEAVY } from "../src/lib/ai/models";
+import { EFFORT_AGENTIC, MODEL } from "../src/lib/ai/models";
 import { openai } from "@ai-sdk/openai";
 import { generateText, stepCountIs, tool } from "ai";
 import { readFileSync } from "node:fs";
@@ -80,7 +80,10 @@ type TurnResult = { text: string; toolNames: string[] };
 
 async function runTurn(userText: string): Promise<TurnResult> {
   const { text, steps } = await generateText({
-    model: openai(MODEL_HEAVY),
+    model: openai(MODEL),
+    // Must mirror the chat route's effort, not the provider default — the
+    // Mode 5 case below is the one that breaks when this drops to `none`.
+    providerOptions: EFFORT_AGENTIC,
     system: CHAT_SYSTEM_PROMPT,
     messages: [{ role: "user", content: userText }],
     stopWhen: [stepCountIs(5)],
@@ -93,6 +96,7 @@ async function runTurn(userText: string): Promise<TurnResult> {
 const hasSuggestions = (t: string) => /```suggestions/.test(t);
 const hasRecipe = (t: string) => /```recipe/.test(t);
 const hasAnyBlock = (t: string) => hasSuggestions(t) || hasRecipe(t);
+const hasChecklist = (t: string) => /```checklist/.test(t);
 const calledInventory = (r: TurnResult) => r.toolNames.includes("getInventory");
 
 // "Leads with" as a position check: a pantry cover must appear in the opening
@@ -185,6 +189,24 @@ const CASES: Case[] = [
     name: "#492 knowledge comparison still makes NO tool call",
     input: "what's the difference between baking soda and baking powder?",
     expect: (r) => r.toolNames.length === 0,
+  },
+  {
+    // Mode 5 (Checklist block) — the gate that had NO coverage here at all.
+    //
+    // Char kway teow's load-bearing items under the name test are flat rice
+    // noodles, dark soy and lap cheong / cockles. FAKE_INVENTORY has none of
+    // them, and none is makeable in one session, so the makeable fork does not
+    // apply — the correct route is a checklist that asks before cooking, never
+    // a recipe built on ingredients we have no reason to think she owns.
+    //
+    // This is also the case that pins `EFFORT_AGENTIC`. At reasoningEffort
+    // "none" this gate stops firing entirely (0/4 measured on both luna and
+    // terra, answering with a full recipe instead); at "low" and above it is
+    // 4/4. The eval passes at "none" without this case, which is exactly how
+    // a broken effort setting would have shipped unnoticed.
+    name: "emits a checklist (Mode 5) when a named dish's load-bearing items are absent",
+    input: "make me char kway teow",
+    expect: ({ text }) => hasChecklist(text) && !hasRecipe(text),
   },
 ];
 

@@ -1,4 +1,4 @@
-import { MODEL_HEAVY } from "@/lib/ai/models";
+import { EFFORT_AGENTIC, MODEL } from "@/lib/ai/models";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { RecipeBlockSchema, type RecipeBlock } from "./schemas";
@@ -7,9 +7,11 @@ import { PROMPT_FRAGMENTS } from "@/lib/prompts/fragments";
 
 export async function parseRecipeText(text: string): Promise<RecipeBlock> {
   const result = await generateObject({
-    model: openai(MODEL_HEAVY),
+    model: openai(MODEL),
+    providerOptions: EFFORT_AGENTIC,
     schema: RecipeBlockSchema,
-    temperature: 0.2,
+    // gpt-5 models only support the default temperature; the SDK strips any
+    // other value and warns, so setting it here did nothing.
     prompt: `Extract the recipe from the text below into a structured format.
 
 FIELDS:
