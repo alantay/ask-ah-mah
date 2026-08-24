@@ -11,8 +11,16 @@ export const MODEL = "gpt-5.6-luna";
 /**
  * Judgement paths: the chat agent, the recipe tweak, the recipe-text parse.
  *
- * `low` is a floor, not a preference. At `none` the Mode 5 checklist gate stops
- * firing entirely — 0/4 on both models, where `low` and above score 4/4.
+ * `low` is a floor and a ceiling.
+ *
+ * Below it: at `none` the Mode 5 checklist gate stops firing entirely — 0/4 on
+ * both models, where `low` and above score 4/4.
+ *
+ * Above it: `medium` and `high` were swept over the recipe checks that still
+ * had headroom at `low`. No check moved by more than one run in five (p = 1.0),
+ * while latency rose ~30-50% (12.6s -> 14.8s -> 17.7s) and reasoning tokens
+ * 7-11x. Resolving a lift that small would need ~300 reps per arm. Raise this
+ * only with evidence at that scale, not on a hunch.
  */
 export const EFFORT_AGENTIC = { openai: { reasoningEffort: "low" } };
 
