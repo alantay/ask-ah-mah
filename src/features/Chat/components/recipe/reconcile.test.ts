@@ -17,10 +17,9 @@ const ing = (
 ): RecipeIngredientModel => ({ name, category });
 
 describe('matchingPantryItems', () => {
-  it('returns every pantry item sharing a token with the ingredient', () => {
+  it('returns pantry items with an agreeing head noun and a subset relationship', () => {
     const items = [inv('fish sauce'), inv('dark soy sauce'), inv('galangal')];
     expect(matchingPantryItems('soy sauce', items).map(i => i.name)).toEqual([
-      'fish sauce',
       'dark soy sauce',
     ]);
   });
@@ -60,8 +59,8 @@ describe('buildReconcilePlan', () => {
 
   it('skips the delete when two pantry items match', () => {
     const plan = buildReconcilePlan(
-      [ing('dark soy sauce')],
-      [inv('fish sauce'), inv('soy sauce')],
+      [ing('light soy sauce')],
+      [inv('soy sauce'), inv('light soy sauce')],
       new Set(),
     );
     expect(plan.deletes).toEqual([]);
@@ -103,7 +102,7 @@ describe('buildReconcilePlan', () => {
 
   it('still deletes when no ticked ingredient claims the matched item', () => {
     const plan = buildReconcilePlan(
-      [ing('galangal'), ing('fish sauce')],
+      [ing('galangal'), ing('dark soy sauce')],
       [inv('Soy sauce')],
       new Set(['galangal']),
     );

@@ -2,10 +2,9 @@ import type { AddInventoryItem, InventoryItem } from '@/lib/inventory/schemas';
 import { ingredientMatches } from '@/lib/recipes/matchIngredient';
 import type { RecipeIngredientModel } from '@/lib/recipes/schemas';
 
-// Every pantry item the loose token matcher considers the same thing as this
-// ingredient. `ingredientMatches` matches on ANY shared token, so this can
-// legitimately return several unrelated items ("dark soy sauce" hits both
-// "fish sauce" and "soy sauce" via "sauce") — see issue #491.
+// Every pantry item the token matcher considers the same thing as this
+// ingredient. Still plural: a pantry holding both "Soy sauce" and "Light soy
+// sauce" matches "light soy sauce" twice. Rarer since #491, not impossible.
 export function matchingPantryItems(
   ingredientName: string,
   inventoryItems: InventoryItem[],
