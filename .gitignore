@@ -63,6 +63,7 @@ skills-lock.json
 
 # AI scratch + local test output (never committed)
 .scratch/
+.superpowers/
 temp/
 test-results/
 .agentindex
