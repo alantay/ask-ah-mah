@@ -67,21 +67,22 @@ describe('buildReconcilePlan', () => {
   });
 
   it('skips the delete when the matched item is claimed by a ticked ingredient', () => {
-    // Pantry holds only "Soy sauce". `fish sauce` matches it via "sauce" and is
-    // the sole match, but `soy sauce` is ticked and relies on that same row.
+    // Pantry holds only "Soy sauce". `dark soy sauce` matches it (agreeing
+    // head noun, subset) and is the sole match, but `soy sauce` is ticked and
+    // relies on that same row.
     const plan = buildReconcilePlan(
-      [ing('soy sauce'), ing('fish sauce')],
+      [ing('soy sauce'), ing('dark soy sauce')],
       [inv('Soy sauce')],
       new Set(['soy sauce']),
     );
     expect(plan.deletes).toEqual([]);
     // Held back from the write, but still absent for this dish.
-    expect(plan.stillMissing.map(i => i.name)).toEqual(['fish sauce']);
+    expect(plan.stillMissing.map(i => i.name)).toEqual(['dark soy sauce']);
   });
 
   it('guards a claim made by a ticked ingredient listed after the unticked one', () => {
     const plan = buildReconcilePlan(
-      [ing('fish sauce'), ing('soy sauce')],
+      [ing('dark soy sauce'), ing('soy sauce')],
       [inv('Soy sauce')],
       new Set(['soy sauce']),
     );
