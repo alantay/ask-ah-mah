@@ -41,4 +41,13 @@ describe("canonicalShoppingKey", () => {
   it("falls back to the cleaned name when only prep words remain", () => {
     expect(canonicalShoppingKey("Fresh")).toBe("fresh");
   });
+
+  it("keeps form variants on separate rows", () => {
+    expect(canonicalShoppingKey("dried chilli")).not.toBe(
+      canonicalShoppingKey("chilli"),
+    );
+    expect(canonicalShoppingKey("garlic powder")).not.toBe(
+      canonicalShoppingKey("garlic"),
+    );
+  });
 });
