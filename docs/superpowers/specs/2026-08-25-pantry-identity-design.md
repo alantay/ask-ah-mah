@@ -92,11 +92,19 @@ prompt. The safety comes from the folding rule being conservative, not from UI
 compensating for it.
 
 **The existing row keeps its name.** The upsert's `update` branch must not write
-`name` — `Shallots` arriving against a stored `Shallot` refreshes
-`quantity`/`unit`/`category`/`lastUpdated` and leaves the display name alone.
-This is the runtime counterpart of the migration's oldest-row-survives rule.
-Since colliding names differ only by plural, case or prep word, either name is
-correct and stability beats recency.
+`name` — `Shallots` arriving against a stored `Shallot` updates the other
+fields as it does today and leaves the display name alone. This is the runtime
+counterpart of the migration's oldest-row-survives rule. Since colliding names
+differ only by plural, case or prep word, either name is correct and stability
+beats recency.
+
+**`quantity` and `unit` need no special handling.** They carry little product
+weight and are a candidate for removal (owner's call, 2026-08-25) — so a merge
+does not attempt to sum, reconcile or preserve them. This spec leaves both
+fields exactly as they are; removing them is a separate effort touching roughly
+seven files plus a migration. Note that recipe ingredient amounts
+(`src/lib/recipes/schemas.ts`, `StepBody`, `CookingMode`) are a different
+`quantity` and are unaffected.
 
 ### Migration
 
@@ -104,8 +112,8 @@ Three steps, because the unique index cannot be added while collisions exist:
 
 1. Additive migration adds `canonicalKey` as nullable.
 2. Backfill script computes each row's key and merges collisions — the oldest
-   `dateAdded` row survives and keeps its `quantity`/`unit`/`category`; the rest
-   are deleted.
+   `dateAdded` row survives as-is; the rest are deleted. No field-level
+   reconciliation (see the note on `quantity` above).
 3. Migration makes the column required, drops `@@unique([userId, name, type])`
    and adds `@@unique([userId, canonicalKey, type])`.
 
