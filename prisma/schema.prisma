@@ -9,15 +9,16 @@ datasource db {
 }
 
 model InventoryItem {
-  id          String   @id @default(cuid())
-  name        String
-  type        String
-  category    String?
-  quantity    Int?
-  unit        String?
-  dateAdded   DateTime @default(now())
-  lastUpdated DateTime @updatedAt
-  userId      String
+  id           String   @id @default(cuid())
+  name         String
+  canonicalKey String?
+  type         String
+  category     String?
+  quantity     Int?
+  unit         String?
+  dateAdded    DateTime @default(now())
+  lastUpdated  DateTime @updatedAt
+  userId       String
 
   @@unique([userId, name, type])
   @@map("inventory_items")
