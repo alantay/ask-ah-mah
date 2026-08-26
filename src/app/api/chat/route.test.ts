@@ -542,7 +542,7 @@ describe("Chat API Route", () => {
             {
               id: "1",
               name: "eggs",
-              canonicalKey: null,
+              canonicalKey: "egg",
               type: "ingredient",
               userId: "user-123",
               quantity: 6,
@@ -554,7 +554,7 @@ describe("Chat API Route", () => {
             {
               id: "2",
               name: "flour",
-              canonicalKey: null,
+              canonicalKey: "flour",
               type: "ingredient",
               userId: "user-123",
               quantity: 1,
@@ -568,7 +568,7 @@ describe("Chat API Route", () => {
             {
               id: "3",
               name: "pan",
-              canonicalKey: null,
+              canonicalKey: "pan",
               type: "kitchenware",
               userId: "user-123",
               quantity: null,

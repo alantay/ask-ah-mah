@@ -11,7 +11,7 @@ datasource db {
 model InventoryItem {
   id           String   @id @default(cuid())
   name         String
-  canonicalKey String?
+  canonicalKey String
   type         String
   category     String?
   quantity     Int?
@@ -20,7 +20,7 @@ model InventoryItem {
   lastUpdated  DateTime @updatedAt
   userId       String
 
-  @@unique([userId, name, type])
+  @@unique([userId, canonicalKey, type])
   @@map("inventory_items")
 }
 

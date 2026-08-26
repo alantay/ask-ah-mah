@@ -47,6 +47,19 @@ describe("addInventoryItem", () => {
     );
     expect(keys).toEqual(["chilli", "dried chilli"]);
   });
+
+  it("resolves the row to upsert by canonical key, not display name", async () => {
+    await addInventoryItem([{ name: "Shallots", type: "ingredient" }], USER);
+
+    const call = upsert.mock.calls[0][0];
+    expect(call.where).toEqual({
+      userId_canonicalKey_type: {
+        userId: USER,
+        canonicalKey: "shallot",
+        type: "ingredient",
+      },
+    });
+  });
 });
 
 describe("removeInventoryItem", () => {
