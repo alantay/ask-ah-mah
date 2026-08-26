@@ -6,7 +6,9 @@
 -- Mirrors 20260505000000, which did the same before the name-based index.
 DELETE FROM "inventory_items" a
 USING "inventory_items" b
-WHERE a."dateAdded" > b."dateAdded"
+-- dateAdded alone isn't unique: a batch insert stamps one timestamp across
+-- every row it creates, so id breaks the tie.
+WHERE (a."dateAdded", a.id) > (b."dateAdded", b.id)
   AND a."userId" = b."userId"
   AND a."canonicalKey" = b."canonicalKey"
   AND a.type = b.type;
