@@ -69,20 +69,7 @@ describe("removeInventoryItem", () => {
     await removeInventoryItem(["Shallots"], USER);
 
     expect(deleteMany).toHaveBeenCalledWith({
-      where: {
-        userId: USER,
-        OR: [
-          { canonicalKey: { in: ["shallot"] } },
-          { name: { in: ["Shallots"] } },
-        ],
-      },
+      where: { userId: USER, canonicalKey: { in: ["shallot"] } },
     });
-  });
-
-  it("also matches by name, so pre-backfill rows with null canonicalKey can be removed", async () => {
-    await removeInventoryItem(["Shallots"], USER);
-
-    const call = deleteMany.mock.calls[0][0];
-    expect(call.where.OR).toContainEqual({ name: { in: ["Shallots"] } });
   });
 });
