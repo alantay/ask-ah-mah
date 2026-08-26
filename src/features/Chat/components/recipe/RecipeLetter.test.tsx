@@ -783,3 +783,77 @@ describe('Reconcile submit writes the pantry then asks', () => {
     expect(screen.getByRole('checkbox', { name: /bok choy/ })).toBeInTheDocument();
   });
 });
+
+// The #491 surface. `ingredientMatches` used to accept any shared word, so a
+// pantry holding fish sauce reported soy sauce as had — no cart button, and a
+// pantry pill that overcounted. These assert the rendered consequence, which
+// the matcher's own unit tests cannot see.
+describe('pantry matching at the rendered surface', () => {
+  const SOY_ONLY: RecipeLetterProps['recipe'] = {
+    ...RECIPE,
+    ingredients: [
+      { name: 'soy sauce', category: 'Condiments', amount: '1', unit: 'tbsp', note: undefined },
+    ],
+  };
+
+  const INVENTORY_WITH_FISH_SAUCE = {
+    ingredientInventory: [
+      {
+        id: '1',
+        name: 'Fish sauce',
+        type: 'ingredient' as const,
+        category: 'Condiments' as const,
+        dateAdded: new Date().toISOString(),
+        lastUpdated: new Date().toISOString(),
+      },
+    ],
+    kitchenwareInventory: [],
+  };
+
+  beforeEach(() => {
+    mockUseSessionContext.mockReturnValue({ userId: 'user-123' });
+    mockUseSWR.mockReturnValue({ data: INVENTORY_WITH_FISH_SAUCE });
+  });
+
+  it('shows soy sauce as missing when the pantry only holds fish sauce', () => {
+    render(<RecipeLetter recipe={SOY_ONLY} />);
+    expect(
+      screen.getByLabelText('Add soy sauce to shopping list'),
+    ).toBeInTheDocument();
+  });
+
+  it('counts that miss in the pantry pill', () => {
+    render(<RecipeLetter recipe={SOY_ONLY} />);
+    expect(screen.getByText('0/1 in your pantry')).toBeInTheDocument();
+  });
+
+  it('agrees with the cart buttons on a mixed recipe', () => {
+    mockUseSWR.mockReturnValue({
+      data: {
+        ...INVENTORY_WITH_FISH_SAUCE,
+        ingredientInventory: [
+          ...INVENTORY_WITH_FISH_SAUCE.ingredientInventory,
+          {
+            id: '2',
+            name: 'Chicken thighs',
+            type: 'ingredient' as const,
+            category: 'Protein' as const,
+            dateAdded: new Date().toISOString(),
+            lastUpdated: new Date().toISOString(),
+          },
+        ],
+      },
+    });
+
+    // chicken thigh is had (plural pantry row, singular recipe name); bok choy
+    // is not — so the pill reads 1/2 and exactly one cart button renders.
+    render(<RecipeLetter recipe={RECIPE} />);
+    expect(screen.getByText('1/2 in your pantry')).toBeInTheDocument();
+    expect(
+      screen.getByLabelText('Add bok choy to shopping list'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByLabelText('Add chicken thigh to shopping list'),
+    ).not.toBeInTheDocument();
+  });
+});
