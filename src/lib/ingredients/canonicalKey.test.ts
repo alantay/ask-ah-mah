@@ -16,6 +16,7 @@ describe("canonicalKey", () => {
     expect(same("Vanilla", "Vanilla extract")).toBe(false);
     expect(same("Mushroom", "Dried mushroom")).toBe(false);
     expect(same("Seaweed", "Roasted seaweed")).toBe(false);
+    expect(same("Pork", "Minced pork")).toBe(false);
   });
 
   it("keeps genuinely distinct items apart", () => {

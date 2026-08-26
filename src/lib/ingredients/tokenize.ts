@@ -3,7 +3,7 @@
  * these are stripped — "fresh chopped coriander" === "coriander".
  */
 export const PREP: ReadonlySet<string> = new Set([
-  "fresh", "chopped", "minced", "sliced", "diced",
+  "fresh", "chopped", "sliced", "diced",
   "whole", "thin", "thinly", "fine", "coarse",
   "large", "small", "medium", "ripe", "cooking",
   "of", "the", "and", "a", "to",
@@ -14,9 +14,14 @@ export const PREP: ReadonlySet<string> = new Set([
  * extract are separate pantry items from chilli, garlic and vanilla, so these
  * are deliberately NOT stripped (ADR-0029). Exported so the tokenizer's
  * contract is testable rather than merely commented.
+ *
+ * "minced" sits here rather than with the cuts, on the owner's call: minced
+ * pork is not pork, and it already had to agree with "ground", which is the
+ * same change under another name.
  */
 export const FORM: ReadonlySet<string> = new Set([
-  "dried", "ground", "powder", "extract", "cooked", "raw", "pure",
+  "dried", "ground", "minced", "powder", "extract", "cooked", "raw",
+  "pure",
 ]);
 
 /** Measurement units that may lead an ingredient string. */

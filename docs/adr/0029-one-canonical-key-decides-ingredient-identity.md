@@ -21,7 +21,7 @@ That silently marked ingredients as *have*, moving the pantry pill, the 🛒 but
 
 **They were coupled.** The loose matcher incidentally prevented outright duplicates — an item sharing any token with an existing entry would already have rendered as *have* and never been offered as an add. Fixing #491 alone removes that accident, so #487 gets *worse* unless both land together. [ADR-0027](0027-the-pantry-is-corrected-at-the-point-of-use.md) flagged exactly this and left it open: *"If #491 tightens the matcher, this cost gets worse, and that is a thing to weigh when it is picked up."* This ADR is that pickup, and the answer is below.
 
-**A third bug, found while designing the fix.** The matcher's stopword list conflated two kinds of word: **prep** (`chopped`, `sliced`, `fresh`) describes how something was cut or sold — identity survives. **Form** (`dried`, `ground`, `powder`, `extract`) describes what something *is* — dried chilli, garlic powder and vanilla extract are different pantry items from chilli, garlic and vanilla. Both were stripped, so the app already treated dried chilli ≡ chilli in both the matcher and the Shopping List's own hand-rolled word list.
+**A third bug, found while designing the fix.** The matcher's stopword list conflated two kinds of word: **prep** (`chopped`, `sliced`, `fresh`) describes how something was cut or sold — identity survives. **Form** (`dried`, `ground`, `minced`, `powder`, `extract`) describes what something *is* — dried chilli, garlic powder and vanilla extract are different pantry items from chilli, garlic and vanilla. Both were stripped, so the app already treated dried chilli ≡ chilli in both the matcher and the Shopping List's own hand-rolled word list.
 
 ## Decision
 
@@ -36,7 +36,9 @@ Coverage requires two rules, both necessary — either alone lets a real bug thr
 
 ### The prep/form split
 
-`tokenize()` strips prep words and leaves form words untouched. This is what makes conservative folding possible for dedupe: once form words survive, the names that still collide differ only by plural, case or prep word, so *either* name is a correct survivor and a silent merge cannot lose meaning. It is also what separates `dried chilli` from `chilli` in both the matcher and the Shopping List, closing the gap in the Context above.
+`tokenize()` strips prep words and leaves form words untouched. `minced` was moved from prep to form after the backfill's first run folded a real `Minced pork` row into `Pork` — the owner's call, and the consistent one, since `ground` was already a form word and is the same change under another name. This is what makes conservative folding possible for dedupe: once form words survive, the names that still collide differ only by plural, case or prep word, so *either* name is a correct survivor and a silent merge cannot lose meaning. It is also what gives `dried chilli` and `chilli` separate pantry rows and separate Shopping List rows, closing the gap in the Context above.
+
+It does **not** separate them in the matcher, and that asymmetry is deliberate rather than an oversight. `ingredientMatches` is coverage, not identity: it requires head-noun agreement, and a form word that *leads* leaves the head noun intact, so a pantry holding `Dried chilli` still reads as covering a recipe's `chilli` — exactly as a pantry holding `oil` covers `olive oil`. A form word that *trails* does block the match, because it becomes the head noun: `Garlic powder` does not cover `garlic`. The practical consequence is worth stating plainly: if the pantry holds only `Dried chilli` and a recipe wants `chilli`, the pill counts it as covered, and unticking it in reconcile mode will delete the `Dried chilli` row. Tightening this would mean giving up the generic-covers-specific behaviour that makes `oil` useful, so it is accepted alongside the `spring onion` / `Onion` limitation below.
 
 ## Rejected alternatives
 
