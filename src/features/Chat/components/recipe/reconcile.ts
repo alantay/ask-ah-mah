@@ -42,14 +42,14 @@ export type ReconcilePlan = {
 //
 // The two directions are deliberately asymmetric. An add uses the recipe's own
 // name — a bad match there costs one spare pantry row. A delete removes the
-// MATCHED pantry item, and only past two guards, because under the loose
-// matcher a delete destroys data: it fires only when exactly one item matched
-// (an ambiguous match would remove the wrong ingredient) and only when no
-// TICKED ingredient matched that same item (one pantry row can answer two
-// ingredients — unticking "fish sauce" must not take away the "Soy sauce" the
-// user just affirmed). An unticked item held back by either guard is simply
-// absent for this dish, which is the transient confirmed-absence ADR-0026 §5
-// already sanctions.
+// MATCHED pantry item, and only past two guards, because coverage matching is
+// looser than pantry-row identity (ADR-0029) and a delete destroys data: it
+// fires only when exactly one item matched (an ambiguous match would remove
+// the wrong ingredient) and only when no TICKED ingredient matched that same
+// item (one pantry row can answer two ingredients — unticking "fish sauce"
+// must not take away the "Soy sauce" the user just affirmed). An unticked
+// item held back by either guard is simply absent for this dish, which is the
+// transient confirmed-absence ADR-0026 §5 already sanctions.
 export function buildReconcilePlan(
   ingredients: RecipeIngredientModel[],
   inventoryItems: InventoryItem[],
@@ -57,7 +57,7 @@ export function buildReconcilePlan(
 ): ReconcilePlan {
   const adds: AddInventoryItem[] = [];
   // A Set: two unticked ingredients can each uniquely match the SAME pantry row
-  // under the loose matcher. `deleteMany` would shrug off the repeat, but
+  // under coverage matching. `deleteMany` would shrug off the repeat, but
   // `deletes.length` is the number the "n removed" toast reports.
   const deletes = new Set<string>();
   const stillMissing: RecipeIngredientModel[] = [];

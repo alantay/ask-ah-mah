@@ -161,11 +161,11 @@ export function RecipeLetter({
     ...(inventoryData?.kitchenwareInventory ?? []),
   ];
   // The delete pool is narrower than the display pool above. `DELETE
-  // /api/inventory` has no type filter, so under the loose matcher an unticked
-  // ingredient could take out an appliance — "jasmine rice" matches "Rice
-  // cooker" via "rice". The display pool stays combined: the pill, the carts
-  // and the pre-tick have always counted both, and reconcile is not the place
-  // to move them.
+  // /api/inventory` has no type filter, so a match landing on kitchenware
+  // would otherwise be deletable — rarer now that matching requires the head
+  // noun to agree (ADR-0029), not impossible. The display pool stays
+  // combined: the pill, the carts and the pre-tick have always counted both,
+  // and reconcile is not the place to move them.
   const deletableItems: InventoryItem[] = inventoryData?.ingredientInventory ?? [];
   const inventoryNames = inventoryItems.map((i) => i.name.trim().toLowerCase());
 
