@@ -74,14 +74,17 @@ export async function removeInventoryItem(
   itemsNonNormalisedName: string[],
   userId: string
 ) {
-  const keys = itemsNonNormalisedName.map((name) =>
-    canonicalKey(normalizeName(name))
-  );
+  const names = itemsNonNormalisedName.map(normalizeName);
+  const keys = names.map(canonicalKey);
 
   await prisma.inventoryItem.deleteMany({
     where: {
-      canonicalKey: { in: keys },
       userId,
+      // Transitional: rows written before the backfill still have a null
+      // canonicalKey, and Prisma's `in` never matches null. Matching the name
+      // too keeps removal working in the window between the migration and the
+      // backfill. Safe to drop to the key alone once the backfill has run.
+      OR: [{ canonicalKey: { in: keys } }, { name: { in: names } }],
     },
   });
 }
