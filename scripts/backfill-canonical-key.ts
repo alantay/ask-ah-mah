@@ -19,8 +19,13 @@ import { canonicalKey } from "../src/lib/ingredients";
 const prisma = new PrismaClient();
 
 async function main() {
+  // Selected explicitly, never `findMany()` bare: when this runs, the schema
+  // already types canonicalKey as non-null but the column is still nullable and
+  // every existing row holds null. Reading it would fail the conversion before
+  // the backfill could write a single key.
   const rows = await prisma.inventoryItem.findMany({
     orderBy: { dateAdded: "asc" },
+    select: { id: true, name: true, userId: true, type: true },
   });
   console.log(`Read ${rows.length} inventory rows.`);
 
