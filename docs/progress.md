@@ -437,19 +437,24 @@ Multi-conversation, organised pantry, auth, and a leaner recipe surface. Highlig
 - **Resolves the coupling ADR-0027 left open.** That ADR shipped reconcile mode on the loose matcher and flagged that tightening #491 alone would make the loose matcher's incidental duplicate-prevention worse. The two fixes shipped together instead: `canonicalKey` now prevents duplicates on purpose, at the database constraint, so the matcher no longer has to prevent them by accident.
 - **Full rationale** → [ADR-0029](./adr/0029-one-canonical-key-decides-ingredient-identity.md). Corrects two stale "matches on any shared token" claims this branch's own tests contradict, left behind in `CONTEXT.md`'s **Reconcile mode** entry and in this file's own reconcile entries above.
 
-**Running this migration.** Three steps, in order — the middle one cannot be skipped:
+**Running this migration.** The backfill has to run *between* the two migrations, and `prisma migrate deploy` applies every pending migration in one go — so the first one has to be applied on its own, by moving the second aside:
 
 ```
-pnpm db:deploy                              # adds the nullable column
+mv prisma/migrations/20260825000001_inventory_unique_canonical_key /tmp/
+pnpm db:deploy                              # migration 1: adds the nullable column
 pnpm tsx scripts/backfill-canonical-key.ts  # fills keys, merges duplicates
-pnpm db:deploy                              # makes it required, swaps the index
+mv /tmp/20260825000001_inventory_unique_canonical_key prisma/migrations/
 ```
 
-`build` runs `prisma migrate deploy` on its own, so a deploy of this branch cannot land both migrations back-to-back with nothing between them — the backfill has to run in between by hand. Two consequences: the branch **cannot be deployed** until the backfill has run, because the second migration's `SET NOT NULL` fails against rows still holding `null` and the build aborts (fail-safe: the deploy stops, nothing is lost). And between the first migration and the backfill, `removeInventoryItem` **silently no-ops** for every pre-existing row — Prisma's `{ in: [...] }` filter never matches `null`, so the delete matches nothing while the API still reports success. Running the three commands in one sitting closes that window.
+Then deploy the branch. `build` runs `prisma migrate deploy`, so the second migration lands together with the code that needs it — which matters, because it drops `inventory_items_userId_name_type_key`, the index the previously deployed upsert resolves rows against.
 
-The backfill prints a `merge:` line for every row it folds away — read them before the second `db:deploy` runs. Each should read as a plural, case or prep-word variant of a survivor; a line pairing two genuinely different items means `src/lib/ingredients/tokenize.ts`'s word lists need fixing first, before the unique constraint lands.
+Letting both migrations run together fails, safely: the second one's `SET NOT NULL` hits rows still holding `null`, the migration aborts, and Prisma records a failed migration that blocks subsequent deploys until `prisma migrate resolve` clears it. Nothing is lost, but it is tedious to unpick on a live database.
 
-**Not yet done**: the migrations are written but unapplied — `DATABASE_URL` holds the owner's real data, and the owner runs them. The spec's in-app `/verify` pass (pantry dedupe, the soy-sauce-vs-fish-sauce match, the `N/M in your pantry` pill) is outstanding too; unit tests cannot see pill counts or cart buttons, so that pass happens after the migrations land.
+The backfill prints a `merge:` line for every row it folds away — read them before the second migration lands. Each should read as a plural, case or prep-word variant of a survivor; a line pairing two genuinely different items means `src/lib/ingredients/tokenize.ts`'s word lists need fixing first, before the unique constraint lands.
+
+`removeInventoryItem` matches the display name as well as the canonical key while this rolls out. Rows written before the backfill still hold a null key, and Prisma's `{ in: [...] }` filter never matches `null`, so key-only removal would silently no-op on every pre-existing pantry item. The name half of that `OR` can be dropped once the backfill has run.
+
+**Not yet done**: the migrations are written but unapplied — `DATABASE_URL` points at the live production database, so the owner runs them by hand. The spec's in-app `/verify` pass (pantry dedupe, the soy-sauce-vs-fish-sauce match, the `N/M in your pantry` pill) is outstanding too; unit tests cannot see pill counts or cart buttons, so that pass happens after the migrations land.
 
 ## Design system
 
