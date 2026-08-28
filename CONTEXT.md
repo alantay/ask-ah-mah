@@ -152,7 +152,17 @@ An ingredient a generated recipe calls for that is not present in the user's pan
 
 Additions **accept** the pantry record as it stands. Correcting that record is someone else's job: the [Checklist block](#checklist-block) before the recipe exists, [Reconcile mode](#reconcile-mode) after it.
 
-Related: [Reconcile mode](#reconcile-mode), [Checklist block](#checklist-block), [Close Recipe](#close-recipe), [Stretch Recipe](#stretch-recipe)
+Related: [Reconcile mode](#reconcile-mode), [Checklist block](#checklist-block), [Close Recipe](#close-recipe), [Stretch Recipe](#stretch-recipe), [Canonical Key](#canonical-key)
+
+---
+
+## Canonical Key
+
+The derived string that decides whether two ingredient names are the *same pantry row* — `canonicalKey("Shallots")` and `canonicalKey("Shallot")` are equal, so they fold to one row instead of two. Computed by `src/lib/ingredients/tokenize.ts`: lowercase, strip parentheticals, punctuation, quantities, units and **prep** words (`chopped`, `fresh`, `sliced`), singularize, join. **Form** words (`dried`, `ground`, `powder`, `extract`) deliberately survive — dried chilli and chilli are different things to stock, not a duplicate.
+
+**Stricter than `ingredientMatches`.** Identity is equality; matching is coverage — a pantry holding `oil` covers a recipe's `olive oil` (they match) but they are still two different things to stock (they do not share a key). The unique constraint on `InventoryItem` is keyed on `(userId, canonicalKey, type)`, so the database — not the UI — is what prevents `Shallot` and `Shallots` from coexisting.
+
+Related: [ADR-0029](docs/adr/0029-one-canonical-key-decides-ingredient-identity.md), [Addition](#addition), [Reconcile mode](#reconcile-mode)
 
 ---
 
@@ -290,13 +300,13 @@ The state a recipe's **What to gather** grid flips into when the user taps *"Ask
 
 **It exists because the record drifts both ways.** It under-reports (owned but never entered) and over-reports (entered but since finished), and the substitutions ask used to trust it blindly. So the nudge shows **whenever a pantry is tracked**, including at a full `10/10` count: over-reporting is invisible otherwise.
 
-**A tick adds, an untick removes.** Both are factual claims about what the user owns, written client-side and **awaited before the message sends** (the chat turn calls `getInventory`; sending first races the writes). A tick `POST`s the recipe's own ingredient name with its `category` passed straight through. An untick `DELETE`s the **matched pantry item's** name, past three guards, because `ingredientMatches` matches on any shared token and a delete destroys data: **only when exactly one pantry item matches** (an ambiguous match would remove the wrong ingredient), **only when no ticked ingredient matched that same item** (one row can answer two ingredients — unticking *fish sauce* must not take away the *soy sauce* just affirmed), and **only over ingredient-type inventory** (`DELETE /api/inventory` has no type filter, so *jasmine rice* could otherwise take out the *rice cooker*). A held-back unticked row is simply treated as absent *for this dish only*, which is the [Checklist block](#checklist-block)'s transient confirmed-absence. Where the pantry's wording differs from the recipe's, the row shows it (*pantry: fresh galangal*) so no delete is a surprise.
+**A tick adds, an untick removes.** Both are factual claims about what the user owns, written client-side and **awaited before the message sends** (the chat turn calls `getInventory`; sending first races the writes). A tick `POST`s the recipe's own ingredient name with its `category` passed straight through. An untick `DELETE`s the **matched pantry item's** name, past three guards, because `ingredientMatches` — head nouns must agree **and** one token set must contain the other ([Canonical Key](#canonical-key), [ADR-0029](docs/adr/0029-one-canonical-key-decides-ingredient-identity.md)) — is still coverage, not identity, and a delete destroys data: **only when exactly one pantry item matches** (an ambiguous match would remove the wrong ingredient), **only when no ticked ingredient matched that same item** (one row can answer two ingredients — unticking *fish sauce* must not take away the *soy sauce* just affirmed), and **only over ingredient-type inventory** (`DELETE /api/inventory` has no type filter, so a match landing on kitchenware would otherwise be deletable). A held-back unticked row is simply treated as absent *for this dish only*, which is the [Checklist block](#checklist-block)'s transient confirmed-absence. Where the pantry's wording differs from the recipe's, the row shows it (*pantry: fresh galangal*) so no delete is a surprise.
 
 **The pre/post pair:** the **Checklist block** is the *pre-recipe* corrector — it asks before the dish is committed to, to protect the dish's name. Reconcile mode is the *post-recipe* corrector — the recipe already exists, and the user is looking at a finite list they can judge item by item. Between them sit **[Additions](#addition)**, which only ever *accept* the record. Reconcile is **recipe-scoped by construction**: it cannot seed an empty pantry, survey the whole pantry, or feed **[Featured Selection](#featured-selection)** — that is the Pantry's job, and the split between the two is deliberately unsettled.
 
 The submit sends directly, with no composer round-trip: that step only existed because the drafted text was wrong. Not a chat block — no fence, no schema, no replay state; the sent sentence is the whole receipt.
 
-Related: [ADR-0027](docs/adr/0027-the-pantry-is-corrected-at-the-point-of-use.md), [ADR-0026](docs/adr/0026-checklist-reopens-never-ask-for-possession.md), [Checklist block](#checklist-block), [Addition](#addition)
+Related: [ADR-0027](docs/adr/0027-the-pantry-is-corrected-at-the-point-of-use.md), [ADR-0026](docs/adr/0026-checklist-reopens-never-ask-for-possession.md), [Checklist block](#checklist-block), [Addition](#addition), [Canonical Key](#canonical-key)
 
 ---
 

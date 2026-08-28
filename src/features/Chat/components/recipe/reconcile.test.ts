@@ -17,10 +17,9 @@ const ing = (
 ): RecipeIngredientModel => ({ name, category });
 
 describe('matchingPantryItems', () => {
-  it('returns every pantry item sharing a token with the ingredient', () => {
+  it('returns pantry items with an agreeing head noun and a subset relationship', () => {
     const items = [inv('fish sauce'), inv('dark soy sauce'), inv('galangal')];
     expect(matchingPantryItems('soy sauce', items).map(i => i.name)).toEqual([
-      'fish sauce',
       'dark soy sauce',
     ]);
   });
@@ -60,29 +59,30 @@ describe('buildReconcilePlan', () => {
 
   it('skips the delete when two pantry items match', () => {
     const plan = buildReconcilePlan(
-      [ing('dark soy sauce')],
-      [inv('fish sauce'), inv('soy sauce')],
+      [ing('light soy sauce')],
+      [inv('soy sauce'), inv('light soy sauce')],
       new Set(),
     );
     expect(plan.deletes).toEqual([]);
   });
 
   it('skips the delete when the matched item is claimed by a ticked ingredient', () => {
-    // Pantry holds only "Soy sauce". `fish sauce` matches it via "sauce" and is
-    // the sole match, but `soy sauce` is ticked and relies on that same row.
+    // Pantry holds only "Soy sauce". `dark soy sauce` matches it (agreeing
+    // head noun, subset) and is the sole match, but `soy sauce` is ticked and
+    // relies on that same row.
     const plan = buildReconcilePlan(
-      [ing('soy sauce'), ing('fish sauce')],
+      [ing('soy sauce'), ing('dark soy sauce')],
       [inv('Soy sauce')],
       new Set(['soy sauce']),
     );
     expect(plan.deletes).toEqual([]);
     // Held back from the write, but still absent for this dish.
-    expect(plan.stillMissing.map(i => i.name)).toEqual(['fish sauce']);
+    expect(plan.stillMissing.map(i => i.name)).toEqual(['dark soy sauce']);
   });
 
   it('guards a claim made by a ticked ingredient listed after the unticked one', () => {
     const plan = buildReconcilePlan(
-      [ing('fish sauce'), ing('soy sauce')],
+      [ing('dark soy sauce'), ing('soy sauce')],
       [inv('Soy sauce')],
       new Set(['soy sauce']),
     );
@@ -103,7 +103,7 @@ describe('buildReconcilePlan', () => {
 
   it('still deletes when no ticked ingredient claims the matched item', () => {
     const plan = buildReconcilePlan(
-      [ing('galangal'), ing('fish sauce')],
+      [ing('galangal'), ing('dark soy sauce')],
       [inv('Soy sauce')],
       new Set(['galangal']),
     );

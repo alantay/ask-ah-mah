@@ -78,11 +78,11 @@ const RECIPE: RecipeLetterProps['recipe'] = {
   ],
 };
 
-const CHICKEN_PAIR: RecipeLetterProps['recipe'] = {
+const SAUCE_PAIR: RecipeLetterProps['recipe'] = {
   ...RECIPE,
   ingredients: [
-    { name: 'chicken thigh', category: 'Protein', amount: '500', unit: 'g', note: undefined },
-    { name: 'chicken stock', category: 'Misc', amount: '200', unit: 'ml', note: undefined },
+    { name: 'light soy sauce', category: 'Condiments', amount: '1', unit: 'tbsp', note: undefined },
+    { name: 'dark soy sauce', category: 'Condiments', amount: '1', unit: 'tbsp', note: undefined },
   ],
 };
 
@@ -333,36 +333,37 @@ describe('Substitutions opens reconcile mode', () => {
     mockUseSWR.mockReturnValue({
       data: {
         ingredientInventory: [
-          { id: '1', name: 'boneless chicken', type: 'ingredient' as const, category: 'Protein' as const, dateAdded: new Date().toISOString(), lastUpdated: new Date().toISOString() },
+          { id: '1', name: 'boneless chicken thigh', type: 'ingredient' as const, category: 'Protein' as const, dateAdded: new Date().toISOString(), lastUpdated: new Date().toISOString() },
         ],
         kitchenwareInventory: [],
       },
     });
     render(<RecipeLetter recipe={RECIPE} onSend={mockOnSend} />);
     openReconcile();
-    expect(screen.getByText(/pantry: boneless chicken/)).toBeInTheDocument();
+    expect(screen.getByText(/pantry: boneless chicken thigh/)).toBeInTheDocument();
   });
 
   it('drops a row\'s pantry caption once another ticked ingredient claims the item', () => {
-    // Both rows match "boneless chicken" via "chicken", and one pantry row
-    // cannot answer both. Untick both and each row honestly names it; re-tick
-    // one and the other's delete can no longer fire, so its caption goes too.
+    // Both rows agree on the head noun "sauce" and both are token subsets of
+    // the generic "Soy sauce" row, so one pantry row cannot answer both. Untick
+    // both and each row honestly names it; re-tick one and the other's delete
+    // can no longer fire, so its caption goes too.
     mockUseSWR.mockReturnValue({
       data: {
         ingredientInventory: [
-          { id: 'boneless chicken', name: 'boneless chicken', type: 'ingredient' as const, category: 'Protein' as const, dateAdded: new Date().toISOString(), lastUpdated: new Date().toISOString() },
+          { id: 'soy sauce', name: 'Soy sauce', type: 'ingredient' as const, category: 'Condiments' as const, dateAdded: new Date().toISOString(), lastUpdated: new Date().toISOString() },
         ],
         kitchenwareInventory: [],
       },
     });
-    render(<RecipeLetter recipe={CHICKEN_PAIR} onSend={mockOnSend} />);
+    render(<RecipeLetter recipe={SAUCE_PAIR} onSend={mockOnSend} />);
     openReconcile();
-    fireEvent.click(screen.getByRole('checkbox', { name: /chicken thigh/ }));
-    fireEvent.click(screen.getByRole('checkbox', { name: /chicken stock/ }));
-    expect(screen.getAllByText(/pantry: boneless chicken/)).toHaveLength(2);
+    fireEvent.click(screen.getByRole('checkbox', { name: /light soy sauce/ }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /dark soy sauce/ }));
+    expect(screen.getAllByText(/pantry: Soy sauce/)).toHaveLength(2);
 
-    fireEvent.click(screen.getByRole('checkbox', { name: /chicken thigh/ }));
-    expect(screen.getAllByText(/pantry: boneless chicken/)).toHaveLength(1);
+    fireEvent.click(screen.getByRole('checkbox', { name: /light soy sauce/ }));
+    expect(screen.getAllByText(/pantry: Soy sauce/)).toHaveLength(1);
   });
 
   it('never captions a kitchenware match — it is not deletable', () => {
@@ -491,7 +492,7 @@ describe('Reconcile submit writes the pantry then asks', () => {
     mockUseSWR.mockReturnValue({
       data: {
         ingredientInventory: [
-          { id: '1', name: 'boneless chicken', type: 'ingredient' as const, category: 'Protein' as const, dateAdded: new Date().toISOString(), lastUpdated: new Date().toISOString() },
+          { id: '1', name: 'boneless chicken thigh', type: 'ingredient' as const, category: 'Protein' as const, dateAdded: new Date().toISOString(), lastUpdated: new Date().toISOString() },
         ],
         kitchenwareInventory: [],
       },
@@ -505,12 +506,14 @@ describe('Reconcile submit writes the pantry then asks', () => {
 
     await waitFor(() => expect(callsTo('DELETE').length).toBe(1));
     expect(JSON.parse(callsTo('DELETE')[0][1].body)).toEqual({
-      itemNames: ['boneless chicken'],
+      itemNames: ['boneless chicken thigh'],
     });
   });
 
-  // Two pantry items match `dark soy sauce` under the loose matcher, so there is
-  // no safe row to remove: the item is absent for this dish only.
+  // Two pantry items match `dark soy sauce` — a generic "Soy sauce" row and an
+  // exact "Dark soy sauce" row both agree on the head noun and are token
+  // subsets of the ingredient — so there is no safe row to remove: the item is
+  // absent for this dish only.
   const RECIPE_SAUCE: RecipeLetterProps['recipe'] = {
     ...RECIPE,
     ingredients: [
@@ -521,8 +524,8 @@ describe('Reconcile submit writes the pantry then asks', () => {
   const AMBIGUOUS_PANTRY = {
     data: {
       ingredientInventory: [
-        { id: '1', name: 'fish sauce', type: 'ingredient' as const, category: 'Condiments' as const, dateAdded: new Date().toISOString(), lastUpdated: new Date().toISOString() },
-        { id: '2', name: 'soy sauce', type: 'ingredient' as const, category: 'Condiments' as const, dateAdded: new Date().toISOString(), lastUpdated: new Date().toISOString() },
+        { id: '1', name: 'Soy sauce', type: 'ingredient' as const, category: 'Condiments' as const, dateAdded: new Date().toISOString(), lastUpdated: new Date().toISOString() },
+        { id: '2', name: 'Dark soy sauce', type: 'ingredient' as const, category: 'Condiments' as const, dateAdded: new Date().toISOString(), lastUpdated: new Date().toISOString() },
       ],
       kitchenwareInventory: [],
     },
@@ -554,9 +557,11 @@ describe('Reconcile submit writes the pantry then asks', () => {
     expect(mockOnSend.mock.calls[0][0]).toContain('dark soy sauce');
   });
 
-  // `jasmine rice` matches the kitchenware row "Rice cooker" via "rice", so the
-  // grid pre-ticks it — but kitchenware is not in the delete pool, and
-  // `DELETE /api/inventory` has no type filter to stop it landing.
+  // `jasmine rice` matches the kitchenware row "Rice" (agreeing head noun,
+  // token subset) — a mis-categorized entry, but one the matcher still has no
+  // reason to doubt — so the grid pre-ticks it. Kitchenware is still not in the
+  // delete pool, and `DELETE /api/inventory` has no type filter to stop it
+  // landing, so the type-pool separation is what actually holds the line here.
   const RECIPE_RICE: RecipeLetterProps['recipe'] = {
     ...RECIPE,
     ingredients: [
@@ -564,17 +569,17 @@ describe('Reconcile submit writes the pantry then asks', () => {
     ],
   };
 
-  const RICE_COOKER_PANTRY = {
+  const RICE_KITCHENWARE_PANTRY = {
     data: {
       ingredientInventory: [],
       kitchenwareInventory: [
-        { id: '1', name: 'Rice cooker', type: 'kitchenware' as const, dateAdded: new Date().toISOString(), lastUpdated: new Date().toISOString() },
+        { id: '1', name: 'Rice', type: 'kitchenware' as const, dateAdded: new Date().toISOString(), lastUpdated: new Date().toISOString() },
       ],
     },
   };
 
   it('never deletes kitchenware for an unticked ingredient', async () => {
-    mockUseSWR.mockReturnValue(RICE_COOKER_PANTRY);
+    mockUseSWR.mockReturnValue(RICE_KITCHENWARE_PANTRY);
     render(<RecipeLetter recipe={RECIPE_RICE} onSend={mockOnSend} />);
     openReconcile();
     fireEvent.click(screen.getByRole('checkbox', { name: /jasmine rice/ }));
@@ -587,7 +592,7 @@ describe('Reconcile submit writes the pantry then asks', () => {
   });
 
   it('adds an ingredient whose only pantry match was kitchenware', async () => {
-    mockUseSWR.mockReturnValue(RICE_COOKER_PANTRY);
+    mockUseSWR.mockReturnValue(RICE_KITCHENWARE_PANTRY);
     render(<RecipeLetter recipe={RECIPE_RICE} onSend={mockOnSend} />);
     openReconcile();
     fireEvent.click(screen.getByRole('button', { name: /Save what I have/ }));
@@ -776,5 +781,79 @@ describe('Reconcile submit writes the pantry then asks', () => {
     );
     expect(mockOnSend).not.toHaveBeenCalled();
     expect(screen.getByRole('checkbox', { name: /bok choy/ })).toBeInTheDocument();
+  });
+});
+
+// The #491 surface. `ingredientMatches` used to accept any shared word, so a
+// pantry holding fish sauce reported soy sauce as had — no cart button, and a
+// pantry pill that overcounted. These assert the rendered consequence, which
+// the matcher's own unit tests cannot see.
+describe('pantry matching at the rendered surface', () => {
+  const SOY_ONLY: RecipeLetterProps['recipe'] = {
+    ...RECIPE,
+    ingredients: [
+      { name: 'soy sauce', category: 'Condiments', amount: '1', unit: 'tbsp', note: undefined },
+    ],
+  };
+
+  const INVENTORY_WITH_FISH_SAUCE = {
+    ingredientInventory: [
+      {
+        id: '1',
+        name: 'Fish sauce',
+        type: 'ingredient' as const,
+        category: 'Condiments' as const,
+        dateAdded: new Date().toISOString(),
+        lastUpdated: new Date().toISOString(),
+      },
+    ],
+    kitchenwareInventory: [],
+  };
+
+  beforeEach(() => {
+    mockUseSessionContext.mockReturnValue({ userId: 'user-123' });
+    mockUseSWR.mockReturnValue({ data: INVENTORY_WITH_FISH_SAUCE });
+  });
+
+  it('shows soy sauce as missing when the pantry only holds fish sauce', () => {
+    render(<RecipeLetter recipe={SOY_ONLY} />);
+    expect(
+      screen.getByLabelText('Add soy sauce to shopping list'),
+    ).toBeInTheDocument();
+  });
+
+  it('counts that miss in the pantry pill', () => {
+    render(<RecipeLetter recipe={SOY_ONLY} />);
+    expect(screen.getByText('0/1 in your pantry')).toBeInTheDocument();
+  });
+
+  it('agrees with the cart buttons on a mixed recipe', () => {
+    mockUseSWR.mockReturnValue({
+      data: {
+        ...INVENTORY_WITH_FISH_SAUCE,
+        ingredientInventory: [
+          ...INVENTORY_WITH_FISH_SAUCE.ingredientInventory,
+          {
+            id: '2',
+            name: 'Chicken thighs',
+            type: 'ingredient' as const,
+            category: 'Protein' as const,
+            dateAdded: new Date().toISOString(),
+            lastUpdated: new Date().toISOString(),
+          },
+        ],
+      },
+    });
+
+    // chicken thigh is had (plural pantry row, singular recipe name); bok choy
+    // is not — so the pill reads 1/2 and exactly one cart button renders.
+    render(<RecipeLetter recipe={RECIPE} />);
+    expect(screen.getByText('1/2 in your pantry')).toBeInTheDocument();
+    expect(
+      screen.getByLabelText('Add bok choy to shopping list'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByLabelText('Add chicken thigh to shopping list'),
+    ).not.toBeInTheDocument();
   });
 });

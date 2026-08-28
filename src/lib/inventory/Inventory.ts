@@ -1,3 +1,4 @@
+import { canonicalKey } from "@/lib/ingredients";
 import { prisma } from "@/lib/db";
 import { DEFAULT_INVENTORY } from "./defaults";
 import { AddInventoryItem } from "./schemas";
@@ -32,11 +33,17 @@ export async function addInventoryItem(
   const nowIso = new Date().toISOString();
 
   for (const item of items) {
+    const key = canonicalKey(item.name);
+
     await prisma.inventoryItem.upsert({
       where: {
-        userId_name_type: { userId, name: item.name, type: item.type },
+        userId_canonicalKey_type: { userId, canonicalKey: key, type: item.type },
       },
       update: {
+        // `name` is deliberately absent: the row that is already there keeps
+        // its display name (ADR-0029). "Shallots" arriving against a stored
+        // "Shallot" refreshes the rest and leaves the name alone.
+        canonicalKey: key,
         quantity: item.quantity ?? null,
         unit: item.unit ?? null,
         category: item.category ?? null,
@@ -44,6 +51,7 @@ export async function addInventoryItem(
       },
       create: {
         name: item.name,
+        canonicalKey: key,
         type: item.type,
         quantity: item.quantity ?? null,
         unit: item.unit ?? null,
@@ -66,12 +74,9 @@ export async function removeInventoryItem(
   itemsNonNormalisedName: string[],
   userId: string
 ) {
-  const itemsNames = itemsNonNormalisedName.map(normalizeName);
+  const keys = itemsNonNormalisedName.map(normalizeName).map(canonicalKey);
 
   await prisma.inventoryItem.deleteMany({
-    where: {
-      name: { in: itemsNames },
-      userId,
-    },
+    where: { userId, canonicalKey: { in: keys } },
   });
 }

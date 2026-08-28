@@ -74,6 +74,7 @@ describe("Inventory API Routes", () => {
           {
             id: "k1",
             name: "frying pan",
+            canonicalKey: "frying pan",
             type: "kitchenware",
             quantity: null,
             unit: null,
@@ -87,6 +88,7 @@ describe("Inventory API Routes", () => {
           {
             id: "i1",
             name: "eggs",
+            canonicalKey: "egg",
             type: "ingredient",
             quantity: 6,
             unit: "pieces",
