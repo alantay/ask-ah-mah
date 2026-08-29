@@ -45,6 +45,9 @@ function prepToStep(item: string, uses?: RecipeStepUse[]): Step {
   return { title, body, uses };
 }
 
+const PHASE_BADGE_CLASS =
+  "shrink-0 size-12 bg-primary text-white flex items-center justify-center rounded-[50%_50%_50%_10px] -rotate-3 shadow-[inset_0_-2px_0_var(--primary-deep),0_1px_0_var(--primary-deep)]";
+
 export function CookingMode({ title, steps, prep, onExit, cooked, onCookedChange, servingsRatio = 1, prepUses }: CookingModeProps) {
   const prepSteps = (prep ?? []).map((item) => prepToStep(item, prepUses));
   const allSteps: Step[] = [...prepSteps, ...steps];
@@ -134,14 +137,14 @@ export function CookingMode({ title, steps, prep, onExit, cooked, onCookedChange
           {isPrep ? (
             <div
               aria-label={`Prep task ${phaseCurrent + 1}`}
-              className="shrink-0 size-12 bg-primary text-white flex items-center justify-center font-sans text-[10px] font-bold uppercase tracking-[0.08em] rounded-[50%_50%_50%_10px] -rotate-3 shadow-[inset_0_-2px_0_var(--primary-deep),0_1px_0_var(--primary-deep)]"
+              className={cn(PHASE_BADGE_CLASS, "font-sans text-[10px] font-bold uppercase tracking-[0.08em]")}
             >
               Prep
             </div>
           ) : (
             <div
               aria-label={`Step ${phaseCurrent + 1}`}
-              className="shrink-0 size-12 bg-primary text-white flex flex-col items-center justify-center font-display font-bold rounded-[50%_50%_50%_10px] -rotate-3 shadow-[inset_0_-2px_0_var(--primary-deep),0_1px_0_var(--primary-deep)]"
+              className={cn(PHASE_BADGE_CLASS, "flex-col font-display font-bold")}
             >
               <span className="font-sans text-[8px] font-bold uppercase tracking-[0.08em] leading-none">
                 Step

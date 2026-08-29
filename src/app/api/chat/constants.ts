@@ -87,12 +87,13 @@ Emit:
   "prep": [
     "Cut chicken thigh into bite-size pieces",
     "Halve bok choy lengthwise",
-    "Mince 1 tbsp ginger"
+    "Mince 1 tbsp ginger",
+    "Marinate the chicken for 10 minutes"
   ],
   "steps": [
     {
-      "title": "Marinate the chicken",
-      "body": "Toss chicken with 1 tbsp soy, cornstarch, sesame oil and a pinch of white pepper. Leave 10 min.",
+      "title": "Cook the chicken",
+      "body": "Heat a little oil, then add the marinated chicken and cook until browned at the edges.",
       "tip": "Cornstarch gives you that velvety texture. Don't skip it.",
       "uses": [
         { "name": "chicken thigh", "amount": "500", "unit": "g" },
