@@ -1,9 +1,9 @@
 "use client";
 
 import {
-  CyclingVoiceLines,
   LoadingDots,
-  shuffle,
+  VoiceLine,
+  useCyclingIndex,
   usePhaseAfter,
 } from "@/features/shared/components/loaders";
 import {
@@ -441,21 +441,29 @@ export function TweakBench({
 // Sub-threshold tweaks show only dots, so the lines never flash.
 function TweakProgress() {
   const [startedAt] = useState(() => Date.now());
-  // Shuffle once per wait; the dots phase rests on the first shuffled line so the
-  // hand-off into the cycling lines doesn't jump.
-  const [lines] = useState(() => shuffle(TWEAK_THINKING_LINES));
+  const idx = useCyclingIndex(TWEAK_THINKING_LINES.length, {
+    intervalMs: 4000,
+    loop: true,
+    randomize: true,
+  });
   const showProgress = usePhaseAfter(startedAt, TWEAK_PROGRESS_DELAY_MS);
 
   return (
     <div>
       {showProgress ? (
-        <CyclingVoiceLines lines={lines} intervalMs={4000} loop />
+        <div
+          className="relative min-h-6 w-full"
+          role="status"
+          aria-label="Ah Mah is thinking…"
+        >
+          <VoiceLine lines={TWEAK_THINKING_LINES} idx={idx} />
+        </div>
       ) : (
         <div
           aria-live="polite"
           className="flex items-center gap-2.5 font-display italic text-dense text-foreground leading-[1.5]"
         >
-          {lines[0]}
+          {TWEAK_THINKING_LINES[idx]}
           <LoadingDots />
         </div>
       )}

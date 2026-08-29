@@ -4,7 +4,8 @@ import { useCyclingIndex } from "./useCyclingIndex";
 describe("useCyclingIndex", () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => {
-    jest.runOnlyPendingTimers();
+    jest.clearAllTimers();
+    jest.restoreAllMocks();
     jest.useRealTimers();
   });
 
@@ -52,6 +53,39 @@ describe("useCyclingIndex", () => {
 
     act(() => jest.advanceTimersByTime(1000));
     expect(result.current).toBe(1);
+  });
+
+  it("visits every index once in a random order before reshuffling", () => {
+    const random = jest.spyOn(Math, "random").mockReturnValue(0);
+    const { result } = renderHook(() =>
+      useCyclingIndex(3, {
+        intervalMs: 1000,
+        loop: true,
+        randomize: true,
+      }),
+    );
+
+    const firstCycle = [result.current];
+    act(() => jest.advanceTimersByTime(1000));
+    firstCycle.push(result.current);
+    act(() => jest.advanceTimersByTime(1000));
+    firstCycle.push(result.current);
+
+    expect(new Set(firstCycle)).toEqual(new Set([0, 1, 2]));
+
+    const secondCycle = [];
+    act(() => jest.advanceTimersByTime(1000));
+    secondCycle.push(result.current);
+    act(() => jest.advanceTimersByTime(1000));
+    secondCycle.push(result.current);
+    act(() => jest.advanceTimersByTime(1000));
+    secondCycle.push(result.current);
+
+    expect(secondCycle[0]).not.toBe(firstCycle.at(-1));
+    expect(new Set(secondCycle)).toEqual(new Set([0, 1, 2]));
+    expect(secondCycle).not.toEqual(firstCycle);
+
+    random.mockRestore();
   });
 
   it("resets to 0 when count changes", () => {

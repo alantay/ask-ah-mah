@@ -2,19 +2,19 @@
 
 import {
   VoiceLine,
-  shuffle,
   useCyclingIndex,
   useReducedMotion,
 } from "@/features/shared/components/loaders";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
 import { STATUS_LINES } from "../../constants";
 
 export function StatusStream() {
   const reduced = useReducedMotion();
-  // Fresh order each time the loader appears so it doesn't always open the same.
-  const [lines] = useState(() => shuffle(STATUS_LINES));
-  const idx = useCyclingIndex(lines.length, { intervalMs: 4000, loop: true });
+  const idx = useCyclingIndex(STATUS_LINES.length, {
+    intervalMs: 4000,
+    loop: true,
+    randomize: true,
+  });
 
   return (
     <div className="max-w-xl">
@@ -61,7 +61,7 @@ export function StatusStream() {
 
         {/* Cycling status text */}
         <div className="flex-1 relative min-h-6">
-          <VoiceLine lines={lines} idx={idx} />
+          <VoiceLine lines={STATUS_LINES} idx={idx} />
         </div>
       </div>
     </div>

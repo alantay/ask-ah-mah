@@ -1,7 +1,9 @@
 'use client';
 
 import { cn } from '@/lib/utils';
+import { useEffect, useState } from 'react';
 import { LoadingDots } from '../loaders/LoadingDots';
+import { shuffle } from '../loaders/VoiceLines';
 import { BowlMark } from './BowlMark';
 import { PRELOADER_TIPS } from './tips';
 
@@ -27,11 +29,20 @@ const HEADING_CLASS =
  *  splash's job is to keep someone company while hydration itself may still
  *  be the slow part, so it can't depend on hydration having finished. */
 function CyclingTip() {
+  // Keep the server and first client render deterministic for hydration, then
+  // give each app load a fresh order once JavaScript is available. The CSS
+  // animation still works before hydration, when it matters most.
+  const [tips, setTips] = useState<readonly string[]>(PRELOADER_TIPS);
+
+  useEffect(() => {
+    setTips(shuffle(PRELOADER_TIPS));
+  }, []);
+
   return (
     <div className="relative min-h-6 w-full" role="status" aria-label="Ah Mah is prepping…">
-      {PRELOADER_TIPS.map((tip, i) => (
+      {tips.map((tip, i) => (
         <div
-          key={i}
+          key={tip}
           aria-hidden
           className={TIP_ITEM_CLASS}
           style={{ animationDelay: `${i * TIP_STEP_MS}ms` }}
