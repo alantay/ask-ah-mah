@@ -120,3 +120,35 @@ describe("CookingMode — Step Uses inline hints", () => {
     expect(matches.every((el) => el.tagName !== "BUTTON")).toBe(true);
   });
 });
+
+describe("CookingMode — prep and method phases", () => {
+  it("keeps mandatory prep in the flow while restarting the method counter at Step 1", () => {
+    render(
+      <CookingMode
+        title="Fried Rice"
+        prep={["Dice the onion", "Mince the garlic"]}
+        steps={[
+          { title: "Fry the aromatics", body: "Cook the prepared onion and garlic." },
+          { title: "Finish the rice", body: "Add the rice and toss." },
+        ]}
+        onExit={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Prep 1 of 2")).toBeInTheDocument();
+    expect(screen.getByText("Before you start")).toBeInTheDocument();
+    expect(screen.getByText("Prep", { exact: true })).toBeInTheDocument();
+    expect(screen.getByLabelText("Prep task 1")).toBeInTheDocument();
+    expect(screen.getByText("Next prep →")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Next prep →"));
+    expect(screen.getByText("Prep 2 of 2")).toBeInTheDocument();
+    expect(screen.getByText("Start cooking →")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Start cooking →"));
+    expect(screen.getByText("Step 1 of 2")).toBeInTheDocument();
+    expect(screen.getByText("Cooking")).toBeInTheDocument();
+    expect(screen.getByLabelText("Step 1")).toBeInTheDocument();
+    expect(screen.getByText("Next step →")).toBeInTheDocument();
+  });
+});

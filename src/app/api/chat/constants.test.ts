@@ -26,6 +26,7 @@ describe("CHAT_SYSTEM_PROMPT recipe example", () => {
     // the issue requires must remain in the prompt.
     expect(CHAT_SYSTEM_PROMPT).toContain("Step depth is earned");
     expect(CHAT_SYSTEM_PROMPT).toContain("Never echo absolute quantities into step bodies");
+    expect(CHAT_SYSTEM_PROMPT).toContain("Give each action exactly one home");
   });
 
   it("carries the shared comprehensible-voice fragment", () => {

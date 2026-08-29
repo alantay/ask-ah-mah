@@ -46,13 +46,16 @@ function prepToStep(item: string, uses?: RecipeStepUse[]): Step {
 }
 
 export function CookingMode({ title, steps, prep, onExit, cooked, onCookedChange, servingsRatio = 1, prepUses }: CookingModeProps) {
-  const allSteps: Step[] = [
-    ...(prep ?? []).map((item) => prepToStep(item, prepUses)),
-    ...steps,
-  ];
+  const prepSteps = (prep ?? []).map((item) => prepToStep(item, prepUses));
+  const allSteps: Step[] = [...prepSteps, ...steps];
   const [current, setCurrent] = useState(0);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const total = allSteps.length;
+  const isPrep = current < prepSteps.length;
+  const phaseCurrent = isPrep ? current : current - prepSteps.length;
+  const phaseTotal = isPrep ? prepSteps.length : steps.length;
+  const phaseLabel = isPrep ? "Prep" : "Step";
+  const phaseHeading = isPrep ? "Before you start" : "Cooking";
 
   const requestWakeLock = useCallback(async () => {
     if (!("wakeLock" in navigator)) return;
@@ -89,6 +92,7 @@ export function CookingMode({ title, steps, prep, onExit, cooked, onCookedChange
   const prev = () => setCurrent((c) => Math.max(0, c - 1));
   const next = () => setCurrent((c) => Math.min(total - 1, c + 1));
   const isFinalStep = current === total - 1;
+  const isLastPrep = isPrep && phaseCurrent === phaseTotal - 1;
   const canMark = isFinalStep && !!onCookedChange;
 
   return (
@@ -100,7 +104,7 @@ export function CookingMode({ title, steps, prep, onExit, cooked, onCookedChange
             {title}
           </div>
           <div className="font-sans text-micro text-ink-faint mt-0.5 tabular-nums">
-            Step {current + 1} of {total}
+            {phaseLabel} {phaseCurrent + 1} of {phaseTotal}
           </div>
         </div>
         <button
@@ -121,11 +125,30 @@ export function CookingMode({ title, steps, prep, onExit, cooked, onCookedChange
 
       {/* Step content */}
       <div className="flex-1 overflow-y-auto flex flex-col justify-center px-6 py-8 sm:px-12 max-w-2xl mx-auto w-full">
+        <div className="mb-3 font-sans text-xs font-bold uppercase tracking-[0.16em] text-primary">
+          {phaseHeading}
+        </div>
+
         {/* Step number stamp */}
         <div className="mb-6 flex items-center gap-3">
-          <div className="shrink-0 size-12 bg-primary text-white flex items-center justify-center font-display font-bold text-2xl rounded-[50%_50%_50%_10px] -rotate-3 shadow-[inset_0_-2px_0_var(--primary-deep),0_1px_0_var(--primary-deep)]">
-            {current + 1}
-          </div>
+          {isPrep ? (
+            <div
+              aria-label={`Prep task ${phaseCurrent + 1}`}
+              className="shrink-0 size-12 bg-primary text-white flex items-center justify-center font-sans text-[10px] font-bold uppercase tracking-[0.08em] rounded-[50%_50%_50%_10px] -rotate-3 shadow-[inset_0_-2px_0_var(--primary-deep),0_1px_0_var(--primary-deep)]"
+            >
+              Prep
+            </div>
+          ) : (
+            <div
+              aria-label={`Step ${phaseCurrent + 1}`}
+              className="shrink-0 size-12 bg-primary text-white flex flex-col items-center justify-center font-display font-bold rounded-[50%_50%_50%_10px] -rotate-3 shadow-[inset_0_-2px_0_var(--primary-deep),0_1px_0_var(--primary-deep)]"
+            >
+              <span className="font-sans text-[8px] font-bold uppercase tracking-[0.08em] leading-none">
+                Step
+              </span>
+              <span className="text-2xl leading-none mt-0.5">{phaseCurrent + 1}</span>
+            </div>
+          )}
           <div className="font-display font-semibold text-2xl text-foreground leading-tight tracking-tight">
             {step.title}
           </div>
@@ -176,7 +199,7 @@ export function CookingMode({ title, steps, prep, onExit, cooked, onCookedChange
               onClick={next}
               className="flex-[2] py-3 font-sans text-sm font-semibold"
             >
-              Next step →
+              {isLastPrep ? "Start cooking →" : isPrep ? "Next prep →" : "Next step →"}
             </Button>
           )}
         </div>
