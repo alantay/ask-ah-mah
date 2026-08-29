@@ -21,11 +21,21 @@ describe("CHAT_SYSTEM_PROMPT recipe example", () => {
     expect(RecipeBlockSchema.safeParse(recipe!.payload).success).toBe(true);
   });
 
+  it("keeps marinating in prep rather than repeating it in Method", () => {
+    const blocks = extractRecipeBlocks(CHAT_SYSTEM_PROMPT);
+    const recipe = blocks.find((b) => b.kind === "recipe");
+    const parsed = RecipeBlockSchema.parse(recipe!.payload);
+
+    expect(parsed.prep).toEqual(expect.arrayContaining([expect.stringMatching(/marinate/i)]));
+    expect(parsed.steps.some((step) => /^marinate\b/i.test(step.title))).toBe(false);
+  });
+
   it("retains the step-depth and no-quantity-in-step-bodies guidance", () => {
     // Cheap guard that the depth guidance survived future edits — both clauses
     // the issue requires must remain in the prompt.
     expect(CHAT_SYSTEM_PROMPT).toContain("Step depth is earned");
     expect(CHAT_SYSTEM_PROMPT).toContain("Never echo absolute quantities into step bodies");
+    expect(CHAT_SYSTEM_PROMPT).toContain("Give each action exactly one home");
   });
 
   it("carries the shared comprehensible-voice fragment", () => {

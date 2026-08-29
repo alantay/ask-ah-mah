@@ -87,12 +87,13 @@ Emit:
   "prep": [
     "Cut chicken thigh into bite-size pieces",
     "Halve bok choy lengthwise",
-    "Mince 1 tbsp ginger"
+    "Mince 1 tbsp ginger",
+    "Marinate the chicken for 10 minutes"
   ],
   "steps": [
     {
-      "title": "Marinate the chicken",
-      "body": "Toss chicken with 1 tbsp soy, cornstarch, sesame oil and a pinch of white pepper. Leave 10 min.",
+      "title": "Cook the chicken",
+      "body": "Heat a little oil, then add the marinated chicken and cook until browned at the edges.",
       "tip": "Cornstarch gives you that velvety texture. Don't skip it.",
       "uses": [
         { "name": "chicken thigh", "amount": "500", "unit": "g" },
@@ -112,7 +113,7 @@ Rules:
 - \`amount\` is always a string (handles "1 1/2", "½", "500", etc.)
 - Every ingredient MUST include \`category\` and it must be one of: ${PROMPT_FRAGMENTS.categoryList}.
 - \`description\` is ≤140 chars — the soul of the dish in one sentence.
-- \`prep\` 0–8 short imperative strings covering ALL knife work (dice, mince, chop, slice), marinating, beating, soaking, scoring — anything BEFORE heat. If a step says "the diced X" or "the marinated Y", that prep MUST be in this array. Omit \`prep\` (or use \`[]\`) for assemble-only recipes with no real prep.
+- \`prep\` 0–8 short imperative strings covering ALL knife work (dice, mince, chop, slice), marinating, beating, soaking, scoring — anything BEFORE heat. It is a required first phase of the recipe, not an optional summary. If a step says "the diced X" or "the marinated Y", that prep MUST be in this array. Give each action exactly one home: after an action appears in \`prep\`, later steps may refer to the prepared ingredient but must never tell the cook to do that prep again. Omit \`prep\` (or use \`[]\`) for assemble-only recipes with no real prep.
 - **Every ingredient must be used.** Each item in \`ingredients\` must be called for somewhere in \`prep\` or \`steps\` — by its own name, or by a natural generic reference ("the herbs", "the aromatics", "the marinade", "the sauce"). Don't list an ingredient, including a garnish, that the method never actually calls for.
 - \`tip\` on a step is optional — only add when the why/trick is non-obvious.
 - \`uses\` on a step is optional: a list of \`{ name, amount?, unit?, text? }\` for the ingredients that step actually adds, so the cook can see quantities without leaving the step. Use \`amount\` + \`unit\` (same units as the ingredient list) when the amount is a fixed, quantifiable piece of the ingredient's total; use \`text\` (e.g. \`"remaining"\`, \`"to taste"\`) when it isn't a fixed number. **If an ingredient's use is split across multiple steps** (e.g. a sauce or slurry added partly at one step, the rest later), give each step its own *partial* amount for that step only — never the ingredient's full listed amount at more than one step. Every \`name\` in \`uses\` must match an ingredient's \`name\` in the \`ingredients\` array. Omit \`uses\` (or use \`[]\`) on steps where nothing is added (resting, plating, tasting) — not every step needs it, only the ones where an ingredient goes in.
