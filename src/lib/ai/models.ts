@@ -2,9 +2,10 @@
  * The one model behind every AI call.
  *
  * There is no heavy/light split any more. `gpt-5.6-terra` was trialled against
- * `gpt-5.6-luna` on chat routing, the Mode 5 checklist gate and time-to-first-
- * token, and matched it on every one at ~10x the price ($2/$12 vs $0.20/$1.20
- * per M). The axis that actually moves behaviour is reasoning effort, below.
+ * `gpt-5.6-luna` on chat routing and the Mode 5 checklist gate. A later 12-case
+ * recipe benchmark tied on broad checks, while targeted repeats favoured Luna
+ * for explicit air-fryer and jammy-egg timing. Terra still costs ~10x as much
+ * ($2/$12 vs $0.20/$1.20 per M). Reasoning effort remains the useful axis below.
  */
 export const MODEL = "gpt-5.6-luna";
 
