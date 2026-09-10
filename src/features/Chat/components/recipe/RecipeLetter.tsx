@@ -10,6 +10,7 @@ type GetInventoryResponse = {
 import { Button } from "@/components/ui/button";
 import { ingredientsToUses } from "@/lib/recipes/ingredientUses";
 import { ingredientMatches } from "@/lib/recipes/matchIngredient";
+import { isStockable } from "@/lib/ingredients";
 import { RecipeBlock, RecipeIngredientModel } from "@/lib/recipes/schemas";
 import {
   inventoryKey as buildInventoryKey,
@@ -169,7 +170,12 @@ export function RecipeLetter({
   const deletableItems: InventoryItem[] = inventoryData?.ingredientInventory ?? [];
   const inventoryNames = inventoryItems.map((i) => i.name.trim().toLowerCase());
 
-  const haveCount = ingredients.filter((ing) =>
+  // Every ingredient the pantry can answer for. Water is dropped: it is not
+  // stockable, so it is never an Addition and has no business in a pantry
+  // count, a cart or a reconcile tick (#490). It still renders as a row.
+  const pantryIngredients = ingredients.filter((ing) => isStockable(ing.name));
+
+  const haveCount = pantryIngredients.filter((ing) =>
     ingredientHave(ing.name, inventoryNames),
   ).length;
 
@@ -202,7 +208,7 @@ export function RecipeLetter({
   const openReconcile = () => {
     setTicked(
       new Set(
-        ingredients
+        pantryIngredients
           .filter((ing) => ingredientHave(ing.name, inventoryNames))
           .map((ing) => ing.name),
       ),
@@ -227,7 +233,7 @@ export function RecipeLetter({
       return next;
     });
 
-  const untickedCount = ingredients.filter((ing) => !ticked.has(ing.name)).length;
+  const untickedCount = pantryIngredients.filter((ing) => !ticked.has(ing.name)).length;
 
 
   const timeLabel = recipe.totalTimeMinutes
@@ -276,7 +282,7 @@ export function RecipeLetter({
     setSubmitting(true);
 
     const { adds, deletes, stillMissing } = buildReconcilePlan(
-      ingredients,
+      pantryIngredients,
       deletableItems,
       ticked,
     );
@@ -359,7 +365,7 @@ export function RecipeLetter({
             )}
             {showPantryPill && (
               <span className="font-sans text-eyebrow font-semibold text-jade px-1.5 py-0.5 bg-jade-tint border border-jade-border rounded-full tracking-normal normal-case">
-                {haveCount}/{ingredients.length} in your pantry
+                {haveCount}/{pantryIngredients.length} in your pantry
               </span>
             )}
           </div>
@@ -409,13 +415,14 @@ export function RecipeLetter({
               const amountLabel = scaledAmt
                 ? `${scaledAmt}${ing.unit ? " " + ing.unit : ""}`
                 : "";
+              const stockable = isStockable(ing.name);
               const have = ingredientHave(ing.name, inventoryNames);
               const matches = matchingPantryItems(ing.name, deletableItems);
               // Every pantry row some OTHER ticked ingredient is relying on —
               // this row's own tick is excluded, or a freshly opened grid (all
               // matched rows pre-ticked) would suppress every caption.
               const claimedByOthers = claimedPantryNames(
-                ingredients.filter((other) => other.name !== ing.name),
+                pantryIngredients.filter((other) => other.name !== ing.name),
                 deletableItems,
                 ticked,
               );
@@ -442,15 +449,20 @@ export function RecipeLetter({
                   <span className="flex-[0_0_72px] font-mono text-dense font-semibold text-foreground text-right tabular-nums whitespace-nowrap">
                     {amountLabel ? <ScaledNum>{amountLabel}</ScaledNum> : ""}
                   </span>
-                  {reconciling && (
-                    <input
-                      type="checkbox"
-                      aria-label={ing.name}
-                      checked={ticked.has(ing.name)}
-                      onChange={() => toggleTick(ing.name)}
-                      className="shrink-0 size-4 accent-primary cursor-pointer"
-                    />
-                  )}
+                  {/* An unstockable row gets no checkbox, only its width, so
+                      the column stays straight down the grid. */}
+                  {reconciling &&
+                    (stockable ? (
+                      <input
+                        type="checkbox"
+                        aria-label={ing.name}
+                        checked={ticked.has(ing.name)}
+                        onChange={() => toggleTick(ing.name)}
+                        className="shrink-0 size-4 accent-primary cursor-pointer"
+                      />
+                    ) : (
+                      <span aria-hidden className="shrink-0 size-4" />
+                    ))}
                   <span className="flex-1 font-display text-emphasis text-foreground">
                     {ing.name}
                     {ing.note && (
@@ -464,7 +476,7 @@ export function RecipeLetter({
                       </span>
                     )}
                   </span>
-                  {!reconciling && !isStreaming && userId && inventoryItems.length > 0 && !have && (
+                  {!reconciling && !isStreaming && userId && inventoryItems.length > 0 && !have && stockable && (
                     <NeedCartButton
                       ingredientName={ing.name}
                       onAdd={() => addToShoppingList(ing)}

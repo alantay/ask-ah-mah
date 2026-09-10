@@ -148,11 +148,18 @@ UI label: **"Worth a small trip."** The internal term is `Stretch`.
 
 ## Addition
 
-An ingredient a generated recipe calls for that is not present in the user's pantry. The Addition count distinguishes Close from Stretch. Salt, pepper, water, and cooking oil are **free staples** — never counted as Additions even if absent from the pantry. Everything else in the pantry is also free; only items genuinely missing are Additions.
+An ingredient a generated recipe calls for that is not present in the user's pantry. The Addition count distinguishes Close from Stretch. Everything already in the pantry is free; only items genuinely missing are Additions.
+
+Two things are free that the pantry record might not show, and they are free for **different reasons** — which is why they live in different places:
+
+- **Assumed staples** — salt, pepper, cooking oil. Every kitchen has them, so they are **seeded rows** in `DEFAULT_INVENTORY`, not an exception in the UI. Seeding is the honest encoding: a hard-coded carve-out makes "I deleted my salt" mean nothing, whereas a seeded row lets it mean *I am out of salt*. Pepper is seeded as **two** rows (`Black pepper`, `White pepper`) rather than a bare `Pepper`, because matching is coverage — one generic row would also cover **bell pepper**.
+- **Water is not an Addition at all.** It is not stockable: it comes out of a tap, so it never sits in the pantry, never earns a [Shopping List](#shopping-list) row, and never enters the pantry pill's numerator *or* denominator. The one genuine code rule — `isStockable`, `src/lib/ingredients/stockable.ts`. Water still renders in **What to gather**, with its amount; it is only pantry accounting it sits out of.
+
+`CHAT_SYSTEM_PROMPT` still calls all four **free staples**, and should: generation needs one blanket rule, because a Close Recipe's Addition budget of 2 must never be spent on salt or water. That is a *generation* rule about the budget. What the UI needs is the narrower question — *should the user buy this?* — and the two are settled separately.
 
 Additions **accept** the pantry record as it stands. Correcting that record is someone else's job: the [Checklist block](#checklist-block) before the recipe exists, [Reconcile mode](#reconcile-mode) after it.
 
-Related: [Reconcile mode](#reconcile-mode), [Checklist block](#checklist-block), [Close Recipe](#close-recipe), [Stretch Recipe](#stretch-recipe), [Canonical Key](#canonical-key)
+Related: [Reconcile mode](#reconcile-mode), [Checklist block](#checklist-block), [Close Recipe](#close-recipe), [Stretch Recipe](#stretch-recipe), [Canonical Key](#canonical-key), [Shopping List](#shopping-list)
 
 ---
 
