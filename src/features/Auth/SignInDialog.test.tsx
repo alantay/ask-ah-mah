@@ -71,6 +71,35 @@ describe("SignInDialog", () => {
     expect(screen.getByText("cook@example.com")).toBeInTheDocument();
   });
 
+  it("resends the link to the same address from the sent state", async () => {
+    render(<SignInDialog />);
+    await openDialog();
+
+    await userEvent.type(screen.getByLabelText(/email/i), "cook@example.com");
+    await userEvent.click(screen.getByRole("button", { name: /send me a link/i }));
+    await userEvent.click(await screen.findByRole("button", { name: /resend link/i }));
+
+    expect(mockMagicLink).toHaveBeenCalledTimes(2);
+    expect(mockMagicLink).toHaveBeenLastCalledWith({
+      email: "cook@example.com",
+      callbackURL: "/",
+    });
+    expect(await screen.findByRole("status")).toHaveTextContent(/sent a fresh link/i);
+  });
+
+  it("announces a failed resend without leaving the sent state", async () => {
+    render(<SignInDialog />);
+    await openDialog();
+
+    await userEvent.type(screen.getByLabelText(/email/i), "cook@example.com");
+    await userEvent.click(screen.getByRole("button", { name: /send me a link/i }));
+    mockMagicLink.mockResolvedValue({ data: null, error: { message: "nope" } });
+    await userEvent.click(await screen.findByRole("button", { name: /resend link/i }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/couldn.t send the link/i);
+    expect(screen.getByText(/check your inbox/i)).toBeInTheDocument();
+  });
+
   it("surfaces an inline error when sending fails", async () => {
     mockMagicLink.mockResolvedValue({ data: null, error: { message: "nope" } });
     render(<SignInDialog />);

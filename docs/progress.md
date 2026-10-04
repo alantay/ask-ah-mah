@@ -8,6 +8,9 @@
 - Cooking mode shows scaled quantities beside matched ingredient mentions, uses an accessible full-screen dialog with Escape/focus containment, announces step changes, and keeps long instructions scrollable. Recipe and chat consumers retain the current step on exit/re-entry while mounted; Done resets it and gives a quiet acknowledgment without marking the recipe cooked automatically.
 - Returning from cooking restores focus to Start cooking. Serving controls have 44px targets.
 - Empty cookbook placeholders are removed, desktop recipe-paste height is bounded, and import previews hide saved-recipe actions.
+- Magic-link sign-in offers Resend link from the sent state; sent/resent status and resend failures are announced.
+- Cookbook header dates the newest save as today / yesterday / weekday (within 6 days) / date, since a bare weekday was ambiguous past a week.
+- Shopping input is capped at `max-w-2xl` on desktop.
 
 ## Keyboard access and deletion safety (October 2026)
 

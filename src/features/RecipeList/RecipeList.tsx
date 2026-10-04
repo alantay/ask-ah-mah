@@ -24,6 +24,7 @@ import useSWR, { mutate } from "swr";
 import { AddRecipeModal } from "./components/AddRecipeModal";
 import RecipeCard from "./components/RecipeCard";
 import { RecipeSidebar } from "./components/RecipeSidebar";
+import { lastSavedLabel } from "./utils/lastSavedLabel";
 
 const HIDE_SCROLLBAR =
   "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
@@ -144,10 +145,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
                     return t > max ? t : max;
                   }, 0);
                   if (!latest) return `${base}.`;
-                  const day = new Date(latest).toLocaleDateString("en-US", {
-                    weekday: "long",
-                  });
-                  return `${base}. Last one in: ${day}.`;
+                  return `${base}. Last one in: ${lastSavedLabel(new Date(latest))}.`;
                 })()}
           </p>
         </div>

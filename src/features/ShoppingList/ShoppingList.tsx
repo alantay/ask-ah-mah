@@ -240,7 +240,7 @@ const ShoppingList = () => {
             e.preventDefault();
             onSubmit();
           }}
-          className="flex gap-2 mb-5 items-center"
+          className="flex gap-2 mb-5 items-center max-w-2xl"
         >
           <textarea
             aria-label="Add shopping items"
