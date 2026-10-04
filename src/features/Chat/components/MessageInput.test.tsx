@@ -565,3 +565,21 @@ describe("MessageInput", () => {
     });
   });
 });
+
+it("keeps the draft when sending fails before the reply request starts", async () => {
+  const send = jest.fn().mockResolvedValue(false);
+  render(<MessageInput disabled={false} onSendMessage={send} />);
+  fireEvent.change(screen.getByRole("textbox", { name: "Message Ah Mah" }), {
+    target: { value: "Got eggs" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+  await waitFor(() => expect(send).toHaveBeenCalledWith("Got eggs"));
+  expect(screen.getByRole("textbox")).toHaveValue("Got eggs");
+});
+
+it("clears the draft once the message has been accepted", async () => {
+  render(<MessageInput disabled={false} onSendMessage={jest.fn().mockResolvedValue(true)} />);
+  fireEvent.change(screen.getByRole("textbox"), { target: { value: "Got eggs" } });
+  fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+  await waitFor(() => expect(screen.getByRole("textbox")).toHaveValue(""));
+});

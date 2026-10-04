@@ -210,3 +210,11 @@ describe("classifyPendingAisles", () => {
     expect(mockedUpdateMany).not.toHaveBeenCalled();
   });
 });
+
+
+it("restores the bought flag on a new row without overwriting a re-added row", async () => {
+  await addShoppingListItems([{ name: "Apples", category: "Produce", bought: true }], "u1");
+  expect(mockedUpsert).toHaveBeenCalledWith(expect.objectContaining({
+    update: {}, create: expect.objectContaining({ name: "Apples", category: "Produce", bought: true }),
+  }));
+});

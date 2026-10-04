@@ -102,7 +102,7 @@ export function useChatSession() {
     })
   ).current;
 
-  const { messages, sendMessage, status } = useChat({
+  const { messages, sendMessage, status, error, regenerate } = useChat({
     id: chatId,
     transport,
     onError: (error) => {
@@ -204,7 +204,13 @@ export function useChatSession() {
     },
   });
 
-  const { data, isLoading: messagesLoading } = useSWR<SavedMessage[]>(
+  const {
+    data,
+    isLoading: messagesLoading,
+    error: historyError,
+    isValidating: historyRetrying,
+    mutate: retryHistory,
+  } = useSWR<SavedMessage[]>(
     userId && activeConversationId
       ? messageKey(activeConversationId)
       : null,
@@ -263,7 +269,9 @@ export function useChatSession() {
     if (activeConversationId !== null) return; // only in staging
     const msg = pendingCookWithMessage;
     handleSendMessage(msg)
-      .then(() => clearCookWithMessage())
+      .then((sent) => {
+        if (sent) clearCookWithMessage();
+      })
       .catch((err) => console.error("Cook-with auto-send failed:", err));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingCookWithMessage, status, activeConversationId]);
@@ -303,7 +311,9 @@ export function useChatSession() {
 
   const handleSendMessage = async (message: string) => {
     // Synchronous guard: bail immediately if a send is already in progress.
-    if (sendingRef.current) return;
+    if (sendingRef.current || status === "submitted" || status === "streaming") {
+      return false;
+    }
     sendingRef.current = true;
     setIsSending(true);
     setSubmittedAt(Date.now());
@@ -337,7 +347,8 @@ export function useChatSession() {
 
       // sendMessage flips status → "submitted", which releases the lock via
       // the status effect above and hands disable/loader back to status.
-      sendMessage({ text: message });
+      void sendMessage({ text: message });
+      return true;
     } catch (err) {
       console.error("Send failed:", err);
       toast.error("Aiyah, could not send your message. Please try again!");
@@ -345,7 +356,16 @@ export function useChatSession() {
       sendingRef.current = false;
       setIsSending(false);
       setSubmittedAt(null);
+      return false;
     }
+  };
+
+  const retryReply = async () => {
+    if (sendingRef.current || status !== "error") return;
+    // Regenerate the failed reply without creating another conversation or
+    // saving the same user message again. Keep its send-time conversation id.
+    setSubmittedAt(Date.now());
+    await regenerate();
   };
 
   return {
@@ -356,6 +376,11 @@ export function useChatSession() {
     submittedAt,
     isSending,
     messagesLoading,
+    error,
+    historyError,
+    historyRetrying,
+    retryHistory,
+    retryReply,
     handleSendMessage,
     handleRecipeDetected,
   };

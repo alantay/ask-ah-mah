@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { toast } from "sonner";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { mutate } from "swr";
 import { canonicalTipKey } from "@/lib/marketTips/canonicalKey";
 import { useMarketTips } from "@/hooks/useMarketTips";
@@ -369,4 +370,26 @@ describe("ShoppingList", () => {
 
     expect(screen.getByText(/thinking of a tip/i)).toBeInTheDocument();
   });
+});
+
+
+it("Undo restores cleared bought items with their aisle and bought status", async () => {
+  mockData = { items: [{ id: "1", name: "Apples", bought: true, category: "Produce" }] };
+  render(<ShoppingList />);
+  fireEvent.click(screen.getByRole("button", { name: /clear bought/i }));
+  await waitFor(() => expect(toast.success).toHaveBeenCalled());
+  const options = jest.mocked(toast.success).mock.calls[0][1] as unknown as { action: { onClick: () => void } };
+  await act(async () => { options.action.onClick(); });
+  expect(global.fetch).toHaveBeenCalledWith("/api/shopping-list", expect.objectContaining({
+    method: "POST", body: JSON.stringify({ items: [{ name: "Apples", category: "Produce", bought: true }] }),
+  }));
+});
+
+it("clicking the shopping item name toggles its checkbox", async () => {
+  mockData = { items: [{ id: "1", name: "Apples", bought: false, category: "Produce" }] };
+  render(<ShoppingList />);
+  fireEvent.click(screen.getByText("Apples"));
+  await waitFor(() => expect(global.fetch).toHaveBeenCalledWith("/api/shopping-list", expect.objectContaining({
+    method: "PATCH", body: JSON.stringify({ id: "1", bought: true }),
+  })));
 });

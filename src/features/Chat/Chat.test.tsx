@@ -4,7 +4,7 @@
  * messages are still loading.
  */
 
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import Chat from "./Chat";
 import { useChatSession } from "./hooks/useChatSession";
 
@@ -44,6 +44,30 @@ function baseSession(overrides: Partial<ReturnType<typeof useChatSession>>) {
 describe("Chat — empty-state gate during conversation switch", () => {
   beforeEach(() => {
     mockUseChatSession.mockReset();
+  });
+
+  it("allows a new message and offers reply retry after an AI failure", () => {
+    const retryReply = jest.fn().mockResolvedValue(undefined);
+    mockUseChatSession.mockReturnValue(baseSession({
+      status: "error", error: new Error("Failed"), retryReply,
+    }));
+    render(<Chat />);
+    expect(screen.getByRole("textbox", { name: "Message Ah Mah" })).toBeEnabled();
+    expect(screen.queryByPlaceholderText("Sending…")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(retryReply).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not call missing history a new chat or let users send into it", () => {
+    const retryHistory = jest.fn().mockResolvedValue(undefined);
+    mockUseChatSession.mockReturnValue(baseSession({
+      historyError: new Error("Failed"), retryHistory,
+    }));
+    render(<Chat />);
+    expect(screen.queryByText(/aiyoh, you.re here/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox")).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(retryHistory).toHaveBeenCalledTimes(1);
   });
 
   it("shows the New Chat empty state when genuinely empty and not loading", () => {

@@ -1,11 +1,11 @@
 import { RecipeWithId } from "@/lib/recipes/schemas";
 import { getRandomRecipeProcessingMessage, isTempId } from "@/features/Chat/constants";
 import Image from "next/image";
+import Link from "next/link";
 
 interface RecipeCardProps {
   recipe: RecipeWithId;
-  onSelect: (recipe: RecipeWithId) => void;
-  onDelete: (recipeId: string) => void;
+  onDelete: (recipeId: string, trigger: HTMLButtonElement) => void;
 }
 
 function formatDuration(minutes: number): string {
@@ -15,7 +15,7 @@ function formatDuration(minutes: number): string {
   return m > 0 ? `${h} h ${m} m` : `${h} h`;
 }
 
-export default function RecipeCard({ recipe, onSelect, onDelete }: RecipeCardProps) {
+export default function RecipeCard({ recipe, onDelete }: RecipeCardProps) {
   const isOptimistic = isTempId(recipe.id);
   const ingredients = Array.isArray(recipe.ingredients) ? recipe.ingredients as { name: string }[] : [];
   const servings = recipe.baseServings ?? 2;
@@ -28,19 +28,7 @@ export default function RecipeCard({ recipe, onSelect, onDelete }: RecipeCardPro
   return (
     <article
       className="bg-card border border-border rounded-lg overflow-hidden flex flex-col relative group cursor-pointer shadow-[0_1px_0_var(--color-border-soft),0_18px_28px_-24px_oklch(0.3_0.05_50/0.5)] transition-shadow hover:shadow-[0_1px_0_var(--color-border-soft),0_24px_36px_-24px_oklch(0.3_0.05_50/0.6)]"
-      onClick={() => !isOptimistic && onSelect(recipe)}
     >
-      {/* Delete button — revealed on hover */}
-      <button
-        className="absolute top-2 right-2 z-20 p-1.5 rounded-md bg-card border border-border opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-muted-foreground hover:bg-muted/60"
-        onClick={(e) => { e.stopPropagation(); onDelete(recipe.id); }}
-        aria-label={`Delete ${recipe.name}`}
-      >
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-          <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      </button>
-
       {/* "Made it" stamp — a quiet recall marker, not an achievement badge */}
       {!isOptimistic && recipe.cooked && (
         <span className="absolute top-2 left-2 z-20 -rotate-6 font-sans text-eyebrow font-bold tracking-[0.12em] uppercase px-2 py-0.5 rounded-[10px_10px_10px_2px] bg-jade text-white shadow-[0_1px_0_var(--jade-deep)]">
@@ -83,9 +71,12 @@ export default function RecipeCard({ recipe, onSelect, onDelete }: RecipeCardPro
           </div>
         ) : (
           <>
-            <div className="font-display font-semibold text-xl text-foreground leading-tight tracking-tight group-hover:text-primary transition-colors line-clamp-2">
+            <Link
+              href={`/recipe/${recipe.id}`}
+              className="font-display font-semibold text-xl text-foreground leading-tight tracking-tight group-hover:text-primary transition-colors line-clamp-2 after:absolute after:inset-0 focus-visible:outline-none after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset"
+            >
               {recipe.name}
-            </div>
+            </Link>
             <div className="font-display italic text-dense text-muted-foreground leading-[1.45] line-clamp-2">
               {blurb}
             </div>
@@ -116,6 +107,18 @@ export default function RecipeCard({ recipe, onSelect, onDelete }: RecipeCardPro
           ))}
         </div>
       </div>
+      {!isOptimistic && (
+        <button
+          className="absolute top-2 right-2 z-20 flex size-11 items-center justify-center rounded-md bg-card border border-border opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 focus-visible:outline-2 focus-visible:outline-ring transition-opacity cursor-pointer text-muted-foreground hover:bg-muted/60"
+          type="button"
+          onClick={(event) => onDelete(recipe.id, event.currentTarget)}
+          aria-label={`Delete ${recipe.name}`}
+        >
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+            <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </button>
+      )}
     </article>
   );
 }

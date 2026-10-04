@@ -139,7 +139,7 @@ export function SignInDialog({ open: openProp, onOpenChange: onOpenChangeProp }:
             </Button>
 
             {error && (
-              <p id="signin-error" className="text-sm text-destructive">
+              <p role="alert" id="signin-error" className="text-sm text-destructive">
                 {error}
               </p>
             )}

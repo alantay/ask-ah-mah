@@ -1,5 +1,6 @@
 "use client";
 
+import { LoadError } from "@/features/shared/components/LoadError";
 import { useChatSession } from "./hooks/useChatSession";
 import { useRouter } from "next/navigation";
 import { ChatEmptyState } from "./components/ChatEmptyState";
@@ -16,6 +17,11 @@ const Chat = () => {
     submittedAt,
     isSending,
     messagesLoading,
+    error,
+    historyError,
+    historyRetrying,
+    retryHistory,
+    retryReply,
     handleSendMessage,
     handleRecipeDetected,
   } = useChatSession();
@@ -27,7 +33,11 @@ const Chat = () => {
   // saved history — gate on it so a mid-switch data gap never renders the
   // full-screen empty state (see #383/#384).
   const isEmpty =
-    messageCount === 0 && status === "ready" && !isSending && !messagesLoading;
+    messageCount === 0 &&
+    status === "ready" &&
+    !isSending &&
+    !messagesLoading &&
+    !historyError;
 
   // Only show the history skeleton when there's genuinely nothing on screen yet
   // (a real conversation switch or a cold load). On the new-chat path the reply
@@ -39,7 +49,9 @@ const Chat = () => {
   const composer = (
     <MessageInput
       onSendMessage={handleSendMessage}
-      disabled={status !== "ready" || isSending}
+      disabled={
+        status === "submitted" || status === "streaming" || isSending || !!historyError
+      }
       // In the first-run hero the composer is inset by the centered column, so
       // drop the bottom-bar padding and let it align with the opener cards.
       className={isEmpty ? "px-0 pb-0 pt-0" : undefined}
@@ -60,6 +72,24 @@ const Chat = () => {
     <div
       className="flex flex-col animate-in fade-in duration-300 h-full"
     >
+      {historyError && (
+        <div className="p-4 shrink-0">
+          <LoadError
+            message="Couldn’t load this conversation. Try again before sending another message."
+            retrying={historyRetrying}
+            onRetry={retryHistory}
+          />
+        </div>
+      )}
+      {error && (
+        <div className="p-4 shrink-0">
+          <LoadError
+            message="Aiyah, the reply didn’t come through. Try again, or send another message below."
+            retrying={status === "submitted" || status === "streaming"}
+            onRetry={retryReply}
+          />
+        </div>
+      )}
       {showHistorySkeleton ? (
         <>
           <HistorySkeleton />

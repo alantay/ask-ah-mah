@@ -8,6 +8,7 @@
 
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { toast } from "sonner";
+import { useChat } from "@ai-sdk/react";
 import { useChatSession } from "./useChatSession";
 
 // ── Context mocks ────────────────────────────────────────────────────────────
@@ -84,6 +85,28 @@ describe("useChatSession — in-flight send guard", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockSendMessage.mockResolvedValue(undefined);
+    jest.mocked(useChat).mockReturnValue({
+      messages: [], sendMessage: mockSendMessage, status: "ready",
+    } as unknown as ReturnType<typeof useChat>);
+  });
+
+  it("retries a failed reply without saving the user message or creating another conversation", async () => {
+    mockFetch.mockReturnValueOnce(okConversation());
+    mockFetch.mockResolvedValue(okMessage());
+    const { result, rerender } = renderHook(() => useChatSession());
+    await act(async () => { await result.current.handleSendMessage("Got eggs"); });
+    const requestsBeforeRetry = mockFetch.mock.calls.length;
+    const regenerate = jest.fn().mockResolvedValue(undefined);
+    const sdk = jest.mocked(useChat);
+    sdk.mockReturnValue({
+      messages: [], sendMessage: mockSendMessage, status: "error", regenerate,
+      error: new Error("Offline"),
+    } as unknown as ReturnType<typeof useChat>);
+    rerender();
+    await act(async () => { await result.current.retryReply(); });
+    expect(regenerate).toHaveBeenCalledTimes(1);
+    expect(mockFetch).toHaveBeenCalledTimes(requestsBeforeRetry);
+    expect(mockSendMessage).toHaveBeenCalledTimes(1);
   });
 
   it("sets isSending=true immediately on submit before fetch resolves", async () => {

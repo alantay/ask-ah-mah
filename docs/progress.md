@@ -3,6 +3,19 @@
 ## Context
 - [x] Persistent kitchen state remains the core moat (inventory + cooked + saved).
 
+## Keyboard access and deletion safety (October 2026)
+
+- Saved recipe cards use native links with visible keyboard focus. Pantry actions reveal on focus, shopping item names toggle the checkbox, and navigation announces the current destination.
+- Recipe deletion requires confirmation naming the recipe and explaining that its shared link will stop working. Failed deletion stays open for retry; closing restores focus.
+- Pantry and shopping removals offer Undo, including Clear bought. Restoration retains pantry quantities/units and shopping aisle/bought state; failed restoration offers another attempt. Shopping restoration creates a new row without overwriting an item already re-added.
+- Pantry/shopping removal and recipe delete hit areas are 44px; sign-in errors are announced as alerts.
+
+## Kitchen recovery (September 2026)
+
+- Pantry, shopping list, cookbook, recipe detail, and conversation history show actionable retry states. Failed reads no longer appear as empty kitchens or missing recipes; cached content remains available after a failed refresh.
+- Chat accepts new messages after a reply failure and can retry the reply without duplicating the saved user message. Drafts survive conversation/message-save failures before the reply request starts.
+- Recipe loading waits for session resolution; missing-recipe feedback fills the available surface. The root crash screen offers a route back to the kitchen.
+
 ## V1 — Shipped (April 2026)
 
 The persistent-kitchen MVP. Highlights:

@@ -119,12 +119,15 @@ describe("Inventory — optimistic delete", () => {
     expect(final.ingredientInventory).toEqual([]);
   });
 
-  it("is silent and does not revalidate on success", async () => {
+  it("offers Undo without revalidating on removal success", async () => {
     render(<Inventory />);
     fireEvent.click(removeButtonFor("Duck"));
     await flush();
 
-    expect(mockToastSuccess).not.toHaveBeenCalled();
+    expect(mockToastSuccess).toHaveBeenCalledWith(
+      "Duck — removed from the pantry.",
+      expect.objectContaining({ action: expect.objectContaining({ label: "Undo" }) }),
+    );
     expect(mockMutate).not.toHaveBeenCalled();
   });
 
@@ -191,4 +194,21 @@ describe("Inventory — optimistic delete", () => {
 
     expect(mockMutate).not.toHaveBeenCalled();
   });
+});
+
+
+it("restores pantry quantities and units through Undo", async () => {
+  jest.clearAllMocks();
+  mockMutateResource.mockResolvedValue({ ok: true });
+  DATA.ingredientInventory[0] = { ...item("Duck"), quantity: 500, unit: "g" };
+  render(<Inventory />);
+  fireEvent.click(removeButtonFor("Duck"));
+  await flush();
+  const undo = mockToastSuccess.mock.calls[0][1].action.onClick;
+  await act(async () => { undo(); });
+  expect(mockMutateResource).toHaveBeenCalledWith(expect.objectContaining({
+    method: "POST", body: { items: [{ name: "Duck", type: "ingredient", category: "Protein", quantity: 500, unit: "g" }] },
+  }));
+  expect(mockMutate).toHaveBeenCalledWith("/api/inventory?userId=u1");
+  DATA.ingredientInventory[0] = item("Duck");
 });
