@@ -11,7 +11,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
  * A step's prose `body`, with any word/phrase that names a Step Use (see
  * CONTEXT.md, ADR-0021) turned into an interactive hint: hover or tap shows
  * the quantity consumed at this step, scaled by `ratio` the same way the
- * master ingredient list scales.
+ * master ingredient list scales. Cooking mode opts into visible, dynamically
+ * scaled parenthetical quantities via `quantityDisplay="inline"`.
  *
  * Matching is best-effort and silent: a `use` whose `name` doesn't literally
  * appear in `body` (e.g. a later reference like "stir it in") just renders no
@@ -22,10 +23,12 @@ export function StepBody({
   body,
   uses,
   ratio = 1,
+  quantityDisplay = "hint",
 }: {
   body: string;
   uses?: RecipeStepUse[];
   ratio?: number;
+  quantityDisplay?: "hint" | "inline";
 }) {
   if (!uses || uses.length === 0) return <>{body}</>;
 
@@ -38,7 +41,11 @@ export function StepBody({
     if (match.start > cursor) nodes.push(body.slice(cursor, match.start));
     const label = formatUseLabel(match.use, ratio);
     nodes.push(
-      label ? (
+      label && quantityDisplay === "inline" ? (
+        <span key={i}>
+          {body.slice(match.start, match.end)} ({label})
+        </span>
+      ) : label ? (
         <UseHint key={i} label={label}>
           {body.slice(match.start, match.end)}
         </UseHint>

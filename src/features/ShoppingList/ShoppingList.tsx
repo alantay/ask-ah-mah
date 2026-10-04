@@ -2,6 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { useSessionContext } from "@/contexts/SessionContext";
+import { showUndoToast } from "@/features/shared/showUndoToast";
+import { LoadError } from "@/features/shared/components/LoadError";
 import { Eyebrow } from "@/features/shared/components/recipe";
 import { TipsToggle } from "@/features/shared/components/TipsToggle";
 import { useMarketTips } from "@/hooks/useMarketTips";
@@ -36,7 +38,13 @@ const ShoppingList = () => {
   const classifyRequestedRef = useRef("");
 
   const key = userId ? shoppingListKey(userId) : null;
-  const { data, isLoading, error } = useSWR<GetShoppingListResponse>(
+  const {
+    data,
+    isLoading,
+    error,
+    isValidating,
+    mutate: retryList,
+  } = useSWR<GetShoppingListResponse>(
     key,
     fetcher,
     { revalidateOnMount: true },
@@ -117,10 +125,12 @@ const ShoppingList = () => {
       if (!res.ok) {
         toast.error("Aiyah, that didn't work. Try again?");
       }
+      return res.ok;
     } catch (e) {
       mutate(key);
       console.error("Failed to update shopping list:", e);
       toast.error("Aiyah, that didn't work. Try again?");
+      return false;
     }
   };
 
@@ -129,15 +139,35 @@ const ShoppingList = () => {
       items.map((i) => (i.id === item.id ? { ...i, bought: !i.bought } : i)),
     );
 
-  const removeItem = (item: ShoppingListRow) =>
-    mutateList("DELETE", { id: item.id }, (items) =>
+  const offerUndo = (removed: ShoppingListRow[], message: string) => {
+    if (!userId) return;
+    const key = shoppingListKey(userId);
+    showUndoToast(message, async () => {
+      const res = await mutateResource({
+        url: "/api/shopping-list", method: "POST",
+        body: { items: removed.map(({ name, category, bought }) => ({
+          name, category: category ?? undefined, bought,
+        })) },
+      });
+      if (!res.ok) throw new Error("Restore failed");
+      await mutate(key);
+    });
+  };
+
+  const removeItem = async (item: ShoppingListRow) => {
+    const removed = await mutateList("DELETE", { id: item.id }, (items) =>
       items.filter((i) => i.id !== item.id),
     );
+    if (removed) offerUndo([item], `${item.name} — removed from the list.`);
+  };
 
-  const clearBought = () =>
-    mutateList("DELETE", { clearBought: true }, (items) =>
+  const clearBought = async () => {
+    const bought = items.filter((item) => item.bought);
+    const removed = await mutateList("DELETE", { clearBought: true }, (items) =>
       items.filter((i) => !i.bought),
     );
+    if (removed) offerUndo(bought, "Bought items — cleared from the list.");
+  };
 
   const items = data?.items ?? [];
   const hasBought = items.some((item) => item.bought);
@@ -183,11 +213,18 @@ const ShoppingList = () => {
     tipsOn,
   );
 
-  if (error) return <div>Error: {error.message}</div>;
-
   return (
     <div className="h-full overflow-y-auto">
       <div className="px-4 sm:px-9 pt-4 sm:pt-7 pb-5">
+        {error && (
+          <div className="mb-5">
+            <LoadError
+              message="Aiyah, couldn’t load the shopping list. Try again to bring it back."
+              retrying={isValidating}
+              onRetry={retryList}
+            />
+          </div>
+        )}
         <div className="hidden sm:block mb-5">
           <Eyebrow className="block mb-1.5">What to get</Eyebrow>
           <h1 className="font-display font-semibold text-display text-foreground leading-none tracking-tight">
@@ -203,9 +240,10 @@ const ShoppingList = () => {
             e.preventDefault();
             onSubmit();
           }}
-          className="flex gap-2 mb-5 items-center"
+          className="flex gap-2 mb-5 items-center max-w-2xl"
         >
           <textarea
+            aria-label="Add shopping items"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => {
@@ -230,13 +268,13 @@ const ShoppingList = () => {
           </Button>
         </form>
 
-        {isLoading && (
+        {isLoading && !error && (
           <p className="font-display italic text-emphasis text-muted-foreground">
             Looking at the list…
           </p>
         )}
 
-        {!isLoading && items.length === 0 && (
+        {!error && !isLoading && items.length === 0 && (
           <p className="font-display italic text-emphasis text-muted-foreground">
             Nothing to buy yet. Add what you need above &mdash; or tap the cart
             on a recipe&rsquo;s missing ingredient.
@@ -263,46 +301,46 @@ const ShoppingList = () => {
                         aria-checked={item.bought}
                         aria-label={item.name}
                         onClick={() => toggleBought(item)}
-                        className={cn(
-                          "flex size-5 shrink-0 items-center justify-center rounded-full border transition-colors",
-                          item.bought
-                            ? "bg-primary border-primary text-primary-foreground"
-                            : "border-border text-transparent hover:border-primary",
-                        )}
+                        className="flex min-h-11 min-w-0 flex-1 items-center gap-3 text-left rounded-md focus-visible:outline-2 focus-visible:outline-ring"
                       >
-                        <Check className="size-3" strokeWidth={3} />
+                        <span aria-hidden="true" className={cn(
+                          "flex size-5 shrink-0 items-center justify-center rounded-full border",
+                          item.bought ? "bg-primary border-primary text-primary-foreground" : "border-border text-transparent",
+                        )}>
+                          <Check className="size-3" strokeWidth={3} />
+                        </span>
+                        <span
+                          className={cn(
+                            "flex-1",
+                            item.bought
+                              ? "line-through text-muted-foreground"
+                              : "text-foreground",
+                          )}
+                        >
+                          {item.name}
+                          {tipsOn &&
+                            !item.bought &&
+                            tips[canonicalTipKey(item.name)] && (
+                              <span className="block font-display italic text-dense text-muted-foreground leading-snug">
+                                — {tips[canonicalTipKey(item.name)]}
+                              </span>
+                            )}
+                          {tipsOn &&
+                            !item.bought &&
+                            tipsLoading &&
+                            !tips[canonicalTipKey(item.name)] &&
+                            isPickableCategory(item.category) && (
+                              <span className="block font-display italic text-dense text-muted-foreground/60 leading-snug animate-pulse">
+                                — Ah Mah&rsquo;s thinking of a tip…
+                              </span>
+                            )}
+                        </span>
                       </button>
-                      <span
-                        className={cn(
-                          "flex-1",
-                          item.bought
-                            ? "line-through text-muted-foreground"
-                            : "text-foreground",
-                        )}
-                      >
-                        {item.name}
-                        {tipsOn &&
-                          !item.bought &&
-                          tips[canonicalTipKey(item.name)] && (
-                            <span className="block font-display italic text-dense text-muted-foreground leading-snug">
-                              — {tips[canonicalTipKey(item.name)]}
-                            </span>
-                          )}
-                        {tipsOn &&
-                          !item.bought &&
-                          tipsLoading &&
-                          !tips[canonicalTipKey(item.name)] &&
-                          isPickableCategory(item.category) && (
-                            <span className="block font-display italic text-dense text-muted-foreground/60 leading-snug animate-pulse">
-                              — Ah Mah&rsquo;s thinking of a tip…
-                            </span>
-                          )}
-                      </span>
                       <button
                         type="button"
                         aria-label={`Remove ${item.name}`}
                         onClick={() => removeItem(item)}
-                        className="shrink-0 -mr-1 flex size-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                        className="shrink-0 -mr-1 flex size-11 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-ring"
                       >
                         <X className="size-4" />
                       </button>

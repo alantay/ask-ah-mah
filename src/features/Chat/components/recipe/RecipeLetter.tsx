@@ -20,7 +20,7 @@ import { mutateResource } from "@/lib/swr/mutateResource";
 import { cn } from "@/lib/utils";
 import { fetcher } from "@/lib/utils";
 import { ShoppingCart, TimerIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CookingMode, ServingsStepper } from "@/features/Recipe";
 import { DottedList, Eyebrow, StepList } from "@/features/shared/components/recipe";
 import { toast } from "sonner";
@@ -101,6 +101,13 @@ export function RecipeLetter({
   const [servings, setServings] = useState(baseServings);
   const [inFlight, setInFlight] = useState<Set<string>>(new Set());
   const [cooking, setCooking] = useState(false);
+  const [cookingStep, setCookingStep] = useState(0);
+  const startCookingRef = useRef<HTMLButtonElement | null>(null);
+  const wasCooking = useRef(false);
+  useEffect(() => {
+    if (wasCooking.current && !cooking) startCookingRef.current?.focus();
+    wasCooking.current = cooking;
+  }, [cooking]);
   const [reconciling, setReconciling] = useState(false);
   const [ticked, setTicked] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
@@ -254,7 +261,13 @@ export function RecipeLetter({
         title={title}
         steps={steps}
         prep={prep}
+        initialStep={cookingStep}
+        onStepChange={setCookingStep}
         onExit={() => setCooking(false)}
+        onFinish={() => {
+          setCookingStep(0);
+          setCooking(false);
+        }}
         cooked={cooked}
         onCookedChange={onCookedChange}
         servingsRatio={ratio}
@@ -582,6 +595,7 @@ export function RecipeLetter({
           {canCook && (
             <Button
               variant="cta"
+              ref={startCookingRef}
               onClick={() => setCooking(true)}
               className="ml-auto h-9 px-4 font-sans text-xs font-semibold gap-1.5"
             >

@@ -1,19 +1,30 @@
 "use client";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useSessionContext } from "@/contexts/SessionContext";
+import { LoadError } from "@/features/shared/components/LoadError";
 import { Eyebrow } from "@/features/shared/components/recipe";
 import { RecipeWithId } from "@/lib/recipes/schemas";
 import { recipeKey } from "@/lib/swr/keys";
 import { mutateResource } from "@/lib/swr/mutateResource";
 import { fetcher } from "@/lib/utils";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
 import { AddRecipeModal } from "./components/AddRecipeModal";
 import RecipeCard from "./components/RecipeCard";
 import { RecipeSidebar } from "./components/RecipeSidebar";
+import { lastSavedLabel } from "./utils/lastSavedLabel";
 
 const HIDE_SCROLLBAR =
   "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
@@ -24,35 +35,53 @@ interface RecipeListProps {
 
 export default function RecipeList({ onChatClick }: RecipeListProps) {
   const { userId } = useSessionContext();
-  const router = useRouter();
   const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<RecipeWithId | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(false);
+  const deleteTrigger = useRef<HTMLButtonElement | null>(null);
+  const addButton = useRef<HTMLButtonElement | null>(null);
+  const deleteSucceeded = useRef(false);
 
-  const { data: recipes, isLoading } = useSWR<RecipeWithId[]>(
+  const {
+    data: recipes,
+    isLoading,
+    error,
+    isValidating,
+    mutate: retryRecipes,
+  } = useSWR<RecipeWithId[]>(
     userId ? recipeKey(userId) : null,
     fetcher,
     { shouldRetryOnError: true, revalidateOnMount: true },
   );
 
-  const deleteRecipe = async (recipeId: string) => {
+  const deleteRecipe = async () => {
+    if (!deleteTarget || deleting) return;
+    setDeleting(true);
+    setDeleteError(false);
     try {
       const res = await mutateResource({
         url: "/api/recipe",
         method: "DELETE",
-        body: { recipeId },
+        body: { recipeId: deleteTarget.id },
       });
       if (!res.ok) throw new Error("Delete failed");
       if (userId) mutate(recipeKey(userId));
+      deleteSucceeded.current = true;
+      setDeleteTarget(null);
       toast.success("Okay, thrown away.");
     } catch {
-      toast.error("Aiyah, couldn't throw it away. Try again?");
+      setDeleteError(true);
+    } finally {
+      setDeleting(false);
     }
   };
 
   const allRecipes = recipes ?? [];
-  const isEmpty = allRecipes.length === 0 && !isLoading;
+  const isEmpty = allRecipes.length === 0 && !isLoading && !error;
 
   const tagCounts = allRecipes.reduce(
     (acc, r) => {
@@ -89,6 +118,15 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
 
   return (
     <div className="h-full flex flex-col bg-muted paper">
+      {error && (
+        <div className="px-4 sm:px-9 pt-4">
+          <LoadError
+            message="Aiyah, couldn’t load your cookbook. Try again to bring your recipes back."
+            retrying={isValidating}
+            onRetry={retryRecipes}
+          />
+        </div>
+      )}
       {/* Title strip — hidden on mobile; Cookbook tab below the app header
           already labels this surface and the chip rail carries `All · N`. */}
       <div className="px-4 sm:px-9 pt-3 sm:pt-6 pb-[18px] sm:border-b sm:border-border flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-6 shrink-0">
@@ -107,10 +145,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
                     return t > max ? t : max;
                   }, 0);
                   if (!latest) return `${base}.`;
-                  const day = new Date(latest).toLocaleDateString("en-US", {
-                    weekday: "long",
-                  });
-                  return `${base}. Last one in: ${day}.`;
+                  return `${base}. Last one in: ${lastSavedLabel(new Date(latest))}.`;
                 })()}
           </p>
         </div>
@@ -172,6 +207,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
           <Button
             variant="cta"
             onClick={() => setShowAdd(true)}
+            ref={addButton}
             aria-label="Add recipe"
             className="shrink-0 gap-1.5 px-3 py-[7px] font-sans text-dense font-semibold rounded-full"
           >
@@ -210,7 +246,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
         <div
           className={`flex-1 overflow-y-auto px-4 sm:px-6 py-5 ${HIDE_SCROLLBAR}`}
         >
-          {isLoading ? (
+          {isLoading && !error ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-[18px]">
               {[0, 1, 2].map((i) => (
                 <SkeletonCard key={i} />
@@ -221,7 +257,7 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
               onChatClick={onChatClick}
               onPasteClick={() => setShowAdd(true)}
             />
-          ) : filtered.length === 0 ? (
+          ) : error && !recipes ? null : filtered.length === 0 ? (
             <p className="font-display italic text-emphasis text-muted-foreground">
               {activeTags.size > 0
                 ? "Nothing matches those filters. Try removing one?"
@@ -233,8 +269,12 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
                 <RecipeCard
                   key={recipe.id}
                   recipe={recipe}
-                  onSelect={(r) => router.push(`/recipe/${r.id}`)}
-                  onDelete={deleteRecipe}
+                  onDelete={(_id, trigger) => {
+                    deleteTrigger.current = trigger;
+                    deleteSucceeded.current = false;
+                    setDeleteError(false);
+                    setDeleteTarget(recipe);
+                  }}
                 />
               ))}
             </div>
@@ -243,6 +283,51 @@ export default function RecipeList({ onChatClick }: RecipeListProps) {
       </div>
 
       <AddRecipeModal open={showAdd} onOpenChange={setShowAdd} />
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open && !deleting) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            if (!deleteSucceeded.current && deleteTrigger.current?.isConnected) {
+              deleteTrigger.current.focus();
+            } else {
+              addButton.current?.focus();
+            }
+          }}
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle className="break-words">
+              Delete &ldquo;{deleteTarget?.name}&rdquo;?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes the recipe from your cookbook for good. Anyone with
+              its shared link will no longer be able to open it.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {deleteError && (
+            <p role="alert" className="text-sm text-destructive">
+              Aiyah, couldn’t confirm the deletion. Try again, or keep browsing your cookbook.
+            </p>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Keep recipe</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={deleting}
+              onClick={(event) => {
+                event.preventDefault();
+                void deleteRecipe();
+              }}
+            >
+              {deleting ? "Deleting…" : "Delete recipe"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -255,9 +340,9 @@ function CookbookEmpty({
   onPasteClick?: () => void;
 }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[18px]">
-      {/* Instructional card — spans 2 rows on desktop */}
-      <div className="bg-card border-[1.5px] border-dashed border-border rounded-lg p-6 lg:row-span-2 flex flex-col gap-3.5 shadow-[0_1px_0_var(--color-border-soft)]">
+    <div className="max-w-xl">
+      {/* A settled empty state, distinct from the loading skeletons. */}
+      <div className="bg-card border-[1.5px] border-dashed border-border rounded-lg p-6 flex flex-col gap-3.5 shadow-[0_1px_0_var(--color-border-soft)]">
         <div className="w-11 h-11 rounded-lg bg-primary flex items-center justify-center text-primary-foreground shrink-0">
           <svg
             width="22"
@@ -295,27 +380,6 @@ function CookbookEmpty({
           </button>
         </div>
       </div>
-
-      {/* Ghost cards */}
-      {[0, 1, 2, 3].map((i) => (
-        <div
-          key={i}
-          className="border-[1.5px] border-dashed border-border rounded-lg overflow-hidden flex flex-col opacity-55"
-        >
-          <div
-            className="h-16 border-b border-border opacity-60"
-            style={{
-              background:
-                "repeating-linear-gradient(135deg, var(--color-border-soft) 0 6px, transparent 6px 12px)",
-            }}
-          />
-          <div className="p-4 flex flex-col gap-2">
-            <div className="h-3 w-[70%] bg-border rounded" />
-            <div className="h-2 w-[90%] bg-border rounded opacity-60" />
-            <div className="h-2 w-[60%] bg-border rounded opacity-60" />
-          </div>
-        </div>
-      ))}
     </div>
   );
 }

@@ -298,14 +298,32 @@ describe("RecipeDisplay", () => {
       expect(screen.getByTestId("invitation")).toBeInTheDocument();
     });
 
-    it("keeps a single Copy recipe control (the hero overlay) and hides owner actions", () => {
+    it("keeps a single Copy recipe control and hides owner actions", () => {
       renderReadOnly();
-      // Nav row is gone, so only the overlay copy button remains.
       expect(screen.getAllByLabelText("Copy recipe")).toHaveLength(1);
       expect(screen.queryByLabelText(/Tweak this recipe/i)).not.toBeInTheDocument();
       expect(screen.queryByLabelText(/Start cooking/i)).not.toBeInTheDocument();
       expect(screen.queryByLabelText(/Share recipe/i)).not.toBeInTheDocument();
     });
+  });
+
+  it("lets a shared-recipe recipient cook without changing the owner's recipe", async () => {
+    render(<SessionProvider>
+      <RecipeDisplay recipe={{ ...baseRecipe, steps: [
+        { title: "Heat", body: "Heat the pan." },
+        { title: "Serve", body: "Serve the eggs." },
+      ] } as never} onBack={jest.fn()} readOnly />
+    </SessionProvider>);
+    fireEvent.click(screen.getByLabelText(/Start cooking/));
+    fireEvent.click(screen.getByText("Next step →"));
+    expect(screen.getByRole("status")).toHaveTextContent("Step 2 of 2");
+    expect(screen.queryByRole("checkbox", { name: "I made this" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText("Exit cooking mode"));
+    await waitFor(() => expect(screen.getByLabelText(/Start cooking/)).toHaveFocus());
+    fireEvent.click(screen.getByLabelText(/Start cooking/));
+    expect(screen.getByRole("status")).toHaveTextContent("Step 2 of 2");
+    fireEvent.click(screen.getByText("Done — all finished!"));
+    expect(screen.queryByRole("checkbox", { name: "I made this" })).not.toBeInTheDocument();
   });
 
   describe("Before you start (mise en place)", () => {
@@ -321,4 +339,31 @@ describe("RecipeDisplay", () => {
       expect(screen.queryByText("Before you start")).not.toBeInTheDocument();
     });
   });
+});
+
+
+it("retains the cooking step on exit, restores focus, and resets after Done", async () => {
+  renderRecipe({ steps: [
+    { title: "Heat", body: "Heat the pan." },
+    { title: "Finish", body: "Serve the eggs." },
+  ] } as never);
+  fireEvent.click(screen.getByLabelText(/Start cooking/));
+  fireEvent.click(screen.getByText("Next step →"));
+  fireEvent.click(screen.getByText("Exit cooking mode"));
+  await waitFor(() => expect(screen.getByLabelText(/Start cooking/)).toHaveFocus());
+  fireEvent.click(screen.getByLabelText(/Start cooking/));
+  expect(screen.getByRole("status")).toHaveTextContent("Step 2 of 2");
+  fireEvent.click(screen.getByText("Done — all finished!"));
+  expect(toast.success).toHaveBeenCalledWith("All finished. Enjoy your meal, lah.");
+  fireEvent.click(screen.getByLabelText(/Start cooking/));
+  expect(screen.getByRole("status")).toHaveTextContent("Step 1 of 2");
+});
+
+it("shows an import preview without saved-recipe actions", () => {
+  render(<SessionProvider>
+    <RecipeDisplay recipe={{ ...baseRecipe, steps: [{ title: "Heat", body: "Heat the pan." }] } as never} onBack={jest.fn()} preview />
+  </SessionProvider>);
+  expect(screen.getByText("Scrambled Eggs")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /Start cooking|Share recipe|Tweak this recipe|Copy recipe/ })).not.toBeInTheDocument();
+  expect(screen.queryByRole("checkbox", { name: "I made this" })).not.toBeInTheDocument();
 });

@@ -47,7 +47,7 @@ export function InventoryItemRow({
           }
         }}
         className={cn(
-          "flex items-center gap-2.5 py-1.5 border-b border-dotted border-border last:border-0 cursor-pointer select-none transition-colors",
+          "flex items-center gap-2.5 py-1.5 border-b border-dotted border-border last:border-0 cursor-pointer select-none transition-colors focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
           selected && "text-foreground",
         )}
       >
@@ -106,7 +106,7 @@ export function InventoryItemRow({
       <button
         onClick={() => onRemove(item.name)}
         aria-label={`Remove ${item.name}`}
-        className="shrink-0 -mr-1 w-6 h-6 rounded-md flex items-center justify-center text-ink-faint hover:text-foreground hover:bg-muted opacity-30 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity cursor-pointer"
+        className="shrink-0 -mr-1 w-11 h-11 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 focus-visible:outline-2 focus-visible:outline-ring transition-opacity cursor-pointer"
       >
         <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
           <path

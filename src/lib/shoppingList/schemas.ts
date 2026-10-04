@@ -5,6 +5,7 @@ import { z } from "zod";
 export const AddShoppingListItemSchema = z.object({
   name: z.string().trim().min(1).max(100),
   category: z.string().trim().min(1).optional(),
+  bought: z.boolean().optional(),
 });
 
 export const AddShoppingListItemsSchema = z.object({

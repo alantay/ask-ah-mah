@@ -12,10 +12,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { GoogleIcon } from "./GoogleIcon";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const SENT_ACTION_CLASS =
+  "min-h-11 text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed";
 
 interface SignInDialogProps {
   // Uncontrolled by default (renders its own trigger button). Pass both to
@@ -34,7 +36,11 @@ export function SignInDialog({ open: openProp, onOpenChange: onOpenChangeProp }:
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState(false);
   const [sentTo, setSentTo] = useState<string | null>(null);
+  const [resent, setResent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Bumped when the sent view is left, so a send still in flight can't
+  // update the state that replaced it.
+  const sendAttempt = useRef(0);
 
   const emailValid = EMAIL_PATTERN.test(email.trim());
   const busy = googleLoading || sending;
@@ -57,11 +63,8 @@ export function SignInDialog({ open: openProp, onOpenChange: onOpenChangeProp }:
     }
   };
 
-  const handleEmailSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!emailValid || sending) return;
-
-    const address = email.trim();
+  const sendLink = async (address: string) => {
+    const attempt = ++sendAttempt.current;
     setSending(true);
     setError(null);
     try {
@@ -70,12 +73,27 @@ export function SignInDialog({ open: openProp, onOpenChange: onOpenChangeProp }:
         callbackURL: "/",
       });
       if (sendError) throw sendError;
-      setSentTo(address);
+      return attempt === sendAttempt.current;
     } catch {
-      setError("Couldn't send the link — please try again.");
+      if (attempt === sendAttempt.current) setError("Couldn't send the link — please try again.");
+      return false;
     } finally {
       setSending(false);
     }
+  };
+
+  const handleEmailSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!emailValid || sending) return;
+
+    const address = email.trim();
+    if (await sendLink(address)) setSentTo(address);
+  };
+
+  const handleResend = async () => {
+    if (!sentTo || sending) return;
+    setResent(false);
+    if (await sendLink(sentTo)) setResent(true);
   };
 
   // Reset the transient form state whenever the dialog closes so it reopens
@@ -83,8 +101,10 @@ export function SignInDialog({ open: openProp, onOpenChange: onOpenChangeProp }:
   const handleOpenChange = (next: boolean) => {
     setOpen(next);
     if (!next) {
+      sendAttempt.current++;
       setEmail("");
       setSentTo(null);
+      setResent(false);
       setError(null);
     }
   };
@@ -110,21 +130,38 @@ export function SignInDialog({ open: openProp, onOpenChange: onOpenChangeProp }:
 
         {sentTo ? (
           <div className="flex flex-col gap-3 text-sm">
-            <p>
-              Check your inbox — we sent a sign-in link to{" "}
+            <p role="status">
+              {resent ? "Sent a fresh link to " : "Check your inbox — we sent a sign-in link to "}
               <span className="font-semibold">{sentTo}</span>. It expires in 10
               minutes.
             </p>
-            <button
-              type="button"
-              onClick={() => {
-                setSentTo(null);
-                setError(null);
-              }}
-              className="self-start text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors cursor-pointer"
-            >
-              Use a different email
-            </button>
+            {error && (
+              <p role="alert" className="text-destructive">
+                {error}
+              </p>
+            )}
+            <div className="flex flex-wrap gap-x-5 gap-y-1">
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={sending}
+                className={SENT_ACTION_CLASS}
+              >
+                {sending ? "Sending…" : "Resend link"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  sendAttempt.current++;
+                  setSentTo(null);
+                  setResent(false);
+                  setError(null);
+                }}
+                className={SENT_ACTION_CLASS}
+              >
+                Use a different email
+              </button>
+            </div>
           </div>
         ) : (
           <div className="flex flex-col gap-4">
@@ -139,7 +176,7 @@ export function SignInDialog({ open: openProp, onOpenChange: onOpenChangeProp }:
             </Button>
 
             {error && (
-              <p id="signin-error" className="text-sm text-destructive">
+              <p role="alert" id="signin-error" className="text-sm text-destructive">
                 {error}
               </p>
             )}

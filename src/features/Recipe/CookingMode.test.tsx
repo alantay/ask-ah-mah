@@ -81,8 +81,8 @@ describe("CookingMode — last-step cooked marker", () => {
   });
 });
 
-describe("CookingMode — Step Uses inline hints", () => {
-  it("turns a matched ingredient mention into a hoverable hint, scaled by servingsRatio", async () => {
+describe("CookingMode — visible Step Uses quantities", () => {
+  it("shows a scaled quantity beside the ingredient without requiring a tap", () => {
     render(
       <CookingMode
         title="Fried Rice"
@@ -100,10 +100,8 @@ describe("CookingMode — Step Uses inline hints", () => {
     );
     fireEvent.click(screen.getByText("Next step →"));
 
-    const hint = screen.getByText("slurry");
-    expect(hint.tagName).toBe("BUTTON");
-    await userEvent.hover(hint);
-    expect(await screen.findByText("4 tbsp")).toBeInTheDocument();
+    expect(screen.getByText("slurry (4 tbsp)")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "slurry" })).not.toBeInTheDocument();
   });
 
   it("renders plain body text on steps without uses (e.g. prep-synthesized steps)", () => {
@@ -151,4 +149,28 @@ describe("CookingMode — prep and method phases", () => {
     expect(screen.getByLabelText("Step 1")).toBeInTheDocument();
     expect(screen.getByText("Next step →")).toBeInTheDocument();
   });
+});
+
+
+it("opens with focus on the step heading and supports Escape", async () => {
+  const user = userEvent.setup();
+  const exit = jest.fn();
+  render(<CookingMode title="Rice" steps={steps} onExit={exit} />);
+  expect(screen.getByRole("dialog", { name: "Rice" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Prep" })).toHaveFocus();
+  await user.keyboard("{Escape}");
+  expect(exit).toHaveBeenCalledTimes(1);
+});
+
+it("resumes at the supplied step and reports navigation", () => {
+  const onStepChange = jest.fn();
+  render(<CookingMode title="Rice" steps={steps} initialStep={1} onStepChange={onStepChange} onExit={jest.fn()} />);
+  expect(screen.getByRole("status")).toHaveTextContent("Step 2 of 2");
+  fireEvent.click(screen.getByRole("button", { name: /Prev/ }));
+  expect(onStepChange).toHaveBeenLastCalledWith(0);
+});
+
+it("keeps a resumed step within a shortened recipe", () => {
+  render(<CookingMode title="Rice" steps={steps} initialStep={10} onExit={jest.fn()} />);
+  expect(screen.getByRole("status")).toHaveTextContent("Step 2 of 2");
 });

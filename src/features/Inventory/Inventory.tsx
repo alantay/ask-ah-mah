@@ -15,6 +15,8 @@ export type GetInventoryResponse = {
 };
 import { cn } from "@/lib/utils";
 import { fetcher } from "@/lib/utils";
+import { showUndoToast } from "@/features/shared/showUndoToast";
+import { LoadError } from "@/features/shared/components/LoadError";
 import { Eyebrow } from "@/features/shared/components/recipe";
 import { TipsToggle } from "@/features/shared/components/TipsToggle";
 import { useStorageTips } from "@/hooks/useStorageTips";
@@ -151,7 +153,13 @@ const Inventory = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const { data, error, isLoading } = useSWR<GetInventoryResponse>(
+  const {
+    data,
+    error,
+    isLoading,
+    isValidating,
+    mutate: retryInventory,
+  } = useSWR<GetInventoryResponse>(
     userId ? inventoryKey(userId) : null,
     fetcher,
     {
@@ -244,14 +252,14 @@ const Inventory = () => {
   const rollbackPending = useRef(false);
 
   // Optimistic: the row disappears on click and the DELETE settles in the
-  // background. Success is silent — the row vanishing is the confirmation, and
-  // a toast per delete just recreates the pile-up when clearing out several
-  // items. No revalidation on success either: the optimistic write is
+  // background. Successful removals offer Undo. No revalidation on success: the optimistic write is
   // authoritative for a delete, and revalidateOnFocus heals any drift from
   // chat-side adds. Only failure pays for a round-trip.
   const removeItem = async (itemName: string) => {
     if (!userId) return;
     const key = inventoryKey(userId);
+    const removed = [...(data?.ingredientInventory ?? []), ...(data?.kitchenwareInventory ?? [])]
+      .filter((item) => item.name === itemName);
     const rollback = (e: unknown) => {
       console.error("Failed to remove item:", e);
       rollbackPending.current = true;
@@ -273,6 +281,18 @@ const Inventory = () => {
       if (!response.ok) {
         const detail = await response.text().catch(() => "");
         rollback(`DELETE /api/inventory ${response.status}: ${detail}`);
+      } else if (removed.length > 0) {
+        showUndoToast(`${itemName} — removed from the pantry.`, async () => {
+          const restored = await mutateResource({
+            url: "/api/inventory", method: "POST",
+            body: { items: removed.map(({ name, type, category, quantity, unit }) => ({
+              name, type, category: category ?? undefined,
+              quantity: quantity ?? undefined, unit: unit ?? undefined,
+            })) },
+          });
+          if (!restored.ok) throw new Error("Restore failed");
+          await mutate(key);
+        });
       }
     } catch (e) {
       rollback(e);
@@ -360,11 +380,6 @@ const Inventory = () => {
     router.replace("/?tab=chat");
   };
 
-  if (error) {
-    console.error("[Inventory]", error);
-    return <div>Aiyah, the pantry door is stuck — try again?</div>;
-  }
-
   const { ingredientInventory = [], kitchenwareInventory = [] } = data || {};
   const ingredientGroups = groupIngredients(ingredientInventory);
   const equipmentItems = [...kitchenwareInventory].sort((a, b) =>
@@ -396,6 +411,15 @@ const Inventory = () => {
   return (
     <div className={cn("h-full overflow-y-auto", selectionMode && "pb-24")}>
       <div className="px-4 sm:px-9 pt-4 sm:pt-7 pb-5">
+        {error && (
+          <div className="mb-5">
+            <LoadError
+              message="Aiyah, couldn’t load the pantry. Try again to see what’s on the shelf."
+              retrying={isValidating}
+              onRetry={retryInventory}
+            />
+          </div>
+        )}
         {/* Header — hidden on mobile (tab strip already labels this surface) */}
         <div className="hidden sm:flex sm:items-end sm:justify-between sm:gap-6 mb-5">
           <div>
@@ -529,7 +553,8 @@ const Inventory = () => {
             </CardHeader>
             <CardContent className="space-y-3">
               <textarea
-                value={draft}
+                aria-label="Add pantry items"
+            value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 placeholder="e.g., 2 chicken breasts, some bok choy, 500g rice noodles, eggs, a wok"
                 rows={4}
@@ -558,19 +583,19 @@ const Inventory = () => {
           </Card>
         )}
 
-        {isLoading && (
+        {isLoading && !error && (
           <p className="font-display italic text-emphasis text-muted-foreground">
             Looking in the pantry…
           </p>
         )}
 
-        {!isLoading && totalCount === 0 && !isAdding && !selectionMode && (
+        {!error && !isLoading && totalCount === 0 && !isAdding && !selectionMode && (
           <p className="font-display italic text-emphasis text-muted-foreground">
             Nothing in yet. Tell Ah Mah what you&rsquo;ve got &mdash; &ldquo;a bit of ginger, some eggs&rdquo; is enough.
           </p>
         )}
 
-        {!isLoading && totalCount === 0 && selectionMode && (
+        {!error && !isLoading && totalCount === 0 && selectionMode && (
           <p className="font-display italic text-emphasis text-muted-foreground">
             Pantry&rsquo;s empty for now. Add a few things first, then Ah Mah can suggest what to cook.
           </p>

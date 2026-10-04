@@ -425,8 +425,9 @@ interface RecipeDisplayProps {
   onStartCooking?: () => void;
   hideBackButton?: boolean;
   // Public share view: hide every owner-only action (share, tweak, bench, back)
-  // and the tweak panel. Copy stays — it's useful for whoever opens the link.
+  // and the tweak panel. Copy and cooking stay — recipients can use the recipe without editing it.
   readOnly?: boolean;
+  preview?: boolean;
   // Rendered after the recipe card, inside the scroll area. The public share
   // view uses it for the closing "try Ah Mah" invitation band.
   footerSlot?: ReactNode;
@@ -437,12 +438,21 @@ export default function RecipeDisplay({
   onBack,
   onStartCooking,
   hideBackButton,
-  readOnly = false,
+  readOnly: publicReadOnly = false,
+  preview = false,
   footerSlot,
 }: RecipeDisplayProps) {
+  const readOnly = publicReadOnly || preview;
   const { userId, isAuthenticated } = useSessionContext();
   const { mutate } = useSWRConfig();
   const [cooking, setCooking] = useState(false);
+  const [cookingStep, setCookingStep] = useState(0);
+  const startCookingRef = useRef<HTMLButtonElement | null>(null);
+  const wasCooking = useRef(false);
+  useEffect(() => {
+    if (wasCooking.current && !cooking) startCookingRef.current?.focus();
+    wasCooking.current = cooking;
+  }, [cooking]);
   const [shareOpen, setShareOpen] = useState(false);
   const [signInOpen, setSignInOpen] = useState(false);
   // Lifted out of RecipeBody so the header "Copy recipe" action can read the
@@ -513,6 +523,8 @@ export default function RecipeDisplay({
     setBenchOpen(false);
     setIsSaving(false);
     setShareOpen(false);
+    setCooking(false);
+    setCookingStep(0);
   }, [recipe.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Handlers ───────────────────────────────────────────────────────────────
@@ -625,9 +637,15 @@ export default function RecipeDisplay({
         title={recipe.name}
         steps={steps}
         prep={(recipe.prep ?? []) as string[]}
+        initialStep={cookingStep}
+        onStepChange={setCookingStep}
         onExit={() => setCooking(false)}
+        onFinish={() => {
+          setCookingStep(0);
+          setCooking(false);
+        }}
         cooked={!!workingDraft.cooked}
-        onCookedChange={handleCookedChange}
+        onCookedChange={!readOnly && userId ? handleCookedChange : undefined}
         servingsRatio={servings / (recipe.baseServings || 2)}
         prepUses={ingredientsToUses((workingDraft.ingredients ?? []) as RecipeIngredient[])}
       />
@@ -659,11 +677,9 @@ export default function RecipeDisplay({
         <div className="flex flex-col flex-1 min-w-0 relative h-full">
           <div ref={scrollRef} className="flex-1 overflow-y-auto pb-24">
             <div className="mx-auto max-w-4xl px-4 sm:px-6 pt-4 sm:pt-5 pb-8">
-              {/* Nav bar — hidden in readOnly: back + every owner action are
-                  suppressed there, so the row would otherwise be empty. Copy
-                  moves to an overlay on the hero (below). */}
-              {!readOnly && (
-              <div className="flex items-center justify-between mb-3 sm:mb-4">
+              {/* Shared recipes retain copy and cooking; previews only show the document. */}
+              {!preview && (
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-3 sm:mb-4">
                 {!hideBackButton && !readOnly && (
                   <button
                     onClick={onBack}
@@ -688,10 +704,10 @@ export default function RecipeDisplay({
                     Back to cookbook
                   </button>
                 )}
-                <div className="flex items-center gap-2 ml-auto">
+                <div className="flex flex-wrap justify-end items-center gap-2 ml-auto max-w-full">
                   <button
                     onClick={handleCopyRecipe}
-                    className="inline-flex items-center min-h-11 px-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    className="inline-flex items-center justify-center size-11 rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                     aria-label="Copy recipe"
                     title="Copy recipe"
                   >
@@ -703,7 +719,7 @@ export default function RecipeDisplay({
                   {!readOnly && userId && (
                     <button
                       onClick={() => setShareOpen(true)}
-                      className="inline-flex items-center min-h-11 px-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                      className="inline-flex items-center justify-center size-11 rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                       aria-label="Share recipe"
                       title="Share recipe"
                     >
@@ -733,12 +749,13 @@ export default function RecipeDisplay({
                       aria-label="Tweak this recipe"
                     >
                       <TweakIcon size={16} />
-                      <span className="hidden sm:inline">Tweak this recipe</span>
+                      <span>Tweak<span className="hidden sm:inline"> this recipe</span></span>
                     </button>
                   )}
-                  {canCook && !readOnly && (
+                  {canCook && (
                     <Button
                       variant="cta"
+                      ref={startCookingRef}
                       onClick={handleStartCooking}
                       className="gap-1.5 min-h-11 px-3 py-1.5 text-xs font-semibold rounded-md"
                       aria-label="Start cooking — step-by-step view with screen stay-on"
@@ -755,19 +772,6 @@ export default function RecipeDisplay({
 
               {/* Recipe card */}
               <div className="relative rounded-xl border border-border bg-card overflow-hidden shadow-[0_1px_0_var(--color-border-soft)]">
-                {readOnly && (
-                  <button
-                    onClick={handleCopyRecipe}
-                    className="absolute top-2.5 right-2.5 z-10 inline-flex items-center justify-center size-9 rounded-full bg-black/25 text-white backdrop-blur hover:bg-black/40 transition-colors cursor-pointer"
-                    aria-label="Copy recipe"
-                    title="Copy recipe"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
-                      <rect x="5" y="2" width="9" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
-                      <path d="M5 4H3.5A1.5 1.5 0 0 0 2 5.5v9A1.5 1.5 0 0 0 3.5 16h7A1.5 1.5 0 0 0 12 14.5V13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-                    </svg>
-                  </button>
-                )}
                 <RecipeBody
                   selectedRecipe={workingDraft}
                   servings={servings}

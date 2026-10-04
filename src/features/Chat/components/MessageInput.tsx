@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 
 interface MessageInputProps {
-  onSendMessage: (message: string) => Promise<void>;
+  onSendMessage: (message: string) => Promise<boolean | void>;
   disabled: boolean;
   // Overrides the form's default outer padding. Used by the first-run hero to
   // sit the composer flush with the opener cards instead of the bottom bar.
@@ -23,19 +23,20 @@ export const MessageInput = ({
       onSubmit={async (e) => {
         e.preventDefault();
         if (input.trim()) {
-          await onSendMessage(input);
-          setInput("");
+          const sent = await onSendMessage(input);
+          if (sent !== false) setInput("");
         }
       }}
       className={cn("p-4", className)}
     >
       <div className="flex gap-1 items-center bg-muted/50 rounded-xl border border-border/60 px-3 py-1 max-w-5xl mx-auto">
         <Input
+          aria-label="Message Ah Mah"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           disabled={disabled}
           placeholder={disabled ? "Sending…" : "Ask Ah Mah…"}
-          className="flex-1 border-none shadow-none bg-transparent focus-visible:ring-0 px-0"
+          className="flex-1 border-none shadow-none bg-transparent focus-visible:ring-1 focus-visible:ring-ring px-0"
         />
         <Button
           type="submit"

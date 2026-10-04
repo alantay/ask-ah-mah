@@ -108,9 +108,10 @@ export function SidebarContent({ onNavigate }: SidebarContentProps) {
           return (
             <button
               key={id}
+              aria-current={isActive ? "page" : undefined}
               onClick={() => handleNavClick(id)}
               className={[
-                "flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-dense font-medium transition-colors text-left cursor-pointer",
+                "flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-dense font-medium transition-colors text-left cursor-pointer focus-visible:outline-2 focus-visible:outline-ring",
                 isActive
                   ? "bg-card text-foreground font-semibold"
                   : "text-muted-foreground hover:text-foreground hover:bg-card/70",

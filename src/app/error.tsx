@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { useEffect } from "react";
 
 // Catch-all below the root layout, so Next's bare "Application error: a
@@ -36,6 +37,9 @@ export default function RootError({
       >
         Try again
       </Button>
+      <Link href="/" className="text-sm text-primary underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring">
+        Back to the kitchen
+      </Link>
     </main>
   );
 }

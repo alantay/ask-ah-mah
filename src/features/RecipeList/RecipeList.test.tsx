@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { mutate } from "swr";
 import RecipeList from "./RecipeList";
 
@@ -53,6 +53,9 @@ describe("RecipeList — delete recipe", () => {
 
     const deleteButton = screen.getByRole("button", { name: /Delete Test Recipe/i });
     fireEvent.click(deleteButton);
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(screen.getByRole("alertdialog")).toHaveTextContent(/shared link/i);
+    fireEvent.click(screen.getByRole("button", { name: "Delete recipe" }));
 
     expect(global.fetch).toHaveBeenCalledWith(
       "/api/recipe",
@@ -67,6 +70,8 @@ describe("RecipeList — delete recipe", () => {
     render(<RecipeList />);
     fireEvent.click(screen.getByRole("button", { name: /Delete Test Recipe/i }));
 
+    fireEvent.click(screen.getByRole("button", { name: "Delete recipe" }));
+
     // Give the async deleteRecipe a tick to resolve (mutateResource adds one
     // more microtask hop around the fetch than the inline call it replaced)
     await Promise.resolve();
@@ -77,17 +82,45 @@ describe("RecipeList — delete recipe", () => {
   });
 });
 
+it("does not delete when the confirmation is cancelled", () => {
+  global.fetch = jest.fn();
+  render(<RecipeList />);
+  fireEvent.click(screen.getByRole("button", { name: /Delete Test Recipe/i }));
+  fireEvent.click(screen.getByRole("button", { name: "Keep recipe" }));
+  expect(global.fetch).not.toHaveBeenCalled();
+  expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+});
+
+it("keeps a failed deletion open with a retry instead of losing the recipe", async () => {
+  global.fetch = jest.fn().mockResolvedValueOnce({ ok: false }).mockResolvedValue({ ok: true });
+  render(<RecipeList />);
+  fireEvent.click(screen.getByRole("button", { name: /Delete Test Recipe/i }));
+  fireEvent.click(screen.getByRole("button", { name: "Delete recipe" }));
+  await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent(/couldn.t confirm the deletion/i));
+  fireEvent.click(screen.getByRole("button", { name: "Delete recipe" }));
+  await waitFor(() => expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument());
+  expect(global.fetch).toHaveBeenCalledTimes(2);
+});
+
 describe("RecipeList — card navigation", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
   });
 
-  it("navigates to recipe page when card is clicked", () => {
+  it("offers a native link for keyboard navigation and opening in another tab", () => {
     render(<RecipeList />);
 
-    fireEvent.click(screen.getByText("Test Recipe"));
-
-    expect(mockPush).toHaveBeenCalledWith("/recipe/r1");
+    expect(screen.getByRole("link", { name: "Test Recipe" })).toHaveAttribute("href", "/recipe/r1");
   });
+});
+
+
+it("returns keyboard focus to the delete control when cancelled", async () => {
+  render(<RecipeList />);
+  const trigger = screen.getByRole("button", { name: /Delete Test Recipe/i });
+  trigger.focus();
+  fireEvent.click(trigger);
+  fireEvent.click(screen.getByRole("button", { name: "Keep recipe" }));
+  await waitFor(() => expect(trigger).toHaveFocus());
 });

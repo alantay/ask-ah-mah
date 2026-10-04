@@ -32,6 +32,7 @@ export async function addShoppingListItems(
         key,
         name: item.name.trim().replace(/\s+/g, " "),
         category: item.category ?? null,
+        ...(item.bought !== undefined ? { bought: item.bought } : {}),
       },
     });
   }
