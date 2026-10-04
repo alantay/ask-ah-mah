@@ -76,3 +76,8 @@ scaled quantity on hover or tap. This keeps scaling correct (the popover compute
 at render time, same as the old chip) while meeting the "read naturally" ask — with the tradeoff
 that a use only gets a hint if its name is actually mentioned in that step's body; unmatched uses
 render no hint and there is no chip fallback (confirmed acceptable: "strictly no chip").
+
+
+## 2026-10-04 update — visible quantities at the stove
+
+CookingMode displays a matched ingredient mention with its dynamically scaled quantity in parentheses. The underlying prose and structured per-use amounts stay separate; changing servings recomputes the annotation. The chat letter and recipe document retain hover/tap hints. This addresses the critique’s discovery and memory problem while preserving the preference against a separate chip row; unmatched uses still have no fallback chips.

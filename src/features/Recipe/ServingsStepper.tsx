@@ -20,7 +20,7 @@ export function ServingsStepper({
         onClick={onDecrement}
         disabled={servings <= 1}
         aria-label="Decrease servings"
-        className="w-8 h-8 flex items-center justify-center text-foreground text-base font-semibold border-r border-border hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+        className="w-11 h-11 flex items-center justify-center text-foreground text-base font-semibold border-r border-border hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer focus-visible:outline-2 focus-visible:outline-ring focus-visible:-outline-offset-2"
       >
         −
       </button>
@@ -32,7 +32,7 @@ export function ServingsStepper({
         onClick={onIncrement}
         disabled={servings >= max}
         aria-label="Increase servings"
-        className="w-8 h-8 flex items-center justify-center text-foreground text-base font-semibold border-l border-border hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+        className="w-11 h-11 flex items-center justify-center text-foreground text-base font-semibold border-l border-border hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer focus-visible:outline-2 focus-visible:outline-ring focus-visible:-outline-offset-2"
       >
         +
       </button>

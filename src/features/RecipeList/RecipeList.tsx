@@ -342,9 +342,9 @@ function CookbookEmpty({
   onPasteClick?: () => void;
 }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[18px]">
-      {/* Instructional card — spans 2 rows on desktop */}
-      <div className="bg-card border-[1.5px] border-dashed border-border rounded-lg p-6 lg:row-span-2 flex flex-col gap-3.5 shadow-[0_1px_0_var(--color-border-soft)]">
+    <div className="max-w-xl">
+      {/* A settled empty state, distinct from the loading skeletons. */}
+      <div className="bg-card border-[1.5px] border-dashed border-border rounded-lg p-6 flex flex-col gap-3.5 shadow-[0_1px_0_var(--color-border-soft)]">
         <div className="w-11 h-11 rounded-lg bg-primary flex items-center justify-center text-primary-foreground shrink-0">
           <svg
             width="22"
@@ -382,27 +382,6 @@ function CookbookEmpty({
           </button>
         </div>
       </div>
-
-      {/* Ghost cards */}
-      {[0, 1, 2, 3].map((i) => (
-        <div
-          key={i}
-          className="border-[1.5px] border-dashed border-border rounded-lg overflow-hidden flex flex-col opacity-55"
-        >
-          <div
-            className="h-16 border-b border-border opacity-60"
-            style={{
-              background:
-                "repeating-linear-gradient(135deg, var(--color-border-soft) 0 6px, transparent 6px 12px)",
-            }}
-          />
-          <div className="p-4 flex flex-col gap-2">
-            <div className="h-3 w-[70%] bg-border rounded" />
-            <div className="h-2 w-[90%] bg-border rounded opacity-60" />
-            <div className="h-2 w-[60%] bg-border rounded opacity-60" />
-          </div>
-        </div>
-      ))}
     </div>
   );
 }

@@ -3,6 +3,12 @@
 ## Context
 - [x] Persistent kitchen state remains the core moat (inventory + cooked + saved).
 
+## Cooking usability and focused polish (October 2026)
+
+- Cooking mode shows scaled quantities beside matched ingredient mentions, uses an accessible full-screen dialog with Escape/focus containment, announces step changes, and keeps long instructions scrollable. Recipe and chat consumers retain the current step on exit/re-entry while mounted; Done resets it and gives a quiet acknowledgment without marking the recipe cooked automatically.
+- Returning from cooking restores focus to Start cooking. Serving controls have 44px targets.
+- Empty cookbook placeholders are removed, desktop recipe-paste height is bounded, and import previews hide saved-recipe actions.
+
 ## Keyboard access and deletion safety (October 2026)
 
 - Saved recipe cards use native links with visible keyboard focus. Pantry actions reveal on focus, shopping item names toggle the checkbox, and navigation announces the current destination.
@@ -570,3 +576,7 @@ The spine (#314), lifecycle (#315), Market Tips (#316), and the recipe on-ramp +
 - **Decrement-on-cook dropped**: tracking what was cooked, confirming with the user, and decrementing inventory adds a confirmation surface and an "active cooking" state model that's hard to get right. The pantry is whatever the user says it is; nudges live in chat ("I used the last of the eggs"). Removed from the V2 backlog entirely.
 - **Chat routing keys off a single "cooking intent?" signal** (Jun 2026): the recurring "ingredient added but no recipe — Ah Mah asks 'want me to suggest?'" bug came from two contradictory prompt rules firing at once. A message like "i want to make something with X, i bought some" hit both *"bought X → do NOT pivot to suggestions"* and *"asks for suggestions → suggest"*; the model split the difference by asking permission. Fix collapses both into one decision in `CHAT_SYSTEM_PROMPT`: **cooking intent present → always produce a `recipe`/`suggestions` block in the same turn, never ask permission**; intent absent (bare "bought salmon") → acknowledge only. A co-occurring "i bought some" no longer suppresses output. "make something with [ingredient]" sits on the Mode-1/Mode-2 line and the model may emit either — both are correct; the regression was the *absence* of a block.
 - **Prompt routing guarded by an opt-in live eval, not CI** (Jun 2026): prior fixes to this bug didn't hold because `route.test.ts` mocks `streamText` and can't observe model behavior. `eval/chat-routing.eval.ts` (run via `pnpm test:eval`, `tsx`) hits the real `gpt-4.1-mini` and asserts on **output-mode block presence/absence** (not question marks — granny nudges are fine). Kept out of CI: it costs API calls and is mildly flaky. Carries a TODO for the separate deferred bug — foreign-ingredient `type` misclassification (romanized "gao li cai" stored as kitchenware).
+
+### Shared-recipe cooking and mobile actions — October 2026
+
+Shared-recipe recipients can now open step-by-step cooking, adjust servings, and resume their step after exiting while the page remains mounted. Cooking never shows the owner's made checkbox or changes the saved recipe. Copy and Start cooking share the action row; import previews remain action-free. The owner view now labels Tweak on mobile, uses 44px copy/share targets with keyboard focus, and wraps actions on narrow screens. Switching recipes resets cooking position.

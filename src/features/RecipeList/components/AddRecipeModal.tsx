@@ -241,7 +241,7 @@ export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         showCloseButton
-        className="max-w-3xl w-[95vw] sm:w-[92vw] h-[92vh] p-0 overflow-hidden bg-background flex flex-col"
+        className="max-w-3xl w-[95vw] sm:w-[92vw] h-[92dvh] sm:h-[min(80dvh,42rem)] p-0 overflow-hidden bg-background flex flex-col"
       >
         <VisuallyHidden.Root>
           <DialogTitle>
@@ -327,6 +327,7 @@ export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
                     setText(e.target.value.slice(0, CHAR_LIMIT));
                     setError(null);
                   }}
+                  aria-label="Recipe text"
                   placeholder="Paste recipe text here. Messy is fine."
                   className={[
                     "w-full flex-1 min-h-[140px] sm:min-h-0 resize-none rounded-lg border bg-card px-4 py-3",
@@ -402,6 +403,7 @@ export function AddRecipeModal({ open, onOpenChange }: AddRecipeModalProps) {
                   <RecipeDisplay
                     recipe={blockToPreviewRecipe(preview)}
                     onBack={() => setStep("paste")}
+                    preview
                     hideBackButton
                   />
                 )}
