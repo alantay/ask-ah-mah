@@ -100,6 +100,25 @@ describe("SignInDialog", () => {
     expect(screen.getByText(/check your inbox/i)).toBeInTheDocument();
   });
 
+  it("ignores a resend that finishes after switching email", async () => {
+    render(<SignInDialog />);
+    await openDialog();
+
+    await userEvent.type(screen.getByLabelText(/email/i), "cook@example.com");
+    await userEvent.click(screen.getByRole("button", { name: /send me a link/i }));
+
+    let finishResend!: (value: unknown) => void;
+    mockMagicLink.mockReturnValueOnce(new Promise((resolve) => (finishResend = resolve)));
+    await userEvent.click(await screen.findByRole("button", { name: /resend link/i }));
+    await userEvent.click(screen.getByRole("button", { name: /use a different email/i }));
+    finishResend({ data: {}, error: null });
+
+    await userEvent.type(screen.getByLabelText(/email/i), "chef@example.com");
+    await userEvent.click(screen.getByRole("button", { name: /send me a link/i }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent(/check your inbox/i);
+  });
+
   it("surfaces an inline error when sending fails", async () => {
     mockMagicLink.mockResolvedValue({ data: null, error: { message: "nope" } });
     render(<SignInDialog />);

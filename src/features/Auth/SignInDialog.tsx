@@ -12,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { GoogleIcon } from "./GoogleIcon";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -38,6 +38,9 @@ export function SignInDialog({ open: openProp, onOpenChange: onOpenChangeProp }:
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [resent, setResent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Bumped when the sent view is left, so a send still in flight can't
+  // update the state that replaced it.
+  const sendAttempt = useRef(0);
 
   const emailValid = EMAIL_PATTERN.test(email.trim());
   const busy = googleLoading || sending;
@@ -61,6 +64,7 @@ export function SignInDialog({ open: openProp, onOpenChange: onOpenChangeProp }:
   };
 
   const sendLink = async (address: string) => {
+    const attempt = ++sendAttempt.current;
     setSending(true);
     setError(null);
     try {
@@ -69,9 +73,9 @@ export function SignInDialog({ open: openProp, onOpenChange: onOpenChangeProp }:
         callbackURL: "/",
       });
       if (sendError) throw sendError;
-      return true;
+      return attempt === sendAttempt.current;
     } catch {
-      setError("Couldn't send the link — please try again.");
+      if (attempt === sendAttempt.current) setError("Couldn't send the link — please try again.");
       return false;
     } finally {
       setSending(false);
@@ -97,6 +101,7 @@ export function SignInDialog({ open: openProp, onOpenChange: onOpenChangeProp }:
   const handleOpenChange = (next: boolean) => {
     setOpen(next);
     if (!next) {
+      sendAttempt.current++;
       setEmail("");
       setSentTo(null);
       setResent(false);
@@ -147,6 +152,7 @@ export function SignInDialog({ open: openProp, onOpenChange: onOpenChangeProp }:
               <button
                 type="button"
                 onClick={() => {
+                  sendAttempt.current++;
                   setSentTo(null);
                   setResent(false);
                   setError(null);
