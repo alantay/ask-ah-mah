@@ -857,3 +857,67 @@ describe('pantry matching at the rendered surface', () => {
     ).not.toBeInTheDocument();
   });
 });
+
+// #490. Water is not stockable, so it is never an Addition: it stays out of
+// the pantry pill, earns no cart, and takes no part in reconcile. Salt and
+// pepper need no rule here — they are seeded pantry rows (DEFAULT_INVENTORY).
+describe('water is not an Addition', () => {
+  const WATER_RECIPE: RecipeLetterProps['recipe'] = {
+    ...RECIPE,
+    ingredients: [
+      { name: 'chicken thigh', category: 'Protein', amount: '500', unit: 'g', note: undefined },
+      { name: 'bok choy', category: 'Vegetable', amount: '1', unit: 'bunch', note: undefined },
+      { name: 'water', category: 'Misc', amount: '250', unit: 'ml', note: undefined },
+    ],
+  };
+
+  beforeEach(() => {
+    mockUseSessionContext.mockReturnValue({ userId: 'user-123' });
+    mockUseSWR.mockReturnValue({ data: INVENTORY_WITH_CHICKEN });
+  });
+
+  it('still lists water in What to gather', () => {
+    render(<RecipeLetter recipe={WATER_RECIPE} />);
+    expect(screen.getByText('water')).toBeInTheDocument();
+  });
+
+  it('leaves water out of the pantry pill, numerator and denominator', () => {
+    render(<RecipeLetter recipe={WATER_RECIPE} />);
+    expect(screen.getByText('1/2 in your pantry')).toBeInTheDocument();
+  });
+
+  it('offers no cart for water', () => {
+    render(<RecipeLetter recipe={WATER_RECIPE} />);
+    expect(
+      screen.queryByLabelText('Add water to shopping list'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByLabelText('Add bok choy to shopping list'),
+    ).toBeInTheDocument();
+  });
+
+  it('gives water no checkbox in reconcile, and leaves it out of the count', () => {
+    render(<RecipeLetter recipe={WATER_RECIPE} onSend={jest.fn()} />);
+    fireEvent.click(screen.getByText('Ask Ah Mah for substitutions'));
+
+    expect(screen.queryByLabelText('water')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('bok choy')).toBeInTheDocument();
+    // bok choy alone is unticked — water was never counted.
+    expect(
+      screen.getByRole('button', { name: /Ask about the 1 you're missing/ }),
+    ).toBeInTheDocument();
+  });
+
+  it('never names water in the substitutions ask', async () => {
+    const onSend = jest.fn();
+    render(<RecipeLetter recipe={WATER_RECIPE} onSend={onSend} />);
+    fireEvent.click(screen.getByText('Ask Ah Mah for substitutions'));
+    fireEvent.click(
+      screen.getByRole('button', { name: /Ask about the 1 you're missing/ }),
+    );
+
+    await waitFor(() => expect(onSend).toHaveBeenCalled());
+    expect(onSend.mock.calls[0][0]).toContain('bok choy');
+    expect(onSend.mock.calls[0][0]).not.toContain('water');
+  });
+});
