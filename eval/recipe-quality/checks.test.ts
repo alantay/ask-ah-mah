@@ -83,6 +83,25 @@ describe("evaluateRecipe", () => {
     );
   });
 
+  it.each(["400 grams", "1 liter", "500 millilitres", "8 ounces", "2 lbs", "1 pound"])(
+    "catches a quantity spelled out in full: %s",
+    (quantity) => {
+      const result = evaluateRecipe(
+        {
+          ...validRecipe,
+          steps: [{ ...validRecipe.steps[0], body: `Add ${quantity} of the tofu.` }],
+        },
+        benchmarkCase,
+      );
+
+      expect(result.checks).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: "no-absolute-quantities-in-bodies", passed: false }),
+        ]),
+      );
+    },
+  );
+
   it("marks a missing recipe block as a hard failure", () => {
     const result = missingRecipeEvaluation();
 

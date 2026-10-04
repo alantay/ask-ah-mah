@@ -29,6 +29,13 @@ const run: BenchmarkRun = {
       latencyMs: 1200,
       toolNames: ["getInventory"],
       outputText: "A recipe",
+      recipe: {
+        title: "Golden Tofu",
+        baseServings: 2,
+        ingredients: [{ name: "tofu", category: "Protein", amount: "400", unit: "g" }],
+        steps: [{ title: "Cook", body: "Cook the tofu until golden." }],
+        tags: ["tofu"],
+      },
       evaluation: {
         checks: [
           {
@@ -79,7 +86,7 @@ describe("recipe benchmark reports", () => {
     const report = renderBenchmarkReport(run);
 
     expect(report).toContain(
-      "gpt-5.6-luna | low | 1 | 0/1 | 1/1 | 100.0% | 1.20 | 100 | 50 | 20 | 0",
+      "gpt-5.6-luna | low | 1 | 1/1 | 1/1 | 100.0% | 1.20 | 100 | 50 | 20 | 0",
     );
     expect(report).toContain(
       "gpt-5.6-terra | low | 1 | 0/1 | 0/1 | 0.0% | 2.40 | 200 | 80 | 30 | 0",

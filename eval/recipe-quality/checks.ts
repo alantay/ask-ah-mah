@@ -11,7 +11,7 @@ import type {
 
 const VALID_TAGS = new Set(Object.values(TAG_SETS).flat());
 const ABSOLUTE_QUANTITY_PATTERN =
-  /\b(?:\d+(?:\.\d+)?|\d+\s*\/\s*\d+|[¼½¾⅓⅔⅛⅜⅝⅞])\s*(?:g|kg|ml|l|oz|lb|cups?|tbsp|tsp|tablespoons?|teaspoons?|cloves?|pieces?|slices?|cans?|packs?|bunch(?:es)?)\b/i;
+  /\b(?:\d+(?:\.\d+)?|\d+\s*\/\s*\d+|[¼½¾⅓⅔⅛⅜⅝⅞])\s*(?:g|grams?|grammes?|kg|kilos?|kilograms?|ml|millilit(?:re|er)s?|l|lit(?:re|er)s?|oz|ounces?|lbs?|pounds?|cups?|tbsp|tsp|tablespoons?|teaspoons?|cloves?|pieces?|slices?|cans?|packs?|bunch(?:es)?)\b/i;
 
 function normalize(value: string): string {
   return value
