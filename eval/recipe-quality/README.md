@@ -1,6 +1,6 @@
 # Recipe quality benchmark
 
-This benchmark compares the production recipe path across supported GPT-5.6 models and reasoning efforts. It uses the real chat system prompt, a canned pantry per fixture, and the same tool loop as `/api/chat`. The default remains the production `gpt-5.6-luna` model.
+This benchmark compares the production recipe path across supported Luna/Terra models (`gpt-5.6-luna`, `gpt-5.6-terra`, `gpt-6-luna`) and reasoning efforts. It uses the real chat system prompt, a canned pantry per fixture, and the same tool loop as `/api/chat`. The default remains the production `gpt-5.6-luna` model.
 
 When multiple models are selected, their execution order alternates across cases and repetitions so one model is not always measured first.
 

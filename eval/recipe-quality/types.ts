@@ -11,7 +11,7 @@ export const REASONING_EFFORTS = [
 
 export type ReasoningEffort = (typeof REASONING_EFFORTS)[number];
 
-export const BENCHMARK_MODELS = ["gpt-5.6-luna", "gpt-5.6-terra"] as const;
+export const BENCHMARK_MODELS = ["gpt-5.6-luna", "gpt-5.6-terra", "gpt-6-luna"] as const;
 
 export type BenchmarkModel = (typeof BENCHMARK_MODELS)[number];
 

@@ -1,5 +1,5 @@
 /**
- * Opt-in live benchmark for recipe quality across GPT-5.6 models and reasoning efforts.
+ * Opt-in live benchmark for recipe quality across supported Luna/Terra models and reasoning efforts.
  *
  * Dry-run the full matrix (no API calls):
  *   pnpm benchmark:recipes
@@ -148,7 +148,7 @@ Usage:
 Options:
   --run                    Make live API calls; omitted means dry-run only
   --smoke                  Default to 2 cases, low/medium, 1 repetition
-  --models model-a,model-b Choose Luna, Terra, or both
+  --models model-a,model-b Any of gpt-5.6-luna, gpt-5.6-terra, gpt-6-luna
   --efforts low,medium     Choose reasoning efforts
   --reps 3                 Repetitions per case/configuration (1–20)
   --cases case-a,case-b    Run only the named fixture IDs
