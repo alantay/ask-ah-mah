@@ -26,9 +26,11 @@ export function extractRecipeBlocks(text: string): ParsedBlock[] {
   const blocks: ParsedBlock[] = [];
 
   // `checklist-reply` precedes `checklist` in the alternation for clarity; the
-  // trailing `\n` in the pattern already makes them unambiguous.
+  // trailing `\n` in the pattern already makes them unambiguous. No line-start
+  // anchor: the model can write prose, reason, then open a fence, and the SDK
+  // joins those text parts with no newline — the fence lands mid-line.
   const fenceRegex =
-    /^```(suggestions|clarify|checklist-reply|checklist|recipe)\n([\s\S]*?)\n```/gm;
+    /```(suggestions|clarify|checklist-reply|checklist|recipe)\n([\s\S]*?)\n```/g;
   let match: RegExpExecArray | null;
 
   while ((match = fenceRegex.exec(text)) !== null) {
@@ -89,7 +91,7 @@ export function stripFences(text: string): string {
     // Keep stripping legacy `gate` fences for backward-compat and to avoid
     // rendering unsupported fenced-language blocks from older messages.
     .replace(
-      /^```(?:suggestions|clarify|checklist-reply|checklist|gate|recipe)\n[\s\S]*?\n```/gm,
+      /```(?:suggestions|clarify|checklist-reply|checklist|gate|recipe)\n[\s\S]*?\n```/g,
       "",
     )
     .trim();
