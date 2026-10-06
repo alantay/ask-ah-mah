@@ -14,6 +14,7 @@
     "test:coverage": "jest --coverage",
     "test:ci": "jest --ci --coverage --watchAll=false",
     "test:eval": "tsx eval/chat-routing.eval.ts",
+    "benchmark:recipes": "tsx eval/recipe-quality.eval.ts",
     "db:push": "prisma generate && prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma generate && prisma migrate deploy",
