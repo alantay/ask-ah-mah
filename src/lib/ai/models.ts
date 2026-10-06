@@ -2,9 +2,10 @@
  * The one model behind every AI call.
  *
  * There is no heavy/light split any more. `gpt-5.6-terra` was trialled against
- * `gpt-5.6-luna` on chat routing, the Mode 5 checklist gate and time-to-first-
- * token, and matched it on every one at ~10x the price ($2/$12 vs $0.20/$1.20
- * per M). The axis that actually moves behaviour is reasoning effort, below.
+ * `gpt-5.6-luna` on chat routing and the Mode 5 checklist gate. A later 12-case
+ * recipe benchmark tied on broad checks, while targeted repeats favoured Luna
+ * for explicit air-fryer and jammy-egg timing. Terra still costs ~10x as much
+ * ($2/$12 vs $0.20/$1.20 per M). Reasoning effort remains the useful axis below.
  *
  * `gpt-6-luna` replaced `gpt-5.6-luna` (Oct 2026): cheaper, ~24% faster, and
  * level or better on the recipe benchmark — once the prompt asked for a rescue
@@ -17,8 +18,8 @@ export const MODEL = "gpt-6-luna";
  *
  * `low` is a floor and a ceiling.
  *
- * Below it: at `none` the Mode 5 checklist gate stops firing entirely — 0/4 on
- * both models, where `low` and above score 4/4.
+ * Below it: at `none` the Mode 5 checklist gate stopped firing entirely — 0/4 on
+ * both gpt-5.6 models, where `low` and above scored 4/4 (not re-run on gpt-6).
  *
  * Above it: `medium` and `high` were swept over the recipe checks that still
  * had headroom at `low`. No check moved by more than one run in five (p = 1.0),
