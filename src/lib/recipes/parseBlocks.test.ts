@@ -216,6 +216,18 @@ not valid json at all
     expect(blocks).toHaveLength(0);
   });
 
+  // The model can write prose, reason, then open the fence; the SDK joins those
+  // text parts with no newline, so the fence lands mid-line.
+  it("parses a recipe fence glued to the end of a prose line", () => {
+    const text = `Here's the plan.\`\`\`recipe
+{ "title": "Glued", "baseServings": 2, "ingredients": [], "steps": [], "tags": [] }
+\`\`\``;
+
+    const blocks = extractRecipeBlocks(text);
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0].kind).toBe("recipe");
+  });
+
   it("returns multiple blocks from a single string", () => {
     const text = `\`\`\`recipe
 {
@@ -424,6 +436,11 @@ describe("stripFences", () => {
     expect(result).not.toContain("recipeId");
     expect(result).toContain("Quick check:");
     expect(result).toContain("More text.");
+  });
+
+  it("strips a fence glued to the end of a prose line, keeping the prose", () => {
+    const text = `Here's the plan.\`\`\`recipe\n{"title":"X"}\n\`\`\``;
+    expect(stripFences(text)).toBe("Here's the plan.");
   });
 
   it("leaves plain prose untouched", () => {

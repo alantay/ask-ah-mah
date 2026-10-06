@@ -156,7 +156,7 @@ describe("Chat API Route", () => {
       const response = await POST(request);
 
       expect(response).toBe("mock-stream-response");
-      expect(mockedOpenai).toHaveBeenCalledWith("gpt-5.6-luna");
+      expect(mockedOpenai).toHaveBeenCalledWith("gpt-6-luna");
       // Effort is the axis that actually moves routing behaviour, so it gets
       // the same canary treatment as the model — pinned by literal, not by
       // importing EFFORT_AGENTIC (which would pass for any value). At "none"
