@@ -5,8 +5,12 @@
  * `gpt-5.6-luna` on chat routing, the Mode 5 checklist gate and time-to-first-
  * token, and matched it on every one at ~10x the price ($2/$12 vs $0.20/$1.20
  * per M). The axis that actually moves behaviour is reasoning effort, below.
+ *
+ * `gpt-6-luna` replaced `gpt-5.6-luna` (Oct 2026): cheaper, ~24% faster, and
+ * level or better on the recipe benchmark — once the prompt asked for a rescue
+ * note on failure-prone techniques, which 5.6 wrote unprompted and 6 dropped.
  */
-export const MODEL = "gpt-5.6-luna";
+export const MODEL = "gpt-6-luna";
 
 /**
  * Judgement paths: the chat agent, the recipe tweak, the recipe-text parse.
@@ -21,6 +25,9 @@ export const MODEL = "gpt-5.6-luna";
  * while latency rose ~30-50% (12.6s -> 14.8s -> 17.7s) and reasoning tokens
  * 7-11x. Resolving a lift that small would need ~300 reps per arm. Raise this
  * only with evidence at that scale, not on a hunch.
+ *
+ * Re-checked on `gpt-6-luna` (Oct 2026): `medium` scored 33/36 all-hard vs 31/36,
+ * at +33% latency and ~6x reasoning tokens. Same verdict.
  */
 export const EFFORT_AGENTIC = { openai: { reasoningEffort: "low" } };
 

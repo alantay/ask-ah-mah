@@ -12,6 +12,16 @@
 - Cookbook header dates the newest save as today / yesterday / weekday (within 6 days) / date, since a bare weekday was ambiguous past a week.
 - Shopping input is capped at `max-w-2xl` on desktop.
 
+## Model bump to gpt-6-luna (October 2026)
+
+- **`MODEL` is now `gpt-6-luna`** (was `gpt-5.6-luna`). It costs less. Effort settings are unchanged (`low` agentic, `none` mechanical); both were confirmed to work on the new model.
+- **Evidence:**
+  - The recipe benchmark (PR #501): a balanced 72-call run at `low` had both models 36/36 valid. gpt-6 passed every hard check in 28/36 vs 27/36 and was ~24% faster with ~23% fewer output tokens.
+  - The chat routing eval passed 8/8 on three runs, Mode 5 checklist gate included.
+- **One regression, closed by a prompt line.** gpt-6 dropped the split-mayonnaise rescue (0/3; 5.6 wrote it 3/3 unprompted). The Recipe Notes rule now says that a dish relying on a failure-prone technique (an emulsion, seizing chocolate, a curdling custard) always gets one note on how to save it. A softer wording only reached 2/5. The firm wording reached 5/5, and the full 12-case suite stayed clean around it (24/24 valid, 20/24 all-hard). The remaining failures are the known off-catalog tempeh tags plus single misses.
+- **`medium` effort re-tried on gpt-6, rejected.** 36 calls per arm: all-hard 33/36 vs 31/36 at `low` (noise at this size), median latency 16.2s vs 12.2s, reasoning tokens ~6x. `low` stays.
+- **Fences glued to prose now parse.** The model can write prose, reason, then open a fence; the AI SDK joins those text parts with no newline, so ```` ```recipe```` landed mid-line and the line-anchored regexes in `parseBlocks.ts` (`extractRecipeBlocks`, `stripFences`) skipped it: no recipe card, raw JSON in the bubble. gpt-6 did this 2/96 at `low` and 6/36 at `medium` (5.6: 0/36). The anchors are dropped (`getOpenFence` was already unanchored); re-scoring the saved outputs gives 36/36 valid at both efforts. Saved messages with a glued fence render correctly too.
+
 ## Keyboard access and deletion safety (October 2026)
 
 - Saved recipe cards use native links with visible keyboard focus. Pantry actions reveal on focus, shopping item names toggle the checkbox, and navigation announces the current destination.
