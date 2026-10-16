@@ -50,6 +50,24 @@ It does **not** separate them in the matcher, and that asymmetry is deliberate r
 
 ## Accepted limitation
 
+### Qualification: flavoured oils (#502, October 2026)
+
+Generic coverage does not cross the sesame/chilli-oil boundary. The seeded
+`Cooking oil` (or a user-entered `Oil`) is cooking fat, not evidence that the
+cook owns sesame oil or chilli oil. For names headed by `oil`, the matcher
+requires agreement on the flavouring tokens `sesame`, `chilli` and `chili`
+before applying the existing subset rule. This applies in both directions:
+flavoured oil also does not stand in for generic cooking fat. Within a flavour,
+subset coverage still works (`Sesame oil` covers `toasted sesame oil`).
+
+Neutral/vegetable/olive-oil coverage remains as before. Tokenization, canonical
+keys, seeded rows and reconcile deletion guards are unchanged; no migration is
+needed. This is a small reviewed coverage exception, not the general synonym
+table proposed in #498. In particular it does not fold `chili` and `chilli`
+into one identity or introduce cross-spelling synonym matching.
+
+### Other semantic differences remain accepted
+
 `spring onion` vs. a pantry holding `Onion` is structurally identical to `olive oil` vs. `oil` — generic subset, matching head noun — but wants the opposite answer: a spring onion is not covered by an onion. No token-shape rule separates the two cases; telling them apart needs knowledge the tokenizer doesn't have. Accepted rather than solved.
 
 ## This resolves ADR-0027's open question

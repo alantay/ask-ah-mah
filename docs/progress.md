@@ -3,6 +3,12 @@
 ## Context
 - [x] Persistent kitchen state remains the core moat (inventory + cooked + saved).
 
+## Flavoured-oil pantry coverage (#502, October 2026)
+
+- Cooking oil and bare Oil no longer mark sesame oil or chilli/chili oil as stocked. The reverse match is also blocked, so flavoured oils do not stand in for generic cooking fat. Neutral/vegetable/olive-oil coverage and matching within the same flavour remain intact.
+- The shared matcher corrects the recipe pantry count, shopping buttons and reconcile defaults. Regression tests cover these rendered states and confirm that missing flavoured oil cannot delete the Cooking oil row, while explicitly confirming sesame oil adds it as separate stock.
+- This narrowly qualifies ADR-0029's coverage rule; canonical keys, seeds and stored pantry rows are unchanged. General synonym handling remains #498. Browser verification is pending; the UI regression runs in Testing Library.
+
 ## Cooking usability and focused polish (October 2026)
 
 - Cooking mode shows scaled quantities beside matched ingredient mentions, uses an accessible full-screen dialog with Escape/focus containment, announces step changes, and keeps long instructions scrollable. Recipe and chat consumers retain the current step on exit/re-entry while mounted; Done resets it and gives a quiet acknowledgment without marking the recipe cooked automatically.

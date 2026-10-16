@@ -42,9 +42,31 @@ describe("ingredientMatches", () => {
 
   it("matches against the seeded default pantry", () => {
     expect(ingredientMatches("vegetable oil", ["Cooking oil"])).toBe(true);
-    expect(ingredientMatches("sesame oil", ["Cooking oil", "Salt", "Soy sauce"])).toBe(true);
+    expect(ingredientMatches("neutral oil", ["Cooking oil"])).toBe(true);
+    expect(ingredientMatches("sesame oil", ["Cooking oil", "Salt", "Soy sauce"])).toBe(false);
     expect(ingredientMatches("light soy sauce", ["Soy sauce"])).toBe(true);
   });
+
+  it.each(["sesame oil", "chilli oil", "chili oil", "toasted sesame oil"])(
+    "requires explicit flavoured-oil stock for %s",
+    (name) => {
+      expect(ingredientMatches(name, ["Cooking oil"])).toBe(false);
+      expect(ingredientMatches(name, ["Oil"])).toBe(false);
+      expect(ingredientMatches(name, [name])).toBe(true);
+      expect(ingredientMatches(name, ["Cooking oil", name])).toBe(true);
+    },
+  );
+
+  it("keeps subset coverage within the same oil flavour", () => {
+    expect(ingredientMatches("toasted sesame oil", ["Sesame oil"])).toBe(true);
+    expect(ingredientMatches("sesame oil", ["Toasted sesame oil"])).toBe(true);
+    expect(ingredientMatches("chilli oil", ["Sesame oil"])).toBe(false);
+  });
+
+  it.each(["sesame oil", "chilli oil", "chili oil"])(
+    "does not count %s as generic cooking oil",
+    (name) => expect(ingredientMatches("Cooking oil", [name])).toBe(false),
+  );
 
   it("does not match synonyms (known limitation)", () => {
     expect(ingredientMatches("scallion", ["green onion"])).toBe(false);
