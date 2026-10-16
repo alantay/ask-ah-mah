@@ -30,6 +30,26 @@ describe('matchingPantryItems', () => {
 });
 
 describe('buildReconcilePlan', () => {
+  it('does not delete cooking oil when a flavoured oil is absent', () => {
+    const plan = buildReconcilePlan(
+      [ing('sesame oil', 'Condiments'), ing('chilli oil', 'Condiments')],
+      [inv('Cooking oil')],
+      new Set(),
+    );
+    expect(plan.deletes).toEqual([]);
+    expect(plan.stillMissing.map(item => item.name)).toEqual(['sesame oil', 'chilli oil']);
+  });
+
+  it('adds confirmed sesame oil even when cooking oil is already stocked', () => {
+    const plan = buildReconcilePlan(
+      [ing('sesame oil', 'Condiments')],
+      [inv('Cooking oil')],
+      new Set(['sesame oil']),
+    );
+    expect(plan.adds).toEqual([{ name: 'sesame oil', type: 'ingredient', category: 'Condiments' }]);
+    expect(plan.deletes).toEqual([]);
+  });
+
   it('adds a ticked ingredient that was not in the pantry', () => {
     const plan = buildReconcilePlan(
       [ing('galangal', 'Spice')],

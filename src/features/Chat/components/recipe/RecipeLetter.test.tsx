@@ -381,6 +381,44 @@ describe('Substitutions opens reconcile mode', () => {
   });
 });
 
+describe('Flavoured oils in a cooking-oil pantry', () => {
+  it.each([false, true])('uses explicit sesame-oil stock for counts, carts and reconcile ticks (stocked: %s)', (stocked) => {
+    mockUseSessionContext.mockReturnValue({ userId: 'user-123' });
+    mockUseSWR.mockReturnValue({
+      data: {
+        ...INVENTORY_WITH_CHICKEN,
+        ingredientInventory: ['Cooking oil', ...(stocked ? ['Sesame oil'] : [])].map((name) => ({
+          ...INVENTORY_WITH_CHICKEN.ingredientInventory[0],
+          id: name,
+          name,
+          category: 'Condiments' as const,
+        })),
+      },
+    });
+    render(<RecipeLetter recipe={{
+      ...RECIPE,
+      ingredients: ['neutral oil', 'sesame oil', 'chilli oil'].map((name) => ({
+        name,
+        category: 'Condiments' as const,
+      })),
+    }} onSend={jest.fn()} />);
+
+    expect(screen.getByText(`${stocked ? 2 : 1}/3 in your pantry`)).toBeInTheDocument();
+    expect(screen.queryByLabelText('Add neutral oil to shopping list')).not.toBeInTheDocument();
+    const sesameCart = screen.queryByLabelText('Add sesame oil to shopping list');
+    if (stocked) expect(sesameCart).not.toBeInTheDocument();
+    else expect(sesameCart).toBeInTheDocument();
+    expect(screen.getByLabelText('Add chilli oil to shopping list')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Ask Ah Mah for substitutions/ }));
+    expect(screen.getByRole('checkbox', { name: /neutral oil/ })).toBeChecked();
+    const sesameCheckbox = screen.getByRole('checkbox', { name: /sesame oil/ });
+    if (stocked) expect(sesameCheckbox).toBeChecked();
+    else expect(sesameCheckbox).not.toBeChecked();
+    expect(screen.getByRole('checkbox', { name: /chilli oil/ })).not.toBeChecked();
+  });
+});
+
 describe('Recipe cart adds to the shopping list', () => {
   beforeEach(() => {
     mockUseSessionContext.mockReturnValue({ userId: 'user-123' });

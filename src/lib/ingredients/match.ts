@@ -3,6 +3,10 @@ import { tokenize } from "./tokenize";
 const isSubsetOf = (a: Set<string>, b: Set<string>): boolean =>
   [...a].every((token) => b.has(token));
 
+// These oils are flavourings, not interchangeable with generic cooking fat.
+// Keep this exception local to coverage; pantry identity is unchanged (#502).
+const OIL_FLAVOURINGS = ["sesame", "chilli", "chili"];
+
 /**
  * Does the pantry cover this recipe ingredient?
  *
@@ -15,6 +19,9 @@ const isSubsetOf = (a: Set<string>, b: Set<string>): boolean =>
  *   - **One token set must contain the other.** "dark soy sauce" and "fish
  *     sauce" share a head noun, but "fish" appears in neither direction, so
  *     they do not match.
+ *
+ * Sesame/chilli oil additionally require the same flavouring token on both
+ * sides. Generic cooking oil covers neutral/vegetable oil, not these oils.
  *
  * Known limitation: "spring onion" vs. a pantry "Onion" is structurally
  * identical to "olive oil" vs. "oil" — generic subset, matching head — but
@@ -36,6 +43,15 @@ export function ingredientMatches(
     if (inventory[inventory.length - 1] !== ingredientHead) return false;
 
     const inventorySet = new Set(inventory);
+    if (
+      ingredientHead === "oil" &&
+      OIL_FLAVOURINGS.some(
+        (token) => ingredientSet.has(token) !== inventorySet.has(token),
+      )
+    ) {
+      return false;
+    }
+
     return (
       isSubsetOf(ingredientSet, inventorySet) ||
       isSubsetOf(inventorySet, ingredientSet)
