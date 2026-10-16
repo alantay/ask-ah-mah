@@ -3,6 +3,12 @@
 ## Context
 - [x] Persistent kitchen state remains the core moat (inventory + cooked + saved).
 
+## Pantry capture names (#487, October 2026)
+
+- Freeform pantry parsing, pre-chat capture and the chat add-inventory tool now share concise naming instructions. `Fresh firm fish (mackerel, snapper, barramundi)` becomes one `Fish` item; examples and shopping/preparation advice are not captured as stock. Explicit Mackerel, Minced beef/pork, cuts and dried forms retain their distinctions. Quantities remain separate and explicit-only.
+- The prompt builders and tool description live together so the opt-in `pnpm eval:inventory --run` exercises the production instructions without database writes. Eight cases across three paths cover the reported example, specific stock, unowned/negated items, prep text, quantities and kitchenware. Checklist-reply skipping and canonical-key dedupe are unchanged; existing pantry rows are not rewritten.
+- **Live evidence:** the current model (`gpt-6-luna`, `none` for extraction / `low` for chat) improved from 15/24 baseline checks to 24/24 after the change in one run per version. The final run initially reported 23/24 because the checker required `pieces` rather than the equally valid `piece`; re-scoring both saved runs with the corrected unit check gives 15/24 and 24/24. All 24 final outputs already had the expected names. Raw runs remain under ignored `.scratch/inventory-capture/`; this small eval does not guarantee every phrasing. The 133 affected unit tests and typecheck pass.
+
 ## Flavoured-oil pantry coverage (#502, October 2026)
 
 - Cooking oil and bare Oil no longer mark sesame oil or chilli/chili oil as stocked. The reverse match is also blocked, so flavoured oils do not stand in for generic cooking fat. Neutral/vegetable/olive-oil coverage and matching within the same flavour remain intact.

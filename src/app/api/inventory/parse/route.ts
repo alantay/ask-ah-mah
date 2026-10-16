@@ -1,6 +1,6 @@
 import { addInventoryItem } from "@/lib/inventory/Inventory";
 import { AddInventoryItemSchema } from "@/lib/inventory/schemas";
-import { PROMPT_FRAGMENTS } from "@/lib/prompts/fragments";
+import { buildInventoryParsePrompt } from "@/lib/inventory/prompts";
 import { withAuth } from "@/lib/withAuth";
 import { EFFORT_MECHANICAL, MODEL } from "@/lib/ai/models";
 import { openai } from "@ai-sdk/openai";
@@ -24,19 +24,7 @@ export const POST = withAuth(async (req: NextRequest, { userId }) => {
       providerOptions: EFFORT_MECHANICAL,
       schema: ParseSchema,
       // gpt-5 models only support the default temperature; setting it errors.
-      prompt: `Parse the following freeform inventory entry into structured items. The user is dumping what they just bought or what they have on hand.
-
-RULES:
-- Each item gets: name, type ("ingredient" | "kitchenware"), and OPTIONAL quantity + unit.
-- ONLY set quantity/unit when the user explicitly states an amount (e.g., "200g chicken" → quantity=200, unit="g"; "2 chicken breasts" → quantity=2, unit="pieces"). If they say "some bok choy" or just "eggs", LEAVE quantity AND unit UNSET — unset means "they have it, amount unlimited".
-- type rules: kitchenware = pots, pans, utensils, appliances. Everything edible = ingredient.
-- category rules (REQUIRED for type=ingredient, OMIT for type=kitchenware):
-${PROMPT_FRAGMENTS.categoryRules}
-- Normalize names to singular, title case where natural ("chicken breasts" → "Chicken breast", "bok choy" → "Bok choy").
-- unit MUST come from this allowlist if used: g, kg, oz, lb, ml, l, cup, tbsp, tsp, piece, pieces, clove, cloves, bottle, bottles, can, cans, pack, packs, bunch, bunches, pinch, dash, slice, slices.
-
-USER ENTRY:
-${text}`,
+      prompt: buildInventoryParsePrompt(text),
     });
 
     await addInventoryItem(object.items, userId);
