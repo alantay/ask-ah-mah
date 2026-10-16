@@ -1,7 +1,7 @@
 import { addInventoryItem } from "@/lib/inventory/Inventory";
 import { extractRecipeBlocks } from "@/lib/recipes/parseBlocks";
 import { AddInventoryItem, AddInventoryItemSchema } from "@/lib/inventory/schemas";
-import { PROMPT_FRAGMENTS } from "@/lib/prompts/fragments";
+import { buildInventoryCapturePrompt } from "@/lib/inventory/prompts";
 import { EFFORT_MECHANICAL, MODEL } from "@/lib/ai/models";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
@@ -72,27 +72,7 @@ export async function captureMentionedInventory(
       providerOptions: EFFORT_MECHANICAL,
       schema: ExtractionSchema,
       // gpt-5 models only support the default temperature; setting it errors.
-      prompt: `You extract ONLY ingredients/kitchenware the user explicitly HAS or JUST ACQUIRED, from a single chat message to a cooking assistant.
-
-STRICT RULES — when in doubt, extract NOTHING:
-- Extract an item ONLY if the user states they possess it or just got it: "I have X", "I've got X", "bought X", "picked up X", "there's X in my fridge".
-- Wanting to USE UP, FINISH, or not waste an item means they HAVE it — extract it: "parsley I want to use up", "finish the tofu", "X in the fridge to use up", "leftover rice", "cilantro before it goes bad" → extract parsley/tofu/X/rice/cilantro.
-- DO NOT extract negated items: "I don't have eggs", "no chicken", "out of soy sauce" → extract nothing for those.
-- DO NOT extract items the user merely wants to ACQUIRE, plans to buy, or asks about: "I want to make laksa", "should I buy tofu?", "what can I cook with chicken?" (a bare "with X" is a request, not a possession claim — skip it). Note the difference: "I want tofu" (wish to acquire → skip) vs "I want to use up the tofu" (already has it → extract).
-- DO NOT extract dish names, cuisines, or recipe titles. Only concrete ingredients and kitchenware.
-- If the message is purely a question or contains no genuine possession claim, return an empty items array.
-
-For each extracted item:
-- name, type ("ingredient" | "kitchenware").
-- OPTIONAL quantity + unit — ONLY when an explicit amount is stated ("200g chicken" → quantity=200, unit="g"; "2 eggs" → quantity=2, unit="pieces"). Otherwise leave BOTH unset.
-- type rules: kitchenware = pots, pans, utensils, appliances. Everything edible = ingredient.
-- category (REQUIRED for type=ingredient, OMIT for type=kitchenware):
-${PROMPT_FRAGMENTS.categoryRules}
-- Normalize names to singular, title case ("chicken breasts" → "Chicken breast").
-- unit MUST come from this allowlist if used: g, kg, oz, lb, ml, l, cup, tbsp, tsp, piece, pieces, clove, cloves, bottle, bottles, can, cans, pack, packs, bunch, bunches, pinch, dash, slice, slices.
-
-USER MESSAGE:
-${text}`,
+      prompt: buildInventoryCapturePrompt(text),
     });
 
     const items = object.items ?? [];
