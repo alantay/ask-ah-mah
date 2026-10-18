@@ -52,7 +52,7 @@ const createMockRequest = (url: string, options: RequestInit = {}) => {
     nextUrl: {
       searchParams: parsedUrl.searchParams,
     },
-    text: async () => options.body as string || "{}",
+    body: new ReadableStream({ start(controller) { controller.enqueue(Buffer.from(options.body as string || "{}")); controller.close(); } }),
   } as NextRequest;
 };
 
@@ -77,7 +77,7 @@ describe("Message API Routes", () => {
 
   describe("GET /api/message", () => {
     it("returns an authenticated photo URL rather than inline image bytes", async () => {
-      mockedGetMessages.mockResolvedValue([{ id: "photo-message", conversationId: "conv-123", userId: "user-123", role: "user", content: "Check this", photo: TEST_PHOTO, createdAt: new Date() }]);
+      mockedGetMessages.mockResolvedValue([{ id: "photo-message", conversationId: "conv-123", userId: "user-123", role: "user", content: "Check this", photo: "/api/message/photo-message/photo", createdAt: new Date() }]);
       const response = await GET(createMockRequest("http://localhost/api/message?conversationId=conv-123"));
       expect((await response.json())[0].photo).toBe("/api/message/photo-message/photo");
     });

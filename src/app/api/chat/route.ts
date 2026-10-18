@@ -5,6 +5,7 @@ import { latestUserText } from "@/lib/chat/messageText";
 import { buildChatTools } from "@/lib/chat/tools";
 import { withAuth } from "@/lib/withAuth";
 import { hasValidPhotoAttachment } from "@/lib/messages";
+import { readLimitedText } from "@/lib/http";
 import { EFFORT_AGENTIC, MODEL } from "@/lib/ai/models";
 import { openai } from "@ai-sdk/openai";
 import {
@@ -32,8 +33,8 @@ const PostSchema = z.object({
 
 export const POST = withAuth(async (req: NextRequest, { userId }) => {
   try {
-    const rawBody = await req.text();
-    if (Buffer.byteLength(rawBody, "utf8") > 1024 * 1024) {
+    const rawBody = await readLimitedText(req, 1024 * 1024);
+    if (rawBody === null) {
       return NextResponse.json({ error: "Request too large" }, { status: 413 });
     }
     const body = PostSchema.safeParse(JSON.parse(rawBody));

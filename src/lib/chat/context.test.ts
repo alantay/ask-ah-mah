@@ -1,9 +1,10 @@
-import { getMessages } from "@/lib/messages/messages";
+import { getMessages, getMessagePhotos } from "@/lib/messages/messages";
 import { validateUIMessages } from "ai";
 import { loadConversationContext } from "./context";
 
 jest.mock("@/lib/messages/messages", () => ({
   getMessages: jest.fn(),
+  getMessagePhotos: jest.fn(),
 }));
 
 jest.mock("ai", () => ({
@@ -28,6 +29,7 @@ const makeUIMessage = (id: string, role: "user" | "assistant", text: string) => 
 describe("loadConversationContext", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.mocked(getMessagePhotos).mockResolvedValue([]);
     (validateUIMessages as jest.Mock).mockImplementation((args) => args.messages);
   });
 
@@ -84,6 +86,20 @@ describe("loadConversationContext", () => {
     expect(result[0]).toMatchObject({ role: "system", parts: [{ type: "text", text: expect.stringContaining("attach it again") }] });
     expect(result.some((message) => message.id === "old-photo")).toBe(false);
     expect(result.slice(1)).toHaveLength(15);
+    expect(getMessagePhotos).not.toHaveBeenCalled();
+  });
+
+  it("fetches photo bytes only for messages inside the final merged context window", async () => {
+    (getMessages as jest.Mock).mockResolvedValue([
+      { ...makeDbMessage("old-photo", "user", "Old photo"), photo: "/api/message/old-photo/photo" },
+      ...Array.from({ length: 15 }, (_, i) => makeDbMessage(`m${i}`, "assistant", "Advice")),
+      { ...makeDbMessage("recent-photo", "user", "Recent photo"), photo: "/api/message/recent-photo/photo" },
+    ]);
+    jest.mocked(getMessagePhotos).mockResolvedValue([{ id: "recent-photo", photo: "recent-inline-jpeg" }]);
+    const result = await loadConversationContext("conv-1", [makeUIMessage("next", "user", "Check my photo")], "user-1");
+    expect(getMessagePhotos).toHaveBeenCalledWith(["recent-photo"], "user-1");
+    expect(result.find((message) => message.id === "recent-photo")?.parts).toContainEqual(expect.objectContaining({ type: "file", url: "recent-inline-jpeg" }));
+    expect(result.some((message) => message.id === "old-photo")).toBe(false);
   });
 
   it("handles empty db messages with only incoming", async () => {
@@ -103,6 +119,7 @@ describe("loadConversationContext", () => {
 
   it("restores the earlier photo for a text-only follow-up after reload", async () => {
     const photo = "data:image/jpeg;base64,/9j/2Q==";
+    jest.mocked(getMessagePhotos).mockResolvedValue([{ id: "photo", photo }]);
     (getMessages as jest.Mock).mockResolvedValue([
       { ...makeDbMessage("photo", "user", "Check this sauce"), photo },
       makeDbMessage("answer", "assistant", "Reduce it uncovered."),
@@ -112,5 +129,6 @@ describe("loadConversationContext", () => {
     expect(result).toHaveLength(3);
     expect(result[0].parts).toContainEqual(expect.objectContaining({ type: "file", mediaType: "image/jpeg", url: photo }));
     expect(result[1].parts).toEqual([{ type: "text", text: "Reduce it uncovered." }]);
+    expect(getMessagePhotos).toHaveBeenCalledWith(["photo"], "user-1");
   });
 });

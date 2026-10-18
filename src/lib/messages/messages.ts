@@ -7,12 +7,32 @@ import { NotFoundError } from "@/lib/errors";
  * `conversationId` simply gets an empty list, never another user's history.
  */
 export async function getMessages(conversationId: string, userId: string) {
-  const messages = await prisma.message.findMany({
-    where: { conversationId, conversation: { userId } },
-    orderBy: { createdAt: "asc" },
-  });
+  const where = { conversationId, conversation: { userId } };
+  const [messages, photos] = await Promise.all([
+    prisma.message.findMany({
+      where,
+      orderBy: { createdAt: "asc" },
+      omit: { photo: true },
+    }),
+    prisma.message.findMany({
+      where: { ...where, photo: { not: null } },
+      select: { id: true },
+    }),
+  ]);
+  const photoIds = new Set(photos.map((message) => message.id));
 
-  return messages;
+  return messages.map((message) => ({
+    ...message,
+    photo: photoIds.has(message.id) ? `/api/message/${encodeURIComponent(message.id)}/photo` : null,
+  }));
+}
+
+/** Load binary photo payloads only for the messages retained in model context. */
+export function getMessagePhotos(ids: string[], userId: string) {
+  return prisma.message.findMany({
+    where: { id: { in: ids }, conversation: { userId } },
+    select: { id: true, photo: true },
+  });
 }
 
 export async function getMessagePhoto(id: string, userId: string) {

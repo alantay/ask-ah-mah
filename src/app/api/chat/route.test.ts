@@ -4,7 +4,7 @@ import {
   getInventory,
   removeInventoryItem,
 } from "@/lib/inventory/Inventory";
-import { getMessages } from "@/lib/messages/messages";
+import { getMessages, getMessagePhotos } from "@/lib/messages/messages";
 import { getSessionUserId } from "@/lib/session";
 import { openai } from "@ai-sdk/openai";
 import {
@@ -25,6 +25,7 @@ jest.mock("@/lib/inventory/Inventory", () => ({
 
 jest.mock("@/lib/messages/messages", () => ({
   getMessages: jest.fn(),
+  getMessagePhotos: jest.fn(),
 }));
 
 jest.mock("@/lib/session", () => ({ getSessionUserId: jest.fn() }));
@@ -70,6 +71,7 @@ const mockedAddInventoryItem = jest.mocked(addInventoryItem);
 const mockedGetInventory = jest.mocked(getInventory);
 const mockedRemoveInventoryItem = jest.mocked(removeInventoryItem);
 const mockedGetMessages = jest.mocked(getMessages);
+const mockedGetMessagePhotos = jest.mocked(getMessagePhotos);
 const mockedGetSessionUserId = jest.mocked(getSessionUserId);
 const mockedOpenai = jest.mocked(openai);
 const mockedConvertToModelMessages = jest.mocked(convertToModelMessages);
@@ -80,7 +82,7 @@ const mockedValidateUIMessages = jest.mocked(validateUIMessages);
 // Helper to create mock NextRequest
 const createMockRequest = (body: unknown) => {
   return {
-    text: async () => JSON.stringify(body),
+    body: new ReadableStream({ start(controller) { controller.enqueue(Buffer.from(JSON.stringify(body))); controller.close(); } }),
   } as NextRequest;
 };
 
@@ -91,6 +93,7 @@ describe("Chat API Route", () => {
     jest.spyOn(console, "error").mockImplementation(() => {});
 
     mockedGetSessionUserId.mockResolvedValue("user-123");
+    mockedGetMessagePhotos.mockResolvedValue([]);
 
     // Setup default mocks
     mockedOpenai.mockReturnValue(
@@ -409,9 +412,7 @@ describe("Chat API Route", () => {
     it("should handle malformed request body", async () => {
       // A body that fails to parse throws → chatErrorResponse → 500.
       const request = {
-        text: async () => {
-          throw new SyntaxError("Unexpected token");
-        },
+        body: new ReadableStream({ start(controller) { controller.error(new SyntaxError("Unexpected token")); } }),
       } as unknown as NextRequest;
 
       const response = await POST(request);

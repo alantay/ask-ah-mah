@@ -2,6 +2,7 @@ import { maybeAutoTitleConversation } from "@/lib/conversations";
 import { NotFoundError } from "@/lib/errors";
 import { createMessage, getMessages, PhotoSchema } from "@/lib/messages";
 import { withAuth } from "@/lib/withAuth";
+import { readLimitedText } from "@/lib/http";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -22,18 +23,15 @@ export const GET = withAuth(async (req: NextRequest, { userId }) => {
   }
   // getMessages is owner-scoped: a foreign conversationId returns no messages.
   const messages = await getMessages(conversationId, userId);
-  // History contains small authenticated URLs, not every photo's base64 data.
-  return NextResponse.json(messages.map((message) => ({
-    ...message,
-    photo: message.photo ? `/api/message/${encodeURIComponent(message.id)}/photo` : null,
-  })));
+  // History queries omit photo bytes and return authenticated image URLs.
+  return NextResponse.json(messages);
 });
 
 export const POST = withAuth(async (req: NextRequest, { userId }) => {
   let rawBody: unknown;
   try {
-    const text = await req.text();
-    if (Buffer.byteLength(text, "utf8") > 1024 * 1024) {
+    const text = await readLimitedText(req, 1024 * 1024);
+    if (text === null) {
       return NextResponse.json({ error: "Request too large" }, { status: 413 });
     }
     rawBody = JSON.parse(text);
