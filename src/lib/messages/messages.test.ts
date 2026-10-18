@@ -1,11 +1,12 @@
 import { prisma } from "@/lib/db";
-import { createMessage, getMessages } from "./messages";
+import { createMessage, getMessages, getMessagePhoto } from "./messages";
 
 // Mock Prisma
 jest.mock("@/lib/db", () => {
   const prismaMock: Record<string, unknown> = {
     message: {
       findMany: jest.fn(),
+      findFirst: jest.fn(),
       create: jest.fn(),
     },
     conversation: {
@@ -31,6 +32,15 @@ describe("Message Functions", () => {
   });
 
   describe("getMessages", () => {
+    it("scopes photo reads to the conversation owner", async () => {
+      mockedPrisma.message.findFirst.mockResolvedValue(null);
+      expect(await getMessagePhoto("foreign-photo", "user-123")).toBeNull();
+      expect(mockedPrisma.message.findFirst).toHaveBeenCalledWith({
+        where: { id: "foreign-photo", conversation: { userId: "user-123" } },
+        select: { photo: true },
+      });
+    });
+
     it("should retrieve messages for a conversation in ascending order", async () => {
       const mockMessages = [
         {
@@ -39,6 +49,7 @@ describe("Message Functions", () => {
           userId: "user-123",
           content: "Hello",
           role: "user",
+          photo: null,
           createdAt: new Date("2024-01-01T10:00:00.000Z"),
         },
         {
@@ -47,6 +58,7 @@ describe("Message Functions", () => {
           userId: "user-123",
           content: "Hi there!",
           role: "assistant",
+          photo: null,
           createdAt: new Date("2024-01-01T10:01:00.000Z"),
         },
       ];
@@ -96,6 +108,7 @@ describe("Message Functions", () => {
           userId: "user-123",
           content: "Conv 123 message",
           role: "user",
+          photo: null,
           createdAt: new Date("2024-01-01T10:00:00.000Z"),
         },
       ];
@@ -125,6 +138,7 @@ describe("Message Functions", () => {
         userId: "user-123",
         content: "What can I cook?",
         role: "user",
+        photo: null,
         createdAt: new Date("2024-01-01T10:00:00.000Z"),
       };
 
@@ -156,6 +170,7 @@ describe("Message Functions", () => {
         userId: "user-123",
         content: "You can make scrambled eggs!",
         role: "assistant",
+        photo: null,
         createdAt: new Date("2024-01-01T10:01:00.000Z"),
       };
 
@@ -186,6 +201,7 @@ describe("Message Functions", () => {
         userId: "user-123",
         content: "",
         role: "user",
+        photo: null,
         createdAt: new Date("2024-01-01T10:00:00.000Z"),
       };
 
@@ -212,6 +228,7 @@ describe("Message Functions", () => {
         userId: "user-123",
         content: longContent,
         role: "user",
+        photo: null,
         createdAt: new Date("2024-01-01T10:00:00.000Z"),
       };
 
@@ -238,6 +255,7 @@ describe("Message Functions", () => {
         userId: "user-123",
         content: specialContent,
         role: "user",
+        photo: null,
         createdAt: new Date("2024-01-01T10:00:00.000Z"),
       };
 
@@ -297,6 +315,7 @@ describe("Message Functions", () => {
         userId: "user-123",
         content: "System initialized",
         role: "system",
+        photo: null,
         createdAt: new Date("2024-01-01T10:00:00.000Z"),
       };
 
@@ -329,6 +348,7 @@ describe("Message Functions", () => {
         userId: "user-123",
         content: "What can I cook?",
         role: "user",
+        photo: null,
         createdAt: new Date("2024-01-01T10:00:00.000Z"),
       };
 
@@ -348,6 +368,7 @@ describe("Message Functions", () => {
         userId: "user-123",
         content: "You can make scrambled eggs!",
         role: "assistant",
+        photo: null,
         createdAt: new Date("2024-01-01T10:01:00.000Z"),
       };
 

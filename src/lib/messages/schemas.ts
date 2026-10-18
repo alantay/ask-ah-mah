@@ -5,6 +5,7 @@ export interface SavedMessage {
   conversationId: string;
   createdAt: string;
   content: string;
+  photo?: string | null;
 }
 
 export interface SaveMessageRequest {

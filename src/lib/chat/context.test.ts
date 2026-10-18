@@ -82,4 +82,17 @@ describe("loadConversationContext", () => {
     await loadConversationContext("conv-1", incoming, "user-1");
     expect(validateUIMessages).toHaveBeenCalledTimes(1);
   });
+
+  it("restores the earlier photo for a text-only follow-up after reload", async () => {
+    const photo = "data:image/jpeg;base64,/9j/2Q==";
+    (getMessages as jest.Mock).mockResolvedValue([
+      { ...makeDbMessage("photo", "user", "Check this sauce"), photo },
+      makeDbMessage("answer", "assistant", "Reduce it uncovered."),
+      makeDbMessage("follow-up", "user", "For how long?"),
+    ]);
+    const result = await loadConversationContext("conv-1", [makeUIMessage("follow-up", "user", "For how long?")], "user-1");
+    expect(result).toHaveLength(3);
+    expect(result[0].parts).toContainEqual(expect.objectContaining({ type: "file", mediaType: "image/jpeg", url: photo }));
+    expect(result[1].parts).toEqual([{ type: "text", text: "Reduce it uncovered." }]);
+  });
 });

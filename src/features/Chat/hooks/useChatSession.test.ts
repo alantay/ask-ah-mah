@@ -77,7 +77,7 @@ const okConversation = () =>
   });
 
 const okMessage = () =>
-  Promise.resolve({ ok: true, status: 200 });
+  Promise.resolve({ ok: true, status: 200, json: async () => ({ message: { id: "saved-user" } }) });
 
 // ── Tests ────────────────────────────────────────────────────────────────────
 
@@ -88,6 +88,22 @@ describe("useChatSession — in-flight send guard", () => {
     jest.mocked(useChat).mockReturnValue({
       messages: [], sendMessage: mockSendMessage, status: "ready",
     } as unknown as ReturnType<typeof useChat>);
+  });
+
+  it("persists the photo and sends the same photo with the saved message identity", async () => {
+    mockFetch.mockReturnValueOnce(okConversation());
+    mockFetch.mockResolvedValue(okMessage());
+    const photo = "data:image/jpeg;base64,/9j/2Q==";
+    const { result } = renderHook(() => useChatSession());
+    await act(async () => { await result.current.handleSendMessage("Check my sauce", photo); });
+    const saveCall = mockFetch.mock.calls.find(([url]) => url === "/api/message");
+    expect(JSON.parse(saveCall![1].body)).toMatchObject({ content: "Check my sauce", photo, conversationId: "conv-1" });
+    expect(mockSendMessage).toHaveBeenCalledWith({
+      id: "saved-user", role: "user", parts: [
+        { type: "file", mediaType: "image/jpeg", filename: "photo.jpg", url: photo },
+        { type: "text", text: "Check my sauce" },
+      ],
+    });
   });
 
   it("retries a failed reply without saving the user message or creating another conversation", async () => {

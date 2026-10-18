@@ -4,6 +4,7 @@ import { chatErrorResponse } from "@/lib/chat/errors";
 import { latestUserText } from "@/lib/chat/messageText";
 import { buildChatTools } from "@/lib/chat/tools";
 import { withAuth } from "@/lib/withAuth";
+import { PhotoSchema } from "@/lib/messages/photo";
 import { EFFORT_AGENTIC, MODEL } from "@/lib/ai/models";
 import { openai } from "@ai-sdk/openai";
 import {
@@ -20,7 +21,16 @@ import { CHAT_SYSTEM_PROMPT } from "./constants";
 
 const UIMessageSchema = z
   .object({ id: z.string(), role: z.string(), parts: z.array(z.unknown()) })
-  .passthrough();
+  .passthrough()
+  .refine((message) => {
+    const files = message.parts.filter((part) =>
+      part && typeof part === "object" && "type" in part && part.type === "file"
+    );
+    if (files.length === 0) return true;
+    if (message.role !== "user" || files.length !== 1) return false;
+    const file = files[0] as { mediaType?: unknown; url?: unknown };
+    return file.mediaType === "image/jpeg" && PhotoSchema.safeParse(file.url).success;
+  }, "Attach one JPEG photo under 512 KB per message");
 
 const PostSchema = z.object({
   conversationId: z.string().min(1).max(100),

@@ -2,6 +2,7 @@ import { maybeAutoTitleConversation } from "@/lib/conversations";
 import { NotFoundError } from "@/lib/errors";
 import { createMessage, getMessages } from "@/lib/messages";
 import { withAuth } from "@/lib/withAuth";
+import { PhotoSchema } from "@/lib/messages/photo";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -9,7 +10,8 @@ const PostSchema = z.object({
   conversationId: z.string().min(1),
   content: z.string().min(1),
   role: z.enum(["user", "assistant"]),
-});
+  photo: PhotoSchema.optional(),
+}).refine((message) => !message.photo || message.role === "user");
 
 export const GET = withAuth(async (req: NextRequest, { userId }) => {
   const conversationId = req.nextUrl.searchParams.get("conversationId");
@@ -21,7 +23,11 @@ export const GET = withAuth(async (req: NextRequest, { userId }) => {
   }
   // getMessages is owner-scoped: a foreign conversationId returns no messages.
   const messages = await getMessages(conversationId, userId);
-  return NextResponse.json(messages);
+  // History contains small authenticated URLs, not every photo's base64 data.
+  return NextResponse.json(messages.map((message) => ({
+    ...message,
+    photo: message.photo ? `/api/message/${encodeURIComponent(message.id)}/photo` : null,
+  })));
 });
 
 export const POST = withAuth(async (req: NextRequest, { userId }) => {
@@ -35,10 +41,10 @@ export const POST = withAuth(async (req: NextRequest, { userId }) => {
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
-  const { conversationId, content, role } = parsed.data;
+  const { conversationId, content, role, photo } = parsed.data;
 
   try {
-    const message = await createMessage(conversationId, userId, content, role);
+    const message = await createMessage(conversationId, userId, content, role, ...(photo ? [photo] : []));
 
     if (role === "assistant") {
       void maybeAutoTitleConversation(conversationId, userId);

@@ -75,7 +75,7 @@ const okConversation = () =>
     json: () => Promise.resolve({ conversation: { id: "conv-new" } }),
   });
 
-const okMessage = () => Promise.resolve({ ok: true, status: 200 });
+const okMessage = () => Promise.resolve({ ok: true, status: 200, json: async () => ({ message: { id: "saved-user" } }) });
 
 const fakeAssistantMessage: UIMessage = {
   id: "msg-1",

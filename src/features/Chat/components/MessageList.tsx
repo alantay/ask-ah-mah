@@ -471,6 +471,11 @@ export const MessageList = ({
                 }`}
               >
                 <MessageContent variant="flat">
+                  {message.parts.filter((part) => part.type === "file" && part.mediaType === "image/jpeg").map((part, index) => part.type === "file" && (
+                    // Inline photos are already resized before being saved.
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img key={`photo-${index}`} src={part.url} alt="Photo attached to your message" loading="lazy" className="mb-3 max-h-80 w-auto max-w-full rounded-xl object-contain" />
+                  ))}
                   {/* Prose — strip completed fences when new-style blocks present;
                       when an open fence is detected, prefixText is already trimmed */}
                   {hasNewBlocks ? (

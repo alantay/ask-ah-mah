@@ -15,11 +15,20 @@ export async function getMessages(conversationId: string, userId: string) {
   return messages;
 }
 
+export async function getMessagePhoto(id: string, userId: string) {
+  const message = await prisma.message.findFirst({
+    where: { id, conversation: { userId } },
+    select: { photo: true },
+  });
+  return message?.photo ?? null;
+}
+
 export async function createMessage(
   conversationId: string,
   userId: string,
   content: string,
-  role: string
+  role: string,
+  photo?: string
 ) {
   // Guard against writing into a conversation owned by someone else, atomically.
   // A separate pre-check + connectOrCreate could race: a foreign conversation
@@ -42,7 +51,7 @@ export async function createMessage(
     }
 
     return tx.message.create({
-      data: { conversationId, userId, content, role },
+      data: { conversationId, userId, content, role, ...(photo ? { photo } : {}) },
     });
   });
 }

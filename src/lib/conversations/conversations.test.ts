@@ -265,6 +265,7 @@ describe("Conversation Functions", () => {
           userId: "user-1",
           content: "Hello",
           role: "user",
+          photo: null,
           createdAt: new Date(),
         },
       ]);
@@ -283,6 +284,7 @@ describe("Conversation Functions", () => {
           userId: "user-1",
           content: "What can I cook?",
           role: "user",
+          photo: null,
           createdAt: new Date(),
         },
         {
@@ -291,6 +293,7 @@ describe("Conversation Functions", () => {
           userId: "user-1",
           content: "You can make eggs!",
           role: "assistant",
+          photo: null,
           createdAt: new Date(),
         },
       ]);
@@ -312,6 +315,7 @@ describe("Conversation Functions", () => {
           userId: "user-1",
           content: "What can I cook with eggs?",
           role: "user",
+          photo: null,
           createdAt: new Date(),
         },
         {
@@ -320,6 +324,7 @@ describe("Conversation Functions", () => {
           userId: "user-1",
           content: "You can make scrambled eggs!",
           role: "assistant",
+          photo: null,
           createdAt: new Date(),
         },
       ]);
@@ -353,6 +358,7 @@ describe("Conversation Functions", () => {
           userId: "user-1",
           content: "What can I cook with eggs?",
           role: "user",
+          photo: null,
           createdAt: new Date(),
         },
         {
@@ -361,6 +367,7 @@ describe("Conversation Functions", () => {
           userId: "user-1",
           content: "You can make scrambled eggs!",
           role: "assistant",
+          photo: null,
           createdAt: new Date(),
         },
       ]);
@@ -391,6 +398,7 @@ describe("Conversation Functions", () => {
           userId: "user-1",
           content: "What can I cook with eggs?",
           role: "user",
+          photo: null,
           createdAt: new Date(),
         },
         {
@@ -399,6 +407,7 @@ describe("Conversation Functions", () => {
           userId: "user-1",
           content: "You can make scrambled eggs!",
           role: "assistant",
+          photo: null,
           createdAt: new Date(),
         },
       ]);

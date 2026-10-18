@@ -7,6 +7,7 @@ import {
   RemoveInventoryItemSchemaObj,
 } from "@/lib/inventory/schemas";
 import { SavedMessage } from "@/lib/messages/schemas";
+import { photoPart } from "@/lib/messages/photo";
 import { inventoryKey, messageKey } from "@/lib/swr/keys";
 import { fetcher, upperCaseFirstLetter } from "@/lib/utils";
 import { useChat } from "@ai-sdk/react";
@@ -94,7 +95,9 @@ export function useChatSession() {
       api: "/api/chat",
       prepareSendMessagesRequest: ({ messages, body }) => ({
         body: {
-          messages,
+          // History is loaded server-side. Sending only the current turn keeps
+          // photo conversations below the hosting request-size limit.
+          messages: messages.filter((message) => message.role === "user").slice(-1),
           ...body,
           conversationId: inFlightConvIdRef.current,
         },
@@ -221,7 +224,8 @@ export function useChatSession() {
   const saveMessage = async (
     role: "user" | "assistant",
     content: string,
-    convId?: string | null
+    convId?: string | null,
+    photo?: string
   ) => {
     const targetConvId = convId ?? convIdRef.current;
     if (!targetConvId) return;
@@ -233,13 +237,16 @@ export function useChatSession() {
           conversationId: targetConvId,
           role,
           content,
+          ...(photo ? { photo } : {}),
         }),
       });
       if (!response.ok)
         throw new Error(
           `Save failed: ${response.status} (conversationId: ${targetConvId})`
         );
+      const { message } = await response.json();
       mutate(messageKey(targetConvId));
+      return message as SavedMessage;
     } catch (error) {
       console.error("Failed to save message:", error);
       throw error;
@@ -299,17 +306,20 @@ export function useChatSession() {
       .join("");
 
     return !messages.some((currentMsg) => {
+      if (savedMsg.id === currentMsg.id) return true;
       const currentContent = currentMsg.parts
         .filter((part) => part.type === "text")
         .map((part) => part.text)
         .join("");
-      return savedContent === currentContent && savedMsg.role === currentMsg.role;
+      const savedPhoto = savedMsg.parts.find((part) => part.type === "file");
+      const currentPhoto = currentMsg.parts.find((part) => part.type === "file");
+      return savedContent === currentContent && savedMsg.role === currentMsg.role && savedPhoto?.url === currentPhoto?.url;
     });
   });
 
   const allMessages = [...savedMessagesFiltered, ...messages];
 
-  const handleSendMessage = async (message: string) => {
+  const handleSendMessage = async (message: string, photo?: string) => {
     // Synchronous guard: bail immediately if a send is already in progress.
     if (sendingRef.current || status === "submitted" || status === "streaming") {
       return false;
@@ -319,6 +329,7 @@ export function useChatSession() {
     setSubmittedAt(Date.now());
 
     try {
+      let savedMessage: SavedMessage | undefined;
       if (!activeConversationId) {
         // Staging path: create conversation before sending
         const res = await fetch("/api/conversation", {
@@ -339,15 +350,19 @@ export function useChatSession() {
         setPendingConversation(conversation);
 
         // Save user message under the new conversation id
-        await saveMessage("user", message, conversation.id);
+        savedMessage = await saveMessage("user", message, conversation.id, photo);
       } else {
         inFlightConvIdRef.current = activeConversationId;
-        await saveMessage("user", message);
+        savedMessage = await saveMessage("user", message, activeConversationId, photo);
       }
 
       // sendMessage flips status → "submitted", which releases the lock via
       // the status effect above and hands disable/loader back to status.
-      void sendMessage({ text: message });
+      void sendMessage({
+        id: savedMessage?.id,
+        role: "user",
+        parts: [...(photo ? [photoPart(photo)] : []), { type: "text", text: message }],
+      });
       return true;
     } catch (err) {
       console.error("Send failed:", err);

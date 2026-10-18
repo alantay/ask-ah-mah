@@ -118,6 +118,16 @@ describe("Chat API Route", () => {
   });
 
   describe("POST /api/chat", () => {
+    it.each([
+      [{ type: "file", mediaType: "image/jpeg", url: "https://example.com/photo.jpg" }],
+      [{ type: "file", mediaType: "image/svg+xml", url: "data:image/svg+xml;base64,PHN2Zz4=" }],
+      Array(2).fill({ type: "file", mediaType: "image/jpeg", url: "data:image/jpeg;base64,/9j/2Q==" }),
+    ])("rejects unsupported attachments before calling the model", async (...parts) => {
+      const response = await POST(createMockRequest({ conversationId: "conv-123", messages: [{ id: "photo", role: "user", parts }] }));
+      expect(response.status).toBe(400);
+      expect(mockedStreamText).not.toHaveBeenCalled();
+    });
+
     it("should process chat request with basic messages", async () => {
       const mockPreviousMessages = [
         {
@@ -126,6 +136,7 @@ describe("Chat API Route", () => {
           content: "Hello",
           userId: "user-123",
           conversationId: "conv-123",
+          photo: null,
           createdAt: new Date("2024-01-01T10:00:00.000Z"),
         },
         {
@@ -134,6 +145,7 @@ describe("Chat API Route", () => {
           content: "Hi there!",
           userId: "user-123",
           conversationId: "conv-123",
+          photo: null,
           createdAt: new Date("2024-01-01T10:01:00.000Z"),
         },
       ];
@@ -202,6 +214,7 @@ describe("Chat API Route", () => {
         content: `Message ${i}`,
         userId: "user-123",
         conversationId: "conv-123",
+        photo: null,
         createdAt: new Date("2024-01-01T10:00:00.000Z"),
       }));
 
@@ -236,6 +249,7 @@ describe("Chat API Route", () => {
           content: "Test message",
           userId: "user-123",
           conversationId: "conv-123",
+          photo: null,
           createdAt: new Date("2024-01-01T10:00:00.000Z"),
         },
         {
@@ -244,6 +258,7 @@ describe("Chat API Route", () => {
           content: "Test response",
           userId: "user-123",
           conversationId: "conv-123",
+          photo: null,
           createdAt: new Date("2024-01-01T10:01:00.000Z"),
         },
       ];
