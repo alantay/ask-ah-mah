@@ -29,7 +29,7 @@ export const MessageInput = ({
   const submitting = useRef(false);
   const canSend = !!(input.trim() || photo) && !disabled && !preparing;
   const photoButtonClassName = "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 transition-colors";
-  const composerClassName = "max-w-5xl mx-auto rounded-xl border border-border/60 bg-muted/50 focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/50";
+  const composerClassName = "max-w-5xl mx-auto rounded-xl border border-border/60 bg-muted/50 focus-within:border-ring focus-within:ring-1 focus-within:ring-ring/40";
 
   return (
     <form
