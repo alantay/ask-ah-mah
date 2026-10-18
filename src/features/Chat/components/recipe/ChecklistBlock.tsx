@@ -134,6 +134,7 @@ export function ChecklistBlock({
   isStreaming = false,
 }: ChecklistBlockProps) {
   const [staged, setStaged] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
 
   // Streaming partials may omit any field; default them so the same render path
   // serves both the live and the final view (ADR-0009).
@@ -146,12 +147,20 @@ export function ChecklistBlock({
   const ticked = reply ? reply.ticked : staged;
 
   const submit = async () => {
+    if (submitting || locked || isStreaming) return;
     const tickedRows = rows.filter(r => ticked.includes(r.id));
     const absentRows = rows.filter(r => !ticked.includes(r.id));
     // Await the Pantry write first, or the chat turn races it and `getInventory`
     // can miss the very items the user just ticked.
-    if (tickedRows.length) await onTicked(tickedRows);
-    onSend(buildReplyMessage(tickedRows, absentRows));
+    setSubmitting(true);
+    try {
+      if (tickedRows.length) await onTicked(tickedRows);
+      onSend(buildReplyMessage(tickedRows, absentRows));
+    } catch {
+      // onTicked reports the failed write; keep the answer staged for retry.
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const count = ticked.length;
@@ -174,7 +183,7 @@ export function ChecklistBlock({
             key={row.id}
             row={row}
             isTicked={ticked.includes(row.id)}
-            locked={locked || isStreaming}
+            locked={locked || isStreaming || submitting}
             onToggle={() =>
               setStaged(s =>
                 s.includes(row.id) ? s.filter(x => x !== row.id) : [...s, row.id]
@@ -192,9 +201,10 @@ export function ChecklistBlock({
         <button
           type="button"
           onClick={submit}
-          className="mt-3 w-full rounded-xl bg-primary text-primary-foreground font-display font-semibold text-base px-4 py-3 cursor-pointer hover:opacity-90 transition-opacity"
+          disabled={submitting}
+          className="mt-3 w-full rounded-xl bg-primary text-primary-foreground font-display font-semibold text-base px-4 py-3 cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-wait"
         >
-          {count === 0
+          {submitting ? 'Saving pantry…' : count === 0
             ? 'Tell Ah Mah'
             : count === total
               ? `I have all ${total}`

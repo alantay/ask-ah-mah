@@ -5,6 +5,7 @@ const INVENTORY_NAMING_RULES = `- Store a concise, singular pantry identity in n
 - Preserve the kind, species, cut and form that distinguish stock: "Minced beef" and "Minced pork" stay distinct; "Dried chilli" stays distinct from "Chilli"; "Chicken thigh" stays distinct from "Chicken breast". Strip preparation/condition only: "fresh chilli" → "Chilli"; "chicken thighs, boneless, skinless, cut into pieces" → "Chicken thigh".
 - Use sentence case where natural ("chicken breasts" → "Chicken breast"). Do not shorten by truncating or merge synonyms. Never add a suggested substitute, negated item or planned purchase as possessed stock.`;
 
+/** Build extraction instructions for possession claims in a chat message. */
 export function buildInventoryCapturePrompt(text: string): string {
   return `You extract ONLY ingredients/kitchenware the user explicitly HAS or JUST ACQUIRED, from a single chat message to a cooking assistant.
 
@@ -29,6 +30,7 @@ USER MESSAGE:
 ${text}`;
 }
 
+/** Build extraction instructions for the pantry's freeform entry box. */
 export function buildInventoryParsePrompt(text: string): string {
   return `Parse the following freeform inventory entry into structured items. The user is dumping what they just bought or what they have on hand.
 
@@ -49,3 +51,13 @@ ${text}`;
 export const ADD_INVENTORY_TOOL_DESCRIPTION = `Add items to the user's inventory. Only add what they actually have or just acquired. Required: name (string), type ("ingredient" or "kitchenware"). Optional: quantity (number) and unit (string) — only set quantity if the user explicitly states one.
 
 ${INVENTORY_NAMING_RULES}`;
+
+/** Names confirmed by recipe/checklist ticks; the user has already asserted ownership. */
+export function buildRecipeInventoryNamesPrompt(names: string[]): string {
+  return `Shorten these confirmed recipe/checklist item labels into pantry names.
+Return one name for EVERY input key, under the SAME key. Do not add, omit, combine or split items. Do not extract quantities or change categories; only rewrite each name.
+${INVENTORY_NAMING_RULES}
+
+CONFIRMED LABELS:
+${JSON.stringify(Object.fromEntries(names.map((name, index) => [String(index), name])))}`;
+}

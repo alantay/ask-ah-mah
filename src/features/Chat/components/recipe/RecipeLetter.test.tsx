@@ -520,7 +520,22 @@ describe('Reconcile submit writes the pantry then asks', () => {
 
     await waitFor(() => expect(callsTo('POST').length).toBe(1));
     expect(JSON.parse(callsTo('POST')[0][1].body)).toEqual({
+      source: 'recipe',
       items: [{ name: 'bok choy', type: 'ingredient', category: 'Vegetable' }],
+    });
+  });
+
+  it('keeps the displayed fish label while marking its pantry write for concise naming', async () => {
+    const name = 'Fresh firm fish (mackerel, snapper, barramundi)';
+    render(<RecipeLetter recipe={{ ...RECIPE, ingredients: [{ name, category: 'Protein' }] }} onSend={mockOnSend} />);
+    openReconcile();
+    fireEvent.click(screen.getByRole('checkbox', { name: /Fresh firm fish/ }));
+    expect(screen.getByText(name)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Save what I have/ }));
+    await waitFor(() => expect(callsTo('POST')).toHaveLength(1));
+    expect(JSON.parse(callsTo('POST')[0][1].body)).toEqual({
+      source: 'recipe',
+      items: [{ name, type: 'ingredient', category: 'Protein' }],
     });
   });
 
@@ -637,6 +652,7 @@ describe('Reconcile submit writes the pantry then asks', () => {
 
     await waitFor(() => expect(callsTo('POST').length).toBe(1));
     expect(JSON.parse(callsTo('POST')[0][1].body)).toEqual({
+      source: 'recipe',
       items: [{ name: 'jasmine rice', type: 'ingredient', category: 'Carbs' }],
     });
   });

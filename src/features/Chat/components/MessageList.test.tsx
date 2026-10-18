@@ -75,19 +75,18 @@ jest.mock("./recipe/ClarifyBlock", () => ({
 
 jest.mock("./recipe/ChecklistBlock", () => ({
   ChecklistBlock: ({
+    data,
     onTicked,
     isStreaming,
   }: {
-    onTicked: (rows: { id: string; label: string; category?: string }[]) => void;
+    data: { rows?: { id: string; label: string; category?: string }[] };
+    onTicked: (rows: { id: string; label: string; category?: string }[]) => Promise<void>;
     isStreaming?: boolean;
   }) => (
     <div data-testid="checklist-block" data-streaming={!!isStreaming}>
       <button
         onClick={() =>
-          onTicked([
-            { id: "laksa-paste", label: "Laksa paste", category: "Condiments" },
-            { id: "coconut-milk", label: "Coconut milk" },
-          ])
+          onTicked(data.rows ?? []).catch(() => {})
         }
       >
         tick
@@ -674,6 +673,7 @@ describe("MessageList", () => {
         (mockFetch.mock.calls[0][1] as RequestInit).body as string,
       );
       expect(body).toEqual({
+        source: "recipe",
         items: [
           { name: "Laksa paste", type: "ingredient", category: "Condiments" },
           { name: "Coconut milk", type: "ingredient" },
@@ -685,7 +685,7 @@ describe("MessageList", () => {
       );
     });
 
-    it("tells the user to add by hand when the Pantry write fails", async () => {
+    it("tells the user to retry when the Pantry write fails", async () => {
       mockFetch.mockResolvedValueOnce({ ok: false } as Response);
 
       render(<MessageList {...defaultProps} messages={[checklistMessage]} />);
@@ -693,9 +693,30 @@ describe("MessageList", () => {
 
       await waitFor(() =>
         expect(toast.error).toHaveBeenCalledWith(
-          expect.stringMatching(/by hand/),
+          expect.stringMatching(/try again/i),
         ),
       );
+    });
+
+    it("marks a ticked recipe-style fish label for server-side naming", async () => {
+      const label = "Fresh firm fish (mackerel, snapper, barramundi)";
+      const message = createMockMessage({
+        id: "fish-checklist",
+        role: "assistant",
+        parts: [{ type: "text", text: '```checklist\n' + JSON.stringify({
+          question: "Do you have fish?",
+          deal: "With fish I can cook this dish.",
+          rows: [{ id: "fish", label, category: "Protein" }],
+        }) + '\n```' }],
+      });
+      mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({}) } as Response);
+      render(<MessageList {...defaultProps} messages={[message]} />);
+      fireEvent.click(screen.getByText("tick"));
+      await waitFor(() => expect(mockMutate).toHaveBeenCalled());
+      expect(JSON.parse((mockFetch.mock.calls[0][1] as RequestInit).body as string)).toEqual({
+        source: "recipe",
+        items: [{ name: label, type: "ingredient", category: "Protein" }],
+      });
     });
   });
 

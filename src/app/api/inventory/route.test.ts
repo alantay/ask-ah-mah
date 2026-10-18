@@ -5,7 +5,12 @@ import {
 } from "@/lib/inventory/Inventory";
 import { getSessionUserId } from "@/lib/session";
 import { NextRequest } from "next/server";
+import { generateObject } from "ai";
 import { DELETE, GET, POST } from "./route";
+
+jest.mock("ai", () => ({ generateObject: jest.fn() }));
+jest.mock("@ai-sdk/openai", () => ({ openai: jest.fn(() => "mock-model") }));
+const mockedGenerateObject = jest.mocked(generateObject);
 
 // Mock Next.js server components
 jest.mock("next/server", () => ({
@@ -56,6 +61,7 @@ const createMockRequest = (url: string, options: RequestInit = {}) => {
 describe("Inventory API Routes", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockedGenerateObject.mockReset();
     // Default: an authenticated session for "user-123". Individual tests
     // override this (e.g. resolve null to simulate an unauthenticated caller).
     mockedGetSessionUserId.mockResolvedValue("user-123");
@@ -198,6 +204,49 @@ describe("Inventory API Routes", () => {
   });
 
   describe("POST /api/inventory", () => {
+    it("shortens confirmed recipe labels before saving, preserving metadata and input order", async () => {
+      const items = [
+        { name: "Fresh firm fish (mackerel, snapper, barramundi)", type: "ingredient", category: "Protein", quantity: 200, unit: "g" },
+        { name: "Minced pork (not beef)", type: "ingredient", category: "Protein" },
+      ];
+      mockedGenerateObject.mockResolvedValueOnce({ object: { names: { "1": "Minced pork", "0": "Fish" } } } as never);
+      const response = await POST(createMockRequest("http://localhost:3000/api/inventory", {
+        body: JSON.stringify({ source: "recipe", userId: "someone-else", items }),
+      }));
+      expect(response.status).toBe(200);
+      expect(mockedAddInventoryItem).toHaveBeenCalledWith([
+        { ...items[0], name: "Fish" },
+        { ...items[1], name: "Minced pork" },
+      ], "user-123");
+    });
+
+    it("does not write raw labels when recipe naming fails", async () => {
+      mockedGenerateObject.mockRejectedValueOnce(new Error("Model unavailable"));
+      const response = await POST(createMockRequest("http://localhost:3000/api/inventory", {
+        body: JSON.stringify({ source: "recipe", items: [{ name: "Fresh firm fish (mackerel, snapper)", type: "ingredient" }] }),
+      }));
+      expect(response.status).toBe(500);
+      expect(mockedAddInventoryItem).not.toHaveBeenCalled();
+    });
+
+    it("rejects a missing name instead of dropping a confirmed row", async () => {
+      mockedGenerateObject.mockResolvedValueOnce({ object: { names: {} } } as never);
+      const response = await POST(createMockRequest("http://localhost:3000/api/inventory", {
+        body: JSON.stringify({ source: "recipe", items: [{ name: "Fish", type: "ingredient" }] }),
+      }));
+      expect(response.status).toBe(500);
+      expect(mockedAddInventoryItem).not.toHaveBeenCalled();
+    });
+
+    it("does not call the model for an empty recipe selection", async () => {
+      const response = await POST(createMockRequest("http://localhost:3000/api/inventory", {
+        body: JSON.stringify({ source: "recipe", items: [] }),
+      }));
+      expect(response.status).toBe(200);
+      expect(mockedGenerateObject).not.toHaveBeenCalled();
+      expect(mockedAddInventoryItem).toHaveBeenCalledWith([], "user-123");
+    });
+
     it("should add inventory items successfully", async () => {
       const requestBody = {
         userId: "user-123",
@@ -233,6 +282,7 @@ describe("Inventory API Routes", () => {
         "user-123"
       );
       expect(mockedAddInventoryItem).toHaveBeenCalledTimes(1);
+      expect(mockedGenerateObject).not.toHaveBeenCalled();
     });
 
     it("should return 401 when unauthenticated", async () => {

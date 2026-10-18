@@ -313,7 +313,7 @@ export function RecipeLetter({
     };
 
     try {
-      if (adds.length) await write('POST', { items: adds });
+      if (adds.length) await write('POST', { source: 'recipe', items: adds });
       if (deletes.length) await write('DELETE', { itemNames: deletes });
       if (adds.length || deletes.length) {
         if (userId) mutate(inventoryKey);

@@ -13,19 +13,26 @@ import {
   ADD_INVENTORY_TOOL_DESCRIPTION,
   buildInventoryCapturePrompt,
   buildInventoryParsePrompt,
+  buildRecipeInventoryNamesPrompt,
 } from "../src/lib/inventory/prompts";
+import { normalizeRecipeItems } from "../src/lib/inventory/normalizeRecipeItems";
 import { AddInventoryItemSchemaObj, type AddInventoryItem } from "../src/lib/inventory/schemas";
+
+type CaptureMode = "parse" | "capture" | "tool" | "recipe";
 
 type CaptureCase = {
   id: string;
   text: string;
   names: string[];
   amount?: { name: string; quantity: number; units: string[] };
+  kitchenware?: string[];
+  modes?: CaptureMode[];
+  confirmedItems?: AddInventoryItem[];
 };
 
 type CaptureResult = {
   id: string;
-  path: string;
+  path: CaptureMode;
   items?: AddInventoryItem[];
   errors: string[];
 };
@@ -38,17 +45,42 @@ const cases: CaptureCase[] = [
   { id: "unowned-alternatives", text: "I have fish (mackerel or snapper would also work); I don't have eggs and I might buy tofu tomorrow.", names: ["Fish"] },
   { id: "no-possession", text: "I don't have fish; should I buy mackerel?", names: [] },
   { id: "prep-instructions", text: "I bought chicken thighs, boneless, skinless, cut into bite-size pieces.", names: ["Chicken thigh"] },
-  { id: "quantity-and-kitchenware", text: "I have 2 eggs and a wok.", names: ["Egg", "Wok"], amount: { name: "Egg", quantity: 2, units: ["piece", "pieces"] } },
+  { id: "quantity-and-kitchenware", text: "I have 2 eggs and a wok.", names: ["Egg", "Wok"], kitchenware: ["Wok"], amount: { name: "Egg", quantity: 2, units: ["piece", "pieces"] } },
+  {
+    id: "bare-fish-line",
+    text: "Fresh firm fish (mackerel, snapper, barramundi)",
+    names: ["Fish"],
+    modes: ["parse", "recipe"],
+    confirmedItems: [{ name: "Fresh firm fish (mackerel, snapper, barramundi)", type: "ingredient", category: "Protein" }],
+  },
+  {
+    id: "confirmed-recipe-items",
+    text: "Confirmed recipe labels",
+    names: ["Mackerel", "Minced beef", "Minced pork", "Dried chilli", "Chilli", "Chicken thigh"],
+    amount: { name: "Mackerel", quantity: 200, units: ["g"] },
+    modes: ["recipe"],
+    confirmedItems: [
+      { name: "Mackerel (ask fishmonger to clean and scale)", type: "ingredient", category: "Protein", quantity: 200, unit: "g" },
+      { name: "Minced beef", type: "ingredient", category: "Protein" },
+      { name: "Minced pork", type: "ingredient", category: "Protein" },
+      { name: "Dried chilli (soak before use)", type: "ingredient", category: "Vegetable" },
+      { name: "Fresh chilli", type: "ingredient", category: "Vegetable" },
+      { name: "Chicken thighs, boneless, skinless, cut into pieces", type: "ingredient", category: "Protein" },
+    ],
+  },
 ];
 
 const normalize = (name: string) => name.trim().toLowerCase();
+const modesFor = (c: CaptureCase): CaptureMode[] => c.modes ?? ["parse", "capture", "tool"];
 
+/** Compare extracted names, types and explicit-only amounts against the fixture. */
 function evaluateItems(c: CaptureCase, items: AddInventoryItem[]): string[] {
   const errors: string[] = [];
   const names = items.map(i => normalize(i.name)).sort();
   if (JSON.stringify(names) !== JSON.stringify(c.names.map(normalize).sort())) errors.push("names differ");
   for (const item of items) {
-    if (item.type !== (normalize(item.name) === "wok" ? "kitchenware" : "ingredient")) errors.push(`wrong type: ${item.name}`);
+    const expectedType = c.kitchenware?.some(name => normalize(name) === normalize(item.name)) ? "kitchenware" : "ingredient";
+    if (item.type !== expectedType) errors.push(`wrong type: ${item.name}`);
     if (item.type === "ingredient" && !item.category) errors.push(`missing category: ${item.name}`);
     if (item.type === "kitchenware" && item.category) errors.push(`unexpected category: ${item.name}`);
     if (c.amount && normalize(item.name) === normalize(c.amount.name)) {
@@ -58,6 +90,7 @@ function evaluateItems(c: CaptureCase, items: AddInventoryItem[]): string[] {
   return errors;
 }
 
+/** Exercise the chat agent with in-memory tool executors, without pantry writes. */
 async function runTool(text: string): Promise<AddInventoryItem[]> {
   const captured: AddInventoryItem[] = [];
   await generateText({
@@ -95,6 +128,7 @@ async function runTool(text: string): Promise<AddInventoryItem[]> {
   return captured;
 }
 
+/** List cases, run opt-in model evaluations, or re-score saved outputs offline. */
 async function main() {
   const rescoreIndex = process.argv.indexOf("--rescore");
   if (rescoreIndex !== -1) {
@@ -113,9 +147,13 @@ async function main() {
     if (passed !== saved.results.length) process.exitCode = 1;
     return;
   }
+  const caseIndex = process.argv.indexOf("--case");
+  const caseIds = caseIndex === -1 ? null : process.argv[caseIndex + 1]?.split(",");
+  if (caseIndex !== -1 && (!caseIds?.length || caseIds.some(id => !cases.some(c => c.id === id)))) throw new Error("--case requires known case IDs (comma-separated)");
+  const selectedCases = caseIds ? cases.filter(c => caseIds.includes(c.id)) : cases;
   if (!process.argv.includes("--run")) {
-    console.log(`${cases.length} cases × 3 paths = ${cases.length * 3} evaluations on ${MODEL} (tool turns can make multiple calls). Add --run to execute.`);
-    console.log(cases.map(c => c.id).join("\n"));
+    console.log(`${selectedCases.length} cases, ${selectedCases.reduce((sum, c) => sum + modesFor(c).length, 0)} evaluations on ${MODEL} (tool turns can make multiple calls). Add --run to execute.`);
+    console.log(selectedCases.map(c => c.id).join("\n"));
     return;
   }
   if (!process.env.OPENAI_API_KEY) {
@@ -128,10 +166,10 @@ async function main() {
   if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is required");
 
   const results: CaptureResult[] = [];
-  for (const c of cases) {
-    for (const path of ["parse", "capture", "tool"] as const) {
+  for (const c of selectedCases) {
+    for (const path of modesFor(c)) {
       try {
-        const items = path === "tool" ? await runTool(c.text) : (await generateObject({
+        const items = path === "recipe" ? await normalizeRecipeItems(c.confirmedItems!) : path === "tool" ? await runTool(c.text) : (await generateObject({
           model: openai(MODEL),
           providerOptions: EFFORT_MECHANICAL,
           schema: AddInventoryItemSchemaObj,
@@ -157,8 +195,9 @@ async function main() {
       capture: buildInventoryCapturePrompt("<user message>"),
       toolDescription: ADD_INVENTORY_TOOL_DESCRIPTION,
       chatSystem: CHAT_SYSTEM_PROMPT,
+      recipeNames: buildRecipeInventoryNamesPrompt(["<confirmed label>"]),
     },
-    cases,
+    cases: selectedCases,
     results,
   }, null, 2));
   const passed = results.filter(r => r.errors.length === 0).length;
