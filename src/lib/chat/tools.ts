@@ -1,3 +1,4 @@
+import { ADD_INVENTORY_TOOL_DESCRIPTION } from "@/lib/inventory/prompts";
 import {
   addInventoryItem,
   getInventory,
@@ -12,7 +13,7 @@ import { z } from "zod";
 export function buildChatTools(userId: string) {
   return {
     addInventoryItem: {
-      description: `Add items to the user's inventory. Required: name (string), type ("ingredient" or "kitchenware"). Optional: quantity (number) and unit (string) — only set quantity if the user explicitly states one.`,
+      description: ADD_INVENTORY_TOOL_DESCRIPTION,
       inputSchema: AddInventoryItemSchemaObj,
       execute: async ({ items }: z.infer<typeof AddInventoryItemSchemaObj>) => {
         await addInventoryItem(items, userId);

@@ -130,15 +130,16 @@ export const MessageList = ({
   const { mutate: mutateInventory } = useSWR(inventoryKey(userId), fetcher);
 
   // A tick is the user asserting "I own this", so the Pantry write is
-  // deterministic and client-driven rather than left to the model to choose to
-  // call `addInventoryItem`. `addInventoryItem` normalises the name and upserts
-  // on (userId, name, type), so an item the user already had is not duplicated.
+  // client-driven rather than left to the model to choose whether to add it.
+  // The server shortens recipe labels before the canonical-key upsert; this
+  // never changes which rows the user affirmed.
   const handleTicked = async (rows: ChecklistRow[]) => {
     try {
       const res = await fetch("/api/inventory", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          source: "recipe",
           items: rows.map((r) => ({
             name: r.label,
             type: "ingredient",
@@ -147,14 +148,16 @@ export const MessageList = ({
         }),
       });
       if (!res.ok) throw new Error("Failed to update pantry");
-      await mutateInventory();
+      // The POST is durable; a slow/failed cache read must not block the reply.
+      void mutateInventory().catch(() => {});
       toast.success(
         rows.length === 1
           ? `Added ${rows[0].label} to your pantry`
           : `Added ${rows.length} items to your pantry`,
       );
-    } catch {
-      toast.error("Couldn't add those to your pantry — you can add them by hand.");
+    } catch (error) {
+      toast.error("Couldn't update your pantry. Try again.");
+      throw error;
     }
   };
 

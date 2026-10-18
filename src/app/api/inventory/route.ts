@@ -8,7 +8,13 @@ import {
   RemoveInventoryItemSchemaObj,
 } from "@/lib/inventory/schemas";
 import { withAuth } from "@/lib/withAuth";
+import { normalizeRecipeItems } from "@/lib/inventory/normalizeRecipeItems";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+const AddInventoryRequestSchema = AddInventoryItemSchemaObj.extend({
+  source: z.literal("recipe").optional(),
+});
 
 async function readJson(req: NextRequest): Promise<Record<string, unknown> | null> {
   try {
@@ -47,10 +53,17 @@ export const POST = withAuth(async (req: NextRequest, { userId }) => {
     if (!payload) return badRequest("Invalid inventory payload");
 
     // `userId` in the body (if any) is ignored — z.object strips unknown keys.
-    const parsed = AddInventoryItemSchemaObj.safeParse(payload);
+    const parsed = AddInventoryRequestSchema.safeParse(payload);
     if (!parsed.success) return badRequest("Invalid inventory payload");
 
-    await addInventoryItem(parsed.data.items, userId);
+    const items = parsed.data.source === "recipe"
+      ? await normalizeRecipeItems(parsed.data.items)
+      : parsed.data.items;
+    if (parsed.data.source === "recipe") {
+      await addInventoryItem(items, userId, { preserveUnspecifiedFields: true });
+    } else {
+      await addInventoryItem(items, userId);
+    }
     return NextResponse.json({ success: true, message: "Inventory updated" });
   } catch (error) {
     console.error("Failed to update inventory", error);

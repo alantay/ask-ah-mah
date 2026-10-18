@@ -225,6 +225,33 @@ describe('ChecklistBlock', () => {
     expect(screen.getByText(/just tell me/i)).toBeInTheDocument();
   });
 
+  it('keeps the ticks staged for retry when the pantry write fails', async () => {
+    const onSend = jest.fn();
+    const onTicked = jest.fn().mockRejectedValueOnce(new Error('Naming failed')).mockResolvedValueOnce(undefined);
+    renderBlock({ onSend, onTicked });
+    fireEvent.click(screen.getByText('Laksa paste'));
+    fireEvent.click(screen.getByText('I have this 1'));
+    await waitFor(() => expect(screen.getByText('I have this 1')).toBeEnabled());
+    expect(onSend).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: /Laksa paste/ })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByText('I have this 1'));
+    await waitFor(() => expect(onSend).toHaveBeenCalledTimes(1));
+  });
+
+  it('disables repeat submissions and changes to ticks while saving', async () => {
+    let finish!: () => void;
+    const onTicked = jest.fn(() => new Promise<void>(resolve => { finish = resolve; }));
+    const onSend = jest.fn();
+    renderBlock({ onSend, onTicked });
+    fireEvent.click(screen.getByText('Laksa paste'));
+    fireEvent.click(screen.getByText('I have this 1'));
+    screen.getAllByRole('button').forEach(button => expect(button).toBeDisabled());
+    fireEvent.click(screen.getByText('Saving pantry…'));
+    expect(onTicked).toHaveBeenCalledTimes(1);
+    finish();
+    await waitFor(() => expect(onSend).toHaveBeenCalledTimes(1));
+  });
+
   it('suppresses staging and the locked state while streaming', () => {
     renderBlock({
       allMessages: [assistantMsg, reply(['laksa-paste'], ['coconut-milk', 'rice-noodles'])],
