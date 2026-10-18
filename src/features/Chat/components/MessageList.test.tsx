@@ -77,16 +77,18 @@ jest.mock("./recipe/ChecklistBlock", () => ({
   ChecklistBlock: ({
     data,
     onTicked,
+    onSend,
     isStreaming,
   }: {
     data: { rows?: { id: string; label: string; category?: string }[] };
     onTicked: (rows: { id: string; label: string; category?: string }[]) => Promise<void>;
+    onSend: (text: string) => void;
     isStreaming?: boolean;
   }) => (
     <div data-testid="checklist-block" data-streaming={!!isStreaming}>
       <button
         onClick={() =>
-          onTicked(data.rows ?? []).catch(() => {})
+          onTicked(data.rows ?? []).then(() => onSend("checklist reply"), () => {})
         }
       >
         tick
@@ -188,6 +190,7 @@ describe("MessageList", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockMutate.mockReset().mockResolvedValue(undefined);
     jest.spyOn(console, "warn").mockImplementation(() => {});
 
     // Default SWR mock
@@ -696,6 +699,19 @@ describe("MessageList", () => {
           expect.stringMatching(/try again/i),
         ),
       );
+    });
+
+    it.each(["pending", "rejected"])("sends the checklist reply after a successful write even when cache refresh is %s", async (state) => {
+      mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({}) } as Response);
+      mockMutate.mockImplementationOnce(() => state === "pending"
+        ? new Promise(() => {})
+        : Promise.reject(new Error("Refetch failed")));
+      const onSend = jest.fn();
+      render(<MessageList {...defaultProps} messages={[checklistMessage]} onSend={onSend} />);
+      fireEvent.click(screen.getByText("tick"));
+      await waitFor(() => expect(onSend).toHaveBeenCalledTimes(1));
+      expect(toast.error).not.toHaveBeenCalled();
+      expect(toast.success).toHaveBeenCalled();
     });
 
     it("marks a ticked recipe-style fish label for server-side naming", async () => {

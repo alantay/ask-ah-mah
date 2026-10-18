@@ -26,6 +26,27 @@ describe("addInventoryItem", () => {
     expect(call.create).toMatchObject({ name: "Shallots", canonicalKey: "shallot" });
   });
 
+  it("preserves existing stock details when a recipe tick supplies no replacements", async () => {
+    const stored = { quantity: 200, unit: "g", category: "Protein" };
+    upsert.mockImplementationOnce(async ({ update }) => Object.assign(stored, update));
+    await addInventoryItem([{ name: "Fish", type: "ingredient" }], USER, { preserveUnspecifiedFields: true });
+    expect(stored).toMatchObject({ quantity: 200, unit: "g", category: "Protein" });
+  });
+
+  it("applies explicit recipe stock details while preserving unspecified fields", async () => {
+    const stored = { quantity: 200, unit: "g", category: "Protein" };
+    upsert.mockImplementationOnce(async ({ update }) => Object.assign(stored, update));
+    await addInventoryItem([{ name: "Fish", type: "ingredient", quantity: 2, unit: "pieces" }], USER, { preserveUnspecifiedFields: true });
+    expect(stored).toMatchObject({ quantity: 2, unit: "pieces", category: "Protein" });
+  });
+
+  it("retains the existing unspecified-means-unlimited behavior for ordinary writes", async () => {
+    const stored = { quantity: 200, unit: "g", category: "Protein" };
+    upsert.mockImplementationOnce(async ({ update }) => Object.assign(stored, update));
+    await addInventoryItem([{ name: "Fish", type: "ingredient" }], USER);
+    expect(stored).toMatchObject({ quantity: null, unit: null, category: null });
+  });
+
   it("never overwrites the display name of a row that already exists", async () => {
     await addInventoryItem([{ name: "Shallots", type: "ingredient" }], USER);
 

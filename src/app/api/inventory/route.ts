@@ -59,7 +59,11 @@ export const POST = withAuth(async (req: NextRequest, { userId }) => {
     const items = parsed.data.source === "recipe"
       ? await normalizeRecipeItems(parsed.data.items)
       : parsed.data.items;
-    await addInventoryItem(items, userId);
+    if (parsed.data.source === "recipe") {
+      await addInventoryItem(items, userId, { preserveUnspecifiedFields: true });
+    } else {
+      await addInventoryItem(items, userId);
+    }
     return NextResponse.json({ success: true, message: "Inventory updated" });
   } catch (error) {
     console.error("Failed to update inventory", error);

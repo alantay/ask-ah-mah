@@ -217,7 +217,7 @@ describe("Inventory API Routes", () => {
       expect(mockedAddInventoryItem).toHaveBeenCalledWith([
         { ...items[0], name: "Fish" },
         { ...items[1], name: "Minced pork" },
-      ], "user-123");
+      ], "user-123", { preserveUnspecifiedFields: true });
     });
 
     it("does not write raw labels when recipe naming fails", async () => {
@@ -244,7 +244,7 @@ describe("Inventory API Routes", () => {
       }));
       expect(response.status).toBe(200);
       expect(mockedGenerateObject).not.toHaveBeenCalled();
-      expect(mockedAddInventoryItem).toHaveBeenCalledWith([], "user-123");
+      expect(mockedAddInventoryItem).toHaveBeenCalledWith([], "user-123", { preserveUnspecifiedFields: true });
     });
 
     it("should add inventory items successfully", async () => {

@@ -148,7 +148,8 @@ export const MessageList = ({
         }),
       });
       if (!res.ok) throw new Error("Failed to update pantry");
-      await mutateInventory();
+      // The POST is durable; a slow/failed cache read must not block the reply.
+      void mutateInventory().catch(() => {});
       toast.success(
         rows.length === 1
           ? `Added ${rows[0].label} to your pantry`

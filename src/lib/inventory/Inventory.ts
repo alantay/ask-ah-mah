@@ -22,9 +22,11 @@ function normalizeName(raw: string): string {
   return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
 }
 
+/** Upsert stock; recipe confirmations preserve details they did not supply. */
 export async function addInventoryItem(
   itemsNonNormalisedName: AddInventoryItem[],
-  userId: string
+  userId: string,
+  options: { preserveUnspecifiedFields?: boolean } = {},
 ) {
   const items = itemsNonNormalisedName.map((item) => ({
     ...item,
@@ -44,9 +46,12 @@ export async function addInventoryItem(
         // its display name (ADR-0029). "Shallots" arriving against a stored
         // "Shallot" refreshes the rest and leaves the name alone.
         canonicalKey: key,
-        quantity: item.quantity ?? null,
-        unit: item.unit ?? null,
-        category: item.category ?? null,
+        ...(options.preserveUnspecifiedFields && item.quantity === undefined
+          ? {} : { quantity: item.quantity ?? null }),
+        ...(options.preserveUnspecifiedFields && item.unit === undefined
+          ? {} : { unit: item.unit ?? null }),
+        ...(options.preserveUnspecifiedFields && item.category === undefined
+          ? {} : { category: item.category ?? null }),
         lastUpdated: nowIso,
       },
       create: {
