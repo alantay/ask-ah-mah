@@ -1,3 +1,4 @@
+import { TEST_PHOTO } from "@/lib/messages/photo.fixture";
 import { GET, POST } from "./route";
 import { createMessage, getMessages } from "@/lib/messages";
 import { NotFoundError } from "@/lib/errors";
@@ -18,6 +19,7 @@ jest.mock("next/server", () => ({
 
 // Mock the message functions
 jest.mock("@/lib/messages", () => ({
+  ...jest.requireActual("@/lib/messages/photo"),
   createMessage: jest.fn(),
   getMessages: jest.fn(),
 }));
@@ -50,16 +52,19 @@ const createMockRequest = (url: string, options: RequestInit = {}) => {
     nextUrl: {
       searchParams: parsedUrl.searchParams,
     },
-    json: async () => {
-      if (options.body) {
-        return JSON.parse(options.body as string);
-      }
-      return {};
-    },
+    text: async () => options.body as string || "{}",
   } as NextRequest;
 };
 
 describe("Message API Routes", () => {
+  it("rejects a request over 1 MB without saving", async () => {
+    const request = createMockRequest("http://localhost/api/message", {
+      body: JSON.stringify({ conversationId: "conv-123", role: "user", content: "🍳".repeat(270000) }),
+    });
+    expect((await POST(request)).status).toBe(413);
+    expect(mockedCreateMessage).not.toHaveBeenCalled();
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
     jest.spyOn(console, "error").mockImplementation(() => {});
@@ -72,7 +77,7 @@ describe("Message API Routes", () => {
 
   describe("GET /api/message", () => {
     it("returns an authenticated photo URL rather than inline image bytes", async () => {
-      mockedGetMessages.mockResolvedValue([{ id: "photo-message", conversationId: "conv-123", userId: "user-123", role: "user", content: "Check this", photo: "data:image/jpeg;base64,/9j/2Q==", createdAt: new Date() }]);
+      mockedGetMessages.mockResolvedValue([{ id: "photo-message", conversationId: "conv-123", userId: "user-123", role: "user", content: "Check this", photo: TEST_PHOTO, createdAt: new Date() }]);
       const response = await GET(createMockRequest("http://localhost/api/message?conversationId=conv-123"));
       expect((await response.json())[0].photo).toBe("/api/message/photo-message/photo");
     });
@@ -200,7 +205,7 @@ describe("Message API Routes", () => {
 
   describe("POST /api/message", () => {
     it("persists a photo as the session user", async () => {
-      const photo = "data:image/jpeg;base64,/9j/2Q==";
+      const photo = TEST_PHOTO;
       const request = createMockRequest("http://localhost/api/message", {
         body: JSON.stringify({ conversationId: "conv-123", content: "Check this", role: "user", photo }),
       });
@@ -210,7 +215,7 @@ describe("Message API Routes", () => {
 
     it.each([
       { role: "user", photo: "https://example.com/photo.jpg" },
-      { role: "assistant", photo: "data:image/jpeg;base64,/9j/2Q==" },
+      { role: "assistant", photo: TEST_PHOTO },
       { role: "user", photo: `data:image/jpeg;base64,/9j/${"A".repeat(700000)}` },
     ])("rejects unsupported photo payloads before saving", async ({ role, photo }) => {
       const request = createMockRequest("http://localhost/api/message", {
@@ -255,7 +260,8 @@ describe("Message API Routes", () => {
         "conv-123",
         "user-123",
         "What can I cook?",
-        "user"
+        "user",
+        undefined
       );
       expect(mockedCreateMessage).toHaveBeenCalledTimes(1);
     });
@@ -295,7 +301,8 @@ describe("Message API Routes", () => {
         "conv-123",
         "user-123",
         "You can make scrambled eggs!",
-        "assistant"
+        "assistant",
+        undefined
       );
     });
 
@@ -368,7 +375,8 @@ describe("Message API Routes", () => {
         "conv-123",
         "user-123",
         "Test message",
-        "user"
+        "user",
+        undefined
       );
     });
 
@@ -477,7 +485,8 @@ describe("Message API Routes", () => {
         "conv-123",
         "user-123",
         "What's for 🍳 dinner? I have £10 & 2kg of 🥔!",
-        "user"
+        "user",
+        undefined
       );
     });
 
@@ -502,7 +511,8 @@ describe("Message API Routes", () => {
         "conv-123",
         "user-123",
         "Test message",
-        "user"
+        "user",
+        undefined
       );
     });
 

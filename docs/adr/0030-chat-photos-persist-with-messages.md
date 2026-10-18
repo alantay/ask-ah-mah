@@ -1,0 +1,7 @@
+# Chat photos persist with their messages
+
+The first photo-check implementation enters through the general Chat composer and stores one bounded JPEG on its owning Message in Postgres. The owner approved this implementation for PR #513 and subsequently authorized merge after review; this supersedes #508's earlier, unanswered triage recommendations for a CookingMode-only entry point and ephemeral images. Persistence lets follow-up questions work after reload without adding another storage service; the trade-off is database space and repeated vision-input cost while the image remains in the last 15 messages.
+
+History serves owner-authenticated photo URLs, while the server restores inline image data for model context. The transport sends one current user turn; persisted history is authoritative for text and photo chats alike. Messages merge by ID, preserving the last assistant reply and bounding context to 15 messages. When an older photo leaves that window, a system notice tells Ah Mah to request reattachment rather than infer its contents from prior replies. Conversation deletion removes the owning messages and their photos.
+
+CookingMode entry and finished-dish recipe photos remain separate work. The file input deliberately keeps library selection available rather than forcing camera capture with `capture="environment"`; this does not promise a camera option on every device. Photo checks remain bounded visual advice with physical cues, never a claim that an image establishes food safety.

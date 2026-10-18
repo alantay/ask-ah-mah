@@ -1,3 +1,4 @@
+import { TEST_PHOTO } from "@/lib/messages/photo.fixture";
 import {
   addInventoryItem,
   getInventory,
@@ -79,7 +80,7 @@ const mockedValidateUIMessages = jest.mocked(validateUIMessages);
 // Helper to create mock NextRequest
 const createMockRequest = (body: unknown) => {
   return {
-    json: async () => body,
+    text: async () => JSON.stringify(body),
   } as NextRequest;
 };
 
@@ -118,10 +119,24 @@ describe("Chat API Route", () => {
   });
 
   describe("POST /api/chat", () => {
+    it("rejects more than the current user turn", async () => {
+      const turn = { id: "photo", role: "user", parts: [{ type: "file", mediaType: "image/jpeg", url: TEST_PHOTO }] };
+      const response = await POST(createMockRequest({ conversationId: "conv-123", messages: [turn, { ...turn, id: "other" }] }));
+      expect(response.status).toBe(400);
+      expect(mockedStreamText).not.toHaveBeenCalled();
+    });
+
+    it("rejects a request over 1 MB before loading history or calling the model", async () => {
+      const response = await POST(createMockRequest({ conversationId: "conv-123", messages: [{ id: "big", role: "user", parts: [{ type: "text", text: "🍳".repeat(270000) }] }] }));
+      expect(response.status).toBe(413);
+      expect(mockedGetMessages).not.toHaveBeenCalled();
+      expect(mockedStreamText).not.toHaveBeenCalled();
+    });
+
     it.each([
       [{ type: "file", mediaType: "image/jpeg", url: "https://example.com/photo.jpg" }],
       [{ type: "file", mediaType: "image/svg+xml", url: "data:image/svg+xml;base64,PHN2Zz4=" }],
-      Array(2).fill({ type: "file", mediaType: "image/jpeg", url: "data:image/jpeg;base64,/9j/2Q==" }),
+      Array(2).fill({ type: "file", mediaType: "image/jpeg", url: TEST_PHOTO }),
     ])("rejects unsupported attachments before calling the model", async (...parts) => {
       const response = await POST(createMockRequest({ conversationId: "conv-123", messages: [{ id: "photo", role: "user", parts }] }));
       expect(response.status).toBe(400);
@@ -283,8 +298,8 @@ describe("Chat API Route", () => {
       const validateCall = mockedValidateUIMessages.mock.calls[0][0] as {
         messages: unknown[];
       };
-      // Should have previous messages (minus last) + new messages
-      expect(validateCall.messages).toHaveLength(2); // 1 previous + 1 new
+      // Preserve both saved turns when the current user turn is not saved yet.
+      expect(validateCall.messages).toHaveLength(3);
       expect(validateCall.messages[0]).toEqual({
         id: "msg-1",
         role: "user",
@@ -394,7 +409,7 @@ describe("Chat API Route", () => {
     it("should handle malformed request body", async () => {
       // A body that fails to parse throws → chatErrorResponse → 500.
       const request = {
-        json: async () => {
+        text: async () => {
           throw new SyntaxError("Unexpected token");
         },
       } as unknown as NextRequest;

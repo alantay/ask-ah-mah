@@ -7,7 +7,7 @@ import {
   RemoveInventoryItemSchemaObj,
 } from "@/lib/inventory/schemas";
 import { SavedMessage } from "@/lib/messages/schemas";
-import { photoPart } from "@/lib/messages/photo";
+import { messageParts } from "@/lib/messages/photo";
 import { inventoryKey, messageKey } from "@/lib/swr/keys";
 import { fetcher, upperCaseFirstLetter } from "@/lib/utils";
 import { useChat } from "@ai-sdk/react";
@@ -237,7 +237,7 @@ export function useChatSession() {
           conversationId: targetConvId,
           role,
           content,
-          ...(photo ? { photo } : {}),
+          photo,
         }),
       });
       if (!response.ok)
@@ -361,7 +361,7 @@ export function useChatSession() {
       void sendMessage({
         id: savedMessage?.id,
         role: "user",
-        parts: [...(photo ? [photoPart(photo)] : []), { type: "text", text: message }],
+        parts: messageParts(message, photo),
       });
       return true;
     } catch (err) {

@@ -3,7 +3,8 @@ import { getMessagePhoto } from "@/lib/messages";
 import { getSessionUserId } from "@/lib/session";
 import type { NextRequest } from "next/server";
 
-jest.mock("@/lib/messages", () => ({ getMessagePhoto: jest.fn() }));
+jest.mock("@/lib/messages", () => ({
+  ...jest.requireActual("@/lib/messages/photo"), getMessagePhoto: jest.fn() }));
 jest.mock("@/lib/session", () => ({ getSessionUserId: jest.fn() }));
 jest.mock("next/server", () => ({
   NextResponse: { json: jest.fn((_body, init) => ({ status: init.status })) },

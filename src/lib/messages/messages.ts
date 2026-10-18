@@ -51,7 +51,7 @@ export async function createMessage(
     }
 
     return tx.message.create({
-      data: { conversationId, userId, content, role, ...(photo ? { photo } : {}) },
+      data: { conversationId, userId, content, role, photo },
     });
   });
 }

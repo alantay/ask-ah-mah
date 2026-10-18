@@ -9,6 +9,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { toast } from "sonner";
 import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport, type UIMessage } from "ai";
 import { useChatSession } from "./useChatSession";
 
 // ── Context mocks ────────────────────────────────────────────────────────────
@@ -88,6 +89,21 @@ describe("useChatSession — in-flight send guard", () => {
     jest.mocked(useChat).mockReturnValue({
       messages: [], sendMessage: mockSendMessage, status: "ready",
     } as unknown as ReturnType<typeof useChat>);
+  });
+
+  it("sends only the current user turn so prior photos stay out of the request body", () => {
+    renderHook(() => useChatSession());
+    const options = jest.mocked(DefaultChatTransport).mock.calls[0][0]!;
+    const current: UIMessage = { id: "current", role: "user", parts: [{ type: "text", text: "For how long?" }] };
+    const result = options.prepareSendMessagesRequest!({
+      messages: [
+        { id: "old-photo", role: "user", parts: [{ type: "file", mediaType: "image/jpeg", url: "old-photo-bytes" }] },
+        { id: "answer", role: "assistant", parts: [{ type: "text", text: "Reduce it." }] },
+        current,
+      ],
+      body: {},
+    } as Parameters<NonNullable<typeof options.prepareSendMessagesRequest>>[0]);
+    expect(result).toMatchObject({ body: { messages: [current] } });
   });
 
   it("persists the photo and sends the same photo with the saved message identity", async () => {

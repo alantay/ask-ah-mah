@@ -28,7 +28,7 @@ import { recipeWithIdToBlock } from "@/lib/recipes/schemas";
 import { inventoryKey, recipeKey as savedRecipesKey } from "@/lib/swr/keys";
 import { fetcher } from "@/lib/utils";
 import { hasSeenSignInNudge, markSignInNudgeSeen } from "@/lib/signInNudge";
-import type { UIMessage } from "ai";
+import type { FileUIPart, UIMessage } from "ai";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
@@ -39,6 +39,8 @@ import { ChecklistBlock } from "./recipe/ChecklistBlock";
 import { ClarifyBlock } from "./recipe/ClarifyBlock";
 import { RecipeLetter } from "./recipe/RecipeLetter";
 import { SuggestionsBlock } from "./recipe/SuggestionsBlock";
+
+const attachedPhotoClassName = "mb-3 max-h-80 w-auto max-w-full rounded-xl object-contain";
 
 interface MessageListProps {
   messages: UIMessage[];
@@ -471,10 +473,10 @@ export const MessageList = ({
                 }`}
               >
                 <MessageContent variant="flat">
-                  {message.parts.filter((part) => part.type === "file" && part.mediaType === "image/jpeg").map((part, index) => part.type === "file" && (
+                  {message.parts.filter((part): part is FileUIPart => part.type === "file" && part.mediaType === "image/jpeg").map((part, index) => (
                     // Inline photos are already resized before being saved.
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img key={`photo-${index}`} src={part.url} alt="Photo attached to your message" loading="lazy" className="mb-3 max-h-80 w-auto max-w-full rounded-xl object-contain" />
+                    <img key={`photo-${index}`} src={part.url} alt="Photo attached to your message" loading="lazy" className={attachedPhotoClassName} />
                   ))}
                   {/* Prose — strip completed fences when new-style blocks present;
                       when an open fence is detected, prefixText is already trimmed */}

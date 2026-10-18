@@ -1,8 +1,7 @@
 import { maybeAutoTitleConversation } from "@/lib/conversations";
 import { NotFoundError } from "@/lib/errors";
-import { createMessage, getMessages } from "@/lib/messages";
+import { createMessage, getMessages, PhotoSchema } from "@/lib/messages";
 import { withAuth } from "@/lib/withAuth";
-import { PhotoSchema } from "@/lib/messages/photo";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -33,7 +32,11 @@ export const GET = withAuth(async (req: NextRequest, { userId }) => {
 export const POST = withAuth(async (req: NextRequest, { userId }) => {
   let rawBody: unknown;
   try {
-    rawBody = await req.json();
+    const text = await req.text();
+    if (Buffer.byteLength(text, "utf8") > 1024 * 1024) {
+      return NextResponse.json({ error: "Request too large" }, { status: 413 });
+    }
+    rawBody = JSON.parse(text);
   } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
@@ -44,7 +47,7 @@ export const POST = withAuth(async (req: NextRequest, { userId }) => {
   const { conversationId, content, role, photo } = parsed.data;
 
   try {
-    const message = await createMessage(conversationId, userId, content, role, ...(photo ? [photo] : []));
+    const message = await createMessage(conversationId, userId, content, role, photo);
 
     if (role === "assistant") {
       void maybeAutoTitleConversation(conversationId, userId);

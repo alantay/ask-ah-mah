@@ -1,9 +1,9 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MessageInput } from "./MessageInput";
-import { preparePhoto } from "../utils/preparePhoto";
+import { preparePhoto } from "../preparePhoto";
 
-jest.mock("../utils/preparePhoto", () => ({ preparePhoto: jest.fn() }));
+jest.mock("../preparePhoto", () => ({ preparePhoto: jest.fn() }));
 
 // Mock external dependencies
 jest.mock("@/components/ui/button", () => ({
@@ -27,7 +27,7 @@ jest.mock("@/components/ui/button", () => ({
       className={className}
       disabled={disabled}
       type={type}
-      data-testid="button"
+      data-testid={type === "submit" ? "button" : undefined}
       {...props}
     >
       {children}

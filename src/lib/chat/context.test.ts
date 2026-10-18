@@ -31,8 +31,7 @@ describe("loadConversationContext", () => {
     (validateUIMessages as jest.Mock).mockImplementation((args) => args.messages);
   });
 
-  it("drops last db message then appends all incoming messages", async () => {
-    // With 2 db messages, slice(0,-1) gives [m1]; then incoming [m2-updated, m3] appended → 3 total
+  it("replaces matching saved messages by ID before appending incoming messages", async () => {
     (getMessages as jest.Mock).mockResolvedValue([
       makeDbMessage("m1", "user", "hello"),
       makeDbMessage("m2", "assistant", "hi"),
@@ -64,8 +63,27 @@ describe("loadConversationContext", () => {
     const incoming = [makeUIMessage("m19", "assistant", "last")];
     const result = await loadConversationContext("conv-1", incoming, "user-1");
 
-    // slice(-15) gives indices 5-19 (15 items), then drop last (index 19), giving 14 + 1 incoming = 15
     expect(result.length).toBeLessThanOrEqual(15);
+  });
+
+  it("keeps the last saved assistant reply when the incoming turn is not saved yet", async () => {
+    (getMessages as jest.Mock).mockResolvedValue([
+      makeDbMessage("question", "user", "Check my sauce"),
+      makeDbMessage("answer", "assistant", "Reduce uncovered."),
+    ]);
+    const result = await loadConversationContext("conv-1", [makeUIMessage("next", "user", "For how long?")], "user-1");
+    expect(result.map((message) => message.id)).toEqual(["question", "answer", "next"]);
+  });
+
+  it("tells the model to request reattachment when an older photo leaves context", async () => {
+    (getMessages as jest.Mock).mockResolvedValue([
+      { ...makeDbMessage("old-photo", "user", "Check this"), photo: "saved-photo" },
+      ...Array.from({ length: 15 }, (_, i) => makeDbMessage(`m${i}`, "user", "More cooking questions")),
+    ]);
+    const result = await loadConversationContext("conv-1", [makeUIMessage("next", "user", "What about my old photo?")], "user-1");
+    expect(result[0]).toMatchObject({ role: "system", parts: [{ type: "text", text: expect.stringContaining("attach it again") }] });
+    expect(result.some((message) => message.id === "old-photo")).toBe(false);
+    expect(result.slice(1)).toHaveLength(15);
   });
 
   it("handles empty db messages with only incoming", async () => {

@@ -1,8 +1,8 @@
-import { MAX_PHOTO_BYTES, MAX_PHOTO_EDGE } from "@/lib/messages/photo";
+import { MAX_PHOTO_BYTES, MAX_PHOTO_EDGE, PHOTO_INPUT_TYPES } from "@/lib/messages/photo";
 
 /** Re-encode phone photos to a bounded JPEG, stripping metadata as well. */
 export async function preparePhoto(file: File): Promise<string> {
-  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+  if (!PHOTO_INPUT_TYPES.includes(file.type)) {
     throw new Error("Choose a JPEG, PNG or WebP photo.");
   }
   if (file.size > 20 * 1024 * 1024) {

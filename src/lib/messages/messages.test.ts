@@ -31,7 +31,7 @@ describe("Message Functions", () => {
     mockedPrisma.conversation.findUnique.mockResolvedValue(null as never);
   });
 
-  describe("getMessages", () => {
+  describe("getMessagePhoto", () => {
     it("scopes photo reads to the conversation owner", async () => {
       mockedPrisma.message.findFirst.mockResolvedValue(null);
       expect(await getMessagePhoto("foreign-photo", "user-123")).toBeNull();
@@ -40,6 +40,10 @@ describe("Message Functions", () => {
         select: { photo: true },
       });
     });
+
+  });
+
+  describe("getMessages", () => {
 
     it("should retrieve messages for a conversation in ascending order", async () => {
       const mockMessages = [
