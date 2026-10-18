@@ -1,11 +1,12 @@
 import { prisma } from "@/lib/db";
-import { createMessage, getMessages } from "./messages";
+import { createMessage, getMessages, getMessagePhoto, getMessagePhotos } from "./messages";
 
 // Mock Prisma
 jest.mock("@/lib/db", () => {
   const prismaMock: Record<string, unknown> = {
     message: {
       findMany: jest.fn(),
+      findFirst: jest.fn(),
       create: jest.fn(),
     },
     conversation: {
@@ -24,13 +25,42 @@ const mockedPrisma = jest.mocked(prisma);
 describe("Message Functions", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockedPrisma.message.findMany.mockReset();
     // Default: the conversation is owned by the requesting user (or doesn't
     // exist yet, hence connectOrCreate). Individual tests override to simulate
     // a foreign owner.
     mockedPrisma.conversation.findUnique.mockResolvedValue(null as never);
   });
 
+  describe("getMessagePhoto", () => {
+    it("scopes photo reads to the conversation owner", async () => {
+      mockedPrisma.message.findFirst.mockResolvedValue(null);
+      expect(await getMessagePhoto("foreign-photo", "user-123")).toBeNull();
+      expect(mockedPrisma.message.findFirst).toHaveBeenCalledWith({
+        where: { id: "foreign-photo", conversation: { userId: "user-123" } },
+        select: { photo: true },
+      });
+    });
+
+  });
+
   describe("getMessages", () => {
+    it("builds history photo URLs from IDs without selecting the photo payload", async () => {
+      const metadata = { id: "photo-1", conversationId: "conv-123", userId: "user-123", content: "Check this", role: "user", createdAt: new Date() };
+      mockedPrisma.message.findMany.mockResolvedValueOnce([metadata] as never);
+      mockedPrisma.message.findMany.mockResolvedValueOnce([{ id: "photo-1" }] as never);
+      expect(await getMessages("conv-123", "user-123")).toEqual([{ ...metadata, photo: "/api/message/photo-1/photo" }]);
+      expect(mockedPrisma.message.findMany).toHaveBeenCalledWith({
+        where: { conversationId: "conv-123", conversation: { userId: "user-123" }, photo: { not: null } },
+        select: { id: true },
+      });
+      expect(mockedPrisma.message.findMany).toHaveBeenCalledWith({
+        where: { conversationId: "conv-123", conversation: { userId: "user-123" } },
+        orderBy: { createdAt: "asc" },
+        omit: { photo: true },
+      });
+    });
+
     it("should retrieve messages for a conversation in ascending order", async () => {
       const mockMessages = [
         {
@@ -39,6 +69,7 @@ describe("Message Functions", () => {
           userId: "user-123",
           content: "Hello",
           role: "user",
+          photo: null,
           createdAt: new Date("2024-01-01T10:00:00.000Z"),
         },
         {
@@ -47,11 +78,12 @@ describe("Message Functions", () => {
           userId: "user-123",
           content: "Hi there!",
           role: "assistant",
+          photo: null,
           createdAt: new Date("2024-01-01T10:01:00.000Z"),
         },
       ];
 
-      mockedPrisma.message.findMany.mockResolvedValue(mockMessages);
+      mockedPrisma.message.findMany.mockResolvedValueOnce(mockMessages).mockResolvedValueOnce([]);
 
       const result = await getMessages("conv-123", "user-123");
 
@@ -59,8 +91,9 @@ describe("Message Functions", () => {
       expect(mockedPrisma.message.findMany).toHaveBeenCalledWith({
         where: { conversationId: "conv-123", conversation: { userId: "user-123" } },
         orderBy: { createdAt: "asc" },
+        omit: { photo: true },
       });
-      expect(mockedPrisma.message.findMany).toHaveBeenCalledTimes(1);
+      expect(mockedPrisma.message.findMany).toHaveBeenCalledTimes(2);
     });
 
     it("should return empty array when no messages found", async () => {
@@ -72,6 +105,7 @@ describe("Message Functions", () => {
       expect(mockedPrisma.message.findMany).toHaveBeenCalledWith({
         where: { conversationId: "conv-456", conversation: { userId: "user-123" } },
         orderBy: { createdAt: "asc" },
+        omit: { photo: true },
       });
     });
 
@@ -85,6 +119,7 @@ describe("Message Functions", () => {
       expect(mockedPrisma.message.findMany).toHaveBeenCalledWith({
         where: { conversationId: "conv-123", conversation: { userId: "user-123" } },
         orderBy: { createdAt: "asc" },
+        omit: { photo: true },
       });
     });
 
@@ -96,23 +131,37 @@ describe("Message Functions", () => {
           userId: "user-123",
           content: "Conv 123 message",
           role: "user",
+          photo: null,
           createdAt: new Date("2024-01-01T10:00:00.000Z"),
         },
       ];
 
-      mockedPrisma.message.findMany.mockResolvedValue(mockMessages);
+      mockedPrisma.message.findMany.mockResolvedValueOnce(mockMessages).mockResolvedValueOnce([]);
 
       await getMessages("conv-123", "user-123");
 
       expect(mockedPrisma.message.findMany).toHaveBeenCalledWith({
         where: { conversationId: "conv-123", conversation: { userId: "user-123" } },
         orderBy: { createdAt: "asc" },
+        omit: { photo: true },
       });
 
       // Verify it doesn't get called with different conversationId
       expect(mockedPrisma.message.findMany).not.toHaveBeenCalledWith({
         where: { conversationId: "conv-456", conversation: { userId: "user-123" } },
         orderBy: { createdAt: "asc" },
+        omit: { photo: true },
+      });
+    });
+  });
+
+  describe("getMessagePhotos", () => {
+    it("reads payloads only for the retained IDs belonging to the owner", async () => {
+      mockedPrisma.message.findMany.mockResolvedValue([]);
+      expect(await getMessagePhotos(["recent-photo"], "user-123")).toEqual([]);
+      expect(mockedPrisma.message.findMany).toHaveBeenCalledWith({
+        where: { id: { in: ["recent-photo"] }, conversation: { userId: "user-123" } },
+        select: { id: true, photo: true },
       });
     });
   });
@@ -125,6 +174,7 @@ describe("Message Functions", () => {
         userId: "user-123",
         content: "What can I cook?",
         role: "user",
+        photo: null,
         createdAt: new Date("2024-01-01T10:00:00.000Z"),
       };
 
@@ -156,6 +206,7 @@ describe("Message Functions", () => {
         userId: "user-123",
         content: "You can make scrambled eggs!",
         role: "assistant",
+        photo: null,
         createdAt: new Date("2024-01-01T10:01:00.000Z"),
       };
 
@@ -186,6 +237,7 @@ describe("Message Functions", () => {
         userId: "user-123",
         content: "",
         role: "user",
+        photo: null,
         createdAt: new Date("2024-01-01T10:00:00.000Z"),
       };
 
@@ -212,6 +264,7 @@ describe("Message Functions", () => {
         userId: "user-123",
         content: longContent,
         role: "user",
+        photo: null,
         createdAt: new Date("2024-01-01T10:00:00.000Z"),
       };
 
@@ -238,6 +291,7 @@ describe("Message Functions", () => {
         userId: "user-123",
         content: specialContent,
         role: "user",
+        photo: null,
         createdAt: new Date("2024-01-01T10:00:00.000Z"),
       };
 
@@ -297,6 +351,7 @@ describe("Message Functions", () => {
         userId: "user-123",
         content: "System initialized",
         role: "system",
+        photo: null,
         createdAt: new Date("2024-01-01T10:00:00.000Z"),
       };
 
@@ -329,6 +384,7 @@ describe("Message Functions", () => {
         userId: "user-123",
         content: "What can I cook?",
         role: "user",
+        photo: null,
         createdAt: new Date("2024-01-01T10:00:00.000Z"),
       };
 
@@ -348,6 +404,7 @@ describe("Message Functions", () => {
         userId: "user-123",
         content: "You can make scrambled eggs!",
         role: "assistant",
+        photo: null,
         createdAt: new Date("2024-01-01T10:01:00.000Z"),
       };
 
@@ -362,7 +419,7 @@ describe("Message Functions", () => {
       expect(createdAssistantMessage).toEqual(assistantMessage);
 
       const allMessages = [userMessage, assistantMessage];
-      mockedPrisma.message.findMany.mockResolvedValue(allMessages);
+      mockedPrisma.message.findMany.mockResolvedValueOnce(allMessages).mockResolvedValueOnce([]);
 
       const retrievedMessages = await getMessages("conv-123", "user-123");
       expect(retrievedMessages).toEqual(allMessages);

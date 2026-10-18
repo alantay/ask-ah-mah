@@ -1,6 +1,9 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MessageInput } from "./MessageInput";
+import { preparePhoto } from "../preparePhoto";
+
+jest.mock("../preparePhoto", () => ({ preparePhoto: jest.fn() }));
 
 // Mock external dependencies
 jest.mock("@/components/ui/button", () => ({
@@ -24,7 +27,7 @@ jest.mock("@/components/ui/button", () => ({
       className={className}
       disabled={disabled}
       type={type}
-      data-testid="button"
+      data-testid={type === "submit" ? "button" : undefined}
       {...props}
     >
       {children}
@@ -559,7 +562,9 @@ describe("MessageInput", () => {
       expect(input).toHaveFocus();
       await user.type(input, "Ready to send");
 
-      // Tab to button
+      // The photo attachment is between the text field and Send.
+      await user.tab();
+      expect(screen.getByRole("button", { name: "Attach photo" })).toHaveFocus();
       await user.tab();
       expect(button).toHaveFocus();
     });
@@ -582,4 +587,47 @@ it("clears the draft once the message has been accepted", async () => {
   fireEvent.change(screen.getByRole("textbox"), { target: { value: "Got eggs" } });
   fireEvent.click(screen.getByRole("button", { name: "Send message" }));
   await waitFor(() => expect(screen.getByRole("textbox")).toHaveValue(""));
+});
+
+describe("photo attachments", () => {
+  const photo = "data:image/jpeg;base64,/9j/2Q==";
+  const choosePhoto = () => fireEvent.change(screen.getByLabelText("Choose a photo"), {
+    target: { files: [new File(["photo"], "sauce.jpg", { type: "image/jpeg" })] },
+  });
+
+  beforeEach(() => jest.mocked(preparePhoto).mockResolvedValue(photo));
+
+  it("previews and sends a photo with the question, then clears both", async () => {
+    const send = jest.fn().mockResolvedValue(true);
+    render(<MessageInput disabled={false} onSendMessage={send} />);
+    choosePhoto();
+    await screen.findByAltText("Photo ready to send");
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "Is this thick enough?" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+    await waitFor(() => expect(send).toHaveBeenCalledWith("Is this thick enough?", photo));
+    await waitFor(() => expect(screen.queryByAltText("Photo ready to send")).not.toBeInTheDocument());
+    expect(screen.getByRole("textbox")).toHaveValue("");
+  });
+
+  it("allows a photo without text and retains it when sending fails", async () => {
+    const send = jest.fn().mockResolvedValue(false);
+    render(<MessageInput disabled={false} onSendMessage={send} />);
+    choosePhoto();
+    await screen.findByAltText("Photo ready to send");
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+    await waitFor(() => expect(send).toHaveBeenCalledWith("What can you tell me about this photo?", photo));
+    expect(screen.getByAltText("Photo ready to send")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Remove photo" }));
+    expect(screen.queryByAltText("Photo ready to send")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Send message" })).toBeDisabled();
+  });
+
+  it("shows a preparation error without losing the text draft", async () => {
+    jest.mocked(preparePhoto).mockRejectedValueOnce(new Error("Choose a JPEG, PNG or WebP photo."));
+    render(<MessageInput disabled={false} onSendMessage={jest.fn()} />);
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "Check this" } });
+    choosePhoto();
+    expect(await screen.findByRole("alert")).toHaveTextContent("Choose a JPEG");
+    expect(screen.getByRole("textbox")).toHaveValue("Check this");
+  });
 });

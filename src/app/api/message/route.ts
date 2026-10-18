@@ -1,7 +1,8 @@
 import { maybeAutoTitleConversation } from "@/lib/conversations";
 import { NotFoundError } from "@/lib/errors";
-import { createMessage, getMessages } from "@/lib/messages";
+import { createMessage, getMessages, PhotoSchema } from "@/lib/messages";
 import { withAuth } from "@/lib/withAuth";
+import { readLimitedText } from "@/lib/http";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -9,7 +10,8 @@ const PostSchema = z.object({
   conversationId: z.string().min(1),
   content: z.string().min(1),
   role: z.enum(["user", "assistant"]),
-});
+  photo: PhotoSchema.optional(),
+}).refine((message) => !message.photo || message.role === "user");
 
 export const GET = withAuth(async (req: NextRequest, { userId }) => {
   const conversationId = req.nextUrl.searchParams.get("conversationId");
@@ -21,13 +23,18 @@ export const GET = withAuth(async (req: NextRequest, { userId }) => {
   }
   // getMessages is owner-scoped: a foreign conversationId returns no messages.
   const messages = await getMessages(conversationId, userId);
+  // History queries omit photo bytes and return authenticated image URLs.
   return NextResponse.json(messages);
 });
 
 export const POST = withAuth(async (req: NextRequest, { userId }) => {
   let rawBody: unknown;
   try {
-    rawBody = await req.json();
+    const text = await readLimitedText(req, 1024 * 1024);
+    if (text === null) {
+      return NextResponse.json({ error: "Request too large" }, { status: 413 });
+    }
+    rawBody = JSON.parse(text);
   } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
@@ -35,10 +42,10 @@ export const POST = withAuth(async (req: NextRequest, { userId }) => {
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
-  const { conversationId, content, role } = parsed.data;
+  const { conversationId, content, role, photo } = parsed.data;
 
   try {
-    const message = await createMessage(conversationId, userId, content, role);
+    const message = await createMessage(conversationId, userId, content, role, photo);
 
     if (role === "assistant") {
       void maybeAutoTitleConversation(conversationId, userId);

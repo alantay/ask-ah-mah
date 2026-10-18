@@ -181,6 +181,17 @@ describe("MessageList", () => {
     messages: [],
   };
 
+  it("renders a persisted photo alongside its question", () => {
+    render(<MessageList {...defaultProps} messages={[{
+      id: "photo-message", role: "user", parts: [
+        { type: "file", mediaType: "image/jpeg", url: "/api/message/photo-message/photo" },
+        { type: "text", text: "Is this thick enough?" },
+      ],
+    }]} />);
+    expect(screen.getByAltText("Photo attached to your message")).toHaveAttribute("src", "/api/message/photo-message/photo");
+    expect(screen.getByText("Is this thick enough?")).toBeInTheDocument();
+  });
+
   const createMockMessage = (overrides?: Partial<UIMessage>): UIMessage => ({
     id: "msg-1",
     role: "user",

@@ -9,6 +9,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { toast } from "sonner";
 import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport, type UIMessage } from "ai";
 import { useChatSession } from "./useChatSession";
 
 // ── Context mocks ────────────────────────────────────────────────────────────
@@ -77,7 +78,7 @@ const okConversation = () =>
   });
 
 const okMessage = () =>
-  Promise.resolve({ ok: true, status: 200 });
+  Promise.resolve({ ok: true, status: 200, json: async () => ({ message: { id: "saved-user" } }) });
 
 // ── Tests ────────────────────────────────────────────────────────────────────
 
@@ -88,6 +89,37 @@ describe("useChatSession — in-flight send guard", () => {
     jest.mocked(useChat).mockReturnValue({
       messages: [], sendMessage: mockSendMessage, status: "ready",
     } as unknown as ReturnType<typeof useChat>);
+  });
+
+  it("sends only the current user turn so prior photos stay out of the request body", () => {
+    renderHook(() => useChatSession());
+    const options = jest.mocked(DefaultChatTransport).mock.calls[0][0]!;
+    const current: UIMessage = { id: "current", role: "user", parts: [{ type: "text", text: "For how long?" }] };
+    const result = options.prepareSendMessagesRequest!({
+      messages: [
+        { id: "old-photo", role: "user", parts: [{ type: "file", mediaType: "image/jpeg", url: "old-photo-bytes" }] },
+        { id: "answer", role: "assistant", parts: [{ type: "text", text: "Reduce it." }] },
+        current,
+      ],
+      body: {},
+    } as Parameters<NonNullable<typeof options.prepareSendMessagesRequest>>[0]);
+    expect(result).toMatchObject({ body: { messages: [current] } });
+  });
+
+  it("persists the photo and sends the same photo with the saved message identity", async () => {
+    mockFetch.mockReturnValueOnce(okConversation());
+    mockFetch.mockResolvedValue(okMessage());
+    const photo = "data:image/jpeg;base64,/9j/2Q==";
+    const { result } = renderHook(() => useChatSession());
+    await act(async () => { await result.current.handleSendMessage("Check my sauce", photo); });
+    const saveCall = mockFetch.mock.calls.find(([url]) => url === "/api/message");
+    expect(JSON.parse(saveCall![1].body)).toMatchObject({ content: "Check my sauce", photo, conversationId: "conv-1" });
+    expect(mockSendMessage).toHaveBeenCalledWith({
+      id: "saved-user", role: "user", parts: [
+        { type: "file", mediaType: "image/jpeg", filename: "photo.jpg", url: photo },
+        { type: "text", text: "Check my sauce" },
+      ],
+    });
   });
 
   it("retries a failed reply without saving the user message or creating another conversation", async () => {

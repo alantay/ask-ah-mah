@@ -1,9 +1,10 @@
+import { TEST_PHOTO } from "@/lib/messages/photo.fixture";
 import {
   addInventoryItem,
   getInventory,
   removeInventoryItem,
 } from "@/lib/inventory/Inventory";
-import { getMessages } from "@/lib/messages/messages";
+import { getMessages, getMessagePhotos } from "@/lib/messages/messages";
 import { getSessionUserId } from "@/lib/session";
 import { openai } from "@ai-sdk/openai";
 import {
@@ -24,6 +25,7 @@ jest.mock("@/lib/inventory/Inventory", () => ({
 
 jest.mock("@/lib/messages/messages", () => ({
   getMessages: jest.fn(),
+  getMessagePhotos: jest.fn(),
 }));
 
 jest.mock("@/lib/session", () => ({ getSessionUserId: jest.fn() }));
@@ -69,6 +71,7 @@ const mockedAddInventoryItem = jest.mocked(addInventoryItem);
 const mockedGetInventory = jest.mocked(getInventory);
 const mockedRemoveInventoryItem = jest.mocked(removeInventoryItem);
 const mockedGetMessages = jest.mocked(getMessages);
+const mockedGetMessagePhotos = jest.mocked(getMessagePhotos);
 const mockedGetSessionUserId = jest.mocked(getSessionUserId);
 const mockedOpenai = jest.mocked(openai);
 const mockedConvertToModelMessages = jest.mocked(convertToModelMessages);
@@ -79,7 +82,7 @@ const mockedValidateUIMessages = jest.mocked(validateUIMessages);
 // Helper to create mock NextRequest
 const createMockRequest = (body: unknown) => {
   return {
-    json: async () => body,
+    body: new ReadableStream({ start(controller) { controller.enqueue(Buffer.from(JSON.stringify(body))); controller.close(); } }),
   } as NextRequest;
 };
 
@@ -90,6 +93,7 @@ describe("Chat API Route", () => {
     jest.spyOn(console, "error").mockImplementation(() => {});
 
     mockedGetSessionUserId.mockResolvedValue("user-123");
+    mockedGetMessagePhotos.mockResolvedValue([]);
 
     // Setup default mocks
     mockedOpenai.mockReturnValue(
@@ -118,6 +122,30 @@ describe("Chat API Route", () => {
   });
 
   describe("POST /api/chat", () => {
+    it("rejects more than the current user turn", async () => {
+      const turn = { id: "photo", role: "user", parts: [{ type: "file", mediaType: "image/jpeg", url: TEST_PHOTO }] };
+      const response = await POST(createMockRequest({ conversationId: "conv-123", messages: [turn, { ...turn, id: "other" }] }));
+      expect(response.status).toBe(400);
+      expect(mockedStreamText).not.toHaveBeenCalled();
+    });
+
+    it("rejects a request over 1 MB before loading history or calling the model", async () => {
+      const response = await POST(createMockRequest({ conversationId: "conv-123", messages: [{ id: "big", role: "user", parts: [{ type: "text", text: "🍳".repeat(270000) }] }] }));
+      expect(response.status).toBe(413);
+      expect(mockedGetMessages).not.toHaveBeenCalled();
+      expect(mockedStreamText).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      [{ type: "file", mediaType: "image/jpeg", url: "https://example.com/photo.jpg" }],
+      [{ type: "file", mediaType: "image/svg+xml", url: "data:image/svg+xml;base64,PHN2Zz4=" }],
+      Array(2).fill({ type: "file", mediaType: "image/jpeg", url: TEST_PHOTO }),
+    ])("rejects unsupported attachments before calling the model", async (...parts) => {
+      const response = await POST(createMockRequest({ conversationId: "conv-123", messages: [{ id: "photo", role: "user", parts }] }));
+      expect(response.status).toBe(400);
+      expect(mockedStreamText).not.toHaveBeenCalled();
+    });
+
     it("should process chat request with basic messages", async () => {
       const mockPreviousMessages = [
         {
@@ -126,6 +154,7 @@ describe("Chat API Route", () => {
           content: "Hello",
           userId: "user-123",
           conversationId: "conv-123",
+          photo: null,
           createdAt: new Date("2024-01-01T10:00:00.000Z"),
         },
         {
@@ -134,6 +163,7 @@ describe("Chat API Route", () => {
           content: "Hi there!",
           userId: "user-123",
           conversationId: "conv-123",
+          photo: null,
           createdAt: new Date("2024-01-01T10:01:00.000Z"),
         },
       ];
@@ -202,6 +232,7 @@ describe("Chat API Route", () => {
         content: `Message ${i}`,
         userId: "user-123",
         conversationId: "conv-123",
+        photo: null,
         createdAt: new Date("2024-01-01T10:00:00.000Z"),
       }));
 
@@ -236,6 +267,7 @@ describe("Chat API Route", () => {
           content: "Test message",
           userId: "user-123",
           conversationId: "conv-123",
+          photo: null,
           createdAt: new Date("2024-01-01T10:00:00.000Z"),
         },
         {
@@ -244,6 +276,7 @@ describe("Chat API Route", () => {
           content: "Test response",
           userId: "user-123",
           conversationId: "conv-123",
+          photo: null,
           createdAt: new Date("2024-01-01T10:01:00.000Z"),
         },
       ];
@@ -268,8 +301,8 @@ describe("Chat API Route", () => {
       const validateCall = mockedValidateUIMessages.mock.calls[0][0] as {
         messages: unknown[];
       };
-      // Should have previous messages (minus last) + new messages
-      expect(validateCall.messages).toHaveLength(2); // 1 previous + 1 new
+      // Preserve both saved turns when the current user turn is not saved yet.
+      expect(validateCall.messages).toHaveLength(3);
       expect(validateCall.messages[0]).toEqual({
         id: "msg-1",
         role: "user",
@@ -379,9 +412,7 @@ describe("Chat API Route", () => {
     it("should handle malformed request body", async () => {
       // A body that fails to parse throws → chatErrorResponse → 500.
       const request = {
-        json: async () => {
-          throw new SyntaxError("Unexpected token");
-        },
+        body: new ReadableStream({ start(controller) { controller.error(new SyntaxError("Unexpected token")); } }),
       } as unknown as NextRequest;
 
       const response = await POST(request);

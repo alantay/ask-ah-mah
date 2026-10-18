@@ -4,6 +4,8 @@ import { chatErrorResponse } from "@/lib/chat/errors";
 import { latestUserText } from "@/lib/chat/messageText";
 import { buildChatTools } from "@/lib/chat/tools";
 import { withAuth } from "@/lib/withAuth";
+import { hasValidPhotoAttachment } from "@/lib/messages";
+import { readLimitedText } from "@/lib/http";
 import { EFFORT_AGENTIC, MODEL } from "@/lib/ai/models";
 import { openai } from "@ai-sdk/openai";
 import {
@@ -19,17 +21,23 @@ import { z } from "zod";
 import { CHAT_SYSTEM_PROMPT } from "./constants";
 
 const UIMessageSchema = z
-  .object({ id: z.string(), role: z.string(), parts: z.array(z.unknown()) })
-  .passthrough();
+  .object({ id: z.string(), role: z.literal("user"), parts: z.array(z.unknown()) })
+  .passthrough()
+  .refine(hasValidPhotoAttachment, "Attach one JPEG photo under 512 KB and 1280 px per message");
 
 const PostSchema = z.object({
   conversationId: z.string().min(1).max(100),
-  messages: z.array(UIMessageSchema).max(100),
+  // The transport sends one current user turn; history is restored server-side.
+  messages: z.array(UIMessageSchema).length(1),
 });
 
 export const POST = withAuth(async (req: NextRequest, { userId }) => {
   try {
-    const body = PostSchema.safeParse(await req.json());
+    const rawBody = await readLimitedText(req, 1024 * 1024);
+    if (rawBody === null) {
+      return NextResponse.json({ error: "Request too large" }, { status: 413 });
+    }
+    const body = PostSchema.safeParse(JSON.parse(rawBody));
     if (!body.success) {
       return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     }

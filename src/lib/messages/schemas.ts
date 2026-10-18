@@ -5,6 +5,8 @@ export interface SavedMessage {
   conversationId: string;
   createdAt: string;
   content: string;
+  /** Owner-authenticated image URL in history responses; never inline photo bytes. */
+  photo?: string | null;
 }
 
 export interface SaveMessageRequest {
