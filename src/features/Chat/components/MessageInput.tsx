@@ -29,14 +29,14 @@ export const MessageInput = ({
       }}
       className={cn("p-4", className)}
     >
-      <div className="flex gap-1 items-center bg-muted/50 rounded-xl border border-border/60 px-3 py-1 max-w-5xl mx-auto">
+      <div className="flex gap-1 items-center bg-muted/50 rounded-xl border border-border/60 px-3 py-1 max-w-5xl mx-auto focus-within:border-ring focus-within:ring-1 focus-within:ring-ring/40">
         <Input
           aria-label="Message Ah Mah"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           disabled={disabled}
           placeholder={disabled ? "Sending…" : "Ask Ah Mah…"}
-          className="flex-1 border-none shadow-none bg-transparent focus-visible:ring-1 focus-visible:ring-ring px-0"
+          className="flex-1 border-none shadow-none bg-transparent focus-visible:ring-0 px-0"
         />
         <Button
           type="submit"
